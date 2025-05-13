@@ -1,0 +1,186 @@
+{
+    "title": "Tenant Logs",
+    "description": "",
+    "inputs": {
+        "input_4A2iEpn6": {
+            "options": {
+                "defaultValue": "*",
+                "token": "text_9yxn14bn"
+            },
+            "title": "Forge Instance ID",
+            "type": "input.text"
+        },
+        "input_ch5zNZ2X": {
+            "dataSources": {
+                "primary": "ds_5a4R8xaz"
+            },
+            "options": {
+                "defaultValue": "",
+                "items": [
+                    {
+                        "label": "All",
+                        "value": "*"
+                    }
+                ],
+                "token": "dd_ZlvrLiNG"
+            },
+            "title": "Forge Log Type",
+            "type": "input.dropdown"
+        },
+        "input_global_trp": {
+            "options": {
+                "defaultValue": "-60m@m,now",
+                "token": "global_time"
+            },
+            "title": "Global Time Range",
+            "type": "input.timerange"
+        },
+        "input_uFiEIG6X": {
+            "context": {
+                "formattedConfig": {
+                    "number": {
+                        "prefix": ""
+                    }
+                },
+                "formattedStatics": ">statics | formatByType(formattedConfig)",
+                "label": ">primary | seriesByName(\"forgecicd_tenant\") | renameSeries(\"label\") | formatByType(formattedConfig)",
+                "statics": [
+                    [
+                        "Select Tenant"
+                    ],
+                    [
+                        "-"
+                    ]
+                ],
+                "value": ">primary | seriesByName(\"forgecicd_tenant\") | renameSeries(\"value\") | formatByType(formattedConfig)"
+            },
+            "dataSources": {
+                "primary": "ds_x8AMw4ri"
+            },
+            "options": {
+                "items": ">frame(label, value) | prepend(formattedStatics) | objects()",
+                "selectFirstSearchResult": true,
+                "token": "dd_8enHUmpH"
+            },
+            "title": "Forge Tenant",
+            "type": "input.dropdown"
+        }
+    },
+    "defaults": {
+        "dataSources": {
+            "ds.o11y": {
+                "options": {
+                    "queryParameters": {
+                        "earliest": "$global_time.earliest$",
+                        "latest": "$global_time.latest$"
+                    }
+                }
+            },
+            "ds.search": {
+                "options": {
+                    "queryParameters": {
+                        "earliest": "$global_time.earliest$",
+                        "latest": "$global_time.latest$"
+                    }
+                }
+            }
+        }
+    },
+    "visualizations": {
+        "viz_KuqTQOYc": {
+            "containerOptions": {},
+            "context": {},
+            "dataSources": {
+                "primary": "ds_iONxCEsT"
+            },
+            "options": {},
+            "showLastUpdated": false,
+            "showProgressBar": false,
+            "type": "splunk.events"
+        }
+    },
+    "dataSources": {
+        "ds_5a4R8xaz": {
+            "name": "log type list",
+            "options": {
+                "query": "index=\"${splunk_index}\" | stats count by forgecicd_log_type | table forgecicd_log_type",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "ds_iONxCEsT": {
+            "name": "logs",
+            "options": {
+                "query": "index=\"${splunk_index}\" forgecicd_tenant=\"$dd_8enHUmpH$\" forgecicd_log_type\n=\"$dd_ZlvrLiNG$\" forgecicd_instance_id=\"$text_9yxn14bn$\"\n|  sort _time asc"
+            },
+            "type": "ds.search"
+        },
+        "ds_x8AMw4ri": {
+            "name": "tenant list",
+            "options": {
+                "query": "index=\"${splunk_index}\" | stats count by forgecicd_tenant | table forgecicd_tenant",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "ds_yDvZOb30": {
+            "name": "GH Job Details search",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" forgecicd_log_type=hook type=\"completed\" forgecicd_tenant=\"$dd_8enHUmpH$\" forgecicd_instance_id=\"$text_9yxn14bn$\"\n| eval repo_url = GITHUB_SERVER_URL . \"/\" . GITHUB_REPOSITORY\n| eval run_url = repo_url . \"/actions/runs/\" . GITHUB_RUN_ID . \"/attempts/\" . GITHUB_RUN_ATTEMPT\n| fields \n    GITHUB_SHA,\n    run_url,\n    repo_url,\n    GITHUB_RUN_ID,\n    GITHUB_RUN_ATTEMPT,\n    GITHUB_ACTOR,\n    GITHUB_TRIGGERING_ACTOR,\n    GITHUB_WORKFLOW,\n    GITHUB_HEAD_REF,\n    GITHUB_BASE_REF,\n    GITHUB_EVENT_NAME,\n    forgecicd_instance_id\n| join forgecicd_instance_id type=left [\n    search index=\"${splunk_index}\" forgecicd_log_type=runner forgecicd_tenant=\"$dd_8enHUmpH$\" forgecicd_instance_id=\"$text_9yxn14bn$\" ci_result=*\n    | fields forgecicd_instance_id, ci_result, job_name\n]\n| join forgecicd_instance_id type=left [\n    search index=\"${splunk_index}\" forgecicd_log_type=hook (type=\"started\" OR type=\"completed\") forgecicd_tenant=\"$dd_8enHUmpH$\" forgecicd_instance_id=\"$text_9yxn14bn$\"\n    | stats earliest(_time) as start latest(_time) as end by forgecicd_instance_id\n    | eval duration_minutes = round((end - start) / 60, 2)\n    | fields forgecicd_instance_id, duration_minutes\n]\n| table \n    GITHUB_SHA,\n    duration_minutes,\n    run_url,\n    repo_url,\n    GITHUB_RUN_ID,\n    GITHUB_RUN_ATTEMPT,\n    GITHUB_ACTOR,\n    GITHUB_TRIGGERING_ACTOR,\n    GITHUB_WORKFLOW,\n    GITHUB_HEAD_REF,\n    GITHUB_BASE_REF,\n    GITHUB_EVENT_NAME,\n    forgecicd_instance_id,\n    job_name,\n    ci_result\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        }
+    },
+    "layout": {
+        "globalInputs": [
+            "input_global_trp",
+            "input_uFiEIG6X",
+            "input_ch5zNZ2X",
+            "input_4A2iEpn6"
+        ],
+        "layoutDefinitions": {
+            "layout_1": {
+                "options": {
+                    "height": 960,
+                    "width": 1440
+                },
+                "structure": [
+                    {
+                        "item": "viz_KuqTQOYc",
+                        "position": {
+                            "h": 626,
+                            "w": 1440,
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "block"
+                    }
+                ],
+                "type": "grid"
+            }
+        },
+        "options": {},
+        "tabs": {
+            "items": [
+                {
+                    "label": "Runner Logs",
+                    "layoutId": "layout_1"
+                }
+            ]
+        }
+    },
+    "applicationProperties": {
+        "collapseNavigation": true
+    }
+}

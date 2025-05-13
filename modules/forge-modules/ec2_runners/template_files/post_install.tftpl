@@ -1,0 +1,13 @@
+# Login to ECR registry. This is needed so that CI jobs can access our "ops"
+# containers we store in ECR.
+%{ if length(ecr_registries) > 0 ~}
+%{ for registry in ecr_registries ~}
+aws ecr get-login-password \
+  --region $(echo ${registry} | awk -F. '{print $4}') \
+  | su -l ${runner_user} -c \
+    "docker --config /home/${runner_user}/.docker login \
+    --username AWS \
+    --password-stdin ${registry}"
+%{ endfor ~}
+
+%{ endif ~}

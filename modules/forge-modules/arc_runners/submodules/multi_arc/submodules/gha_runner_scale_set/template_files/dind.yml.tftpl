@@ -1,0 +1,252 @@
+## githubConfigUrl is the GitHub url for where you want to configure runners
+## ex: https://github.com/myorg/myrepo or https://github.com/myorg
+githubConfigUrl: "${github_config_url}"
+
+## githubConfigSecret is the k8s secrets to use when auth with GitHub API.
+## You can choose to use GitHub App or a PAT token
+githubConfigSecret: ${config_secret}
+
+## maxRunners is the max number of runners the autoscaling runner set will scale up to.
+maxRunners: ${max_runners}
+
+## minRunners is the min number of idle runners. The target number of runners created will be
+## calculated as a sum of minRunners and the number of jobs assigned to the scale set.
+minRunners: ${min_runners}
+
+runnerGroup: "${runner_group_name}"
+
+## name of the runner scale set to create. Defaults to the helm release name
+runnerScaleSetName: "${scale_set_name}"
+
+## template is the PodSpec for each runner Pod
+## For reference: https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#PodSpec
+template:
+  spec:
+    initContainers:
+      - name: init-dind-externals
+        image: ${container_actions_runner}
+        imagePullPolicy: Always
+        command: ["cp", "-r", "-v", "/home/runner/externals/.", "/home/runner/tmpDir/"]
+        volumeMounts:
+          - name: dind-externals
+            mountPath: /home/runner/tmpDir
+      - name: init-work
+        image: ${container_actions_runner}
+        imagePullPolicy: Always
+        command:
+          - sh
+          - -c
+          - |
+            set -x
+            chown 1001:123 /home/runner/_work
+        securityContext:
+          runAsUser: 0
+        volumeMounts:
+          - name: work
+            mountPath: /home/runner/_work
+      - name: init-dind-rootless
+        image: docker:dind-rootless
+        imagePullPolicy: Always
+        command:
+          - sh
+          - -c
+          - |
+            set -x
+            cp -a /etc/. /dind-etc/
+            echo 'runner:x:1001:1001:runner:/home/runner:/bin/ash' >> /dind-etc/passwd
+            echo 'runner:x:1001:' >> /dind-etc/group
+            echo 'runner:100000:65536' >> /dind-etc/subgid
+            echo 'runner:100000:65536' >>  /dind-etc/subuid
+            chmod 755 /dind-etc;
+            chmod u=rwx,g=rx+s,o=rx /dind-home
+            chown 1001:1001 /dind-home
+        securityContext:
+          runAsUser: 0
+        volumeMounts:
+          - mountPath: /dind-etc
+            name: dind-etc
+          - mountPath: /dind-home
+            name: dind-home
+      - name: init-docker-creds
+        image: ${container_actions_runner}
+        imagePullPolicy: Always
+        command:
+          - sh
+          - -c
+          - |
+            set -x
+            chown 1001:1001 /home/runner/.docker/
+            echo '{
+              "credHelpers": {
+                %{ for registry in container_ecr_registries ~}
+                "${registry}": "ecr-login",
+                %{ endfor ~}
+                "public.ecr.aws": "ecr-login"
+              }
+            }' > /home/runner/.docker/config.json
+            chown 1001:1001 /home/runner/.docker/config.json
+        securityContext:
+          runAsUser: 0
+        volumeMounts:
+          - name: docker-creds
+            mountPath: /home/runner/.docker
+    containers:
+      - name: runner
+        image: ${container_actions_runner}
+        imagePullPolicy: Always
+        command: ["/home/runner/run.sh"]
+        env:
+          - name: DOCKER_HOST
+            value: unix:///home/runner/var/run/docker.sock
+          - name: ACTIONS_RUNNER_HOOK_JOB_STARTED
+            value: /home/runner/hooks/job_started.sh
+          - name: ACTIONS_RUNNER_HOOK_JOB_COMPLETED
+            value: /home/runner/hooks/job_completed.sh
+        securityContext:
+          privileged: true
+          runAsUser: 1001
+          runAsGroup: 1001
+        volumeMounts:
+          - name: runner-diag
+            mountPath: /home/runner/_diag
+          - name: stopfile-volume
+            mountPath: /tmp/stopfile
+          - name: work
+            mountPath: /home/runner/_work
+          - name: docker-creds
+            mountPath: /home/runner/.docker
+          - name: dind-sock
+            mountPath: /home/runner/var/run
+          - name: pod-hooks
+            mountPath: /home/runner/hooks
+            readOnly: true
+        lifecycle:
+          preStop:
+            exec:
+              command: ["sh", "-c", "echo 'Main container stopped' > /tmp/stopfile"]
+        resources:
+          limits:
+            cpu: ${container_limits_cpu}
+            memory: ${container_limits_memory}
+          requests:
+            cpu: ${container_requests_cpu}
+            memory: ${container_requests_memory}
+
+      - name: dind
+        image: docker:dind-rootless
+        imagePullPolicy: Always
+        args: ["dockerd", "--host=unix:///home/runner/var/run/docker.sock"]
+        securityContext:
+          privileged: true
+          runAsUser: 1001
+          runAsGroup: 1001
+        volumeMounts:
+          - name: work
+            mountPath: /home/runner/_work
+          - name: dind-sock
+            mountPath: /home/runner/var/run
+          - name: dind-externals
+            mountPath: /home/runner/externals
+          - name: dind-etc
+            mountPath: /etc
+          - name: dind-home
+            mountPath: /home/runner
+        resources:
+          limits:
+            cpu: ${container_limits_cpu}
+            memory: ${container_limits_memory}
+          requests:
+            cpu: ${container_requests_cpu}
+            memory: ${container_requests_memory}
+
+      - name: worker
+        image: busybox
+        command:
+          - sh
+          - -c
+          - |
+            while [ ! -f /tmp/stopfile ]; do
+              logs=$(ls /home/runner/_diag/Worker_*.log 2>/dev/null)
+              if [ -n "$logs" ]; then
+                tail -f $logs
+              else
+                sleep 2
+              fi
+            done
+        volumeMounts:
+          - name: runner-diag
+            mountPath: /home/runner/_diag
+          - name: stopfile-volume
+            mountPath: /tmp/stopfile
+        resources:
+          limits:
+            cpu: "100m"
+            memory: "128Mi"
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+
+      - name: hook
+        image: busybox
+        command:
+          - sh
+          - -c
+          - |
+            while [ ! -f /home/runner/_diag/hook.log ]; do sleep 1; done
+            while [ ! -f /tmp/stopfile ]; do
+              tail -f /home/runner/_diag/hook.log &
+              tail_pid=$!
+              while [ ! -f /tmp/stopfile ]; do sleep 1; done
+              kill $tail_pid
+            done
+        volumeMounts:
+          - name: runner-diag
+            mountPath: /home/runner/_diag
+          - name: stopfile-volume
+            mountPath: /tmp/stopfile
+        resources:
+          limits:
+            cpu: "100m"
+            memory: "128Mi"
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+
+    volumes:
+      - name: work
+        ephemeral:
+          volumeClaimTemplate:
+            spec:
+              accessModes: [ "ReadWriteOnce" ]
+              storageClassName: "gp2"
+              resources:
+                requests:
+                  storage: 10Gi
+      - name: dind-home
+        ephemeral:
+          volumeClaimTemplate:
+            spec:
+              accessModes: [ "ReadWriteOnce" ]
+              storageClassName: "gp2"
+              resources:
+                requests:
+                  storage: 10Gi
+      - name: stopfile-volume
+        emptyDir: {}
+      - name: runner-diag
+        emptyDir: {}
+      - name: dind-externals
+        emptyDir: {}
+      - name: dind-sock
+        emptyDir: {}
+      - name: docker-creds
+        emptyDir: {}
+      - name: dind-etc
+        emptyDir: {}
+      - name: pod-hooks
+        configMap:
+          name: hook-pre-post-job-${scale_set_name}
+
+controllerServiceAccount:
+  namespace: ${controller_namespace}
+  name: ${controller_service_account}

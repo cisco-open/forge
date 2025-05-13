@@ -1,0 +1,151 @@
+## githubConfigUrl is the GitHub url for where you want to configure runners
+## ex: https://github.com/myorg/myrepo or https://github.com/myorg
+githubConfigUrl: "${github_config_url}"
+
+## githubConfigSecret is the k8s secrets to use when auth with GitHub API.
+## You can choose to use GitHub App or a PAT token
+githubConfigSecret: ${config_secret}
+
+## maxRunners is the max number of runners the autoscaling runner set will scale up to.
+maxRunners: ${max_runners}
+
+## minRunners is the min number of idle runners. The target number of runners created will be
+## calculated as a sum of minRunners and the number of jobs assigned to the scale set.
+minRunners: ${min_runners}
+
+runnerGroup: "${runner_group_name}"
+
+## name of the runner scale set to create. Defaults to the helm release name
+runnerScaleSetName: "${scale_set_name}"
+
+containerMode:
+  type: "kubernetes"
+  ## the following is required when containerMode.type=kubernetes
+  kubernetesModeWorkVolumeClaim:
+    accessModes: ["ReadWriteOnce"]
+    storageClassName: "gp2"
+    resources:
+      requests:
+        storage: 10Gi
+  kubernetesModeServiceAccount:
+    annotations:
+      eks.amazonaws.com/role-arn: ${runner_role}
+
+# with containerMode.type=kubernetes, we will populate the template.spec with following pod spec
+template:
+  spec:
+    securityContext:
+      fsGroup: 123
+    serviceAccountName: ${service_account}
+    automountServiceAccountToken: true
+    containers:
+      - name: runner
+        image: ${container_actions_runner}
+        imagePullPolicy: Always
+        command: ["/home/runner/run.sh"]
+        env:
+          - name: ACTIONS_RUNNER_CONTAINER_HOOKS
+            value: /home/runner/k8s/index.js
+          - name: ACTIONS_RUNNER_POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: ACTIONS_RUNNER_REQUIRE_JOB_CONTAINER
+            value: "false"
+          - name: ACTIONS_RUNNER_CONTAINER_HOOK_TEMPLATE
+            value: /home/runner/pod-templates/container-podspec.yaml
+          - name: ACTIONS_RUNNER_HOOK_JOB_STARTED
+            value: /home/runner/hooks/job_started.sh
+          - name: ACTIONS_RUNNER_HOOK_JOB_COMPLETED
+            value: /home/runner/hooks/job_completed.sh
+        volumeMounts:
+          - name: runner-diag
+            mountPath: /home/runner/_diag
+          - name: stopfile-volume
+            mountPath: /tmp/stopfile
+          - name: pod-templates
+            mountPath: /home/runner/pod-templates
+            readOnly: true
+          - name: pod-hooks
+            mountPath: /home/runner/hooks
+            readOnly: true
+        lifecycle:
+          preStop:
+            exec:
+              command: ["sh", "-c", "echo 'Main container stopped' > /tmp/stopfile"]
+        resources:
+          limits:
+            cpu: ${container_limits_cpu}
+            memory: ${container_limits_memory}
+          requests:
+            cpu: ${container_requests_cpu}
+            memory: ${container_requests_memory}
+
+      - name: worker
+        image: busybox
+        command:
+          - sh
+          - -c
+          - |
+            while [ ! -f /tmp/stopfile ]; do
+              logs=$(ls /home/runner/_diag/Worker_*.log 2>/dev/null)
+              if [ -n "$logs" ]; then
+                tail -f $logs
+              else
+                sleep 2
+              fi
+            done
+        volumeMounts:
+          - name: runner-diag
+            mountPath: /home/runner/_diag
+          - name: stopfile-volume
+            mountPath: /tmp/stopfile
+        resources:
+          limits:
+            cpu: "100m"
+            memory: "128Mi"
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+
+      - name: hook
+        image: busybox
+        command:
+          - sh
+          - -c
+          - |
+            while [ ! -f /home/runner/_diag/hook.log ]; do sleep 1; done
+            while [ ! -f /tmp/stopfile ]; do
+              tail -f /home/runner/_diag/hook.log &
+              tail_pid=$!
+              while [ ! -f /tmp/stopfile ]; do sleep 1; done
+              kill $tail_pid
+            done
+        volumeMounts:
+          - name: runner-diag
+            mountPath: /home/runner/_diag
+          - name: stopfile-volume
+            mountPath: /tmp/stopfile
+        resources:
+          limits:
+            cpu: "100m"
+            memory: "128Mi"
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+
+    volumes:
+      - name: stopfile-volume
+        emptyDir: {}
+      - name: runner-diag
+        emptyDir: {}
+      - name: pod-templates
+        configMap:
+          name: hook-extension-${scale_set_name}
+      - name: pod-hooks
+        configMap:
+          name: hook-pre-post-job-${scale_set_name}
+
+controllerServiceAccount:
+  namespace: ${controller_namespace}
+  name: ${controller_service_account}

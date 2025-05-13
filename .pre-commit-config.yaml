@@ -1,0 +1,148 @@
+---
+repos:
+  # General Hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-yaml
+        always_run: true
+      - id: end-of-file-fixer
+        always_run: true
+      - id: trailing-whitespace
+        always_run: true
+        args: [--markdown-linebreak-ext=md]
+      - id: check-merge-conflict
+        always_run: true
+      - id: check-added-large-files
+        always_run: true
+        exclude: (images/*)
+      - id: check-ast
+        always_run: true
+      - id: check-builtin-literals
+        always_run: true
+      - id: check-json
+        always_run: true
+      - id: check-toml
+        always_run: true
+      - id: check-xml
+        always_run: true
+      - id: detect-private-key
+        always_run: true
+      - id: mixed-line-ending
+        always_run: true
+      - id: debug-statements
+        always_run: true
+      - id: fix-encoding-pragma
+        always_run: true
+      - id: name-tests-test
+        always_run: true
+      - id: destroyed-symlinks
+        always_run: true
+      - id: check-docstring-first
+        always_run: true
+      - id: check-case-conflict
+        always_run: true
+      - id: double-quote-string-fixer
+        always_run: true
+
+  - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
+    rev: 0.2.3
+    hooks:
+      - id: yamlfmt
+        always_run: true
+        args: [--mapping, '2', --sequence, '4', --offset, '2', --width, '180']
+        exclude: (ansible/)
+
+  - repo: http://github.com/jumanjihouse/pre-commit-hooks
+    rev: 3.0.0
+    hooks:
+      - id: shellcheck
+      - id: shfmt
+        args: [-i, '4', -w]
+      - id: script-must-have-extension
+
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.37.0
+    hooks:
+      - id: yamllint
+
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.13.1-beta
+    hooks:
+      - id: hadolint
+
+  # Python Hooks
+  - repo: https://github.com/hhatto/autopep8
+    rev: v2.3.2
+    hooks:
+      - id: autopep8
+
+  - repo: https://github.com/PyCQA/isort
+    rev: 6.0.1
+    hooks:
+      - id: isort
+
+  - repo: https://github.com/PyCQA/autoflake
+    rev: v2.3.1
+    hooks:
+      - id: autoflake
+
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.2.0
+    hooks:
+      - id: flake8
+        args:
+          - --ignore=E501
+
+  # JSON Schema Hooks
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.33.0
+    hooks:
+      - id: check-github-workflows
+      - id: check-github-actions
+        args: [--verbose]
+      - id: check-renovate
+
+  # Terraform Hooks
+  - repo: https://github.com/gruntwork-io/pre-commit
+    rev: v0.1.29
+    hooks:
+      - id: terragrunt-hclfmt
+
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.99.0
+    hooks:
+      - id: terraform_fmt
+        args:
+          - --hook-config=--tf-path=tofu
+        always_run: true
+      - id: terraform_tflint
+        args:
+          - --hook-config=--tf-path=tofu
+        exclude: (modules/infra-modules/splunk_cloud_data_manager)
+        always_run: true
+      - id: terraform_validate
+        args:
+          - --hook-config=--retry-once-with-cleanup=true
+          - --tf-init-args=-backend=false
+          - --hook-config=--tf-path=tofu
+        exclude: (modules/infra-modules/splunk_cloud_data_manager)
+        always_run: true
+      - id: terraform_docs
+        always_run: true
+        args:
+          - --hook-config=--tf-path=tofu
+          - --args=--config=.terraform-docs.yml
+        exclude: (modules/infra-modules/splunk_cloud_data_manager)
+
+  # Security Hooks
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.25.1
+    hooks:
+      - id: gitleaks
+        always_run: true
+
+  - repo: https://github.com/python-poetry/poetry
+    rev: 2.1.2
+    hooks:
+      - id: poetry-check

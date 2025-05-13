@@ -1,0 +1,42 @@
+---
+
+# Specify the files to lint
+yaml-files:
+  - '*.yaml'
+  - '*.yml'
+  - .yamllint
+
+# Define the linting rules
+rules:
+  braces: enable
+  brackets: enable
+  colons: enable
+  commas: enable
+  comments:
+    level: error
+  comments-indentation:
+    level: error
+  document-end: disable
+  document-start:
+    present: true  # Ensure that documents start with '---'
+    level: error  # Set the level to error
+  empty-lines: enable
+  empty-values: disable
+  hyphens: enable
+  indentation:
+    spaces: 2  # Use 2 spaces for indentation
+    level: error  # Set the level to error
+    indent-sequences: true
+    check-multi-line-strings: false
+  key-duplicates: enable
+  key-ordering: disable
+  # Unavoidable due to long queries.
+  line-length: disable
+  new-line-at-end-of-file: enable
+  new-lines: enable
+  octal-values: disable
+  quoted-strings: disable
+  trailing-spaces:
+    level: error  # Warn about trailing spaces
+  truthy:
+    level: error

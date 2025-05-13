@@ -1,0 +1,32 @@
+.DS_Store
+.bash_history
+
+# Ignore Terraform state files
+*.tfstate
+*.tfstate.backup
+*.tfstate.backup.*
+
+# Ignore override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ignore Terraform plan files
+*.tfplan
+
+# Ignore .terraform directory
+.terraform/
+
+# Ignore Terraform state and lock files
+*.tflock
+.terraform.lock.hcl
+.terragrunt-cache
+providers
+
+# Auth files. Sensitive.
+.auth/
+
+artifacts
+
+package
