@@ -1,0 +1,90 @@
+#!/bin/bash
+
+# Note: based off the default userdata script provided by Philips Labs:
+# <https://github.com/github-aws-runners/terraform-aws-github-runner/blob/main/examples/multi-runner/templates/user-data.sh>
+
+exec > >(tee /var/log/user-data.log | logger -t user-data -s 2>/dev/console) 2>&1
+
+# AWS suggest to create a log for debug purpose based on https://aws.amazon.com/premiumsupport/knowledge-center/ec2-linux-log-user-data/
+# As side effect all command, set +x disable debugging explicitly.
+#
+# An alternative for masking tokens could be: exec > >(sed 's/--token\ [^ ]* /--token\ *** /g' > /var/log/user-data.log) 2>&1
+exec > >(sed 's/--token\ [^ ]* /--token\ *** /g' > /var/log/user-data.log) 2>&1
+
+set +x
+%{ if enable_debug_logging }
+set -x
+%{ endif }
+
+# Just a dummy value (user-supplied string; does nothing).
+${pre_install}
+
+# Set defaults.
+user_name=ubuntu
+user_id=$(id -ru $user_name)
+
+# Configure cloudwatch logging agent.
+amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c ssm:${ssm_key_cloudwatch_agent_config}
+
+# Configure systemd for running service in users accounts.
+cat >/etc/systemd/user@UID.service <<-EOF
+
+	[Unit]
+	Description=User Manager for UID %i
+	After=user-runtime-dir@%i.service
+	Wants=user-runtime-dir@%i.service
+
+	[Service]
+	LimitNOFILE=infinity
+	LimitNPROC=infinity
+	User=%i
+	PAMName=systemd-user
+	Type=notify
+
+	[Install]
+	WantedBy=default.target
+
+EOF
+
+# Set important paths.
+echo export XDG_RUNTIME_DIR=/run/user/$user_id >>/home/$user_name/.bashrc
+
+# Load our user manager service.
+systemctl daemon-reload
+systemctl enable user@UID.service
+systemctl start user@UID.service
+
+# Setup "ubuntu" user's environment so future sessions can connect to docker.
+echo "export DOCKER_HOST=unix:///run/user/$user_id/docker.sock" >>/home/$user_name/.bashrc
+echo "export PATH=/home/$user_name/bin:\$PATH" >>/home/$user_name/.bashrc
+loginctl enable-linger $user_name
+
+# Install rootless docker (this doesn't download anything; all artifacts are already baked-in to the VM image).
+su -l $user_name -c "/usr/bin/dockerd-rootless-setuptool.sh install"
+
+# Config Actions to use rootless Docker.
+cd /opt/actions-runner/ || exit
+echo "DOCKER_HOST=unix:///run/user/$user_id/docker.sock" >>.env
+echo "PATH=/home/$user_name/bin:$PATH" >>.env
+
+# Install our dynamically-generated SSH public keys (i.e. team members,
+# so they can debug the runners via SSH + the AWS management console).
+${post_install}
+
+# Register runner job hooks
+# Ref: https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/running-scripts-before-or-after-a-job
+%{ if hook_job_started != "" }
+cat > /opt/actions-runner/hook_job_started.sh <<'EOF'
+${hook_job_started}
+EOF
+echo ACTIONS_RUNNER_HOOK_JOB_STARTED=/opt/actions-runner/hook_job_started.sh | tee -a /opt/actions-runner/.env
+%{ endif }
+
+%{ if hook_job_completed != "" }
+cat > /opt/actions-runner/hook_job_completed.sh <<'EOF'
+${hook_job_completed}
+EOF
+echo ACTIONS_RUNNER_HOOK_JOB_COMPLETED=/opt/actions-runner/hook_job_completed.sh | tee -a /opt/actions-runner/.env
+%{ endif }
+
+${start_runner}
