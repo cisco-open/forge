@@ -45,14 +45,6 @@ repos:
       - id: double-quote-string-fixer
         always_run: true
 
-  - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
-    rev: 0.2.3
-    hooks:
-      - id: yamlfmt
-        always_run: true
-        args: [--mapping, '2', --sequence, '4', --offset, '2', --width, '180']
-        exclude: (ansible/)
-
   - repo: http://github.com/jumanjihouse/pre-commit-hooks
     rev: 3.0.0
     hooks:
@@ -119,21 +111,21 @@ repos:
       - id: terraform_tflint
         args:
           - --hook-config=--tf-path=tofu
-        exclude: (modules/infra-modules/splunk_cloud_data_manager)
+        exclude: (modules/integrations/splunk_cloud_data_manager)
         always_run: true
       - id: terraform_validate
         args:
           - --hook-config=--retry-once-with-cleanup=true
           - --tf-init-args=-backend=false
           - --hook-config=--tf-path=tofu
-        exclude: (modules/infra-modules/splunk_cloud_data_manager)
+        exclude: (modules/integrations/splunk_cloud_data_manager)
         always_run: true
       - id: terraform_docs
         always_run: true
         args:
           - --hook-config=--tf-path=tofu
           - --args=--config=.terraform-docs.yml
-        exclude: (modules/infra-modules/splunk_cloud_data_manager)
+        exclude: (modules/integrations/splunk_cloud_data_manager)
 
   # Security Hooks
   - repo: https://github.com/gitleaks/gitleaks
@@ -141,8 +133,3 @@ repos:
     hooks:
       - id: gitleaks
         always_run: true
-
-  - repo: https://github.com/python-poetry/poetry
-    rev: 2.1.2
-    hooks:
-      - id: poetry-check
