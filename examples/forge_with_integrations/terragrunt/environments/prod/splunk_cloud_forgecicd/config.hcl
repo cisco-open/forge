@@ -3,5 +3,5 @@ locals {
     "eu-west-1",
   ]
 
-  env = "dev"
+  env = "prod"
 }

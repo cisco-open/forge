@@ -52,19 +52,19 @@ locals {
     region_alias = local.region_alias
     vpc_alias    = local.vpc_alias
     iam_roles_to_assume = [
-      "arn:aws:iam::123456789012:role/role_for_forge_runners", # Replace with tenant IAM role
+      "<ADD YOUR VALUE>" # e.g., "arn:aws:iam::123456789012:role/role_for_forge_runners"
     ]
     ecr_registries = [
-      "123456789012.dkr.ecr.eu-west-1.amazonaws.com" # Replace with tenant ECR registry
+      "<ADD YOUR VALUE>" # e.g., "123456789012.dkr.ecr.eu-west-1.amazonaws.com"
     ]
   }
 
   # AMI settings for GitHub runners
   ami_filter = {
-    name  = ["forge-gh-runner-v*"], # Replace with the AMI name pattern
-    state = ["available"],
+    name  = ["<ADD YOUR VALUE>"] # e.g., "forge-gh-runner-v*"
+    state = ["available"]
   }
-  ami_owner = "123456789012" # Replace with AMI owner ID
+  ami_owner = "<ADD YOUR VALUE>" # e.g., "123456789012"
 
   # Runner specifications
   ec2_runner_specs = {
@@ -193,7 +193,7 @@ locals {
     },
   }
 
-  arc_cluster_name = "forge-euw1-dev" # Replace with your ARC cluster name
+  arc_cluster_name = "forge-euw1-prod"
 
   arc_runner_specs = {
     "dependabot" = {
@@ -203,7 +203,20 @@ locals {
       }
       scale_set_name            = "dependabot"
       scale_set_type            = "dind"
-      container_actions_runner  = "123456789012.dkr.ecr.eu-west-1.amazonaws.com/actions-runner:v0.0.55" # Replace with the container image
+      container_actions_runner  = "ghcr.io/actions/actions-runner:sha256-e03b4550955d539604233352ba27cd095a880b906400bb9283f1ee4b061e21bb"
+      container_requests_cpu    = "500m"
+      container_requests_memory = "1Gi"
+      container_limits_cpu      = "1"
+      container_limits_memory   = "2Gi"
+    }
+    "dind" = {
+      runner_size = {
+        max_runners = 100
+        min_runners = 1
+      }
+      scale_set_name            = "dind"
+      scale_set_type            = "dind"
+      container_actions_runner  = "ghcr.io/actions/actions-runner:sha256-e03b4550955d539604233352ba27cd095a880b906400bb9283f1ee4b061e21bb"
       container_requests_cpu    = "500m"
       container_requests_memory = "1Gi"
       container_limits_cpu      = "1"
@@ -216,7 +229,7 @@ locals {
       }
       scale_set_name            = "k8s"
       scale_set_type            = "k8s"
-      container_actions_runner  = "123456789012.dkr.ecr.eu-west-1.amazonaws.com/actions-runner:v0.0.55" # Replace with the container image
+      container_actions_runner  = "ghcr.io/actions/actions-runner:sha256-e03b4550955d539604233352ba27cd095a880b906400bb9283f1ee4b061e21bb"
       container_requests_cpu    = "500m"
       container_requests_memory = "1Gi"
       container_limits_cpu      = "1"

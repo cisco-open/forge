@@ -1,0 +1,30 @@
+---
+api_version: v1
+product: Forge
+version: v1.0.0
+revision:
+  use_local_repos: false
+spec:
+  # Versions of our IaC/Terraform modules.
+  iac:
+    modules:
+      forge_runners:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/platform/forge_runners
+        ref: v1.0.0
+      teleport:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/integrations/teleport
+        ref: v1.0.0
+      splunk_cloud_forgecicd:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/integrations/splunk_cloud_data_manager
+        ref: v1.0.0
+      splunk_cloud_conf:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/integrations/splunk_cloud_conf_shared
+        ref: v1.0.0

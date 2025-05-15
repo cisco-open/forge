@@ -3,27 +3,27 @@ locals {
   global_settings = read_terragrunt_config(find_in_parent_folders("_global_settings/_global.hcl"))
 
   # Environment name.
-  env = "dev"
+  env = "prod"
 
   # Prefix used throughout various bits of code involving auth. Must only
   # contain letters, numbers, and hyphens (valid hostname characters).
-  prefix = "dev"
+  prefix = "prod"
 
   # Default region in which we store critical infra such as secrets, DynamoDB
   # tables, etc.
   default_aws_region = "eu-west-1"
 
-  runner_group_name_suffix = "cicd-forge-dev"
+  runner_group_name_suffix = "cicd-forge"
 
   # Variant of environment name. Used for company-specific tagging (for
   # security and team-billing purposes). Can be "Prod" or "NonProd".
-  env_for_tags = "NonProd"
+  env_for_tags = "Prod"
 
   # AWS account associated with this environment.
-  aws_account_id                          = "123456789012" # Replace with your AWS account ID
-  sl_aws_account_name                     = "${local.global_settings.locals.sl_aws_account_prefix}-${local.env}"
-  default_aws_profile                     = "${local.sl_aws_account_name}"
-  default_aws_profile_with_default_region = "${local.sl_aws_account_name}-${local.default_aws_region}"
+  aws_account_id                          = "<ADD YOUR VALUE>" # e.g., "123456789012"
+  aws_account_name                        = "${local.global_settings.locals.aws_account_prefix}-${local.env}"
+  default_aws_profile                     = "${local.aws_account_name}"
+  default_aws_profile_with_default_region = "${local.aws_account_name}-${local.default_aws_region}"
 
   # Sanitized values
   sanitized_project_name = replace(local.global_settings.locals.project_name, "_", "-")

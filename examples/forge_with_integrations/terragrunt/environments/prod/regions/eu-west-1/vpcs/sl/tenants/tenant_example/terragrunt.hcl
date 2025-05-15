@@ -15,16 +15,27 @@ include "env" {
   expose = true
 }
 
-# Splunk Cloud settings.
-include "splunk_cloud" {
-  path   = find_in_parent_folders("_global_settings/splunk_cloud.hcl")
+# Region-wide settings.
+include "region" {
+  path   = find_in_parent_folders("_region_wide_settings/_region.hcl")
   expose = true
 }
 
+# Tenant-wide settings.
+include "tenant" {
+  path   = find_in_parent_folders("_tenant_wide_settings/_tenant.hcl")
+  expose = true
+}
+
+# Module-global settings (i.e. module inputs).
+include "tenant_global" {
+  path   = find_in_parent_folders("_global_settings/tenants/tenant_example.hcl")
+  expose = true
+}
 
 # Version of module to use.
 locals {
-  module_name     = "splunk_cloud_data_manager"
+  module_name     = "forge_runners"
   project         = include.global.locals.project_name
   env             = include.env.locals.env
   release_version = yamldecode(file("${get_repo_root()}/release_versions.yaml"))
@@ -33,7 +44,7 @@ locals {
   git_prefix      = "git::file://"
   module_base     = local.use_local_repos ? "${local.git_prefix}${get_repo_root()}/${local.module_root["local_path"]}" : local.module_root["repo"]
   module_version  = local.module_root["ref"]
-  module_ref      = "${local.module_base}//modules/${local.module_name}?ref=${local.module_version}"
+  module_ref      = "${local.module_base}//${local.module_root["module_path"]}?ref=${local.module_version}"
 }
 
 # Construct the terraform.source attribute using the source_base.

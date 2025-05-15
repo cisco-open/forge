@@ -4,35 +4,29 @@ locals {
   global_data  = read_terragrunt_config(find_in_parent_folders("_global_settings/_global.hcl"))
   group_email  = local.global_data.locals.group_email
   team_name    = local.global_data.locals.team_name
-  project_name = local.global_data.locals.project_name
   product_name = local.global_data.locals.product_name
 
   # Environment-wide settings.
-  env_data     = read_terragrunt_config(find_in_parent_folders("_environment_wide_settings/_environment.hcl"))
-  env_name     = local.env_data.locals.env
-  env_for_tags = local.env_data.locals.env_for_tags
-  # Default AWS profile and region. Typically used when deciding on
-  # master/replica setups, such as auto-replication of secrets, databases, etc.
+  env_data            = read_terragrunt_config(find_in_parent_folders("_environment_wide_settings/_environment.hcl"))
+  env_for_tags        = local.env_data.locals.env_for_tags
   default_aws_region  = local.env_data.locals.default_aws_region
   default_aws_profile = local.env_data.locals.default_aws_profile
   aws_account_id      = local.env_data.locals.aws_account_id
-  # DRY re-use of back-end configuration across modules.
-  remote_state_config = local.env_data.locals.remote_state_config
 
-  splunk_cloud_data = read_terragrunt_config(find_in_parent_folders("splunk_cloud/config.hcl"))
+  splunk_cloud_data = read_terragrunt_config(find_in_parent_folders("splunk_cloud_forgecicd/config.hcl"))
 
   log_group_name_prefixes = [
     "/github-self-hosted-runners/"
   ]
 
   splunk_cloud_data_manager = {
-    splunk_cloud = "<your instance>.splunkcloud.com"
+    splunk_cloud = "<ADD YOUR VALUE>" # e.g., example-org.splunkcloud.com
     cloudformation_s3_config = {
       bucket = "${local.aws_account_id}-short-term-storage"
       key    = "cicd_artifacts/cf-templates/"
       region = local.default_aws_region
     }
-    index_name  = "forge-prod-index"
+    index_name  = "forge-index"
     input_name  = "forge-ccwl-forgecicd-${local.splunk_cloud_data.locals.env}"
     source_type = "forgecicd"
 
@@ -46,14 +40,24 @@ locals {
     ])
   }
 
-  extra_tags = {
-    TeamName = local.team_name
+  tags = {
+    TeamName         = local.team_name
+    TechnicalContact = local.group_email
+    SecurityContact  = local.group_email
   }
 
   default_tags = {
-    ApplicationName = local.product_name
-    Environment     = local.env_for_tags
-    ResourceOwner   = local.team_name
+    # Common tags we propagate project-wide.
+    ApplicationName   = local.product_name
+    Environment       = local.env_for_tags
+    ResourceOwner     = local.team_name
+    ProductFamilyName = local.product_name
+    IntendedPublic    = "No"
+    LastRevalidatedBy = "Terraform"
+    # Don't make this dynamic or it changes every apply.
+    LastRevalidatedAt = "2025-05-15"
+    # Additional security tags added at a later date by security/asset-tagging
+    # team.
   }
 
   tenant_paths = split("\n", trimspace(run_cmd(
@@ -82,6 +86,6 @@ inputs = {
     log_group_name_prefixes = local.splunk_cloud_data_manager.log_group_name_prefixes
   }
 
-  tags     = local.default_tags
-  all_tags = merge(local.extra_tags, local.default_tags)
+  tags         = local.tags
+  default_tags = local.default_tags
 }

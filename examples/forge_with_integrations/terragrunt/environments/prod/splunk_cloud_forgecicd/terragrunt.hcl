@@ -15,16 +15,15 @@ include "env" {
   expose = true
 }
 
-# Splunk Conf settings.
-include "splunk_conf" {
-  path   = find_in_parent_folders("_global_settings/splunk_conf.hcl")
+# Splunk Cloud settings.
+include "splunk_cloud_forgecicd" {
+  path   = find_in_parent_folders("_global_settings/splunk_cloud_forgecicd.hcl")
   expose = true
 }
 
-
 # Version of module to use.
 locals {
-  module_name     = "splunk_conf"
+  module_name     = "splunk_cloud_forgecicd"
   project         = include.global.locals.project_name
   env             = include.env.locals.env
   release_version = yamldecode(file("${get_repo_root()}/release_versions.yaml"))
@@ -33,7 +32,7 @@ locals {
   git_prefix      = "git::file://"
   module_base     = local.use_local_repos ? "${local.git_prefix}${get_repo_root()}/${local.module_root["local_path"]}" : local.module_root["repo"]
   module_version  = local.module_root["ref"]
-  module_ref      = "${local.module_base}//modules/${local.module_name}?ref=${local.module_version}"
+  module_ref      = "${local.module_base}//${local.module_root["module_path"]}?ref=${local.module_version}"
 }
 
 # Construct the terraform.source attribute using the source_base.
