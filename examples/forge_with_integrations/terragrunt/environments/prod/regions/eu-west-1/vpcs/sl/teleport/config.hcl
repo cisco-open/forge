@@ -21,7 +21,7 @@ locals {
   ]
 
   teleport_config = {
-    cluster_name                = "forge-euw1-dev"                 # Replace with the eks cluster name
-    teleport_iam_role_to_assume = "arn:aws:iam::123456789012:root" # Replace with the IAM role to assume for Teleport
+    cluster_name                = "forge-euw1-prod"
+    teleport_iam_role_to_assume = "<ADD YOUR VALUE>" # e.g., "arn:aws:iam::123456789012:role/teleport-access"
   }
 }
