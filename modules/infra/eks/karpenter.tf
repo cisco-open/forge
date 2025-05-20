@@ -75,6 +75,7 @@ locals {
   ec2_node_class_manifest = templatefile("${path.module}/templates/ec2_node_class.yaml.tpl", {
     ami_id                    = data.aws_ami.eks_default.image_id
     role_arn                  = module.karpenter.node_iam_role_arn
+    subnet_ids                = var.subnet_ids
     primary_security_group_id = module.eks.cluster_primary_security_group_id
     security_group_id         = module.eks.cluster_security_group_id
   })

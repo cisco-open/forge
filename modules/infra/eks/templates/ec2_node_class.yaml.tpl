@@ -8,12 +8,20 @@ spec:
     - id: ${ami_id}
   role: ${role_arn}
   subnetSelectorTerms:
-    - tags:
-        Name: ops_a
-    - tags:
-        Name: ops_b
+%{ for id in subnet_ids }
+    - id: ${id}
+%{ endfor }
   securityGroupSelectorTerms:
     - id: ${primary_security_group_id}
     - id: ${security_group_id}
+  blockDeviceMappings:
+    - deviceName: /dev/sda1
+      ebs:
+        volumeSize: 200Gi
+        volumeType: gp3
+        encrypted: true
+        iops: 10000
+        throughput: 500
+        deleteOnTermination: true
   kubelet:
     maxPods: 100
