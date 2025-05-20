@@ -45,7 +45,7 @@ Forge also supports **secure SSH access via Teleport** for remote debugging and 
 
 ## 🚀 Features & Architecture
 
-![Forge Architecture](./images/forge_architecture.jpg)
+![Forge Architecture](./img/forge_architecture.jpg)
 
 Forge is designed for flexible, secure, and scalable CI/CD operations, integrating seamlessly with GitHub Actions. Key features include:
 

@@ -11,8 +11,8 @@
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.90 |
-| <a name="provider_external"></a> [external](#provider\_external) | >= 2.3 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.98.0 |
+| <a name="provider_external"></a> [external](#provider\_external) | 2.3.5 |
 
 ## Modules
 
