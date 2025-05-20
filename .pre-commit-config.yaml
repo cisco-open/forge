@@ -15,7 +15,7 @@ repos:
         always_run: true
       - id: check-added-large-files
         always_run: true
-        exclude: (images/*)
+        exclude: (images)
       - id: check-ast
         always_run: true
       - id: check-builtin-literals
