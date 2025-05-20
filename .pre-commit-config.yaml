@@ -117,6 +117,7 @@ repos:
         args:
           - --hook-config=--retry-once-with-cleanup=true
           - --tf-init-args=-backend=false
+          - --tf-init-args=--upgrade=true
           - --hook-config=--tf-path=tofu
         exclude: (modules/integrations/splunk_cloud_data_manager)
         always_run: true

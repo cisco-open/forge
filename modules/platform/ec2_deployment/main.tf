@@ -6,14 +6,8 @@ locals {
   runner_template_hook_job_started   = "${local.user_data_prefix}/hook_job_started.tftpl"
   runner_template_hook_job_completed = "${local.user_data_prefix}/hook_job_completed.tftpl"
 
-  runner_hook_job_started = templatefile(
-    local.runner_template_hook_job_started,
-    {}
-  )
-  runner_hook_job_completed = templatefile(
-    local.runner_template_hook_job_completed,
-    {}
-  )
+  runner_hook_job_started   = file(local.runner_template_hook_job_started)
+  runner_hook_job_completed = file(local.runner_template_hook_job_completed)
 
   userdata_post_install = templatefile(
     local.userdata_template_post_install,
