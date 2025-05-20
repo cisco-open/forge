@@ -1,0 +1,19 @@
+---
+- name: Build GH Runner
+  hosts: all
+  gather_facts: true
+  become: true
+  pre_tasks:
+
+    - name: Wait for cloud-init to complete.
+      ansible.builtin.command: /usr/bin/cloud-init status --wait
+      changed_when: false
+
+    - name: Wait for any ongoing apt installations to conclude.
+      ansible.builtin.command: systemd-run --property="After=apt-daily.service apt-daily-upgrade.service" --wait /bin/true
+      changed_when: false
+
+  roles:
+    - role: deps
+    - role: teleport
+    - role: splunk_otel_collector

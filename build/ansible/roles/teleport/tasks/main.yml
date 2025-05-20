@@ -1,0 +1,87 @@
+---
+- name: Grab Teleport cluster version
+  ansible.builtin.shell:
+    cmd: curl --silent {{ teleport_comm_ping }} | jq -r '.server_version'
+    executable: /bin/bash
+  register: tp_version
+
+- name: Download binary
+  ansible.builtin.get_url:
+    url: "https://get.gravitational.com/teleport-ent-v{{ tp_version.stdout }}-linux-amd64-fips-bin.tar.gz"
+    dest: /tmp/teleport-ent-fips-bin.tar.gz
+
+- name: Extract Teleport binary
+  ansible.builtin.unarchive:
+    src: /tmp/teleport-ent-fips-bin.tar.gz
+    dest: /tmp
+    remote_src: true
+
+- name: Delete Teleport archives
+  ansible.builtin.file:
+    path: /tmp/teleport-ent-fips-bin.tar.gz
+    state: absent
+
+- name: Add /usr/local/bin to default sudo path
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers.d/secure_path
+    line: 'Defaults secure_path = /sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin'
+    create: true
+    insertafter: EOF
+    state: present
+  become: true
+
+- name: Copy Teleport binaries to /usr/local/bin/
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: /usr/local/bin/
+    mode: '0755'
+    remote_src: true
+  with_items:
+    - /tmp/teleport-ent/teleport
+    - /tmp/teleport-ent/tctl
+    - /tmp/teleport-ent/tsh
+
+- name: Set correct permissions for Teleport binary
+  ansible.builtin.file:
+    path: /usr/local/bin/teleport
+    mode: '0755'
+
+- name: Set creds
+  ansible.builtin.set_fact:
+    teleport_ca_pin: "{{ teleport_comm_ca_pin }}"
+    teleport_auth_server: "{{ teleport_comm_auth_server }}"
+
+- name: Create Teleport configuration file
+  ansible.builtin.template:
+    src: teleport.yaml.j2
+    dest: /etc/teleport.yaml.tpl
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Copy Teleport service file
+  ansible.builtin.copy:
+    src: teleport.service
+    dest: /etc/systemd/system/teleport.service
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Copy pre-start scripts
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/etc/{{ item }}"
+    owner: root
+    group: root
+    mode: '0755'
+  with_items:
+    - start-teleport.sh
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Enable and start Teleport service
+  ansible.builtin.systemd:
+    name: teleport
+    enabled: true

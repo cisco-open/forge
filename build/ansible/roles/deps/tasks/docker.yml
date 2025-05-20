@@ -1,0 +1,30 @@
+---
+- name: Install key and repo support for Docker CE and Build-X plugin.
+  args:
+    executable: /bin/bash
+  ansible.builtin.shell: |
+    sudo install -m 0755 -d /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    sudo chmod a+r /etc/apt/keyrings/docker.gpg
+    echo \
+        "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+        "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+    sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+- name: Install Docker Build-X, CE, and other components.
+  ansible.builtin.apt:
+    update_cache: true
+    pkg:
+      - containerd.io
+      - docker-ce
+      - docker-ce-cli
+      - docker-buildx-plugin
+      - docker-compose-plugin
+
+- name: Disable global Docker services. We'll create a non-root equivalent in userdata.
+  args:
+    executable: /bin/bash
+  ansible.builtin.shell: |
+    systemctl is-enabled docker.service && systemctl disable --now docker.service docker.socket || echo "already disabled"
+  register: docker_disable
+  changed_when: "'disabled' in docker_disable.stdout or docker_disable.rc == 0"

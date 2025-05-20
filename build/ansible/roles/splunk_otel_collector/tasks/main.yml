@@ -1,0 +1,27 @@
+---
+
+- name: Set splunk_skip_repo
+  ansible.builtin.set_fact:
+    splunk_skip_repo: true
+
+- name: Download Splunk GPG key
+  ansible.builtin.get_url:
+    url: https://splunk.jfrog.io/splunk/otel-collector-deb/splunk-B3CD4420.gpg
+    dest: /etc/apt/keyrings/splunk.gpg
+    mode: '0644'
+
+- name: Add Splunk OpenTelemetry Collector repo to apt source list
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/splunk.gpg] https://splunk.jfrog.io/splunk/otel-collector-deb release main"
+    filename: splunk-otel-collector.list
+    state: present
+    validate_certs: false
+
+- name: "Include splunk_otel_collector"
+  ansible.builtin.include_role:
+    name: "signalfx.splunk_otel_collector.collector"
+  vars:
+    splunk_access_token: "{{ lookup('env', 'SPLUNK_ACCESS_TOKEN') }}"
+    splunk_realm: "{{ lookup('env', 'SPLUNK_REALM') }}"
+    splunk_otel_collector_config: /etc/otel/collector/agent_config.yaml
+    install_splunk_otel_auto_instrumentation: true
