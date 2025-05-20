@@ -32,15 +32,6 @@ spec:
         group: karpenter.k8s.aws
         kind: EC2NodeClass
         name: karpenter
-  blockDeviceMappings:
-    - deviceName: /dev/sda1
-      ebs:
-        volumeSize: 200Gi
-        volumeType: gp3
-        encrypted: true
-        iops: 10000
-        throughput: 500
-        deleteOnTermination: true
   limits:
     cpu: 1000
   disruption:
