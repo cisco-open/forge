@@ -12,19 +12,19 @@ spec:
         local_path: ../forge
         repo: git@github.com:cisco-open/forge.git
         module_path: modules/platform/forge_runners
-        ref: v1.0.0
+        ref: v1.0.1
       teleport:
         local_path: ../forge
         repo: git@github.com:cisco-open/forge.git
         module_path: modules/integrations/teleport
-        ref: v1.0.0
+        ref: v1.0.1
       splunk_cloud_forgecicd:
         local_path: ../forge
         repo: git@github.com:cisco-open/forge.git
         module_path: modules/integrations/splunk_cloud_data_manager
-        ref: v1.0.0
+        ref: v1.0.1
       splunk_cloud_conf:
         local_path: ../forge
         repo: git@github.com:cisco-open/forge.git
         module_path: modules/integrations/splunk_cloud_conf_shared
-        ref: v1.0.0
+        ref: v1.0.1

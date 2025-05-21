@@ -6,9 +6,14 @@
     * [RenovateBot](#renovatebot)
     * [Comparison*](#comparison)
     * [Conclusion](#conclusion)
-- [Setting Up Dependabot or RenovateBot](#setting-up-dependabot-or-renovatebot)
-    * [Dependabot Configuration Example](#dependabot-configuration-example)
-    * [Setting Up RenovateBot](#setting-up-renovatebot)
+- [What is Dependabot and RenovateBot?](#what-is-dependabot-and-renovatebot)
+    - [Dependabot](#dependabot)
+    - [RenovateBot](#renovatebot)
+    - [Comparison\*](#comparison)
+    - [Conclusion](#conclusion)
+  - [Setting Up Dependabot or RenovateBot](#setting-up-dependabot-or-renovatebot)
+    - [Dependabot Configuration Example](#dependabot-configuration-example)
+    - [Setting Up RenovateBot](#setting-up-renovatebot)
 
 <!-- tocstop -->
 
@@ -98,4 +103,4 @@ For further details, refer to the [official Dependabot docs](https://docs.github
 
 ### Setting Up RenovateBot
 
-If you require more customization and flexibility in managing your dependencies, **RenovateBot** is a powerful tool that offers a broader range of options. Below is a basic setup guide to get you started with **RenovateBot** in your repository. For more in-depth configuration examples, refer to the [RenovateBot Configuration Guide](./docs/renovatebot/config.md), and for a detailed explanation of the available update strategies, check the [RenovateBot Strategy Guide](./docs/renovatebot/strategy.md).
+If you require more customization and flexibility in managing your dependencies, **RenovateBot** is a powerful tool that offers a broader range of options. Below is a basic setup guide to get you started with **RenovateBot** in your repository. For more in-depth configuration examples, refer to the [RenovateBot Configuration Guide](./renovatebot/config.md), and for a detailed explanation of the available update strategies, check the [RenovateBot Strategy Guide](./renovatebot/strategy.md).

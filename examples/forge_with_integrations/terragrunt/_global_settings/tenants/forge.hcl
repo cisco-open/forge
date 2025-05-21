@@ -19,7 +19,7 @@ locals {
   region_data = read_terragrunt_config(find_in_parent_folders("_region_wide_settings/_region.hcl"))
   region      = local.region_data.locals.region_aws
 
-  runner_settings_data = read_terragrunt_config(find_in_parent_folders("tenant_example/runner_settings.hcl"))
+  runner_settings_data = read_terragrunt_config(find_in_parent_folders("forge/runner_settings.hcl"))
   tenant               = local.runner_settings_data.locals.tenant
 
   tags = {
