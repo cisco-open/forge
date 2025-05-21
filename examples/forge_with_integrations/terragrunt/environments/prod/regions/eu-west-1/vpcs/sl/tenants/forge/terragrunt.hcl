@@ -29,7 +29,7 @@ include "tenant" {
 
 # Module-global settings (i.e. module inputs).
 include "tenant_global" {
-  path   = find_in_parent_folders("_global_settings/tenants/tenant_example.hcl")
+  path   = find_in_parent_folders("_global_settings/tenants/forge.hcl")
   expose = true
 }
 

@@ -17,7 +17,7 @@ locals {
   tenant_prefix = "${local.region_alias}-${local.vpc_alias}"
 
   tenants = [
-    "tenant_example"
+    "forge"
   ]
 
   teleport_config = {

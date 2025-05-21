@@ -42,6 +42,14 @@ Start fast with our [Getting Started guide](./docs/configurations/).
 
 💡 Need deployment examples? Check the [examples directory](./examples).
 
+
+## 🔑 Tenant Usage & Onboarding
+
+Ready to start running workflows with Forge? Check out the **Forge Tenant Usage Guide** — a practical, step-by-step resource to get your team’s GitHub repositories connected to Forge runners, configure runner types, and manage advanced options like AWS access and containerized jobs.
+
+[Go to Forge Tenant Usage Guide →](./docs/tenant-usage/)
+
+
 ## ⚙️ Configuration
 
 Tweak every part of Forge to your needs — from AMIs and subnet choices to concurrency settings.

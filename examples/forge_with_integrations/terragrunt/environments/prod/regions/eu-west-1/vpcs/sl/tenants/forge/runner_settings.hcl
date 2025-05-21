@@ -26,7 +26,7 @@ locals {
   vpc_alias    = include.vpc.locals.vpc_alias
 
   # Tenant settings
-  tenant_name       = "tenant_example"
+  tenant_name       = "forge"
   runner_group_name = "${local.tenant_name}-${local.region_alias}-${local.vpc_alias}-${include.env.locals.runner_group_name_suffix}"
   log_level         = "info"
 
@@ -47,7 +47,7 @@ locals {
   tenant = {
     name = local.tenant_name
     teleport = {
-      tenant_name = "tenant_example"
+      tenant_name = "forge"
     }
     region_alias = local.region_alias
     vpc_alias    = local.vpc_alias
