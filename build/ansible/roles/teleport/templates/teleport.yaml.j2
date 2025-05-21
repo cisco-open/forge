@@ -1,0 +1,30 @@
+teleport:
+  data_dir: /var/lib/teleport-app
+  nodename: forge-cicd-$INSTANCE_ID
+  ca_pin: {{ teleport_ca_pin }}
+  join_params:
+    method: token
+    token_name: headless-token
+  auth_servers: [{{ teleport_auth_server }}]
+  log:
+    output: stderr
+    severity: INFO
+auth_service:
+  enabled: no
+ssh_service:
+  enabled: yes
+  labels:
+    Tenant: $TENANT
+    InstanceId: $INSTANCE_ID
+  commands:
+  - name: hostname
+    command: ["hostname"]
+    period: 1m0s
+  - name: IP-addresses
+    command: ["hostname", "-I"]
+    period: 1h0m0s
+  - name: timestamp
+    command: ["uptime", "-s"]
+    period: 1h0m0s
+proxy_service:
+  enabled: no

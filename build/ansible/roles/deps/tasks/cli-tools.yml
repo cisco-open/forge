@@ -1,0 +1,51 @@
+---
+- name: Install AWS CLI v2
+  block:
+    - name: Download AWS CLI v2 installer (latest)
+      ansible.builtin.get_url:
+        url: "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-{{ aws_cli_version }}.zip"
+        checksum: "sha256:{{ aws_cli_checksum }}"
+        dest: /tmp/awscliv2.zip
+        mode: '0644'
+
+    - name: Install AWS CLI v2
+      args:
+        executable: /bin/bash
+      ansible.builtin.shell: |
+        set -e
+        AWS_INSTALL_DIR="/usr/local/aws-cli"
+        AWS_BIN_DIR="/usr/local/bin"
+        TMP_INSTALL_DIR="/tmp/awscliv2_installer"
+        ZIP_PATH="/tmp/awscliv2.zip"
+
+        # Skip if aws exists and is version 2
+        if command -v aws >/dev/null 2>&1 && aws --version | grep -q 'aws-cli/2'; then
+          echo "AWS CLI v2 already installed, skipping."
+          exit 0
+        fi
+
+        unzip -o "${ZIP_PATH}" -d "${TMP_INSTALL_DIR}"
+        "${TMP_INSTALL_DIR}/aws/install" --update -i "${AWS_INSTALL_DIR}" -b "${AWS_BIN_DIR}"
+        rm -rf "${TMP_INSTALL_DIR}" "${ZIP_PATH}"
+        chmod -R a+rX "${AWS_INSTALL_DIR}" "${AWS_BIN_DIR}/aws"
+      changed_when: false
+
+- name: Install amazon-cloudwatch-agent
+  block:
+    - name: Download CloudWatch logging agent
+      ansible.builtin.get_url:
+        url: https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
+        dest: /tmp/amazon-cloudwatch-agent.deb
+        mode: '0644'
+      register: cw_download
+
+    - name: Install CloudWatch logging agent
+      ansible.builtin.apt:
+        deb: /tmp/amazon-cloudwatch-agent.deb
+        state: present
+      when: cw_download.changed
+
+    - name: Remove CloudWatch agent installer
+      ansible.builtin.file:
+        path: /tmp/amazon-cloudwatch-agent.deb
+        state: absent

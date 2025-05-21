@@ -1,0 +1,29 @@
+---
+- name: Create /opt.
+  ansible.builtin.file:
+    path: /opt
+    state: directory
+    mode: '0755'
+    recurse: true
+
+- name: Create /opt/scripts.
+  ansible.builtin.file:
+    path: /opt/scripts
+    state: directory
+    mode: '0755'
+    recurse: true
+
+- name: Download install_gha_runner.sh from GitHub
+  ansible.builtin.get_url:
+    url: "{{ install_runner_shell }}"
+    dest: /opt/scripts/install_gha_runner.sh
+    mode: '0755'
+    force: true
+
+- name: Install GitHub Actions runner package (via scripts we just deployed).
+  args:
+    executable: /bin/bash
+  ansible.builtin.shell: |
+    USERNAME={{ username }} RUNNER_TARBALL_URL={{ runner_tarball }} /opt/scripts/install_gha_runner.sh
+  register: gha_install
+  changed_when: "'installed successfully' in gha_install.stdout or 'already installed' not in gha_install.stdout"

@@ -1,0 +1,15 @@
+---
+- name: Update and install APT packages
+  ansible.builtin.import_tasks: ./apt.yml
+
+- name: Install Docker
+  ansible.builtin.import_tasks: ./docker.yml
+
+- name: Install GitHub CLI
+  ansible.builtin.import_tasks: ./gh.yml
+
+- name: Install CLI tools
+  ansible.builtin.import_tasks: ./cli-tools.yml
+
+- name: Clean up
+  ansible.builtin.import_tasks: ./clean.yml

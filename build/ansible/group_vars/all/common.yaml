@@ -1,0 +1,13 @@
+---
+username: ubuntu
+# renovate: datasource=github-releases depName=actions/runner registryUrl=https://github.com/
+github_runner_version: 2.323.0
+runner_tarball: "https://github.com/actions/runner/releases/download/v{{ github_runner_version }}/actions-runner-linux-x64-{{ github_runner_version }}.tar.gz"
+
+# renovate: datasource=github-tags depName=aws/aws-cli registryUrl=https://github.com/
+aws_cli_version: 2.26.7
+aws_cli_checksum: bb1fcbbdaffc006dce62827083605b9953d23a1b42b3a7375733d9a6d7c94b8d
+
+# renovate: datasource=github-tags depName=github-aws-runners/terraform-aws-github-runner registryUrl=https://github.com/
+tf_aws_github_runner_version: 6.5.5
+install_runner_shell: https://raw.githubusercontent.com/github-aws-runners/terraform-aws-github-runner/v{{ tf_aws_github_runner_version }}/modules/runners/templates/install-runner.sh
