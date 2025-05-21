@@ -8,8 +8,6 @@
 📚 **Docs:**
 Comprehensive documentation is available at [cisco-open.github.io/forge](https://cisco-open.github.io/forge/).
 
----
-
 ## 🔍 What Is Forge?
 
 Forge automates the provisioning and lifecycle management of ephemeral GitHub Actions runners across EC2 and EKS, leveraging the [terraform-aws-github-runner](https://github.com/github-aws-runners/terraform-aws-github-runner) module and [actions-runner-controller](https://github.com/actions/actions-runner-controller) Helm chart — adding multi-tenant isolation, drift remediation, and native observability out-of-the-box.
@@ -26,11 +24,9 @@ Forge automates the provisioning and lifecycle management of ephemeral GitHub Ac
 * **Broad OS Support:** Linux (x64/arm64) and Windows.
 * **GitHub Cloud & GHES Support:** Seamless support for both hosting models.
 
----
-
 ## ⚡ Getting Started
 
-Start fast with our [Getting Started guide](#TODO).
+Start fast with our [Getting Started guide](./docs/configurations/).
 
 ### 🏗️ Infrastructure Setup
 
@@ -39,68 +35,38 @@ Start fast with our [Getting Started guide](#TODO).
 
 ### 🧩 Tenant Configuration
 
-3. Create and configure a GitHub App with the required permissions.
-4. Deploy the tenant configuration using Tofu (and optionally Terragrunt).
-5. Install the GitHub App in the target GitHub organization or repositories.
-6. Assign repositories to the appropriate runner group(s).
+1. Create and configure a GitHub App with the required permissions.
+2. Deploy the tenant configuration using Tofu (and optionally Terragrunt).
+3. Install the GitHub App in the target GitHub organization or repositories.
+4. Assign repositories to the appropriate runner group(s).
 
 💡 Need deployment examples? Check the [examples directory](./examples).
-
----
 
 ## ⚙️ Configuration
 
 Tweak every part of Forge to your needs — from AMIs and subnet choices to concurrency settings.
-See the [Configuration Docs](#TODO) for details and best practices.
-
----
+See the [Configuration Docs](./docs/configurations/) for details and best practices.
 
 ## 🧭 Roadmap
 
 Want to see what’s next or request features? Check the [open issues](https://github.com/cisco-open/forge/issues).
 
----
 
 ## 🙌 Acknowledgements
 
 Forge builds on the shoulders of giants in the open-source community. Special thanks to:
 
-* [terraform-aws-github-runner](https://github.com/github-aws-runners/terraform-aws-github-runner)
-* [actions-runner-controller](https://github.com/actions/actions-runner-controller)
-## Configuration
+* [terraform-aws-github-runner](https://github.com/github-aws-runners/terraform-aws-github-runner) ⚙️
+* [actions-runner-controller](https://github.com/actions/actions-runner-controller) 🚀
 
-See the [Configuration section](https://cisco-open.github.io/forge/docs/) in the docs for all available options and best practices.
+## 🤝 Contributing
 
----
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**. For detailed contributing guidelines, please see [CONTRIBUTING.md](CONTRIBUTING.md) ✍️
 
-## Roadmap
+## 📜 License
 
-See the [open issues](https://github.com/cisco-open/forge/issues) for a list of proposed features (and known issues).
+Distributed under the `Apache Software License`. See [LICENSE](LICENSE) for more information.
 
+## 📬 Contact
 
-## Acknowledgements
-
-This project is inspired by and builds on the work of the open-source community. We thank all contributors and maintainers for their efforts.
-
-https://github.com/github-aws-runners/terraform-aws-github-runner
-
-https://github.com/actions/actions-runner-controller
-
-
----
-
-## Contributing
-
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**. For detailed contributing guidelines, please see [CONTRIBUTING.md](CONTRIBUTING.md)
-
----
-
-## License
-
-Distributed under the `Apache Software License` License. See [LICENSE](LICENSE) for more information.
-
----
-
-## Contact
-
-For all project feedback, please use [Github Issues](https://github.com/cisco-open/forge/issues).
+For all project feedback, please use [Github Issues](https://github.com/cisco-open/forge/issues) 💬
