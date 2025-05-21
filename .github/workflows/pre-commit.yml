@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     container:
-      image: ghcr.io/${{ github.repository }}-pre-commit
+      image: ghcr.io/${{ github.repository }}-pre-commit:main
 
     steps:
       - name: Checkout Repository

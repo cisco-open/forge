@@ -14,9 +14,8 @@ curl -sqLo /tmp/opentofu.tar.gz "https://github.com/opentofu/opentofu/releases/d
 unzip -o /tmp/opentofu.tar.gz -d /usr/local/bin/
 chmod +x /usr/local/bin/tofu
 
-# Use the dynamically found path for the fake values file
 find modules/* -type d -not -path '*/\.*' -print0 | xargs -0 -I {} tofu -chdir={} init -backend=false
 find modules/* -type f -name "*.tf" \
     -not -path '*/.*' \
-    -not -path 'modules/integrations/splunk_cloud_data_manager_common/*' \
+    -not -path 'modules/integrations/splunk_cloud_data_manager/*' \
     -exec dirname {} \; | sort -u | xargs -I {} terraform-docs -c .terraform-docs.yml {}

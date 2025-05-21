@@ -16,11 +16,11 @@
 
 | Name | Version |
 |------|---------|
-| <a name="provider_archive"></a> [archive](#provider\_archive) | >= 2.7.0 |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.90 |
-| <a name="provider_external"></a> [external](#provider\_external) | >= 2.3 |
-| <a name="provider_random"></a> [random](#provider\_random) | >= 3.6 |
-| <a name="provider_time"></a> [time](#provider\_time) | >= 0.13 |
+| <a name="provider_archive"></a> [archive](#provider\_archive) | 2.7.1 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.98.0 |
+| <a name="provider_external"></a> [external](#provider\_external) | 2.3.5 |
+| <a name="provider_random"></a> [random](#provider\_random) | 3.7.2 |
+| <a name="provider_time"></a> [time](#provider\_time) | 0.13.1 |
 
 ## Modules
 

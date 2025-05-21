@@ -29,14 +29,8 @@ resource "kubernetes_config_map" "hook_pre_post_job" {
   }
 
   data = {
-    "job_started.sh" = templatefile(
-      "${path.module}/template_files/hook_job_started.tftpl",
-      {}
-    )
-    "job_completed.sh" = templatefile(
-      "${path.module}/template_files/hook_job_completed.tftpl",
-      {}
-    )
+    "job_started.sh"   = file("${path.module}/template_files/hook_job_started.tftpl")
+    "job_completed.sh" = file("${path.module}/template_files/hook_job_completed.tftpl")
   }
 }
 

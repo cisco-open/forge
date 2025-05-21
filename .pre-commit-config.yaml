@@ -15,7 +15,7 @@ repos:
         always_run: true
       - id: check-added-large-files
         always_run: true
-        exclude: (images)
+        exclude: (docs/img)
       - id: check-ast
         always_run: true
       - id: check-builtin-literals
@@ -117,6 +117,7 @@ repos:
         args:
           - --hook-config=--retry-once-with-cleanup=true
           - --tf-init-args=-backend=false
+          - --tf-init-args=--upgrade=true
           - --hook-config=--tf-path=tofu
         exclude: (modules/integrations/splunk_cloud_data_manager)
         always_run: true
@@ -133,3 +134,10 @@ repos:
     hooks:
       - id: gitleaks
         always_run: true
+
+# # Ansible Hooks
+# - repo: https://github.com/ansible-community/ansible-lint.git
+#   rev: v25.2.1
+#   hooks:
+#     - id: ansible-lint
+#       args: [--exclude, .github]
