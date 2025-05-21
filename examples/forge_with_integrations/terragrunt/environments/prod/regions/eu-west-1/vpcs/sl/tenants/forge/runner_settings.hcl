@@ -18,8 +18,8 @@ include "vpc" {
 
 locals {
   # GitHub App settings
-  ghes_url = "" # For gitHub Enterprise Server URL
-  ghes_org = "<my_org>"
+  ghes_url = "<ADD YOUR VALUE>" # For gitHub Enterprise Server URL
+  ghes_org = "<ADD YOUR VALUE>"
 
   # Aliases
   region_alias = include.region.locals.region_alias

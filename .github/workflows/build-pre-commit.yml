@@ -6,20 +6,20 @@ name: Docker image [pre-commit]
 on:
   push:
     branches:
-      - "main"
+      - main
     paths:
-      - ".docker/pre-commit/**"
-      - ".github/workflows/build-pre-commit.yml"
+      - .docker/pre-commit/**
+      - .github/workflows/build-pre-commit.yml
   pull_request:
     types:
       - opened
       - synchronize
       - reopened
     branches:
-      - "main"
+      - main
     paths:
-      - ".docker/pre-commit/**"
-      - ".github/workflows/build-pre-commit.yml"
+      - .docker/pre-commit/**
+      - .github/workflows/build-pre-commit.yml
 
 env:
   PLATFORMS: linux/amd64
