@@ -2,17 +2,16 @@
 
 <!-- toc -->
 
-- [**Automated Dependency Management with RenovateBot Using GitHub Actions**](#automated-dependency-management-with-renovatebot-using-github-actions)
-  - [RenovateBot GitHub Actions Workflow Setup](#renovatebot-github-actions-workflow-setup)
-    - [File name: `renovatebot-github-actions.yml`](#file-name-renovatebot-github-actionsyml)
-    - [Key Parts Breakdown](#key-parts-breakdown)
-  - [Renovate Configuration File (`config.json`)](#renovate-configuration-file-configjson)
-    - [File name: `config.json`](#file-name-configjson)
-    - [Key Sections Breakdown](#key-sections-breakdown)
-  - [Renovate Configuration File (`default.json`)](#renovate-configuration-file-defaultjson)
-    - [File name: `default.json`](#file-name-defaultjson)
-    - [Key Sections Breakdown](#key-sections-breakdown-1)
-  - [Security Considerations](#security-considerations)
+- [RenovateBot GitHub Actions Workflow Setup](#renovatebot-github-actions-workflow-setup)
+    * [File name: `renovatebot-github-actions.yml`](#file-name-renovatebot-github-actionsyml)
+    * [Key Parts Breakdown](#key-parts-breakdown)
+- [Renovate Configuration File (`config.json`)](#renovate-configuration-file-configjson)
+    * [File name: `config.json`](#file-name-configjson)
+    * [Key Sections Breakdown](#key-sections-breakdown)
+- [Renovate Configuration File (`default.json`)](#renovate-configuration-file-defaultjson)
+    * [File name: `default.json`](#file-name-defaultjson)
+    * [Key Sections Breakdown](#key-sections-breakdown-1)
+- [Security Considerations](#security-considerations)
 
 <!-- tocstop -->
 
