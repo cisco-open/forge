@@ -46,7 +46,3 @@ terragrunt run-all apply terragrunt/environments/prod/
 ```
 
 > **Tip:** Always run `terragrunt run-all plan` first to validate changes before applying.
-
----
-
-Let me know if you want to automate secret creation, bootstrap the storage module first, or control apply ordering with `dependencies`.
