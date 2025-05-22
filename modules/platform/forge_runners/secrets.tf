@@ -14,6 +14,11 @@ locals {
       recovery_days = 7
     },
     {
+      name          = "${local.cicd_secrets_prefix}github_actions_runners_app_client_id"
+      description   = "GitHub App Client ID for GHA ephemeral runners for Tenant ${var.tenant.name} and VPC ${var.tenant.vpc_alias}."
+      recovery_days = 7
+    },
+    {
       name          = "${local.cicd_secrets_prefix}github_actions_runners_app_installation_id"
       description   = "GitHub App Installation ID for GHA ephemeral runners for Tenant ${var.tenant.name} and VPC ${var.tenant.vpc_alias}."
       recovery_days = 7
