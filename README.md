@@ -1,12 +1,13 @@
 # 🚀 Forge CI Platform
 
+[![Release](https://img.shields.io/github/v/release/cisco-open/forge?display_name=tag)](https://github.com/cisco-open/forge/releases/latest/)
+[![Contributor-Covenant](https://img.shields.io/badge/Contributor%20Covenant-1.4-fbab2c.svg)](CODE_OF_CONDUCT.md)
+[![Maintainer](https://img.shields.io/badge/Maintainer-Cisco-00bceb.svg)](https://opensource.cisco.com)
+
 **Forge** is a scalable, secure, and fully automated **multi-tenant** platform for running **ephemeral GitHub Actions runners on AWS** — designed for platform teams, by platform engineers.
 
 > 🛠️ **Community-Driven:**
 > Forge is an open-source project maintained on a best-effort basis. Contributions are welcome — help triage issues, submit PRs, review code, or join discussions!
-
-📚 **Docs:**
-Comprehensive documentation is available at [cisco-open.github.io/forge](https://cisco-open.github.io/forge/).
 
 ## 🔍 What Is Forge?
 

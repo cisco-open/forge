@@ -94,7 +94,7 @@ updates:
 - **schedule**: Defines how often Dependabot checks for updates (`daily`, `weekly`, `monthly`).
 - **versioning-strategy**: Controls how updates are applied (e.g., only updating versions, adjusting lockfile, widening version ranges).
 
-For further details, refer to the [official Dependabot docs](https://docs.github.com/en/github/administering-a-repository/setting-up-dependency-graph-configuration).
+For further details, refer to the [official Dependabot docs](https://docs.github.com/en/code-security/getting-started/dependabot-quickstart-guide).
 
 ---
 

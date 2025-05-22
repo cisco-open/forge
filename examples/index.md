@@ -31,7 +31,7 @@ This directory contains **ready-to-use, real-world examples** for deploying Forg
 
 - [Forge Documentation](https://cisco-open.github.io/forge/)
 - [Configuration Reference](../docs/configurations/)
-- [Module Reference](../modules/)
+- [Module Reference](https://github.com/cisco-open/forge/tree/main/modules/)
 
 ---
 
