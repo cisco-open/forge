@@ -25,9 +25,9 @@ Before deploying, ensure:
 
 * All `<ADD YOUR VALUE>` placeholders are replaced
 * Secrets are created in **AWS Secrets Manager**
-  → See [`docs/configurations/secrets.md`](docs/configurations/secrets.md)
+  → See [`docs/configurations/secrets.md`](../../docs/configurations/secrets.md)
 * Infra dependencies (e.g., IAM, S3) are in place
-  → See [`docs/configurations/dependency.md`](docs/configurations/dependency.md)
+  → See [`docs/configurations/dependency.md`](../../docs/configurations/dependency.md)
 
 ---
 
