@@ -1,81 +1,123 @@
-# 🚀 Forge CI Platform
+# Forge: Platform for Ephemeral EC2/EKS GitHub Runners with Tenant Isolation
 
 [![Release](https://img.shields.io/github/v/release/cisco-open/forge?display_name=tag)](https://github.com/cisco-open/forge/releases/latest/)
-[![Contributor-Covenant](https://img.shields.io/badge/Contributor%20Covenant-1.4-fbab2c.svg)](CODE_OF_CONDUCT.md)
+[![License](https://img.shields.io/github/license/cisco-open/forge)](LICENSE.md)
 [![Maintainer](https://img.shields.io/badge/Maintainer-Cisco-00bceb.svg)](https://opensource.cisco.com)
 
-**Forge** is a scalable, secure, and fully automated **multi-tenant** platform for running **ephemeral GitHub Actions runners on AWS** — designed for platform teams, by platform engineers.
+![CI](https://img.shields.io/github/check-runs/cisco-open/forge/main)
+![Commits since latest release](https://img.shields.io/github/commits-since/cisco-open/forge/latest)
+[![Contributors](https://img.shields.io/github/contributors/cisco-open/forge)](https://github.com/cisco-open/forge/graphs/contributors)
 
-> 🛠️ **Community-Driven:**
-> Forge is an open-source project maintained on a best-effort basis. Contributions are welcome — help triage issues, submit PRs, review code, or join discussions!
+[![Contributor-Covenant](https://img.shields.io/badge/Contributor%20Covenant-1.4-fbab2c.svg)](CODE_OF_CONDUCT.md)
 
-## 🔍 What Is Forge?
+---
 
-Forge automates the provisioning and lifecycle management of ephemeral GitHub Actions runners across EC2 and EKS, leveraging the [terraform-aws-github-runner](https://github.com/github-aws-runners/terraform-aws-github-runner) module and [actions-runner-controller](https://github.com/actions/actions-runner-controller) Helm chart — adding multi-tenant isolation, drift remediation, and native observability out-of-the-box.
+**Forge** is an open-source, production-grade platform that runs ephemeral GitHub Actions runners on AWS for multiple tenants — with built-in automation, security, and observability.
 
-### 🔑 Core Features
+Built *by platform engineers, for platform engineers.*
 
-* **Ephemeral Runners:** Auto-scaling EC2 and EKS runners — zero idle waste.
-* **Tenant Isolation:** Secure per-tenant boundaries using IAM and OIDC.
-* **Zero-Touch Automation:** Fully automated lifecycle — patching, updates, drift detection, onboarding.
-* **Observability Built-In:** Dashboards, logs, and metrics out-of-the-box.
-* **Cost-Aware Scheduling:** Spot instances + scale-to-zero = minimal cost.
-* **Flexible Infrastructure:** BYO AMI, instance types, subnets, and more.
-* **Multi-Runner Deployments:** Launch multiple runner types in one deployment.
-* **Broad OS Support:** Linux (x64/arm64) and Windows.
-* **GitHub Cloud & GHES Support:** Seamless support for both hosting models.
+**Why Forge?**
+It empowers platform teams to deliver secure, cost-efficient, and scalable CI runners with minimal ongoing manual operations — and zero overhead for tenant teams.
 
-## ⚡ Getting Started
-
-Start fast with our [Getting Started guide](./docs/configurations/).
-
-### 🏗️ Infrastructure Setup
-
-1. Prepare your AWS account.
-2. Deploy the Forge infrastructure and platform modules using [Tofu](https://opentofu.org/) — optionally with [Terragrunt](https://terragrunt.gruntwork.io/) for layered configuration and environment management.
-
-### 🧩 Tenant Configuration
-
-1. Create and configure a GitHub App with the required permissions.
-2. Deploy the tenant configuration using Tofu (and optionally Terragrunt).
-3. Install the GitHub App in the target GitHub organization or repositories.
-4. Assign repositories to the appropriate runner group(s).
-
-💡 Need deployment examples? Check the [examples directory](./examples).
+> **Community-driven:**
+> Forge is maintained on a best-effort basis. Contributions are welcome — triage issues, submit PRs, review code, or join the conversation!
 
 
-## 🔑 Tenant Usage & Onboarding
+## What Is Forge?
 
-Ready to start running workflows with Forge? Check out the **Forge Tenant Usage Guide** — a practical, step-by-step resource to get your team’s GitHub repositories connected to Forge runners, configure runner types, and manage advanced options like AWS access and containerized jobs.
+Forge is a control plane that automates the provisioning, isolation, and lifecycle of GitHub Actions runners — at scale. It combines two proven OSS projects:
 
-[Go to Forge Tenant Usage Guide →](./docs/tenant-usage/)
+* [`terraform-aws-github-runner`](https://github.com/github-aws-runners/terraform-aws-github-runner)
+* [`actions-runner-controller`](https://github.com/actions/actions-runner-controller)
 
+With added value:
 
-## ⚙️ Configuration
-
-Tweak every part of Forge to your needs — from AMIs and subnet choices to concurrency settings.
-See the [Configuration Docs](./docs/configurations/) for details and best practices.
-
-## 🧭 Roadmap
-
-Want to see what’s next or request features? Check the [open issues](https://github.com/cisco-open/forge/issues).
+* **Multi-tenant isolation**
+* **Zero-touch automation**
+* **Built-in observability**
+* **Cost-efficient scheduling**
 
 
-## 🙌 Acknowledgements
+## Core Features
+
+| Feature                    | Description                                       |
+| -------------------------- | ------------------------------------------------- |
+| **Ephemeral Runners**      | Auto-scaling EC2/EKS runners — zero idle costs    |
+| **Tenant Isolation**       | IAM + OIDC + VPC boundaries per tenant            |
+| **Zero-Touch Ops**         | Drift remediation, patching, upgrades, onboarding |
+| **Built-in Observability** | Logs, metrics, dashboards                         |
+| **Cost Optimization**      | Spot instances, scale-to-zero, warm pool logic    |
+| **Customizable Infra**     | BYO AMIs, subnets, instance types                 |
+| **Multi-Runner Support**   | Deploy multiple runner types in one module        |
+| **Multi-OS**               | Linux (x64/arm64), Windows                        |
+| **GitHub Cloud & GHES**    | Works across hosting models                       |
+
+
+## Quickstart
+
+* **Docs:** [docs/configurations](./docs/configurations/)
+* **Examples:** [examples/](./examples)
+* **Tenant Usage & Onboarding:** [docs/tenant-usage](./docs/tenant-usage/)
+
+
+## Architecture Overview
+
+Forge glues together Tofu/Terraform, ARC, and native AWS constructs into a modular runner platform.
+
+**Core Components:**
+
+* [OpenTofu](https://opentofu.org/) or Terraform
+* [Terragrunt](https://terragrunt.gruntwork.io/) (optional)
+* [Helm](https://helm.sh/) for ARC
+* AWS IAM + OIDC for secure runner registration
+* VPC segmentation per tenant
+
+**Platform Responsibilities:**
+
+* Centralized provisioning
+* Secure isolation between tenants
+* Automated lifecycle + scaling logic
+* GitHub App-based authorization
+* Tenant-specific observability + access control
+
+
+## How It Works
+
+### Infrastructure Setup (One-Time)
+
+1. Prepare an AWS account and IAM boundaries.
+2. Deploy the Forge control plane using OpenTofu or Terraform.
+3. Optionally use Terragrunt for layered configuration.
+
+### Tenant Setup (Per Team)
+
+1. Create a GitHub App.
+2. Configure tenant module with desired runner types and settings.
+3. Install the GitHub App into target orgs or repos.
+4. Push workflows — Forge takes care of the rest.
+5. Share the [Usage Guide](./docs/tenant-usage/) with your tenant
+
+## Contributing
+
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**. For detailed contributing guidelines, please see [CONTRIBUTING.md](CONTRIBUTING.md)
+
+## Acknowledgements
 
 Forge builds on the shoulders of giants in the open-source community. Special thanks to:
 
-* [terraform-aws-github-runner](https://github.com/github-aws-runners/terraform-aws-github-runner) ⚙️
-* [actions-runner-controller](https://github.com/actions/actions-runner-controller) 🚀
+* [terraform-aws-github-runner](https://github.com/github-aws-runners/terraform-aws-github-runner)
+* [actions-runner-controller](https://github.com/actions/actions-runner-controller)
 
-## 🤝 Contributing
+## Further Reading
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**. For detailed contributing guidelines, please see [CONTRIBUTING.md](CONTRIBUTING.md) ✍️
+Want to understand how Forge scales, isolates tenants, and minimizes ops?
 
-## 📜 License
+Check out the [technical case study](https://www.linkedin.com/pulse/forge-scalable-secure-multi-tenant-github-runner-brilhante--fyxbf) written by one of the core contributors.
+
+## License
 
 Distributed under the `Apache Software License`. See [LICENSE](LICENSE) for more information.
 
-## 📬 Contact
+## Contact
 
-For all project feedback, please use [Github Issues](https://github.com/cisco-open/forge/issues) 💬
+For all project feedback, please use [Github Issues](https://github.com/cisco-open/forge/issues)
