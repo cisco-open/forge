@@ -1,29 +1,7 @@
-# Registry uses for ops-related images (i.e. containers we use to build/deploy
-# our product).
-locals {
-  registries = [
-    {
-      repo         = "pre-commit"
-      mutability   = "MUTABLE"
-      scan_on_push = true
-    },
-    {
-      repo         = "ops-builder"
-      mutability   = "MUTABLE"
-      scan_on_push = true
-    },
-    {
-      repo         = "actions-runner"
-      mutability   = "MUTABLE"
-      scan_on_push = true
-    },
-  ]
-}
-
 # Create the actual ECR registries (one per image type).
 resource "aws_ecr_repository" "ops_container_repository" {
   for_each = {
-    for key, val in local.registries : val.repo => val
+    for key, val in var.repositories : val.repo => val
   }
   name                 = each.value.repo
   image_tag_mutability = each.value.mutability
@@ -32,6 +10,7 @@ resource "aws_ecr_repository" "ops_container_repository" {
     scan_on_push = each.value.scan_on_push
   }
   tags_all = local.all_security_tags
+  tags     = local.all_security_tags
 }
 
 # Policies for our ECR instances.
@@ -46,7 +25,7 @@ resource "aws_ecr_repository" "ops_container_repository" {
 # be equally valuable (and equally ready-to-discard when older than 21 days).
 resource "aws_ecr_lifecycle_policy" "ops_cleanup_policy" {
   for_each = {
-    for key, val in local.registries : val.repo => val
+    for key, val in var.repositories : val.repo => val
   }
   repository = aws_ecr_repository.ops_container_repository[each.key].name
 
