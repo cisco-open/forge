@@ -18,4 +18,5 @@ find modules/* -type d -not -path '*/\.*' -print0 | xargs -0 -I {} tofu -chdir={
 find modules/* -type f -name "*.tf" \
     -not -path '*/.*' \
     -not -path 'modules/integrations/splunk_cloud_data_manager/*' \
+    -not -path 'modules/infra/forge_subscription/*' \
     -exec dirname {} \; | sort -u | xargs -I {} terraform-docs -c .terraform-docs.yml {}

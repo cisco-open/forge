@@ -1,5 +1,15 @@
+locals {
+  ecr_repo_region_pairs = flatten([
+    for region in var.forge.ecr_repositories.regions : [
+      for name in var.forge.ecr_repositories.names : {
+        region = region
+        name   = name
+      }
+    ]
+  ])
+}
+
 data "aws_iam_policy_document" "ecr_repository_policy" {
-  for_each = toset(var.forge.ecr_repositories.names)
 
   statement {
     effect = "Allow"
@@ -20,8 +30,11 @@ data "aws_iam_policy_document" "ecr_repository_policy" {
 }
 
 resource "aws_ecr_repository_policy" "repository_policy" {
-  for_each = toset(var.forge.ecr_repositories.names)
+  for_each = {
+    for pair in local.ecr_repo_region_pairs : "${pair.region}/${pair.name}" => pair
+  }
+  provider = aws.by_region[each.value.region]
 
-  repository = each.value
-  policy     = data.aws_iam_policy_document.ecr_repository_policy[each.key].json
+  repository = each.value.name
+  policy     = data.aws_iam_policy_document.ecr_repository_policy.json
 }
