@@ -14,9 +14,18 @@ variable "forge" {
     ecr_repositories = object({
       names                  = list(string)
       ecr_access_account_ids = list(string)
+      regions                = list(string)
     })
   })
   description = "Configuration for Forge runners."
+  default = {
+    runner_roles = []
+    ecr_repositories = {
+      names                  = []
+      ecr_access_account_ids = []
+      regions                = []
+    }
+  }
 }
 
 variable "tags" {
