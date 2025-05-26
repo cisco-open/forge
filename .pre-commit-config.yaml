@@ -154,3 +154,12 @@ repos:
     rev: v25.2.1
     hooks:
       - id: ansible-lint
+
+  # Golang Hooks
+  - repo: https://github.com/tekwizely/pre-commit-golang
+    rev: v1.0.0-rc.1
+    hooks:
+      - id: go-fmt
+        always_run: true
+      - id: go-fmt-repo
+        always_run: true

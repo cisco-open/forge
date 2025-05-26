@@ -1,0 +1,30 @@
+---
+services:
+  localstack:
+    image: localstack/localstack:latest
+    container_name: localstack
+    ports:
+      - 4566:4566
+    environment:
+      - SERVICES=dynamodb
+      - DEFAULT_REGION=us-east-1
+
+  orchestrator:
+    build:
+      context: ../
+      dockerfile: development/Dockerfile
+    container_name: orchestrator
+    command: tail -f /dev/null
+    volumes:
+      - ../:/go/src/github.com/cisco-open/forge/orchestrator
+    depends_on:
+      - localstack
+    environment:
+      - DYNAMODB_ENDPOINT=http://localstack:4566
+      - AWS_REGION=us-east-1
+    networks:
+      - default
+
+networks:
+  default:
+    driver: bridge
