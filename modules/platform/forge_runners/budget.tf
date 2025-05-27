@@ -5,7 +5,7 @@ data "aws_sns_topic" "account_billing_alarm_topic" {
 resource "aws_budgets_budget" "budget_monthly_overall" {
   for_each = var.ec2_runner_specs
 
-  name              = "Tenant (${local.runner_prefix} ${each.key}) => Runner Type Monthly Budget"
+  name              = "Tenant (${var.deployment_config.prefix} ${each.key}) => Runner Type Monthly Budget"
   budget_type       = "COST"
   limit_amount      = each.value.aws_budget.budget_limit
   limit_unit        = "USD"
@@ -16,7 +16,7 @@ resource "aws_budgets_budget" "budget_monthly_overall" {
     # Filter by service type (case-sensitive).
     name = "TagKeyValue"
     values = [
-      "user:Name${"$"}${local.runner_prefix}-${each.key}-action-runner"
+      "user:Name${"$"}${var.deployment_config.prefix}-${each.key}-action-runner"
     ]
   }
 

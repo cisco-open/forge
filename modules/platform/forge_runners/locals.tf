@@ -1,6 +1,4 @@
 locals {
-  runner_prefix = "${var.tenant.name}-${var.tenant.region_alias}-${var.tenant.vpc_alias}"
-
   runner_iam_role_managed_policy_arns = concat(
     # If the policy exists, include it, otherwise skip it
     length(var.tenant.iam_roles_to_assume) > 0 ? [aws_iam_policy.role_assumption_for_forge_runners[0].arn] : [],
