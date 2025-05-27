@@ -23,7 +23,7 @@ module "ec2_runners" {
   }
 
   runner_configs = {
-    prefix                              = local.runner_prefix
+    prefix                              = var.deployment_config.prefix
     ghes_url                            = var.ghes_url
     ghes_org                            = var.ghes_org
     log_level                           = var.log_level

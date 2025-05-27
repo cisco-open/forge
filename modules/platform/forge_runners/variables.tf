@@ -27,14 +27,25 @@ variable "ghes_url" {
   type        = string
   description = "GitHub Enterprise Server URL."
 }
+
 variable "lambda_subnet_ids" {
   type        = list(string)
   description = "So the lambdas can run in our pre-determined subnets. They don't require the same security policy as the runners though."
 }
+
 variable "runner_group_name" {
   type        = string
   description = "Name of the group applied to all runners."
 }
+
+variable "deployment_config" {
+  type = object({
+    prefix        = string
+    secret_suffix = string
+  })
+  description = "Prefix for the deployment, used to distinguish resources."
+}
+
 variable "ec2_runner_specs" {
   description = "Map of runner specifications"
   type = map(object({
@@ -82,12 +93,7 @@ variable "subnet_ids" {
 variable "tenant" {
   description = "Map of tenant configs"
   type = object({
-    name = string
-    teleport = object({
-      tenant_name = string
-    })
-    region_alias        = string
-    vpc_alias           = string
+    name                = string
     iam_roles_to_assume = optional(list(string), [])
     ecr_registries      = optional(list(string), [])
   })

@@ -1,17 +1,17 @@
 data "external" "install_dependencies_runner_group" {
-  program = ["bash", "${path.module}/scripts/requirements_runner_group.sh", "/tmp/lambda_runner_group-${var.env}-${local.runner_prefix}/"]
+  program = ["bash", "${path.module}/scripts/requirements_runner_group.sh", "/tmp/lambda_runner_group-${var.env}-${var.deployment_config.prefix}/"]
 }
 
 data "archive_file" "lambda_zip_runner_group" {
   type       = "zip"
   source_dir = data.external.install_dependencies_runner_group.result["lambda_package_dir"]
 
-  output_path = "/tmp/lambda_runner_group-${var.env}-${local.runner_prefix}-lambda_function.zip"
+  output_path = "/tmp/lambda_runner_group-${var.env}-${var.deployment_config.prefix}-lambda_function.zip"
   depends_on  = [data.external.install_dependencies_runner_group]
 }
 
 resource "aws_lambda_function" "github_app_runner_group_lambda" {
-  function_name    = "${local.runner_prefix}-github-app-runner-group"
+  function_name    = "${var.deployment_config.prefix}-github-app-runner-group"
   filename         = data.archive_file.lambda_zip_runner_group.output_path
   source_code_hash = data.archive_file.lambda_zip_runner_group.output_base64sha256
   handler          = "github_app_runner_group.lambda_handler"
@@ -36,7 +36,7 @@ resource "aws_lambda_function" "github_app_runner_group_lambda" {
 }
 
 resource "aws_cloudwatch_event_rule" "every_hour_runner_group" {
-  name                = "${local.runner_prefix}-runner-group-every-hour-rule"
+  name                = "${var.deployment_config.prefix}-runner-group-every-hour-rule"
   description         = "Trigger Lambda every hour"
   schedule_expression = "cron(0 * * * ? *)"
 
@@ -58,7 +58,7 @@ resource "aws_lambda_permission" "allow_cloudwatch_runner_group" {
 }
 
 resource "aws_iam_role" "lambda_exec_runner_group" {
-  name = "${local.runner_prefix}-runner-group-lambda-exec-role"
+  name = "${var.deployment_config.prefix}-runner-group-lambda-exec-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -101,7 +101,7 @@ data "aws_iam_policy_document" "lambda_policy_document_runner_group" {
 }
 
 resource "aws_iam_policy" "lambda_policy_runner_group" {
-  name        = "${local.runner_prefix}-runner_group_lambda_policy"
+  name        = "${var.deployment_config.prefix}-runner_group_lambda_policy"
   description = "IAM policy for Lambda logging"
   policy      = data.aws_iam_policy_document.lambda_policy_document_runner_group.json
 
