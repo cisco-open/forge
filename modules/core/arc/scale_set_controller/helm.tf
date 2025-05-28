@@ -10,7 +10,8 @@ resource "helm_release" "gha_runner_scale_set_controller" {
     templatefile(
       "${path.module}/template_files/values.yml.tftpl",
       {
-        name = var.controller_config.name
+        name      = var.controller_config.name
+        namespace = var.namespace
       }
     )
   ]
