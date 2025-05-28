@@ -1,25 +1,11 @@
-## githubConfigUrl is the GitHub url for where you want to configure runners
-## ex: https://github.com/myorg/myrepo or https://github.com/myorg
 githubConfigUrl: "${github_config_url}"
-
-## githubConfigSecret is the k8s secrets to use when auth with GitHub API.
-## You can choose to use GitHub App or a PAT token
 githubConfigSecret: ${config_secret}
 
-## maxRunners is the max number of runners the autoscaling runner set will scale up to.
 maxRunners: ${max_runners}
-
-## minRunners is the min number of idle runners. The target number of runners created will be
-## calculated as a sum of minRunners and the number of jobs assigned to the scale set.
 minRunners: ${min_runners}
-
 runnerGroup: "${runner_group_name}"
-
-## name of the runner scale set to create. Defaults to the helm release name
 runnerScaleSetName: "${scale_set_name}"
 
-## template is the PodSpec for each runner Pod
-## For reference: https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#PodSpec
 template:
   spec:
     initContainers:
@@ -30,6 +16,7 @@ template:
         volumeMounts:
           - name: dind-externals
             mountPath: /home/runner/tmpDir
+
       - name: init-work
         image: ${container_actions_runner}
         imagePullPolicy: Always
@@ -44,32 +31,32 @@ template:
         volumeMounts:
           - name: work
             mountPath: /home/runner/_work
+
       - name: init-dind-rootless
-        image: docker:dind-rootless
         imagePullPolicy: Always
+        image: docker:dind-rootless
         command:
           - sh
           - -c
           - |
-            set -x
             cp -a /etc/. /dind-etc/
             echo 'runner:x:1001:1001:runner:/home/runner:/bin/ash' >> /dind-etc/passwd
             echo 'runner:x:1001:' >> /dind-etc/group
+            echo 'runner:100000:65536' >> /dind-etc/subuid
             echo 'runner:100000:65536' >> /dind-etc/subgid
-            echo 'runner:100000:65536' >>  /dind-etc/subuid
-            chmod 755 /dind-etc;
-            chmod u=rwx,g=rx+s,o=rx /dind-home
+            chmod 755 /dind-etc
+            chmod 2755 /dind-home
             chown 1001:1001 /dind-home
         securityContext:
           runAsUser: 0
         volumeMounts:
-          - mountPath: /dind-etc
-            name: dind-etc
-          - mountPath: /dind-home
-            name: dind-home
+          - name: dind-etc
+            mountPath: /dind-etc
+          - name: dind-home
+            mountPath: /dind-home
+
       - name: init-docker-creds
         image: ${container_actions_runner}
-        imagePullPolicy: Always
         command:
           - sh
           - -c
@@ -90,6 +77,7 @@ template:
         volumeMounts:
           - name: docker-creds
             mountPath: /home/runner/.docker
+
     containers:
       - name: runner
         image: ${container_actions_runner}
@@ -103,9 +91,9 @@ template:
           - name: ACTIONS_RUNNER_HOOK_JOB_COMPLETED
             value: /home/runner/hooks/job_completed.sh
         securityContext:
-          privileged: true
           runAsUser: 1001
           runAsGroup: 1001
+          allowPrivilegeEscalation: false
         volumeMounts:
           - name: runner-diag
             mountPath: /home/runner/_diag
@@ -137,9 +125,9 @@ template:
         imagePullPolicy: Always
         args: ["dockerd", "--host=unix:///home/runner/var/run/docker.sock"]
         securityContext:
-          privileged: true
           runAsUser: 1001
           runAsGroup: 1001
+          privileged: true
         volumeMounts:
           - name: work
             mountPath: /home/runner/_work
@@ -217,7 +205,7 @@ template:
         ephemeral:
           volumeClaimTemplate:
             spec:
-              accessModes: [ "ReadWriteOnce" ]
+              accessModes: ["ReadWriteOnce"]
               storageClassName: "gp2"
               resources:
                 requests:
@@ -226,7 +214,7 @@ template:
         ephemeral:
           volumeClaimTemplate:
             spec:
-              accessModes: [ "ReadWriteOnce" ]
+              accessModes: ["ReadWriteOnce"]
               storageClassName: "gp2"
               resources:
                 requests:
