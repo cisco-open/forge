@@ -90,6 +90,25 @@ def get_all_runner_groups(url: str, headers: Dict[str, str]) -> List[Dict[str, A
     return runner_groups
 
 
+def create_runner_group(access_token: str, organization: str, runner_group_name: str) -> Dict[str, Any]:
+    """Create a new runner group in the GitHub organization."""
+    url = f'https://api.github.com/orgs/{organization}/actions/runner-groups'
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+        'Accept': 'application/vnd.github+json',
+    }
+    payload = {
+        'name': runner_group_name,
+        'visibility': 'selected',
+        'selected_repository_ids': []
+    }
+    response = requests.post(url, json=payload, headers=headers)
+    response.raise_for_status()
+    logger.info(
+        f"Created runner group '{runner_group_name}' in org '{organization}'.")
+    return response.json()
+
+
 def save_to_runner_group(access_token: str, organization: str, runner_group_name: str, repos: List[Dict[str, Any]]):
     """Add repositories to a GitHub Runner Group."""
     headers = {
@@ -106,8 +125,9 @@ def save_to_runner_group(access_token: str, organization: str, runner_group_name
     group_id = next((g['id']
                     for g in groups if g['name'] == runner_group_name), None)
     if not group_id:
-        raise ValueError(
-            f"Runner Group '{runner_group_name}' not found in organization '{organization}'.")
+        group = create_runner_group(
+            access_token, organization, runner_group_name)
+        group_id = group['id']
 
     # Add Repositories to the Runner Group
     for repo in repos:
