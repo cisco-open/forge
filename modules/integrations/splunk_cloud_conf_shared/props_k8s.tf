@@ -2,8 +2,9 @@ resource "splunk_configs_conf" "forgecicd_kube_container_runner" {
   name = "props/kube:container:runner"
 
   variables = {
-    "REPORT-forgecicd_kube_container_runner_tenant_fields" = "forgecicd_kube_container_runner_tenant_fields"
-    "REPORT-forgecicd_kube_container_runner_ci_result"     = "forgecicd_kube_container_runner_ci_result"
+    "REPORT-forgecicd_kube_container_runner_tenant_fields"     = "forgecicd_kube_container_runner_tenant_fields"
+    "REPORT-forgecicd_kube_container_runner_ci_result"         = "forgecicd_kube_container_runner_ci_result"
+    "REPORT-forgecicd_kube_container_runner_gh_runner_version" = "forgecicd_kube_container_runner_gh_runner_version"
   }
   acl {
     app     = var.splunk_conf.acl.app
