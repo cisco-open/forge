@@ -35,17 +35,17 @@ resource "aws_lambda_function" "github_app_runner_group_lambda" {
   tags_all = local.all_security_tags
 }
 
-resource "aws_cloudwatch_event_rule" "every_hour_runner_group" {
-  name                = "${var.deployment_config.prefix}-runner-group-every-hour-rule"
-  description         = "Trigger Lambda every hour"
-  schedule_expression = "cron(0 * * * ? *)"
+resource "aws_cloudwatch_event_rule" "sync_runner_group" {
+  name                = "${var.deployment_config.prefix}-runner-group-sync"
+  description         = "Trigger Lambda every 10 minutes to sync GitHub App runner group"
+  schedule_expression = "cron(*/10 * * * ? *)"
 
   tags     = local.all_security_tags
   tags_all = local.all_security_tags
 }
 
 resource "aws_cloudwatch_event_target" "lambda_target_runner_group" {
-  rule = aws_cloudwatch_event_rule.every_hour_runner_group.name
+  rule = aws_cloudwatch_event_rule.sync_runner_group.name
   arn  = aws_lambda_function.github_app_runner_group_lambda.arn
 }
 
@@ -54,7 +54,7 @@ resource "aws_lambda_permission" "allow_cloudwatch_runner_group" {
   function_name = aws_lambda_function.github_app_runner_group_lambda.function_name
   principal     = "events.amazonaws.com"
   statement_id  = "AllowExecutionFromCloudWatch"
-  source_arn    = aws_cloudwatch_event_rule.every_hour_runner_group.arn
+  source_arn    = aws_cloudwatch_event_rule.sync_runner_group.arn
 }
 
 resource "aws_iam_role" "lambda_exec_runner_group" {
