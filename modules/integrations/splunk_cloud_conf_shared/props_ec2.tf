@@ -62,6 +62,7 @@ resource "splunk_configs_conf" "forgecicd_cloudwatchlogs_forgecicd" {
     "REPORT-forgecicd_cloudwatchlogs_extract_log_time_message"      = "forgecicd_cloudwatchlogs_extract_log_time_message"
     "REPORT-forgecicd_cloudwatchlogs_runner_pages_github_repo_name" = "forgecicd_cloudwatchlogs_runner_pages_github_repo_name"
     "REPORT-forgecicd_cloudwatchlogs_runner_ci_result"              = "forgecicd_cloudwatchlogs_runner_ci_result"
+    "REPORT-forgecicd_cloudwatchlogs_runner_gh_runner_version"      = "forgecicd_cloudwatchlogs_runner_gh_runner_version"
   }
   acl {
     app     = var.splunk_conf.acl.app

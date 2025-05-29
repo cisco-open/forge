@@ -28,6 +28,7 @@ No modules.
 | [splunk_configs_conf.forgecicd_cloudwatchlogs_global_lambda_tenant_fields](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_cloudwatchlogs_lambda_tenant_fields](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_cloudwatchlogs_runner_ci_result](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
+| [splunk_configs_conf.forgecicd_cloudwatchlogs_runner_gh_runner_version](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_cloudwatchlogs_runner_pages_github_repo_name](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_cloudwatchlogs_runner_tenant_fields](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_kube_container_dind](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
@@ -43,6 +44,7 @@ No modules.
 | [splunk_configs_conf.forgecicd_kube_container_manager_tenant_fields](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_kube_container_runner](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_kube_container_runner_ci_result](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
+| [splunk_configs_conf.forgecicd_kube_container_runner_gh_runner_version](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_kube_container_runner_tenant_fields](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_metadata](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_metadata_tenant_fields](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
