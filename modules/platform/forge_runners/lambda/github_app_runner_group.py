@@ -31,19 +31,19 @@ def generate_jwt(app_id: str, private_key: str) -> str:
     return jwt.encode(payload, private_key, algorithm='RS256')
 
 
-def get_installation_access_token(jwt_token: str, installation_id: str) -> str:
+def get_installation_access_token(jwt_token: str, installation_id: str, github_api: str) -> str:
     """Fetch an access token for the installation."""
     headers = {
         'Authorization': f'Bearer {jwt_token}',
         'Accept': 'application/vnd.github+json',
     }
-    url = f'https://api.github.com/app/installations/{installation_id}/access_tokens'
+    url = f'{github_api}/app/installations/{installation_id}/access_tokens'
     response = requests.post(url, headers=headers)
     response.raise_for_status()
     return response.json()['token']
 
 
-def list_repositories(access_token: str) -> List[Dict[str, Any]]:
+def list_repositories(access_token: str, github_api: str) -> List[Dict[str, Any]]:
     """List all repositories the GitHub App has access to."""
     headers = {
         'Authorization': f'Bearer {access_token}',
@@ -51,7 +51,7 @@ def list_repositories(access_token: str) -> List[Dict[str, Any]]:
     }
 
     repos = []
-    url = 'https://api.github.com/installation/repositories'
+    url = f'{github_api}/installation/repositories'
 
     while url:
         response = requests.get(url, headers=headers)
@@ -90,9 +90,9 @@ def get_all_runner_groups(url: str, headers: Dict[str, str]) -> List[Dict[str, A
     return runner_groups
 
 
-def create_runner_group(access_token: str, organization: str, runner_group_name: str) -> Dict[str, Any]:
+def create_runner_group(access_token: str, github_api: str, organization: str, runner_group_name: str) -> Dict[str, Any]:
     """Create a new runner group in the GitHub organization."""
-    url = f'https://api.github.com/orgs/{organization}/actions/runner-groups'
+    url = f'{github_api}/orgs/{organization}/actions/runner-groups'
     headers = {
         'Authorization': f'Bearer {access_token}',
         'Accept': 'application/vnd.github+json',
@@ -109,14 +109,14 @@ def create_runner_group(access_token: str, organization: str, runner_group_name:
     return response.json()
 
 
-def save_to_runner_group(access_token: str, organization: str, runner_group_name: str, repos: List[Dict[str, Any]]):
+def save_to_runner_group(access_token: str, github_api: str, organization: str, runner_group_name: str, repos: List[Dict[str, Any]]):
     """Add repositories to a GitHub Runner Group."""
     headers = {
         'Authorization': f'Bearer {access_token}',
         'Accept': 'application/vnd.github+json',
     }
 
-    url = f'https://api.github.com/orgs/{organization}/actions/runner-groups'
+    url = f'{github_api}/orgs/{organization}/actions/runner-groups'
 
     # Get all runner groups
     groups = get_all_runner_groups(url, headers)
@@ -126,13 +126,13 @@ def save_to_runner_group(access_token: str, organization: str, runner_group_name
                     for g in groups if g['name'] == runner_group_name), None)
     if not group_id:
         group = create_runner_group(
-            access_token, organization, runner_group_name)
+            access_token, github_api, organization, runner_group_name)
         group_id = group['id']
 
     # Add Repositories to the Runner Group
     for repo in repos:
         repo_id = repo['id']
-        add_url = f'https://api.github.com/orgs/{organization}/actions/runner-groups/{group_id}/repositories/{repo_id}'
+        add_url = f'{github_api}/orgs/{organization}/actions/runner-groups/{group_id}/repositories/{repo_id}'
         response = requests.put(add_url, headers=headers)
         response.raise_for_status()
         logger.info(
@@ -153,7 +153,6 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         secret_name_app_id = os.getenv('SECRET_NAME_APP_ID')
         secret_name_private_key = os.getenv('SECRET_NAME_PRIVATE_KEY')
         secret_name_installation_id = os.getenv('SECRET_NAME_INSTALLATION_ID')
-        os.getenv('AWS_REGION')
 
         logger.info('Fetching secrets from AWS Secrets Manager')
         app_id = get_secret(secret_name_app_id)
@@ -161,6 +160,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             secret_name_private_key)).decode('utf-8')
         installation_id = get_secret(secret_name_installation_id)
         organization = os.getenv('ORGANIZATION')
+        github_api = os.getenv('GITHUB_API')
         runner_group_name = os.getenv('RUNNER_GROUP_NAME')
 
         # Generate JWT
@@ -171,15 +171,15 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Get installation access token
         logger.info('Getting installation access token')
         access_token = get_installation_access_token(
-            jwt_token, installation_id)
+            jwt_token, installation_id, github_api)
 
         # List repositories
         logger.info('Listing repositories')
-        repos = list_repositories(access_token)
+        repos = list_repositories(access_token, github_api)
 
         # Save to Runner Group
         logger.info('Saving repositories to runner group')
-        save_to_runner_group(access_token, organization,
+        save_to_runner_group(access_token, github_api, organization,
                              runner_group_name, repos)
 
         return {

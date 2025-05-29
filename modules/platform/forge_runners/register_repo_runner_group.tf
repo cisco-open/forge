@@ -22,6 +22,7 @@ resource "aws_lambda_function" "github_app_runner_group_lambda" {
 
   environment {
     variables = {
+      GITHUB_API                  = local.github_api
       ORGANIZATION                = var.ghes_org
       RUNNER_GROUP_NAME           = var.runner_group_name
       SECRET_NAME_APP_ID          = "${local.cicd_secrets_prefix}github_actions_runners_app_id"
