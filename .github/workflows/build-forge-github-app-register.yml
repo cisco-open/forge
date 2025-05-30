@@ -1,0 +1,69 @@
+---
+# yamllint disable rule:comments
+# yamllint disable rule:truthy
+name: Docker image [forge-github-app-register]
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - forge-github-app-register/**
+      - .github/workflows/build-forge-github-app-register.yml
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    branches:
+      - main
+    paths:
+      - forge-github-app-register/**
+      - .github/workflows/build-forge-github-app-register.yml
+
+env:
+  PLATFORMS: linux/amd64
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}-forge-github-app-register
+
+jobs:
+  build-and-push-image:
+    name: Build and push Docker image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+        with:
+          platforms: ${{ env.PLATFORMS }}
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5.7.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: Build and push Docker image [forge-github-app-register]
+        uses: docker/build-push-action@1dc73863535b631f98b2378be8619f83b136f4a0 # v6.17.0
+        with:
+          context: ./forge-github-app-register
+          file: forge-github-app-register/Dockerfile
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: ${{ env.PLATFORMS }}
+          push: ${{ github.event_name != 'pull_request' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

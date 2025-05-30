@@ -1,0 +1,23 @@
+{
+  "name": "ForgeRunnerFactory",
+  "description": "Registers and manages ephemeral GitHub Actions runners for your Forge instance.",
+  "url": "https://cisco-open.github.io/forge",
+  "hook_attributes": {
+    "url": "https://cisco-open.github.io/forge"
+  },
+  "redirect_url": "http://localhost:5000/oauth/callback",
+  "callback_urls": [],
+  "public": false,
+  "default_permissions": {
+    "actions": "read",
+    "checks": "read",
+    "metadata": "read",
+    "organization_self_hosted_runners": "write",
+    "organization_administration": "write"
+  },
+  "default_events": [
+    "workflow_job"
+  ],
+  "request_oauth_on_install": false,
+  "setup_on_update": false
+}
