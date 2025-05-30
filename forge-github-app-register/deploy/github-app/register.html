@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register Forge Runner Factory App</title>
+</head>
+<body>
+  <h1>🔧 Register the Forge Runner Factory App</h1>
+  <form id="factory-form" method="post" action="https://github.com/settings/apps/new">
+    <input type="hidden" name="manifest" id="manifest-input" value="">
+    <button type="submit">🛠 Register App in Your Org</button>
+  </form>
+
+  <script>
+    // Fetch the manifest JSON and inject it into the hidden input
+    fetch('./app-manifest.json')
+      .then(r => r.text())
+      .then(manifest => {
+        document.getElementById('manifest-input').value = manifest;
+      })
+      .catch(err => {
+        console.error('Failed to load manifest:', err);
+        document.querySelector('button').disabled = true;
+      });
+  </script>
+</body>
+</html>
