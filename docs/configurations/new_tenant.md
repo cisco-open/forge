@@ -10,39 +10,39 @@ Copy these templates and place them at the correct paths.
 
 ### Templates to Copy
 
-* `tenant_templates/_global_settings/tenant.hcl`
-* `tenant_templates/tenant/terragrunt.hcl`
-* `tenant_templates/tenant/runner_settings.hcl`
-* `tenant_templates/tenant/config.yml`
+* `examples/tenant_templates/_global_settings/tenant.hcl`
+* `examples/tenant_templates/tenant/terragrunt.hcl`
+* `examples/tenant_templates/tenant/runner_settings.hcl`
+* `examples/tenant_templates/tenant/config.yml`
 
 ### Destination Paths
 
 ```
-terragrunt/_global_settings/tenants/<tenant_name>.hcl
+examples/starter-tenant/terragrunt/_global_settings/tenants/<tenant_name>.hcl
 
-terragrunt/environments/<aws_account>/regions/<aws_region>/vpcs/<vpc_alias>/tenants/<tenant_name>/terragrunt.hcl
+examples/starter-tenant/terragrunt/environments/<aws_account>/regions/<aws_region>/vpcs/<vpc_alias>/tenants/<tenant_name>/terragrunt.hcl
 
-terragrunt/environments/<aws_account>/regions/<aws_region>/vpcs/<vpc_alias>/tenants/<tenant_name>/runner_settings.hcl
+examples/starter-tenant/terragrunt/environments/<aws_account>/regions/<aws_region>/vpcs/<vpc_alias>/tenants/<tenant_name>/runner_settings.hcl
 
-terragrunt/environments/<aws_account>/regions/<aws_region>/vpcs/<vpc_alias>/tenants/<tenant_name>/config.yml
+examples/starter-tenant/terragrunt/environments/<aws_account>/regions/<aws_region>/vpcs/<vpc_alias>/tenants/<tenant_name>/config.yml
 ```
 
 ### Example for tenant=`sbg`, account=`sec-plat`, region=`eu-west-1`, vpc\_alias=`shared`
 
 ```bash
-cp tenant_templates/_global_settings/tenant.hcl \
-   terragrunt/_global_settings/tenants/sbg.hcl
+cp examples/tenant_templates/_global_settings/tenant.hcl \
+   examples/starter-tenant/terragrunt/_global_settings/tenants/sbg.hcl
 
-mkdir -p terragrunt/environments/sec-plat/regions/eu-west-1/vpcs/shared/tenants/sbg
+mkdir -p examples/starter-tenant/terragrunt/environments/sec-plat/regions/eu-west-1/vpcs/shared/tenants/sbg
 
-cp tenant_templates/tenant/terragrunt.hcl \
-   terragrunt/environments/sec-plat/regions/eu-west-1/vpcs/shared/tenants/sbg/terragrunt.hcl
+cp examples/tenant_templates/tenant/terragrunt.hcl \
+   examples/starter-tenant/terragrunt/environments/sec-plat/regions/eu-west-1/vpcs/shared/tenants/sbg/terragrunt.hcl
 
-cp tenant_templates/tenant/runner_settings.hcl \
-   terragrunt/environments/sec-plat/regions/eu-west-1/vpcs/shared/tenants/sbg/runner_settings.hcl
+cp examples/tenant_templates/tenant/runner_settings.hcl \
+   examples/starter-tenant/terragrunt/environments/sec-plat/regions/eu-west-1/vpcs/shared/tenants/sbg/runner_settings.hcl
 
-cp tenant_templates/tenant/config.yml \
-   terragrunt/environments/sec-plat/regions/eu-west-1/vpcs/shared/tenants/sbg/config.yml
+cp examples/tenant_templates/tenant/config.yml \
+   examples/starter-tenant/terragrunt/environments/sec-plat/regions/eu-west-1/vpcs/shared/tenants/sbg/config.yml
 ```
 
 ---
@@ -168,7 +168,7 @@ arc_runner_specs:
 1. **Navigate to the tenant directory** matching your AWS account, region, VPC, and tenant:
 
 ```bash
-cd terragrunt/environments/<aws_account_alias>/regions/<aws_region>/vpcs/<vpc_alias>/tenants/<tenant_name>
+cd examples/starter-tenant/terragrunt/environments/<aws_account_alias>/regions/<aws_region>/vpcs/<vpc_alias>/tenants/<tenant_name>
 ```
 
 2. **Deploy only the secrets** to AWS Secrets Manager:
@@ -269,7 +269,7 @@ Run the `update-github-app-secrets.sh` script to inject critical GitHub App valu
 1. **Navigate to your tenant directory:**
 
 ```bash
-cd terragrunt/environments/<aws_account_alias>/regions/<aws_region>/vpcs/<vpc_alias>/tenants/<tenant_name>
+cd examples/starter-tenant/terragrunt/environments/<aws_account_alias>/regions/<aws_region>/vpcs/<vpc_alias>/tenants/<tenant_name>
 ```
 
 2. **Deploy everything in one go:**

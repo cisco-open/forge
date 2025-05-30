@@ -8,7 +8,7 @@ on:
     branches:
       - main
     paths:
-      - forge-github-app-register/**
+      - .docker/forge-github-app-register/**
       - .github/workflows/build-forge-github-app-register.yml
   pull_request:
     types:
@@ -18,7 +18,7 @@ on:
     branches:
       - main
     paths:
-      - forge-github-app-register/**
+      - .docker/forge-github-app-register/**
       - .github/workflows/build-forge-github-app-register.yml
 
 env:
@@ -59,8 +59,8 @@ jobs:
       - name: Build and push Docker image [forge-github-app-register]
         uses: docker/build-push-action@1dc73863535b631f98b2378be8619f83b136f4a0 # v6.17.0
         with:
-          context: ./forge-github-app-register
-          file: forge-github-app-register/Dockerfile
+          context: ./.docker/forge-github-app-register
+          file: .docker/forge-github-app-register/Dockerfile
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: ${{ env.PLATFORMS }}
