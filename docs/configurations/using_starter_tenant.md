@@ -25,9 +25,9 @@ Before deploying Forge:
 
 * Replace **all** `<REPLACE WITH YOUR VALUE>` placeholders in these files:
 
-  * `terragrunt/environments/prod/regions/eu-west-1/vpcs/sl/_vpc_wide_settings/_vpc.hcl`
-  * `terragrunt/_global_settings/_global.hcl`
-  * `terragrunt/environments/prod/_environment_wide_settings/_environment.hcl`
+  * `examples/starter-tenant/terragrunt/environments/prod/regions/eu-west-1/vpcs/sl/_vpc_wide_settings/_vpc.hcl`
+  * `examples/starter-tenant/terragrunt/_global_settings/_global.hcl`
+  * `examples/starter-tenant/terragrunt/environments/prod/_environment_wide_settings/_environment.hcl`
 
 
 ## Adding a New Tenant
@@ -42,7 +42,7 @@ To provision a new tenant, follow the step-by-step guide:
 From the environment root directory, deploy all tenants at once:
 
 ```sh
-cd terragrunt/environments/prod/
+cd examples/starter-tenant/terragrunt/environments/prod/
 terragrunt run-all plan
 terragrunt run-all apply
 ```
@@ -50,7 +50,7 @@ terragrunt run-all apply
 Or deploy a single tenant individually by navigating to its folder:
 
 ```sh
-cd terragrunt/environments/prod/regions/<region>/vpcs/<vpc_alias>/tenants/<tenant_name>/
+cd examples/starter-tenant/terragrunt/environments/prod/regions/<region>/vpcs/<vpc_alias>/tenants/<tenant_name>/
 terragrunt plan
 terragrunt apply
 ```
