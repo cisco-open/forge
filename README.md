@@ -53,12 +53,14 @@ With added value:
 | **GitHub Cloud & GHES**    | Works across hosting models                       |
 
 
-## Quickstart
+## Start from a Working Example
 
-* **Docs:** [docs/configurations](./docs/configurations/)
-* **Examples:** [examples/](./examples)
-* **Tenant Usage & Onboarding:** [docs/tenant-usage](./docs/tenant-usage/)
+Use the starter config to bootstrap a new tenant:
 
+→ [examples/starter-tenant]((https://github.com/cisco-open/forge/tree/main/examples/starter-tenant))
+
+For detailed setup instructions, see  
+→ [Using the Starter Tenant](./docs/configurations/using_starter_tenant.md)
 
 ## Architecture Overview
 

@@ -1,0 +1,33 @@
+---
+gh_config:
+  ghes_url: <GITHUB_URL>
+  ghes_org: <GITHUB_ORG>
+tenant:
+  iam_roles_to_assume:
+    - arn:aws:iam::<ACCOUNT_ID>:role/<ROLE_NAME>
+  ecr_registries:
+    - <ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com
+ec2_runner_specs:
+  <runner_type>:
+    ami_name: <AMI_NAME_PATTERN>
+    ami_owner: <ACCOUNT_ID>
+    ami_kms_key_arn: <KMS_ARN>
+    max_instances: <MAX_PARALLEL>
+    instance_types:
+      - <AWS_INSTANCE_TYPE>
+    pool_config:
+      - size: <RUNNERS_STARTING_SIZE>
+        schedule_expression: <CRON_EXPRESSION>
+        schedule_expression_timezone: <TIMEZONE>
+arc_runner_specs:
+  <runner_type>:
+    runner_size:
+      max_runners: <MAX>
+      min_runners: <MIN>
+    scale_set_name: <NAME>
+    scale_set_type: <TYPE>
+    container_actions_runner: <ECR_IMAGE>
+    container_requests_cpu: <CPU>
+    container_requests_memory: <MEM>
+    container_limits_cpu: <CPU>
+    container_limits_memory: <MEM>

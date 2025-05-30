@@ -59,17 +59,17 @@ resource "aws_secretsmanager_secret" "cicd_secrets" {
 # Force a delay between secret creation and seeding. We only need a few
 # seconds, but if we don't do this, we get into a bad state requiring manual
 # intervention and/or manual forced-deletion of secrets.
-resource "time_sleep" "wait_30_seconds" {
+resource "time_sleep" "wait_60_seconds" {
   depends_on = [
     aws_secretsmanager_secret.cicd_secrets,
   ]
-  create_duration = "30s"
+  create_duration = "60s"
 }
 
 # Only used for seeding purposes. Will not clobber/overwrite secrets afterward
 # (i.e. if/when we set them manually via the AWS CLI or management console).
 resource "aws_secretsmanager_secret_version" "cicd_secrets" {
-  depends_on = [time_sleep.wait_30_seconds]
+  depends_on = [time_sleep.wait_60_seconds]
   for_each = {
     for key, val in local.secrets : val.name => val
   }
