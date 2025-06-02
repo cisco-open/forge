@@ -57,7 +57,7 @@ With added value:
 
 Use the starter config to bootstrap a new tenant:
 
-→ [examples/starter-tenant](https://github.com/cisco-open/forge/tree/main/examples/starter-tenant)
+→ [examples/deployments/starter-tenant](https://github.com/cisco-open/forge/tree/main/examples/deployments/starter-tenant)
 
 For detailed setup instructions, see  
 → [Using the Starter Tenant](./docs/configurations/using_starter_tenant.md)
