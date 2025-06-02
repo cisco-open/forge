@@ -58,15 +58,11 @@
         name: unattended-upgrades
         selection: hold
 
-    - name: Wait for APT lock to be released
-      ansible.builtin.shell: |
-        while sudo fuser /var/lib/dpkg/lock >/dev/null 2>&1 || sudo fuser /var/lib/apt/lists/lock >/dev/null 2>&1 || sudo fuser /var/cache/apt/archives/lock >/dev/null 2>&1; do
-          echo "Waiting for APT locks to be released..."
-          sleep 5
-        done
+    - name: Wait for APT Lock
       args:
         executable: /bin/bash
-      changed_when: false
+      ansible.builtin.shell:
+        while fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 5; done;
 
     - name: Remove apt lock file
       ansible.builtin.file:
@@ -93,7 +89,6 @@
       - curl                          # HTTP client
       - git                           # Source control
       - jq                            # JSON parsing in scripts
-      - yq                            # YAML processor
       - unzip                         # Extract ZIP archives
       - wget                          # Download files
       - zip                           # Create ZIP archives
