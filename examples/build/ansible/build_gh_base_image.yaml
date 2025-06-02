@@ -15,5 +15,5 @@
 
   roles:
     - role: deps
-    - role: teleport
-    - role: splunk_otel_collector
+    # - role: teleport  # Uncomment if you want to install Teleport
+    # - role: splunk_otel_collector # Uncomment if you want to install Splunk OpenTelemetry Collector
