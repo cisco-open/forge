@@ -48,19 +48,6 @@ variable "cluster_tags" {
   description = "Cluster tags"
 }
 
-variable "splunk_otel_collector" {
-  description = "Configuration for the Splunk OpenTelemetry Collector"
-  type = object({
-    splunk_observability_realm     = string
-    splunk_platform_endpoint       = string
-    splunk_platform_index          = string
-    gateway                        = bool
-    splunk_observability_profiling = bool
-    environment                    = string
-    discovery                      = bool
-  })
-}
-
 variable "tags" {
   type        = map(string)
   description = "A map of tags to apply to resources."
