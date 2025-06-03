@@ -4,8 +4,15 @@ variable "aws_profile" {
 }
 
 variable "aws_region" {
-  description = "Default AWS region."
   type        = string
+  description = "Default AWS region."
+  default     = "us-east-1"
+}
+
+variable "replica_regions" {
+  description = "List of regions to replicate the secret"
+  type        = list(string)
+  default     = []
 }
 
 variable "tags" {
