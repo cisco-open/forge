@@ -1,6 +1,3 @@
-# Global settings for all environments. Not too many, since we use different
-# SL AWS accounts for each environment.
-
 # We use for enabling safety hooks. They're in place to prevent an accident "tf
 # run-all apply" for a non-dev environment.
 terraform {
