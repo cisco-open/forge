@@ -1,7 +1,7 @@
 locals {
   ro_secrets = {
     splunk_cloud_api_token = {
-      name = "/app/tf/splunk_cloud_api_token"
+      name = "/cicd/common/splunk_cloud_api_token"
     }
   }
 }
