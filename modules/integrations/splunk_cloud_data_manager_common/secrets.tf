@@ -1,10 +1,10 @@
 locals {
   secrets = {
     splunk_cloud_username = {
-      name = "/app/tf/splunk_cloud_username"
+      name = "/cicd/common/splunk_cloud_username"
     }
     splunk_cloud_password = {
-      name = "/app/tf/splunk_cloud_password"
+      name = "/cicd/common/splunk_cloud_password"
     }
   }
 }
