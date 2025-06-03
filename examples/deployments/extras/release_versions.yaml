@@ -1,0 +1,30 @@
+---
+api_version: v1
+product: Forge
+version: v1.0.0
+metadata:
+  use_local_repos: true
+spec:
+  # Versions of our IaC/Terraform modules.
+  iac:
+    modules:
+      cloud_custodian:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/infra/cloud_custodian
+        ref: main
+      cloud_formation:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/infra/cloud_formation
+        ref: main
+      ecr:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/infra/ecr
+        ref: main
+      storage:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/infra/storage
+        ref: main

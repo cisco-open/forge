@@ -1,0 +1,3 @@
+locals {
+  forge_role_arn = "arn:aws:iam::123456789012:role/role_for_forge_runners" # <REPLACE WITH YOUR VALUE>
+}
