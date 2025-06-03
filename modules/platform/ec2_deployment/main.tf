@@ -168,12 +168,6 @@ module "runners" {
             "log_stream_name" : "{instance_id}/runner"
           },
           {
-            "log_group_name" : "worker",
-            "prefix_log_group" : true,
-            "file_path" : "/opt/actions-runner/_diag/Worker_**.log",
-            "log_stream_name" : "{instance_id}/worker"
-          },
-          {
             "log_group_name" : "runner-logs",
             "prefix_log_group" : true,
             "file_path" : "/opt/actions-runner/_diag/pages/*.log",
@@ -185,12 +179,6 @@ module "runners" {
             "file_path" : "/home/ubuntu/hook.log",
             "log_stream_name" : "{instance_id}/hook"
           },
-          {
-            "log_group_name" : "docker-logs",
-            "prefix_log_group" : true,
-            "file_path" : "/var/log/docker.log",
-            "log_stream_name" : "{instance_id}/docker-logs"
-          }
         ]
         ami_owners                          = val["ami_owners"]
         ami_filter                          = val["ami_filter"]

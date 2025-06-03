@@ -68,14 +68,14 @@ template:
             cpu: ${container_requests_cpu}
             memory: ${container_requests_memory}
 
-      - name: worker
+      - name: runner-logs
         image: busybox
         command:
           - sh
           - -c
           - |
             while [ ! -f /tmp/stopfile ]; do
-              logs=$(ls /home/runner/_diag/Worker_*.log 2>/dev/null)
+              logs=$(ls /home/runner/_diag/pages/*.log 2>/dev/null)
               if [ -n "$logs" ]; then
                 tail -f $logs
               else
