@@ -8,8 +8,33 @@ spec:
   # Versions of our IaC/Terraform modules.
   iac:
     modules:
-      forge_runners:
+      splunk_cloud_data_manager_deps:
         local_path: ../forge
         repo: git@github.com:cisco-open/forge.git
-        module_path: modules/platform/forge_runners
+        module_path: modules/integrations/splunk_cloud_data_manager_deps
+        ref: main
+      splunk_cloud_data_manager:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/integrations/splunk_cloud_data_manager
+        ref: main
+      splunk_o11y_integration:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/integrations/splunk_o11y_integration
+        ref: main
+      splunk_o11y_regional_integration:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/integrations/splunk_o11y_regional_integration
+        ref: main
+      splunk_otel_eks:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/integrations/splunk_otel_eks
+        ref: main
+      splunk_secrets:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/integrations/splunk_secrets
         ref: main

@@ -16,17 +16,17 @@ include "env" {
 }
 
 # Global settings.
-include "tenant_global" {
-  path   = find_in_parent_folders("_global_settings/eks.hcl")
+include "mod_global" {
+  path   = find_in_parent_folders("_global_settings/cloud_formation.hcl")
   expose = true
 }
 
 # Version of module to use.
 locals {
-  module_name     = "eks"
+  module_name     = "cloud_formation"
   project         = include.global.locals.project_name
   env             = include.env.locals.env
-  release_version = yamldecode(file("${get_repo_root()}/examples/deployments/forge-eks/release_versions.yaml"))
+  release_version = yamldecode(file("${get_repo_root()}/examples/deployments/extras/release_versions.yaml"))
 
   use_local_repos = local.release_version["metadata"]["use_local_repos"]
   module_root     = local.release_version["spec"]["iac"]["modules"][local.module_name]

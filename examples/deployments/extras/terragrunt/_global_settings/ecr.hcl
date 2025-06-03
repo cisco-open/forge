@@ -12,13 +12,11 @@ locals {
   # Environment Settings
   # ─────────────────────────────────────────────────────────────────────────────
   env_data            = read_terragrunt_config(find_in_parent_folders("_environment_wide_settings/_environment.hcl"))
-  env_name            = local.env_data.locals.env
   default_aws_region  = local.env_data.locals.default_aws_region
   default_aws_profile = local.env_data.locals.default_aws_profile
-  aws_account_id      = local.env_data.locals.aws_account_id
 
   # ─────────────────────────────────────────────────────────────────────────────
-  # Region Settings
+  # Region Settings.
   # ─────────────────────────────────────────────────────────────────────────────
   region_data = read_terragrunt_config(find_in_parent_folders("_region_wide_settings/_region.hcl"))
   region      = local.region_data.locals.region_aws
@@ -26,10 +24,6 @@ locals {
   # ─────────────────────────────────────────────────────────────────────────────
   # Tags
   # ─────────────────────────────────────────────────────────────────────────────
-  cluster_tags = {
-    TeleportDiscovery = "ForgeCICD-MT" # <REPLACE WITH YOUR VALUE>
-  }
-
   tags = {
     TeamName         = local.team_name
     TechnicalContact = local.group_email
@@ -45,26 +39,18 @@ locals {
     LastRevalidatedAt = "2025-05-15"
   }
 
-  eks_settings_data = read_terragrunt_config(find_in_parent_folders("eks/config.hcl"))
+  ecr_data = read_terragrunt_config(find_in_parent_folders("ecr/config.hcl"))
 }
 
 inputs = {
   # Core Environment
-  env            = local.env_name
-  aws_account_id = local.aws_account_id
-  aws_profile    = local.default_aws_profile
-  aws_region     = local.region
+  aws_profile = local.default_aws_profile
+  aws_region  = local.region
 
-  # EKS Cluster Settings
-  cluster_name          = local.eks_settings_data.locals.cluster_name
-  cluster_version       = local.eks_settings_data.locals.cluster_version
-  cluster_size          = local.eks_settings_data.locals.cluster_size
-  subnet_ids            = local.eks_settings_data.locals.subnet_ids
-  vpc_id                = local.eks_settings_data.locals.vpc_id
-  splunk_otel_collector = local.eks_settings_data.locals.splunk_otel_collector
+  # Cloud Custodian Configuration
+  repositories = local.ecr_data.locals.repositories
 
   # Misc
-  cluster_tags = local.cluster_tags
   tags         = local.tags
   default_tags = local.default_tags
 }
