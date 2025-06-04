@@ -1,55 +1,93 @@
-## 📦 Module Overview
+# ForgeMT Configuration
 
-Below is a summary of the main modules in `modules/infra/`, `modules/core/arc/`, `modules/platform/`, and `modules/integrations/`:
-
-| Module/Path                                         | Purpose                                                                                                   | Key Requirements / Notes                                                                                   |
-|-----------------------------------------------------|-----------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
-| **infra**                                           |                                                                                                           |                                                                                                            |
-| `infra/ami_policy`                                  | Manages AMI sharing and policy controls for runner images                                                 | —                                                                                                          |
-| `infra/ami_sharing`                                 | Shares AMIs across accounts or regions                                                                    | —                                                                                                          |
-| `infra/billing`                                     | Sets up billing alarms and notifications                                                                  | —                                                                                                          |
-| `infra/budget`                                      | Manages AWS Budgets for cost control                                                                      | —                                                                                                          |
-| `infra/cloud_custodian`                             | Applies Cloud Custodian policies for resource governance                                                  | —                                                                                                          |
-| `infra/cloud_formation`                             | Grants CloudFormation permissions needed by integration modules                                           | Required for Splunk and Observability integrations                                                         |
-| `infra/ecr`                                         | Provisions ECR repositories for runner images                                                             | —                                                                                                          |
-| `infra/eks`                                         | Provisions EKS clusters for Kubernetes-based runners                                                      | Requires secrets for Splunk integration                                                                    |
-| `infra/forge_subscription`                          | Manages Forge subscription and related resources                                                          | —                                                                                                          |
-| `infra/opt_in_regions`                              | Enables AWS regions for use                                                                               | —                                                                                                          |
-| `infra/secrets`                                     | Manages sensitive values via AWS Secrets Manager                                                          | Must create `/tf/splunk_access_ingest_token` and `/tf/splunk_cloud_hec_token_eks` secrets                  |
-| `infra/service_linked_roles`                        | Ensures AWS service-linked roles exist (e.g., for EC2 Spot support)                                       | Must allow creation of EC2 Spot service-linked role in the account                                         |
-| `infra/storage`                                     | Provisions required S3 buckets for integrations (e.g., Splunk Cloud Data Manager)                         | Used by Splunk and other integrations                                                                      |
-| **core/arc**                                        |                                                                                                           |                                                                                                            |
-| `core/arc`                                          | Deploys and manages the Actions Runner Controller (ARC) for EKS-based runners                             | —                                                                                                          |
-| **platform**                                        |                                                                                                           |                                                                                                            |
-| `platform/arc_deployment`                           | Deploys ARC and related resources                                                                         | —                                                                                                          |
-| `platform/ec2_deployment`                           | Provisions EC2-based runners and related scripts                                                          | —                                                                                                          |
-| `platform/forge_runners`                            | Orchestrates both EC2 and ARC runners, including Lambda logic and repo registration                       | —                                                                                                          |
-| **integrations**                                    |                                                                                                           |                                                                                                            |
-| `integrations/splunk_cloud_conf_shared`             | Shared configuration for Splunk Cloud integrations                                                        | —                                                                                                          |
-| `integrations/splunk_cloud_data_manager`            | Integrates with Splunk Cloud for log ingestion and management                                             | Requires S3 bucket (via `storage`), CloudFormation permissions, Splunk tokens in Secrets Manager           |
-| `integrations/splunk_cloud_data_manager_common`     | Shared Splunk Cloud Data Manager logic for multi-tenant setups                                            | Requires CloudFormation permissions, Splunk tokens in Secrets Manager                                      |
-| `integrations/splunk_o11y_aws_integration`          | Integrates with Splunk Observability Cloud for metrics and events                                         | Requires CloudFormation permissions, Splunk tokens in Secrets Manager                                      |
-| `integrations/splunk_o11y_aws_integration_common`   | Shared Splunk Observability integration logic for multi-tenant setups                                     | Requires CloudFormation permissions, Splunk tokens in Secrets Manager                                      |
-| `integrations/teleport`                             | Integrates Teleport for secure session access and auditing                                                | —                                                                                                          |
+This guide helps you navigate ForgeMT configuration modules—from platform setup to integrations. Follow it to deploy ForgeMT correctly, understand module dependencies, and onboard tenant teams with clarity.
 
 ---
 
-### 🔑 Integration Notes
+## Quick Start
 
-- **EKS modules** require the following secrets in AWS Secrets Manager:
-  - `/tf/splunk_access_ingest_token`
-  - `/tf/splunk_cloud_hec_token_eks`
-  - These can be created using the `infra/secrets` module.
+Start here if you're deploying for the first time:
 
-- **Splunk Cloud Data Manager** also needs an S3 bucket for CloudFormation templates and data ingestion. Use the `infra/storage` module to provision this bucket.
-
-- **CloudFormation** permissions are required for Splunk and Observability integrations. Use the `infra/cloud_formation` module to grant these permissions.
-
-- **Service Linked Roles**: The `infra/service_linked_roles` module must be applied to allow EC2 Spot instance usage in your AWS account.
+1. [First Tenant Deployment](./deployments/first_tenant.md)
+2. [Tenant Usage Guide](../tenant-usage/index.md)
+3. [Secrets Reference](./secrets.md)
+4. [Module Dependency Guide](./dependency.md)
 
 ---
 
-> **Tip:**  
-> Always review the [./secrets.md](./secrets.md) and [./dependency.md](./dependency.md) for more details on required secrets and dependencies.
+## Core Components
 
-For instructions on creating a new tenant, see [Adding a New Tenant to Forge](./new_tenant.md).
+### Control Plane (Platform-Owned)
+
+| Module                    | Description                                          |
+|---------------------------|------------------------------------------------------|
+| `platform/forge_runners`  | Top-level module. Provisions runners and wires EC2/EKS logic. |
+| `platform/ec2_deployment` | Sets up EC2-based ephemeral runners.                |
+| `platform/arc_deployment` | Sets up EKS runners using actions-runner-controller. |
+
+---
+
+## Infrastructure Modules
+
+Used to create AWS primitives required by ForgeMT.
+
+### Core Infrastructure
+
+| Module                    | Purpose                                    |
+|---------------------------|--------------------------------------------|
+| `infra/eks`               | Provisions EKS cluster for ARC             |
+| `infra/ecr`               | Creates ECR repos for runner images        |
+| `infra/storage`           | Creates S3 buckets for logs and metadata   |
+| `infra/ami_policy`        | Grants permissions to use shared AMIs      |
+| `infra/ami_sharing`       | Shares AMIs across regions/accounts        |
+| `infra/opt_in_regions`    | Enables additional AWS regions             |
+| `infra/service_linked_roles` | Enables EC2 Spot functionality        |
+
+### Cost & Policy Management
+
+| Module                  | Purpose                                      |
+|-------------------------|----------------------------------------------|
+| `infra/budget`          | Creates AWS budget alerts                    |
+| `infra/billing`         | Adds CloudWatch billing alarms               |
+| `infra/cloud_custodian` | Applies cleanup/governance rules             |
+
+---
+
+## Integrations
+
+Optional modules for observability, access, and compliance.
+
+| Module                  | Notes                                         |
+|-------------------------|-----------------------------------------------|
+| `integrations/splunk_*` | Set of modules for Splunk Cloud, secrets, dashboards |
+| `integrations/teleport` | Enables audit/session capture via Teleport    |
+
+---
+
+## Secrets and Identity
+
+| Item                     | Purpose                                       |
+|--------------------------|-----------------------------------------------|
+| `infra/secrets`          | Provisions secrets for GitHub Apps and Splunk |
+| [Secrets Reference](./secrets.md) | Documents required keys, formats, scopes |
+| [Dependency Guide](./dependency.md) | Shows setup order across modules     |
+
+---
+
+## Deployment Scenarios
+
+Ready-made configuration examples:
+
+- [First Tenant Deployment](./deployments/first_tenant.md)
+- [Splunk Integration](./deployments/splunk_deployment.md)
+
+View all: [Deployment Index](./deployments/index.md)
+
+---
+
+## Recommended Setup Order
+
+1. Deploy base `infra/` modules (VPCs, EKS, IAM, S3, etc.)
+2. Deploy `platform/forge_runners`
+3. Configure secrets and tenant GitHub Apps
+4. Enable integrations (e.g., Splunk, Teleport)

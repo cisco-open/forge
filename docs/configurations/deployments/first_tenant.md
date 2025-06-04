@@ -16,25 +16,21 @@ The following module is deployed as part of this configuration:
 
 Before deploying Forge:
 
-* You **must have a VPC, subnets, and an EKS cluster** available.
-
-* You can either:
-
-  * Use your existing AWS infrastructure, **or**
-  * Deploy a compatible cluster using Forge’s own [EKS Terraform module](https://github.com/cisco-open/forge/tree/main/modules/infra/eks) or create your own standard EKS cluster.
-
-* Replace **all** `<REPLACE WITH YOUR VALUE>` placeholders in these files:
-
-  * `examples/deployments/starter-tenant/terragrunt/environments/prod/regions/eu-west-1/vpcs/sl/_vpc_wide_settings/_vpc.hcl`
-  * `examples/deployments/starter-tenant/terragrunt/_global_settings/_global.hcl`
-  * `examples/deployments/starter-tenant/terragrunt/environments/prod/_environment_wide_settings/_environment.hcl`
+- Ensure a **VPC**, **subnets**, and an **EKS cluster** are available.
+- Install [Terragrunt](https://terragrunt.gruntwork.io/) and [OpenTofu](https://opentofu.org/) (or Terraform).
+- Configure **AWS credentials** (`aws configure`) with the correct profile.
+- You can use your existing infrastructure or deploy a new cluster using the [Forge EKS module](https://github.com/cisco-open/forge/tree/main/modules/infra/eks)(Check the [EKS Example](./forge_eks.md)) or any standard setup.
+- Replace **all** `<REPLACE WITH YOUR VALUE>` placeholders in these files:
+  - `examples/deployments/starter-tenant/terragrunt/environments/prod/regions/eu-west-1/vpcs/sl/_vpc_wide_settings/_vpc.hcl`
+  - `examples/deployments/starter-tenant/terragrunt/_global_settings/_global.hcl`
+  - `examples/deployments/starter-tenant/terragrunt/environments/prod/_environment_wide_settings/_environment.hcl`
 
 
 ## Adding a New Tenant
 
 To provision a new tenant, follow the step-by-step guide:
 
-[docs/configurations/new_tenant.md](../../docs/configurations/new_tenant.md)
+[Deploy a New Tenant ](./new_tenant.md)
 
 
 ## How to Deploy
