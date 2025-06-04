@@ -1,12 +1,10 @@
 locals {
-  team_name          = "forgeMT" # <REPLACE WITH YOUR VALUE> # e.g., "DevOps Team"
-  product_name       = "forgeMT" # <REPLACE WITH YOUR VALUE> # e.g., "Internal Platform"
-  project_name       = "forgemt" # <REPLACE WITH YOUR VALUE> # e.g., "intplat"
-  aws_account_prefix = "forge"   # <REPLACE WITH YOUR VALUE> # e.g., "intplat-ops"
+  global = yamldecode(file(find_in_parent_folders("_global.yaml")))
 
-  # GitHub organization for GitOps repo.
-  git_org = "forgemt" # <REPLACE WITH YOUR VALUE> e.g., "my-org"
-
-  # Team information.
-  group_email = "forgemt@cisco.com" # <REPLACE WITH YOUR VALUE> e.g., "devops@example.com"
+  team_name          = local.global.team_name
+  product_name       = local.global.product_name
+  project_name       = local.global.project_name
+  aws_account_prefix = local.global.aws_account_prefix
+  git_org            = local.global.git_org
+  group_email        = local.global.group_email
 }
