@@ -21,9 +21,9 @@ Before deploying Forge:
 - Configure **AWS credentials** (`aws configure`) with the correct profile.
 - You can use your existing infrastructure or deploy a new cluster using the [Forge EKS module](https://github.com/cisco-open/forge/tree/main/modules/infra/eks)(Check the [EKS Example](./forge_eks.md)) or any standard setup.
 - Replace **all** `<REPLACE WITH YOUR VALUE>` placeholders in these files:
-  - `examples/deployments/starter-tenant/terragrunt/environments/prod/regions/eu-west-1/vpcs/sl/_vpc_wide_settings/_vpc.hcl`
-  - `examples/deployments/starter-tenant/terragrunt/_global_settings/_global.hcl`
-  - `examples/deployments/starter-tenant/terragrunt/environments/prod/_environment_wide_settings/_environment.hcl`
+  - `examples/deployments/forge-tenant/terragrunt/environments/prod/regions/eu-west-1/vpcs/sl/_vpc_wide_settings/_vpc.hcl`
+  - `examples/deployments/forge-tenant/terragrunt/_global_settings/_global.hcl`
+  - `examples/deployments/forge-tenant/terragrunt/environments/prod/_environment_wide_settings/_environment.hcl`
 
 
 ## Adding a New Tenant
@@ -38,7 +38,7 @@ To provision a new tenant, follow the step-by-step guide:
 From the environment root directory, deploy all tenants at once:
 
 ```sh
-cd examples/deployments/starter-tenant/terragrunt/environments/prod/
+cd examples/deployments/forge-tenant/terragrunt/environments/prod/
 terragrunt run-all plan
 terragrunt run-all apply
 ```
@@ -46,7 +46,7 @@ terragrunt run-all apply
 Or deploy a single tenant individually by navigating to its folder:
 
 ```sh
-cd examples/deployments/starter-tenant/terragrunt/environments/prod/regions/<region>/vpcs/<vpc_alias>/tenants/<tenant_name>/
+cd examples/deployments/forge-tenant/terragrunt/environments/prod/regions/<region>/vpcs/<vpc_alias>/tenants/<tenant_name>/
 terragrunt plan
 terragrunt apply
 ```
