@@ -1,7 +1,7 @@
 locals {
   global_settings = read_terragrunt_config(find_in_parent_folders("_global_settings/_global.hcl"))
 
-  environment = yamldecode(file(find_in_parent_folders("_environment.yaml")))
+  environment = yamldecode(file("_environment.yaml"))
 
   # Environment name.
   env = local.environment.env

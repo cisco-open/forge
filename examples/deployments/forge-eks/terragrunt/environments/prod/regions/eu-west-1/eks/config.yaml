@@ -10,3 +10,7 @@ subnet_ids:
   - subnet-0abc1234def567890
   - subnet-0123456789abcdef0
 vpc_id: vpc-0abc1234def567890
+cluster_ami_filter:
+  - EKS1.31Ubuntu22-amd64-hvm-*
+cluster_ami_owners:
+  - '123456789012'

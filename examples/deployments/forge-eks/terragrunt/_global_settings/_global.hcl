@@ -1,5 +1,5 @@
 locals {
-  global = yamldecode(file(find_in_parent_folders("_global.yaml")))
+  global = yamldecode(file("_global.yaml"))
 
   team_name          = local.global.team_name
   product_name       = local.global.product_name

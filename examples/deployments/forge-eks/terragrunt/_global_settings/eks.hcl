@@ -56,12 +56,13 @@ inputs = {
   aws_region     = local.region
 
   # EKS Cluster Settings
-  cluster_name          = local.eks_settings_data.locals.cluster_name
-  cluster_version       = local.eks_settings_data.locals.cluster_version
-  cluster_size          = local.eks_settings_data.locals.cluster_size
-  subnet_ids            = local.eks_settings_data.locals.subnet_ids
-  vpc_id                = local.eks_settings_data.locals.vpc_id
-  splunk_otel_collector = local.eks_settings_data.locals.splunk_otel_collector
+  cluster_name       = local.eks_settings_data.locals.cluster_name
+  cluster_version    = local.eks_settings_data.locals.cluster_version
+  cluster_size       = local.eks_settings_data.locals.cluster_size
+  subnet_ids         = local.eks_settings_data.locals.subnet_ids
+  vpc_id             = local.eks_settings_data.locals.vpc_id
+  cluster_ami_filter = local.eks_settings_data.locals.cluster_ami_filter
+  cluster_ami_owners = local.eks_settings_data.locals.cluster_ami_owners
 
   # Misc
   cluster_tags = local.cluster_tags

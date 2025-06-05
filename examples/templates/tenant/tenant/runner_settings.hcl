@@ -40,7 +40,7 @@ locals {
   arc_cluster_name = include.vpc.locals.cluster_name
 
   # Load and parse runner specs YAML once
-  runner_specs_raw = yamldecode(file("config.yml"))
+  runner_specs_raw = yamldecode(file("config.yaml"))
 
   # GitHub App settings
   ghes_url = local.runner_specs_raw.gh_config.ghes_url

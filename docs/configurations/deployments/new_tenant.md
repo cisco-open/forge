@@ -13,7 +13,7 @@ Copy these templates and place them at the correct paths.
 * `examples/templates/tenant/_global_settings/tenant.hcl`
 * `examples/templates/tenant/tenant/terragrunt.hcl`
 * `examples/templates/tenant/tenant/runner_settings.hcl`
-* `examples/templates/tenant/tenant/config.yml`
+* `examples/templates/tenant/tenant/config.yaml`
 
 ### Destination Paths
 
@@ -24,7 +24,7 @@ examples/deployments/starter-tenant/terragrunt/environments/<aws_account>/region
 
 examples/deployments/starter-tenant/terragrunt/environments/<aws_account>/regions/<aws_region>/vpcs/<vpc_alias>/tenants/<tenant_name>/runner_settings.hcl
 
-examples/deployments/starter-tenant/terragrunt/environments/<aws_account>/regions/<aws_region>/vpcs/<vpc_alias>/tenants/<tenant_name>/config.yml
+examples/deployments/starter-tenant/terragrunt/environments/<aws_account>/regions/<aws_region>/vpcs/<vpc_alias>/tenants/<tenant_name>/config.yaml
 ```
 
 ### Example for tenant=`sbg`, account=`sec-plat`, region=`eu-west-1`, vpc\_alias=`shared`
@@ -41,13 +41,13 @@ cp examples/templates/tenant/tenant/terragrunt.hcl \
 cp examples/templates/tenant/tenant/runner_settings.hcl \
    examples/deployments/starter-tenant/terragrunt/environments/sec-plat/regions/eu-west-1/vpcs/shared/tenants/sbg/runner_settings.hcl
 
-cp examples/templates/tenant/tenant/config.yml \
-   examples/deployments/starter-tenant/terragrunt/environments/sec-plat/regions/eu-west-1/vpcs/shared/tenants/sbg/config.yml
+cp examples/templates/tenant/tenant/config.yaml \
+   examples/deployments/starter-tenant/terragrunt/environments/sec-plat/regions/eu-west-1/vpcs/shared/tenants/sbg/config.yaml
 ```
 
 ---
 
-## 2. Edit `config.yml` — Tenant Configuration Fields
+## 2. Edit `config.yaml` — Tenant Configuration Fields
 
 Controls GitHub integration, IAM roles, runner specs (EC2 & ARC).
 
@@ -120,7 +120,7 @@ arc_runner_specs:
 
 ---
 
-## 3. Minimal Working `config.yml` Example
+## 3. Minimal Working `config.yaml` Example
 
 ```yaml
 gh_config:
