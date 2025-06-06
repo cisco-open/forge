@@ -1,0 +1,10 @@
+---
+vpc_alias: <VPC_ALIAS>                    # e.g., "sl"
+lambda_subnet_ids:
+  - <LAMBDA_SUBNET_ID_1>                  # e.g., "subnet-0abc1234def567890"
+  - <LAMBDA_SUBNET_ID_2>
+vpc_id: <VPC_ID>                          # e.g., "vpc-0abc1234def567890"
+subnet_ids:
+  - <SUBNET_ID_1>                         # e.g., "subnet-0abc1234def567890"
+  - <SUBNET_ID_2>                         # e.g., "subnet-0123456789abcdef0"
+cluster_name: <CLUSTER_NAME>              # e.g., "forge-euw1-prod"

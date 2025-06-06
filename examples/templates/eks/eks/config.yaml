@@ -1,0 +1,16 @@
+---
+cluster_name: <CLUSTER_NAME>                  # e.g., "forge-euw1-dev"
+cluster_version: <CLUSTER_VERSION>            # e.g., "1.31"
+cluster_size:
+  instance_type: <INSTANCE_TYPE>              # e.g., "m5.large"
+  min_size: <MIN_SIZE>                        # e.g., 3
+  max_size: <MAX_SIZE>                        # e.g., 10
+  desired_size: <DESIRED_SIZE>                # e.g., 3
+subnet_ids:
+  - <SUBNET_ID_1>                             # e.g., "subnet-0abc1234def567890"
+  - <SUBNET_ID_2>                             # e.g., "subnet-0123456789abcdef0"
+vpc_id: <VPC_ID>                              # e.g., "vpc-0abc1234def567890"
+cluster_ami_filter:
+  - <AMI_FILTER>                              # e.g., "EKS1.31Ubuntu22-amd64-hvm-*"
+cluster_ami_owners:
+  - <AMI_OWNER>                              # e.g., "123456789012"

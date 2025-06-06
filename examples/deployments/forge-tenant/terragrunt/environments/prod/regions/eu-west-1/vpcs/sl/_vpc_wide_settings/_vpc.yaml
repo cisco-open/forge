@@ -1,0 +1,10 @@
+---
+vpc_alias: sl
+lambda_subnet_ids:
+  - subnet-0abc1234def567890
+vpc_id:
+  - vpc-0abc1234def567890
+subnet_ids:
+  - subnet-0abc1234def567890
+  - subnet-0123456789abcdef0
+cluster_name: forge-euw1-prod
