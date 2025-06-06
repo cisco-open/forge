@@ -1,0 +1,13 @@
+---
+forge:
+  runner_roles:
+    - <RUNNER_ROLE_ARN_1>      # e.g., arn:aws:iam::123456789012:role/my-runner-role-1
+    - <RUNNER_ROLE_ARN_2>      # e.g., arn:aws:iam::123456789012:role/my-runner-role-2
+
+  ecr_repositories:
+    names:
+      - <ECR_REPO_NAME_1>      # e.g., pre-commit
+    ecr_access_account_ids:
+      - <ECR_ACCESS_ACCOUNT_ID_1>     # e.g., "123456789013"
+    regions:
+      - <AWS_REGION>                  # e.g., eu-west-1
