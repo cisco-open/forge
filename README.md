@@ -18,7 +18,7 @@ Designed for platform teams delivering CI/CD at scale.
 
 ## Quick Start
 
-- **[Deploy Your First Tenant](./docs/configurations/deployments/first_tenant.md)**  
+- **[Deploy Your First Tenant](./docs/configurations/deployments/forge_tenant.md)**  
   Minimal setup for bootstrapping ForgeMT.
 
 - **[All Deployment Scenarios](./docs/configurations/deployments/index.md)**  
@@ -80,7 +80,7 @@ Traditional CI infrastructure is often:
 
 ## Deployment Examples
 
-- **[Deploy Your First Tenant](./docs/configurations/deployments/first_tenant.md)** — Minimal setup to get started.
+- **[Deploy Your First Tenant](./docs/configurations/deployments/forge_tenant.md)** — Minimal setup to get started.
 - **[All Deployment Scenarios](./docs/configurations/deployments/index.md)** — EKS, Splunk, integrations, and more.
 
 ---

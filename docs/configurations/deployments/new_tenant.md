@@ -1,6 +1,6 @@
 # Deploy a New Tenant
 
-This checklist tells you *exactly* what to update to onboard a new Forge tenant. Replace all `<PLACEHOLDER>` values with real tenant data.
+This checklist tells you *exactly* what to update to onboard a new Forge tenant.
 
 ---
 
@@ -283,3 +283,7 @@ terragrunt apply
 * No errors in Terraform apply output.
 * All expected AWS resources exist.
 * GitHub runners appear registered and are actively picking up jobs.
+
+---
+
+> For more advanced scenarios or troubleshooting, see the [full documentation](../index.md).
