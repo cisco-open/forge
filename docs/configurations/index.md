@@ -8,7 +8,7 @@ This guide helps you navigate ForgeMT configuration modules—from platform setu
 
 Start here if you're deploying for the first time:
 
-1. [First Tenant Deployment](./deployments/first_tenant.md)
+1. [First Tenant Deployment](./deployments/forge_tenant.md)
 2. [Tenant Usage Guide](../tenant-usage/index.md)
 3. [Secrets Reference](./secrets.md)
 4. [Module Dependency Guide](./dependency.md)
@@ -78,7 +78,7 @@ Optional modules for observability, access, and compliance.
 
 Ready-made configuration examples:
 
-- [First Tenant Deployment](./deployments/first_tenant.md)
+- [First Tenant Deployment](./deployments/forge_tenant.md)
 - [Splunk Integration](./deployments/splunk_deployment.md)
 
 View all: [Deployment Index](./deployments/index.md)

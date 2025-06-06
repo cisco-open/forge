@@ -1,6 +1,6 @@
 # Forge Deployment Scenarios
 
-- [**First Tenant**](./first_tenant.md)  
+- [**First Tenant**](./forge_tenant.md)  
   *Minimal multi-tenant Forge deployment example. Shows how to provision Forge runners and onboard your first tenant.*
 
 - [**New Tenant Guide**](./new_tenant.md)  
