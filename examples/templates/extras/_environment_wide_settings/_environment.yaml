@@ -1,0 +1,4 @@
+---
+env: <ENVIRONMENT_NAME>                       # e.g., "prod"
+default_aws_region: <DEFAULT_AWS_REGION>      # e.g., "eu-west-1"
+aws_account_id: <AWS_ACCOUNT_ID>              # e.g., "123456789012"

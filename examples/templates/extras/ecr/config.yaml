@@ -1,0 +1,5 @@
+---
+repositories:
+  - repo: <ECR_REPO_NAME_1>           # e.g., pre-commit
+    mutability: <MUTABILITY_1>        # e.g., MUTABLE or IMMUTABLE
+    scan_on_push: <SCAN_ON_PUSH_1>    # true or false

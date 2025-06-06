@@ -15,5 +15,5 @@
 - [**Splunk Deployment**](./splunk_deployment.md)  
   *Complete example for deploying Splunk integrations, including secrets, data manager, and observability modules.*
 
-- [**Extras**](./extras.md)  
+- [**Extras Deployments**](./forge_extras.md)  
   *Deploys supporting infrastructure such as Cloud Custodian, CloudFormation permissions, ECR repositories, Forge subscription, and S3 storage.*

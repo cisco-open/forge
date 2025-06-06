@@ -1,0 +1,2 @@
+---
+forge_role_arn: <FORGE_ROLE_ARN>  # e.g., arn:aws:iam::123456789012:role/role_for_forge_runners

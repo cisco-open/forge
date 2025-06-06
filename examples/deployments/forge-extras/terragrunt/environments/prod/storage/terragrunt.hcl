@@ -16,7 +16,7 @@ include "env" {
 }
 
 # Global settings.
-include "tenant_global" {
+include "mod_global" {
   path   = find_in_parent_folders("_global_settings/${basename(get_terragrunt_dir())}.hcl")
   expose = true
 }
