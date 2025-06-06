@@ -1,0 +1,11 @@
+---
+cluster_name: forge-euw1-prod
+
+splunk_otel_collector:
+  splunk_observability_realm: us0
+  splunk_platform_endpoint: https://http-inputs-mycompany.splunkcloud.com:443/services/collector
+  splunk_platform_index: forge-prod-index
+  gateway: false
+  splunk_observability_profiling: true
+  environment: prod
+  discovery: true

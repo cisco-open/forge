@@ -42,6 +42,12 @@ locals {
   eks_settings_data = read_terragrunt_config(find_in_parent_folders("splunk_otel_eks/config.hcl"))
 }
 
+dependencies {
+  paths = [
+    find_in_parent_folders("splunk_secrets")
+  ]
+}
+
 inputs = {
   # Core Environment
   aws_profile = local.default_aws_profile

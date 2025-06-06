@@ -14,6 +14,7 @@ locals {
   env_data            = read_terragrunt_config(find_in_parent_folders("_environment_wide_settings/_environment.hcl"))
   default_aws_region  = local.env_data.locals.default_aws_region
   default_aws_profile = local.env_data.locals.default_aws_profile
+  aws_account_id      = local.env_data.locals.aws_account_id
 
   # ─────────────────────────────────────────────────────────────────────────────
   # Tags
@@ -33,7 +34,13 @@ locals {
     LastRevalidatedAt = "2025-05-15"
   }
 
-  splunk_integration = read_terragrunt_config(find_in_parent_folders("splunk_o11y_integration/config.hcl"))
+  splunk_integration = read_terragrunt_config(find_in_parent_folders("splunk_o11y_aws_integration_common/config.hcl"))
+}
+
+dependencies {
+  paths = [
+    find_in_parent_folders("splunk_secrets")
+  ]
 }
 
 inputs = {
@@ -45,8 +52,8 @@ inputs = {
   # Splunk O11y Integration Configuration
   integration_name       = local.splunk_integration.locals.integration_name
   integration_regions    = local.splunk_integration.locals.integration_regions
-  splunk_api_url         = "https://api.us0.signalfx.com" # <REPLACE WITH YOUR VALUE>
-  splunk_organization_id = "ORG1234567890"                # <REPLACE WITH YOUR VALUE>
+  splunk_api_url         = local.splunk_integration.locals.splunk_api_url
+  splunk_organization_id = local.splunk_integration.locals.splunk_organization_id
 
   # Misc
   tags         = local.tags

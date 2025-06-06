@@ -1,0 +1,30 @@
+---
+splunk_cloud: https://mycompany.splunkcloud.com
+
+cloudformation_s3_config:
+  bucket: 123456789012-short-term-storage
+  key: cicd_artifacts/cf-templates/
+  region: eu-west-1
+
+cloudwatch_log_groups_config:
+  enabled: true
+  name: forge-cwl-prod
+  datasource:
+    cwl-eks:
+      enabled: true
+      index: forge-prod-index
+    cwl-lambda:
+      enabled: true
+      index: forge-prod-index
+  regions:
+    - eu-west-1
+
+security_metadata_config:
+  enabled: true
+  name: forge-secmeta-prod
+  datasource:
+    metadata:
+      enabled: true
+      index: forge-prod-index
+  regions:
+    - eu-west-1

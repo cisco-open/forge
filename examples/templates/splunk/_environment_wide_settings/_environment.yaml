@@ -1,0 +1,10 @@
+---
+env: <ENVIRONMENT_NAME>                       # e.g., "prod"
+default_aws_region: <DEFAULT_AWS_REGION>      # e.g., "eu-west-1"
+aws_account_id: <AWS_ACCOUNT_ID>              # e.g., "123456789012"
+splunk:
+  splunk_api_url: <SPLUNK_API_URL>          # e.g., "https://api.us0.signalfx.com"
+  splunk_ingest_url: <SPLUNK_INGEST_URL>      # e.g., "https://ingest.us0.signalfx.com"
+  splunk_organization_id: <SPLUNK_ORGANIZATION_ID>  # e.g., "ORG1234567890"
+  data_manager_template_url: <DATA_MANAGER_TEMPLATE_URL>  # e.g., "https://o11y-public.s3.amazonaws.com/aws-cloudformation-templates/release/template_all_features_regional.yaml"
+  splunk_cloud: <SPLUNK_CLOUD_URL>          # e.g., "https://mycompany.splunkcloud.com"

@@ -1,0 +1,30 @@
+---
+splunk_cloud: <SPLUNK_CLOUD_URL>                # e.g., https://mycompany.splunkcloud.com
+
+cloudformation_s3_config:
+  bucket: <S3_BUCKET_NAME>                  # e.g., 123456789012-short-term-storage
+  key: <S3_KEY_PREFIX>                      # e.g., cicd_artifacts/cf-templates/
+  region: <AWS_REGION>                      # e.g., eu-west-1
+
+cloudwatch_log_groups_config:
+  enabled: <CWL_ENABLED>                    # true or false
+  name: <CWL_GROUP_NAME>                    # e.g., forge-cwl-prod
+  datasource:
+    cwl-eks:
+      enabled: <CWL_EKS_ENABLED>            # true or false_EKS_ENABLED>            # true or false
+      index: <CWL_EKS_INDEX>                # e.g., forge-prod-index"              # e.g., forge-prod-index
+    cwl-lambda:
+      enabled: <CWL_LAMBDA_ENABLED>         # true or false_LAMBDA_ENABLED>         # true or false
+      index: <CWL_LAMBDA_INDEX>             # e.g., forge-prod-indexEX>"           # e.g., forge-prod-index
+  regions:
+    - <AWS_REGION>                          # e.g., eu-west-1ION>"                        # e.g., eu-west-1
+
+security_metadata_config:
+  enabled: <SEC_META_ENABLED>               # true or false_META_ENABLED>               # true or false
+  name: <SEC_META_NAME>                     # e.g., forge-secmeta-prod                  # e.g., forge-secmeta-prod
+  datasource:
+    metadata:
+      enabled: <SEC_META_DS_ENABLED>        # true or false_META_DS_ENABLED>        # true or false
+      index: <SEC_META_INDEX>               # e.g., forge-prod-index>"             # e.g., forge-prod-index
+  regions:
+    - <AWS_REGION>                          # e.g., eu-west-1ION>"                        # e.g., eu-west-1

@@ -14,12 +14,7 @@ locals {
   env_data            = read_terragrunt_config(find_in_parent_folders("_environment_wide_settings/_environment.hcl"))
   default_aws_region  = local.env_data.locals.default_aws_region
   default_aws_profile = local.env_data.locals.default_aws_profile
-
-  # ─────────────────────────────────────────────────────────────────────────────
-  # Region Settings.
-  # ─────────────────────────────────────────────────────────────────────────────
-  region_data = read_terragrunt_config(find_in_parent_folders("_region_wide_settings/_region.hcl"))
-  region      = local.region_data.locals.region_aws
+  aws_account_id      = local.env_data.locals.aws_account_id
 
   # ─────────────────────────────────────────────────────────────────────────────
   # Tags
@@ -39,7 +34,14 @@ locals {
     LastRevalidatedAt = "2025-05-15"
   }
 
-  splunk_integration = read_terragrunt_config(find_in_parent_folders("splunk_o11y_regional_integration/config.hcl"))
+  splunk_cloud = read_terragrunt_config(find_in_parent_folders("splunk_cloud_data_manager_common/config.hcl"))
+
+}
+
+dependencies {
+  paths = [
+    find_in_parent_folders("splunk_secrets")
+  ]
 }
 
 inputs = {
@@ -48,9 +50,8 @@ inputs = {
   aws_profile    = local.default_aws_profile
   aws_region     = local.default_aws_region
 
-  # Splunk O11y Integration Configuration
-  splunk_ingest_url = local.splunk_integration.locals.splunk_ingest_url
-  template_url      = local.splunk_integration.locals.template_url
+  # Splunk Cloud Configuration
+  splunk_cloud = local.splunk_cloud.locals.splunk_cloud
 
   # Misc
   tags         = local.tags
