@@ -15,18 +15,22 @@ include "env" {
   expose = true
 }
 
-# Splunk Cloud Config settings.
-include "splunk_cloud_data_manager_deps" {
-  path   = find_in_parent_folders("_global_settings/splunk_cloud_data_manager_deps.hcl")
+# Global settings.
+include "mod_global" {
+  path   = find_in_parent_folders("_global_settings/${basename(get_terragrunt_dir())}.hcl")
   expose = true
 }
 
 # Version of module to use.
 locals {
-  module_name     = "splunk_cloud_data_manager_deps"
-  project         = include.global.locals.project_name
-  env             = include.env.locals.env
-  release_version = yamldecode(file("${get_repo_root()}/examples/deployments/forge-integrations/release_versions.yaml"))
+  module_name = basename(get_terragrunt_dir())
+  project     = include.global.locals.project_name
+  env         = include.env.locals.env
+
+  release_version_env     = get_env("RELEASE_VERSION_PATH", "")
+  release_version_file    = length(trimspace(local.release_version_env)) > 0 ? local.release_version_env : "${get_repo_root()}/release_versions.yaml"
+  release_version_content = file(local.release_version_file)
+  release_version         = yamldecode(local.release_version_content)
 
   use_local_repos = local.release_version["metadata"]["use_local_repos"]
   module_root     = local.release_version["spec"]["iac"]["modules"][local.module_name]
@@ -34,7 +38,7 @@ locals {
 
   module_base    = local.use_local_repos ? "${local.git_prefix}${get_repo_root()}/${local.module_root["local_path"]}" : local.module_root["repo"]
   module_version = local.module_root["ref"]
-  module_ref     = "${local.module_base}//${local.module_root["module_path"]}?ref=${local.module_version}"
+  module_ref     = local.use_local_repos ? "${local.module_base}//${local.module_root["module_path"]}" : "${local.module_base}//${local.module_root["module_path"]}?ref=${local.module_version}"
 }
 
 # Construct the terraform.source attribute using the source_base.

@@ -38,9 +38,8 @@ locals {
 
 inputs = {
   # Core Environment
-  aws_account_id = local.aws_account_id
-  aws_profile    = local.default_aws_profile
-  aws_region     = local.default_aws_region
+  aws_profile = local.default_aws_profile
+  aws_region  = local.default_aws_region
 
   # Splunk Secrets Configuration
   replica_regions = local.secrets_data.locals.replica_regions

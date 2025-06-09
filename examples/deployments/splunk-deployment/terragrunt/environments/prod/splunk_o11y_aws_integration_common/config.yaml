@@ -1,0 +1,6 @@
+---
+integration_name: forge-prod
+integration_regions:
+  - eu-west-1
+splunk_api_url: https://api.us0.signalfx.com
+splunk_organization_id: ORG1234567890

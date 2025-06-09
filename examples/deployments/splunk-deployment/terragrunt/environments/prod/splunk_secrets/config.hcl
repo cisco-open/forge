@@ -1,3 +1,4 @@
 locals {
-  replica_regions = [] # <REPLACE WITH YOUR VALUE>
+  config          = yamldecode(file("config.yaml"))
+  replica_regions = local.config.replica_regions
 }

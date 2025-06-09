@@ -1,0 +1,11 @@
+---
+cluster_name: <CLUSTER_NAME>                              # e.g., forge-euw1-prod
+
+splunk_otel_collector:
+  splunk_observability_realm: <OBS_REALM>                 # e.g., us0
+  splunk_platform_endpoint: <SPLUNK_PLATFORM_ENDPOINT>    # e.g., https://http-inputs-mycompany.splunkcloud.com:443/services/collector
+  splunk_platform_index: <SPLUNK_PLATFORM_INDEX>          # e.g., forge-prod-index
+  gateway: <GATEWAY_ENABLED>                              # true or false
+  splunk_observability_profiling: <PROFILING_ENABLED>     # true or false
+  environment: <ENVIRONMENT>                              # e.g., prod
+  discovery: <DISCOVERY_ENABLED>                          # true or false

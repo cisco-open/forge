@@ -14,6 +14,7 @@ locals {
   env_data            = read_terragrunt_config(find_in_parent_folders("_environment_wide_settings/_environment.hcl"))
   default_aws_region  = local.env_data.locals.default_aws_region
   default_aws_profile = local.env_data.locals.default_aws_profile
+  aws_account_id      = local.env_data.locals.aws_account_id
 
   # ─────────────────────────────────────────────────────────────────────────────
   # Tags
@@ -34,6 +35,12 @@ locals {
   }
 
   splunk_cloud = read_terragrunt_config(find_in_parent_folders("splunk_cloud_data_manager/config.hcl"))
+}
+
+dependencies {
+  paths = [
+    find_in_parent_folders("splunk_cloud_data_manager_common")
+  ]
 }
 
 inputs = {

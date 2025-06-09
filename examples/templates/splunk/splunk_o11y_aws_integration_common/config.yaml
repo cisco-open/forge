@@ -1,0 +1,6 @@
+---
+integration_name: <INTEGRATION_NAME>        # e.g., forge-prod
+integration_regions:
+  - <AWS_REGION>                           # e.g., eu-west-1
+splunk_api_url: <SPLUNK_API_URL>  # e.g., https://api.us0.signalfx.com
+splunk_organization_id: <ORG_ID>    # e.g., ORG1234567890

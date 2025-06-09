@@ -1,0 +1,3 @@
+---
+splunk_ingest_url: <SPLUNK_INGEST_URL>  # e.g., https://ingest.us0.signalfx.com
+template_url: <SPLUNK_TEMPLATE_URL>  # e.g., https://o11y-public.s3.amazonaws.com/aws-cloudformation-templates/release/template_all_features_regional.yaml
