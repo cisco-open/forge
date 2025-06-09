@@ -8,10 +8,12 @@ This guide helps you navigate ForgeMT configuration modules—from platform setu
 
 Start here if you're deploying for the first time:
 
-1. [First Tenant Deployment](./deployments/forge_tenant.md)
-2. [Tenant Usage Guide](../tenant-usage/index.md)
-3. [Secrets Reference](./secrets.md)
-4. [Module Dependency Guide](./dependency.md)
+1. [First Tenant Deployment](./deployments/new_tenant.md)
+2. [Build GitHub Actions Base Image](./build/gh_base_image.md)
+3. [EKS Deployment Example](./deployments/forge_eks.md)
+4. [Splunk Integration Example](./deployments/splunk_deployment.md)
+5. [Secrets Reference](./secrets.md)
+6. [Module Dependency Guide](./dependency.md)
 
 ---
 
@@ -68,18 +70,19 @@ Optional modules for observability, access, and compliance.
 
 | Item                     | Purpose                                       |
 |--------------------------|-----------------------------------------------|
-| `infra/secrets`          | Provisions secrets for GitHub Apps and Splunk |
 | [Secrets Reference](./secrets.md) | Documents required keys, formats, scopes |
 | [Dependency Guide](./dependency.md) | Shows setup order across modules     |
 
 ---
 
-## Deployment Scenarios
+## Deployment & Build Scenarios
 
 Ready-made configuration examples:
 
-- [First Tenant Deployment](./deployments/forge_tenant.md)
-- [Splunk Integration](./deployments/splunk_deployment.md)
+- [First Tenant Deployment](./deployments/new_tenant.md)
+- [Build GitHub Actions Base Image](./build/gh_base_image.md)
+- [EKS Deployment Example](./deployments/forge_eks.md)
+- [Splunk Integration Example](./deployments/splunk_deployment.md)
 
 View all: [Deployment Index](./deployments/index.md)
 
@@ -87,7 +90,10 @@ View all: [Deployment Index](./deployments/index.md)
 
 ## Recommended Setup Order
 
-1. Deploy base `infra/` modules (VPCs, EKS, IAM, S3, etc.)
-2. Deploy `platform/forge_runners`
-3. Configure secrets and tenant GitHub Apps
-4. Enable integrations (e.g., Splunk, Teleport)
+1. Build the GitHub Actions base image ([guide](./build/gh_base_image.md))
+2. Deploy base `infra/` modules (VPCs, EKS, IAM, S3, etc.)
+3. Deploy `platform/forge_runners`
+4. Configure secrets and tenant GitHub Apps
+5. Enable integrations (e.g., Splunk, Teleport)
+
+---

@@ -11,3 +11,6 @@ aws_cli_checksum: bb1fcbbdaffc006dce62827083605b9953d23a1b42b3a7375733d9a6d7c94b
 # renovate: datasource=github-tags depName=github-aws-runners/terraform-aws-github-runner registryUrl=https://github.com/
 tf_aws_github_runner_version: 6.5.5
 install_runner_shell: https://raw.githubusercontent.com/github-aws-runners/terraform-aws-github-runner/v{{ tf_aws_github_runner_version }}/modules/runners/templates/install-runner.sh
+
+teleport_comm_ca_pin: <teleport_comm_ca_pin>  # e.g. sha256:3c2f8b1d4e5f7c6a9b0c8d9e1f2a3b4c5d6e7f8g9h0i1j2k3l4m5n6o7p8q9r0
+teleport_comm_auth_server: <teleport_comm_auth_server>  # e.g. teleport.example.com:443
