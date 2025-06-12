@@ -138,5 +138,10 @@ variable "default_tags" {
 
 variable "log_level" {
   type        = string
-  description = "Log level for the module."
+  description = "Log level for application logging (e.g., INFO, DEBUG, WARN, ERROR)"
+}
+
+variable "logging_retention_in_days" {
+  type        = string
+  description = "Logging retention period in days."
 }

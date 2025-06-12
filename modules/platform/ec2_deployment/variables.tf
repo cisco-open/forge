@@ -5,10 +5,11 @@ variable "aws_region" {
 
 variable "runner_configs" {
   type = object({
-    prefix    = string
-    ghes_url  = string
-    ghes_org  = string
-    log_level = string
+    prefix                    = string
+    ghes_url                  = string
+    ghes_org                  = string
+    log_level                 = string
+    logging_retention_in_days = string
     github_app = object({
       key_base64     = string
       id             = string

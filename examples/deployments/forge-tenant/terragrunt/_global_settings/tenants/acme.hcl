@@ -72,9 +72,10 @@ inputs = {
   runner_group_name = local.runner_settings_data.locals.runner_group_name
 
   # Misc
-  deployment_config = local.runner_settings_data.locals.deployment_config
-  log_level         = local.runner_settings_data.locals.log_level
-  tenant            = local.tenant
-  tags              = local.tags
-  default_tags      = local.default_tags
+  deployment_config         = local.runner_settings_data.locals.deployment_config
+  log_level                 = local.runner_settings_data.locals.log_level
+  logging_retention_in_days = local.runner_settings_data.locals.logging_retention_in_days
+  tenant                    = local.tenant
+  tags                      = local.tags
+  default_tags              = local.default_tags
 }
