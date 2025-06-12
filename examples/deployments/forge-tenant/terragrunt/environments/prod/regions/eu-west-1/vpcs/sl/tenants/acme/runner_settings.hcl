@@ -37,6 +37,8 @@ locals {
 
   log_level = "info"
 
+  logging_retention_in_days = 3
+
   arc_cluster_name = include.vpc.locals.cluster_name
 
   # Load and parse runner specs YAML once
@@ -81,7 +83,6 @@ locals {
       min_run_time                  = 30
       max_instances                 = spec.max_instances
       instance_types                = spec.instance_types
-      pool_config                   = spec.pool_config
       block_device_mappings = [{
         delete_on_termination = true
         device_name           = "/dev/sda1"

@@ -80,6 +80,9 @@ module "runners" {
   # Verbose logging.
   log_level = var.runner_configs.log_level
 
+  # Retention period for the logs in days.
+  logging_retention_in_days = var.runner_configs.logging_retention_in_days
+
   # Grab the lambda packages from local directory. Must run "ci/build.sh" first.
   webhook_lambda_zip                = "/tmp/${var.runner_configs.prefix}/webhook.zip"
   runner_binaries_syncer_lambda_zip = "/tmp/${var.runner_configs.prefix}/runner-binaries-syncer.zip"
