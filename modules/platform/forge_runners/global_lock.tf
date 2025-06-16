@@ -147,7 +147,6 @@ resource "aws_iam_role" "lambda_exec_global_lock" {
 data "aws_iam_policy_document" "lambda_policy_document_global_lock" {
   statement {
     actions = [
-      "logs:CreateLogGroup",
       "logs:CreateLogStream",
       "logs:PutLogEvents"
     ]
@@ -192,4 +191,11 @@ resource "aws_iam_policy" "lambda_policy_global_lock" {
 resource "aws_iam_role_policy_attachment" "lambda_policy_attachment_global_lock" {
   role       = aws_iam_role.lambda_exec_global_lock.name
   policy_arn = aws_iam_policy.lambda_policy_global_lock.arn
+}
+
+resource "aws_cloudwatch_log_group" "github_clean_global_lock_lambda" {
+  name              = "/aws/lambda/${aws_lambda_function.github_clean_global_lock_lambda.function_name}"
+  retention_in_days = var.logging_retention_in_days
+  tags              = local.all_security_tags
+  tags_all          = local.all_security_tags
 }

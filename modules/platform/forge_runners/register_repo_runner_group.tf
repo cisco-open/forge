@@ -80,7 +80,6 @@ resource "aws_iam_role" "lambda_exec_runner_group" {
 data "aws_iam_policy_document" "lambda_policy_document_runner_group" {
   statement {
     actions = [
-      "logs:CreateLogGroup",
       "logs:CreateLogStream",
       "logs:PutLogEvents"
     ]
@@ -113,4 +112,13 @@ resource "aws_iam_policy" "lambda_policy_runner_group" {
 resource "aws_iam_role_policy_attachment" "lambda_policy_attachment_runner_group" {
   role       = aws_iam_role.lambda_exec_runner_group.name
   policy_arn = aws_iam_policy.lambda_policy_runner_group.arn
+}
+
+
+
+resource "aws_cloudwatch_log_group" "github_app_runner_group_lambda" {
+  name              = "/aws/lambda/${aws_lambda_function.github_app_runner_group_lambda.function_name}"
+  retention_in_days = var.logging_retention_in_days
+  tags              = local.all_security_tags
+  tags_all          = local.all_security_tags
 }
