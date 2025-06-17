@@ -31,6 +31,11 @@ module "karpenter" {
 
 data "aws_ecrpublic_authorization_token" "token" {
   provider = aws.karpenter
+
+  depends_on = [
+    time_sleep.wait_300_seconds,
+    module.eks
+  ]
 }
 
 resource "helm_release" "karpenter" {
@@ -41,7 +46,7 @@ resource "helm_release" "karpenter" {
   repository_username = data.aws_ecrpublic_authorization_token.token.user_name
   repository_password = data.aws_ecrpublic_authorization_token.token.password
   chart               = "karpenter"
-  version             = "1.3.3"
+  version             = "1.5.0"
   wait                = false
 
   values = [
@@ -78,6 +83,7 @@ locals {
     subnet_ids                = var.subnet_ids
     primary_security_group_id = module.eks.cluster_primary_security_group_id
     security_group_id         = module.eks.cluster_security_group_id
+    tags                      = local.all_security_tags
   })
 
   node_pool_manifest = templatefile("${path.module}/templates/node_pool.yaml.tpl", {})

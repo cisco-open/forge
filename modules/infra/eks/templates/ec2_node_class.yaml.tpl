@@ -25,3 +25,7 @@ spec:
         deleteOnTermination: true
   kubelet:
     maxPods: 100
+  tags:
+%{ for k, v in tags }
+    ${k}: "${v}"
+%{ endfor }

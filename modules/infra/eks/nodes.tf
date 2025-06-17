@@ -2,7 +2,7 @@ module "self_managed_node_group" {
   source  = "terraform-aws-modules/eks/aws//modules/self-managed-node-group"
   version = "20.35.0"
 
-  name                = "green"
+  name                = var.cluster_name
   cluster_name        = var.cluster_name
   cluster_version     = var.cluster_version
   cluster_endpoint    = module.eks.cluster_endpoint
@@ -46,9 +46,12 @@ module "self_managed_node_group" {
   max_size     = var.cluster_size.max_size
   desired_size = var.cluster_size.desired_size
 
-  launch_template_name = "green"
+  launch_template_name = var.cluster_name
   instance_type        = var.cluster_size.instance_type
 
   tags = local.all_security_tags
 
+  depends_on = [
+    time_sleep.wait_300_seconds,
+  ]
 }

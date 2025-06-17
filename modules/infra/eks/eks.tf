@@ -39,7 +39,7 @@ module "eks" {
 
   access_entries = {
     super-admin = {
-      principal_arn = "arn:aws:iam::${var.aws_account_id}:role/owner"
+      principal_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/owner"
 
       policy_associations = {
         this = {
@@ -84,4 +84,11 @@ resource "null_resource" "delete_daemonset" {
   provisioner "local-exec" {
     command = "kubectl delete daemonset -n kube-system aws-node"
   }
+}
+
+resource "time_sleep" "wait_300_seconds" {
+  depends_on = [
+    module.eks
+  ]
+  create_duration = "300s"
 }
