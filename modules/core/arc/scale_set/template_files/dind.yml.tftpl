@@ -8,6 +8,9 @@ runnerScaleSetName: "${scale_set_name}"
 
 template:
   spec:
+    serviceAccountName: ${service_account}
+    automountServiceAccountToken: true
+
     initContainers:
       - name: init-dind-externals
         image: ${container_actions_runner}
