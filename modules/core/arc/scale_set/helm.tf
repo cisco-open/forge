@@ -13,7 +13,7 @@ resource "kubernetes_config_map" "hook_extension" {
           labeled-by: "extension"
       spec:
         automountServiceAccountToken: true
-        service_account: "${var.service_account}"
+        serviceAccountName: "${var.service_account}"
         securityContext:
           fsGroup: 123 # Group used by GitHub default agent image
         containers:

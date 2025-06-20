@@ -111,6 +111,9 @@ template:
           - name: pod-hooks
             mountPath: /home/runner/hooks
             readOnly: true
+          - name: pod-identity-token-custom
+            mountPath: /home/runner/forge
+            readOnly: true
         lifecycle:
           preStop:
             exec:
@@ -142,6 +145,9 @@ template:
             mountPath: /etc
           - name: dind-home
             mountPath: /home/runner
+          - name: pod-identity-token-custom
+            mountPath: /home/runner/forge
+            readOnly: true
         resources:
           limits:
             cpu: ${container_limits_cpu}
@@ -237,6 +243,14 @@ template:
       - name: pod-hooks
         configMap:
           name: hook-pre-post-job-${scale_set_name}
+      - name: pod-identity-token-custom
+        projected:
+          sources:
+            - serviceAccountToken:
+                path: eks-pod-identity-token
+                expirationSeconds: 3600
+                audience: sts.amazonaws.com
+
 
 controllerServiceAccount:
   namespace: ${controller_namespace}
