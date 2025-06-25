@@ -28,7 +28,7 @@ resource "aws_iam_role_policy_attachment" "runner_role_policy_attachment" {
   policy_arn = element(var.runner_iam_role_managed_policy_arns, count.index)
 }
 
-resource "kubernetes_service_account" "runner_sa" {
+resource "kubernetes_service_account_v1" "runner_sa" {
   metadata {
     name      = var.service_account
     namespace = var.namespace
