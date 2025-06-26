@@ -114,8 +114,6 @@ resource "aws_iam_role_policy_attachment" "lambda_policy_attachment_runner_group
   policy_arn = aws_iam_policy.lambda_policy_runner_group.arn
 }
 
-
-
 resource "aws_cloudwatch_log_group" "github_app_runner_group_lambda" {
   name              = "/aws/lambda/${aws_lambda_function.github_app_runner_group_lambda.function_name}"
   retention_in_days = var.logging_retention_in_days

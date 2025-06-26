@@ -40,6 +40,11 @@ resource "aws_kms_key" "github" {
   tags_all = var.tenant_configs.tags
 }
 
+resource "aws_kms_alias" "github" {
+  name          = "alias/${var.runner_configs.prefix}-github-kms-key"
+  target_key_id = aws_kms_key.github.key_id
+}
+
 data "aws_subnet" "runner_subnet" {
   for_each = toset(var.network_configs.subnet_ids)
   id       = each.value
