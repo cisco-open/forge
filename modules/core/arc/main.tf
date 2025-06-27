@@ -20,7 +20,8 @@ module "scale_sets" {
   for_each = coalesce(var.multi_runner_config, {})
 
   # EKS Cluster Configuration
-  cluster_name = data.aws_eks_cluster.cluster.id
+  cluster_name      = data.aws_eks_cluster.cluster.id
+  oidc_provider_arn = data.aws_iam_openid_connect_provider.cluster.arn
 
   # Helm Chart Configuration
   release_name  = each.value.runner_set_configs.release_name

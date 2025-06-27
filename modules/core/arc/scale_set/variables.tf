@@ -127,3 +127,8 @@ variable "container_ecr_registries" {
   type        = list(string)
   description = "List of ECR registries."
 }
+
+variable "oidc_provider_arn" {
+  type        = string
+  description = "OIDC provider ARN for the EKS cluster."
+}

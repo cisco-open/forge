@@ -12,6 +12,31 @@ data "aws_iam_policy_document" "assume_role" {
       "sts:TagSession"
     ]
   }
+
+  dynamic "statement" {
+    for_each = var.scale_set_type == "dind" ? [1] : []
+
+    content {
+      effect = "Allow"
+
+      principals {
+        type = "Federated"
+        identifiers = [
+          var.oidc_provider_arn
+        ]
+      }
+
+      actions = ["sts:AssumeRoleWithWebIdentity"]
+
+      condition {
+        test     = "StringEquals"
+        variable = "${regex("^arn:aws:iam::\\d+:oidc-provider/(.+)$", var.oidc_provider_arn)[0]}:sub"
+        values = [
+          "system:serviceaccount:${var.namespace}:${var.service_account}"
+        ]
+      }
+    }
+  }
 }
 
 resource "aws_iam_role" "runner_role" {
