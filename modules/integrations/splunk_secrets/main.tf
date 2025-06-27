@@ -37,6 +37,11 @@ locals {
       description   = "Splunk Cloud HEC token for eks"
       recovery_days = 7
     },
+    {
+      name          = "${local.cicd_secrets_prefix}/splunk_cloud_hec_token_aws_billing"
+      description   = "Splunk Cloud HEC token for aws billing"
+      recovery_days = 7
+    },
   ]
 
   all_regions = toset(concat([var.aws_region], var.replica_regions))
