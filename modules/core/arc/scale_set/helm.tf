@@ -55,6 +55,7 @@ resource "helm_release" "gha_runner_scale_set" {
         container_limits_memory    = var.container_limits_memory
         container_requests_cpu     = var.container_requests_cpu
         container_requests_memory  = var.container_requests_memory
+        volume_requests_storage    = var.volume_requests_storage
         container_ecr_registries   = var.container_ecr_registries
         service_account            = var.service_account
         github_config_url          = local.github_config_url

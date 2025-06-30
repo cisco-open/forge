@@ -10,10 +10,10 @@ containerMode:
   type: "kubernetes"
   kubernetesModeWorkVolumeClaim:
     accessModes: ["ReadWriteOnce"]
-    storageClassName: "gp2"
+    storageClassName: "gp3"
     resources:
       requests:
-        storage: 10Gi
+        storage: ${volume_requests_storage}
   kubernetesModeServiceAccount:
     annotations:
       eks.amazonaws.com/role-arn: ${runner_role}

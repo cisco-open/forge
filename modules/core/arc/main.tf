@@ -40,6 +40,7 @@ module "scale_sets" {
   container_limits_memory   = each.value.runner_config.container_limits_memory
   container_requests_cpu    = each.value.runner_config.container_requests_cpu
   container_requests_memory = each.value.runner_config.container_requests_memory
+  volume_requests_storage   = each.value.runner_config.volume_requests_storage
   container_ecr_registries  = each.value.runner_config.container_ecr_registries
   scale_set_name            = each.value.runner_config.scale_set_name
   scale_set_type            = each.value.runner_config.scale_set_type

@@ -62,6 +62,7 @@ variable "multi_runner_config" {
       container_limits_memory             = string
       container_requests_cpu              = string
       container_requests_memory           = string
+      volume_requests_storage             = string
       container_actions_runner            = string
       container_ecr_registries            = list(string)
       runner_iam_role_managed_policy_arns = list(string)

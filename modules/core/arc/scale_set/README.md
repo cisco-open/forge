@@ -63,6 +63,7 @@ No modules.
 | <a name="input_secret_name"></a> [secret\_name](#input\_secret\_name) | Name of the Secret. | `string` | n/a | yes |
 | <a name="input_service_account"></a> [service\_account](#input\_service\_account) | Name of the Service Account. | `string` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to apply to resources. | `map(string)` | n/a | yes |
+| <a name="input_volume_requests_storage"></a> [volume\_requests\_storage](#input\_volume\_requests\_storage) | Volume storage requests. | `string` | n/a | yes |
 
 ## Outputs
 

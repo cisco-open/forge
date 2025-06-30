@@ -123,6 +123,7 @@ variable "arc_runner_specs" {
     container_limits_memory   = string
     container_requests_cpu    = string
     container_requests_memory = string
+    volume_requests_storage   = string
   }))
 }
 

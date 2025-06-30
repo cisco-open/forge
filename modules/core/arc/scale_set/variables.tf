@@ -118,6 +118,11 @@ variable "container_requests_memory" {
   description = "Container memory requests."
 }
 
+variable "volume_requests_storage" {
+  type        = string
+  description = "Volume storage requests."
+}
+
 variable "cluster_name" {
   type        = string
   description = "Name of the EKS cluster."
