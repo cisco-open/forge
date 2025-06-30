@@ -28,6 +28,18 @@ variable "cluster_size" {
   })
 }
 
+
+variable "cluster_volume" {
+  description = "The volume config of the EKS cluster"
+  type = object({
+    size       = number
+    iops       = number
+    throughput = number
+    type       = string
+  })
+
+}
+
 variable "subnet_ids" {
   description = "A list of private subnet IDs for worker nodes"
   type        = list(string)

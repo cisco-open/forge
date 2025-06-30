@@ -34,6 +34,12 @@ variable "clusters" {
         max_size      = number
         desired_size  = number
       })
+      cluster_volume = object({
+        size       = number
+        iops       = number
+        throughput = number
+        type       = string
+      })
       subnet_ids         = list(string)
       vpc_id             = string
       cluster_ami_filter = list(string)
@@ -47,6 +53,12 @@ variable "clusters" {
         min_size      = number
         max_size      = number
         desired_size  = number
+      })
+      cluster_volume = object({
+        size       = number
+        iops       = number
+        throughput = number
+        type       = string
       })
       subnet_ids         = list(string)
       vpc_id             = string

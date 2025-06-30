@@ -17,11 +17,11 @@ spec:
   blockDeviceMappings:
     - deviceName: /dev/sda1
       ebs:
-        volumeSize: 200Gi
-        volumeType: gp3
+        volumeSize: ${disk_size}
+        volumeType: ${disk_type}
         encrypted: true
-        iops: 10000
-        throughput: 500
+        iops: ${disk_iops}
+        throughput: ${disk_throughput}
         deleteOnTermination: true
   kubelet:
     maxPods: 100

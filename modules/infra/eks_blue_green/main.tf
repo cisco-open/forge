@@ -7,6 +7,7 @@ module "green" {
   cluster_name    = var.clusters.green.cluster_name
   cluster_version = var.clusters.green.cluster_version
   cluster_size    = var.clusters.green.cluster_size
+  cluster_volume  = var.clusters.green.cluster_volume
 
   subnet_ids = var.clusters.green.subnet_ids
   vpc_id     = var.clusters.green.vpc_id
@@ -28,6 +29,7 @@ module "blue" {
   cluster_name    = var.clusters.blue.cluster_name
   cluster_version = var.clusters.blue.cluster_version
   cluster_size    = var.clusters.blue.cluster_size
+  cluster_volume  = var.clusters.blue.cluster_volume
 
   subnet_ids = var.clusters.blue.subnet_ids
   vpc_id     = var.clusters.blue.vpc_id

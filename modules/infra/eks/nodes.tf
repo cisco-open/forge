@@ -14,10 +14,10 @@ module "self_managed_node_group" {
     xvda = {
       device_name = "/dev/sda1"
       ebs = {
-        volume_size           = 200
-        volume_type           = "gp3"
-        iops                  = 10000
-        throughput            = 500
+        volume_size           = var.cluster_volume.size
+        volume_type           = var.cluster_volume.type
+        iops                  = var.cluster_volume.iops
+        throughput            = var.cluster_volume.throughput
         encrypted             = true
         kms_key_id            = null
         delete_on_termination = true

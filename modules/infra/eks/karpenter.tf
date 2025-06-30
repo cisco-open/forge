@@ -84,6 +84,10 @@ locals {
     primary_security_group_id = module.eks.cluster_primary_security_group_id
     security_group_id         = module.eks.cluster_security_group_id
     tags                      = local.all_security_tags
+    disk_size                 = var.cluster_volume.size
+    disk_type                 = var.cluster_volume.type
+    disk_iops                 = var.cluster_volume.iops
+    disk_throughput           = var.cluster_volume.throughput
   })
 
   node_pool_manifest = templatefile("${path.module}/templates/node_pool.yaml.tpl", {})
