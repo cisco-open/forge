@@ -26,14 +26,15 @@ variable "runner_configs" {
         max_runners = number
         min_runners = number
       })
-      scale_set_name            = string
-      scale_set_type            = string
-      container_actions_runner  = string
-      container_limits_cpu      = string
-      container_limits_memory   = string
-      volume_requests_storage   = string
-      container_requests_cpu    = string
-      container_requests_memory = string
+      scale_set_name               = string
+      scale_set_type               = string
+      container_actions_runner     = string
+      container_limits_cpu         = string
+      container_limits_memory      = string
+      volume_requests_storage_size = string
+      volume_requests_storage_type = string
+      container_requests_cpu       = string
+      container_requests_memory    = string
     }))
   })
 }

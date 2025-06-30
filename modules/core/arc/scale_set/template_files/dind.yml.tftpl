@@ -215,19 +215,19 @@ template:
           volumeClaimTemplate:
             spec:
               accessModes: ["ReadWriteOnce"]
-              storageClassName: "gp3"
+              storageClassName: ${volume_requests_storage_type}
               resources:
                 requests:
-                  storage: ${volume_requests_storage}
+                  storage: ${volume_requests_storage_size}
       - name: dind-home
         ephemeral:
           volumeClaimTemplate:
             spec:
               accessModes: ["ReadWriteOnce"]
-              storageClassName: "gp3"
+              storageClassName: ${volume_requests_storage_type}
               resources:
                 requests:
-                  storage: ${volume_requests_storage}
+                  storage: ${volume_requests_storage_size}
       - name: stopfile-volume
         emptyDir: {}
       - name: runner-diag

@@ -118,7 +118,12 @@ variable "container_requests_memory" {
   description = "Container memory requests."
 }
 
-variable "volume_requests_storage" {
+variable "volume_requests_storage_size" {
+  type        = string
+  description = "Volume storage requests."
+}
+
+variable "volume_requests_storage_type" {
   type        = string
   description = "Volume storage requests."
 }

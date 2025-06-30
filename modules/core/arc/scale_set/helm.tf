@@ -46,23 +46,24 @@ resource "helm_release" "gha_runner_scale_set" {
     templatefile(
       "${path.module}/template_files/${var.scale_set_type}.yml.tftpl",
       {
-        config_secret              = var.secret_name
-        max_runners                = var.runner_size.max_runners
-        min_runners                = var.runner_size.min_runners
-        runner_group_name          = var.runner_group_name
-        scale_set_name             = var.scale_set_name
-        container_limits_cpu       = var.container_limits_cpu
-        container_limits_memory    = var.container_limits_memory
-        container_requests_cpu     = var.container_requests_cpu
-        container_requests_memory  = var.container_requests_memory
-        volume_requests_storage    = var.volume_requests_storage
-        container_ecr_registries   = var.container_ecr_registries
-        service_account            = var.service_account
-        github_config_url          = local.github_config_url
-        controller_namespace       = var.controller.namespace
-        controller_service_account = var.controller.service_account
-        container_actions_runner   = var.container_actions_runner
-        runner_role                = aws_iam_role.runner_role.arn
+        config_secret                = var.secret_name
+        max_runners                  = var.runner_size.max_runners
+        min_runners                  = var.runner_size.min_runners
+        runner_group_name            = var.runner_group_name
+        scale_set_name               = var.scale_set_name
+        container_limits_cpu         = var.container_limits_cpu
+        container_limits_memory      = var.container_limits_memory
+        container_requests_cpu       = var.container_requests_cpu
+        container_requests_memory    = var.container_requests_memory
+        volume_requests_storage_size = var.volume_requests_storage_size
+        volume_requests_storage_type = var.volume_requests_storage_type
+        container_ecr_registries     = var.container_ecr_registries
+        service_account              = var.service_account
+        github_config_url            = local.github_config_url
+        controller_namespace         = var.controller.namespace
+        controller_service_account   = var.controller.service_account
+        container_actions_runner     = var.container_actions_runner
+        runner_role                  = aws_iam_role.runner_role.arn
       }
     )
   ]

@@ -35,18 +35,19 @@ module "scale_sets" {
   runner_group_name = var.runner_group_name
 
   # Runner Configuration
-  container_actions_runner  = each.value.runner_config.container_actions_runner
-  container_limits_cpu      = each.value.runner_config.container_limits_cpu
-  container_limits_memory   = each.value.runner_config.container_limits_memory
-  container_requests_cpu    = each.value.runner_config.container_requests_cpu
-  container_requests_memory = each.value.runner_config.container_requests_memory
-  volume_requests_storage   = each.value.runner_config.volume_requests_storage
-  container_ecr_registries  = each.value.runner_config.container_ecr_registries
-  scale_set_name            = each.value.runner_config.scale_set_name
-  scale_set_type            = each.value.runner_config.scale_set_type
-  service_account           = each.value.runner_config.prefix
-  secret_name               = var.controller_config.release_name
-  runner_size               = each.value.runner_config.runner_size
+  container_actions_runner     = each.value.runner_config.container_actions_runner
+  container_limits_cpu         = each.value.runner_config.container_limits_cpu
+  container_limits_memory      = each.value.runner_config.container_limits_memory
+  container_requests_cpu       = each.value.runner_config.container_requests_cpu
+  container_requests_memory    = each.value.runner_config.container_requests_memory
+  volume_requests_storage_size = each.value.runner_config.volume_requests_storage_size
+  volume_requests_storage_type = each.value.runner_config.volume_requests_storage_type
+  container_ecr_registries     = each.value.runner_config.container_ecr_registries
+  scale_set_name               = each.value.runner_config.scale_set_name
+  scale_set_type               = each.value.runner_config.scale_set_type
+  service_account              = each.value.runner_config.prefix
+  secret_name                  = var.controller_config.release_name
+  runner_size                  = each.value.runner_config.runner_size
   controller = {
     service_account = each.value.runner_config.controller.service_account
     namespace       = each.value.runner_config.controller.namespace

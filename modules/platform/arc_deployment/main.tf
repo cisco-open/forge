@@ -34,7 +34,8 @@ module "arc" {
         container_limits_memory             = val.container_limits_memory
         container_requests_cpu              = val.container_requests_cpu
         container_requests_memory           = val.container_requests_memory
-        volume_requests_storage             = val.volume_requests_storage
+        volume_requests_storage_type        = val.volume_requests_storage_type
+        volume_requests_storage_size        = val.volume_requests_storage_size
         container_ecr_registries            = var.tenant_configs.ecr_registries
         runner_iam_role_managed_policy_arns = var.runner_configs.runner_iam_role_managed_policy_arns
         controller = {
