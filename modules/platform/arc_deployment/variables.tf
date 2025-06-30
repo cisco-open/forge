@@ -31,6 +31,7 @@ variable "runner_configs" {
       container_actions_runner  = string
       container_limits_cpu      = string
       container_limits_memory   = string
+      volume_requests_storage   = string
       container_requests_cpu    = string
       container_requests_memory = string
     }))
