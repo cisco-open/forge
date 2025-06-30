@@ -17,7 +17,7 @@ spec:
   blockDeviceMappings:
     - deviceName: /dev/sda1
       ebs:
-        volumeSize: ${disk_size}
+        volumeSize: ${disk_size}Gi
         volumeType: ${disk_type}
         encrypted: true
         iops: ${disk_iops}
@@ -27,5 +27,5 @@ spec:
     maxPods: 100
   tags:
 %{ for k, v in tags }
-    ${k}: "${v}"
+    ${k}: '${v}'
 %{ endfor }
