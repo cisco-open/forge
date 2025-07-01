@@ -25,7 +25,7 @@ module "ebs_csi_irsa_role" {
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "20.35.0"
+  version = "20.37.1"
 
   cluster_name    = var.cluster_name
   cluster_version = var.cluster_version
@@ -33,7 +33,7 @@ module "eks" {
   vpc_id     = var.vpc_id
   subnet_ids = var.subnet_ids
 
-  cluster_endpoint_public_access = true
+  cluster_endpoint_public_access = var.cluster_endpoint_public_access
 
   authentication_mode = "API_AND_CONFIG_MAP"
 

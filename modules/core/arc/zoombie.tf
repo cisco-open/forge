@@ -1,4 +1,5 @@
 resource "kubernetes_service_account_v1" "zombie_runner_cleanup" {
+  count = var.migrate_arc_cluster == false ? 1 : 0
   metadata {
     name      = "zombie-runner-cleanup"
     namespace = var.controller_config.namespace
@@ -6,6 +7,7 @@ resource "kubernetes_service_account_v1" "zombie_runner_cleanup" {
 }
 
 resource "kubernetes_role_v1" "zombie_runner_cleanup" {
+  count = var.migrate_arc_cluster == false ? 1 : 0
   metadata {
     name      = "zombie-runner-cleanup"
     namespace = var.controller_config.namespace
@@ -25,6 +27,7 @@ resource "kubernetes_role_v1" "zombie_runner_cleanup" {
 }
 
 resource "kubernetes_role_binding_v1" "zombie_runner_cleanup" {
+  count = var.migrate_arc_cluster == false ? 1 : 0
   metadata {
     name      = "zombie-runner-cleanup"
     namespace = var.controller_config.namespace
@@ -32,18 +35,19 @@ resource "kubernetes_role_binding_v1" "zombie_runner_cleanup" {
 
   subject {
     kind      = "ServiceAccount"
-    name      = kubernetes_service_account_v1.zombie_runner_cleanup.metadata[0].name
-    namespace = kubernetes_service_account_v1.zombie_runner_cleanup.metadata[0].namespace
+    name      = kubernetes_service_account_v1.zombie_runner_cleanup[0].metadata[0].name
+    namespace = kubernetes_service_account_v1.zombie_runner_cleanup[0].metadata[0].namespace
   }
 
   role_ref {
     api_group = "rbac.authorization.k8s.io"
     kind      = "Role"
-    name      = kubernetes_role_v1.zombie_runner_cleanup.metadata[0].name
+    name      = kubernetes_role_v1.zombie_runner_cleanup[0].metadata[0].name
   }
 }
 
 resource "kubernetes_cron_job_v1" "zombie_runner_cleanup" {
+  count = var.migrate_arc_cluster == false ? 1 : 0
   metadata {
     name      = "zombie-runner-cleanup"
     namespace = var.controller_config.namespace
@@ -66,7 +70,7 @@ resource "kubernetes_cron_job_v1" "zombie_runner_cleanup" {
           }
 
           spec {
-            service_account_name = kubernetes_service_account_v1.zombie_runner_cleanup.metadata[0].name
+            service_account_name = kubernetes_service_account_v1.zombie_runner_cleanup[0].metadata[0].name
             restart_policy       = "OnFailure"
 
             container {

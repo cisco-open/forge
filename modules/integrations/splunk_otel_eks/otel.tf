@@ -64,4 +64,8 @@ resource "helm_release" "splunk_otel_collector" {
     name  = "agent.discovery.enabled"
     value = var.splunk_otel_collector.discovery
   }
+
+  upgrade_install = true
+  cleanup_on_fail = true
+  timeout         = 1200
 }

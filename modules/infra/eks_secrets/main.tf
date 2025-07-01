@@ -38,7 +38,7 @@ resource "aws_kms_key" "regional" {
   for_each = local.all_regions
   provider = aws.by_region[each.value]
 
-  description         = "Customer managed CMK for SecretsManager in ${each.key}"
+  description         = "Customer managed CMK for EKS Secrets in ${each.key}"
   enable_key_rotation = true
 
   tags     = local.all_security_tags
@@ -47,6 +47,7 @@ resource "aws_kms_key" "regional" {
 
 resource "aws_kms_alias" "regional_alias" {
   for_each = aws_kms_key.regional
+  provider = aws.by_region[each.key]
 
   name          = "alias/eks-cmk-${each.key}"
   target_key_id = each.value.id

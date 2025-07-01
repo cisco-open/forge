@@ -1,12 +1,12 @@
 resource "kubernetes_namespace" "controller_namespace" {
-  count = var.migrate_arc_cluster == false ? 0 : 1
+  count = var.migrate_arc_cluster == false ? 1 : 0
   metadata {
     name = var.namespace
   }
 }
 
 resource "kubernetes_secret" "github_app" {
-  count = var.migrate_arc_cluster == false ? 0 : 1
+  count = var.migrate_arc_cluster == false ? 1 : 0
 
   metadata {
     name      = var.release_name

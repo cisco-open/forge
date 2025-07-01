@@ -54,7 +54,7 @@ resource "aws_iam_role_policy_attachment" "runner_role_policy_attachment" {
 }
 
 resource "kubernetes_service_account_v1" "runner_sa" {
-  count = var.migrate_arc_cluster == false ? 0 : 1
+  count = var.migrate_arc_cluster == false ? 1 : 0
   metadata {
     name      = var.service_account
     namespace = var.namespace
@@ -62,7 +62,7 @@ resource "kubernetes_service_account_v1" "runner_sa" {
 }
 
 resource "aws_eks_pod_identity_association" "eks_pod_identity" {
-  count           = var.migrate_arc_cluster == false ? 0 : 1
+  count           = var.migrate_arc_cluster == false ? 1 : 0
   cluster_name    = var.cluster_name
   namespace       = var.namespace
   service_account = var.service_account

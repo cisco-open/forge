@@ -12,7 +12,7 @@
 | Name | Version |
 |------|---------|
 | <a name="provider_aws"></a> [aws](#provider\_aws) | 5.100.0 |
-| <a name="provider_splunk"></a> [splunk](#provider\_splunk) | 1.4.30 |
+| <a name="provider_splunk"></a> [splunk](#provider\_splunk) | 1.4.31 |
 
 ## Modules
 

@@ -129,9 +129,9 @@ variable "arc_runner_specs" {
 }
 
 variable "migrate_arc_cluster" {
-  type        = string
-  description = "Name of the EKS cluster to migrate to."
-
+  type        = bool
+  description = "Flag to indicate if the cluster is being migrated."
+  default     = false
 }
 
 variable "tags" {

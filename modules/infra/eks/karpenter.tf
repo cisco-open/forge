@@ -1,6 +1,6 @@
 module "karpenter" {
   source  = "terraform-aws-modules/eks/aws//modules/karpenter"
-  version = "20.35.0"
+  version = "20.37.1"
 
   namespace    = "karpenter"
   cluster_name = var.cluster_name
@@ -21,7 +21,7 @@ module "karpenter" {
 
   depends_on = [
     module.self_managed_node_group,
-    null_resource.apply_tigera_operator,
+    null_resource.create_calico_installation,
     data.aws_eks_cluster_auth.cluster,
     aws_eks_addon.aws_ebs_csi_driver,
     aws_eks_addon.eks_pod_identity_agent,

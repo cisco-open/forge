@@ -18,6 +18,12 @@ variable "cluster_version" {
   type        = string
 }
 
+variable "cluster_endpoint_public_access" {
+  description = "Whether the EKS cluster endpoint is publicly accessible"
+  type        = bool
+  default     = true
+}
+
 variable "cluster_size" {
   description = "The size config of the EKS cluster"
   type = object({
@@ -28,7 +34,6 @@ variable "cluster_size" {
   })
 }
 
-
 variable "cluster_volume" {
   description = "The volume config of the EKS cluster"
   type = object({
@@ -37,7 +42,6 @@ variable "cluster_volume" {
     throughput = number
     type       = string
   })
-
 }
 
 variable "subnet_ids" {

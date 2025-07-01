@@ -1,6 +1,6 @@
 module "self_managed_node_group" {
   source  = "terraform-aws-modules/eks/aws//modules/self-managed-node-group"
-  version = "20.35.0"
+  version = "20.37.1"
 
   name                = var.cluster_name
   cluster_name        = var.cluster_name
@@ -23,6 +23,10 @@ module "self_managed_node_group" {
         delete_on_termination = true
       }
     }
+  }
+
+  iam_role_additional_policies = {
+    AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
   }
 
   // The following variables are necessary if you decide to use the module outside of the parent EKS module context.
