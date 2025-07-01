@@ -116,3 +116,9 @@ variable "controller_config" {
     }
 EOT
 }
+
+variable "migrate_arc_cluster" {
+  type        = bool
+  description = "Flag to indicate if the cluster should be migrated."
+  default     = false
+}

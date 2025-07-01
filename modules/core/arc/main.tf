@@ -13,6 +13,8 @@ module "controller" {
   }
 
   github_app = var.github_app
+
+  migrate_arc_cluster = var.migrate_arc_cluster
 }
 
 module "scale_sets" {
@@ -22,6 +24,8 @@ module "scale_sets" {
   # EKS Cluster Configuration
   cluster_name      = data.aws_eks_cluster.cluster.id
   oidc_provider_arn = data.aws_iam_openid_connect_provider.cluster.arn
+
+  migrate_arc_cluster = var.migrate_arc_cluster
 
   # Helm Chart Configuration
   release_name  = each.value.runner_set_configs.release_name

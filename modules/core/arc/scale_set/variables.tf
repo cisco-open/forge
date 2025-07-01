@@ -142,3 +142,9 @@ variable "oidc_provider_arn" {
   type        = string
   description = "OIDC provider ARN for the EKS cluster."
 }
+
+variable "migrate_arc_cluster" {
+  type        = bool
+  description = "Flag to indicate if the cluster is being migrated."
+  default     = false
+}

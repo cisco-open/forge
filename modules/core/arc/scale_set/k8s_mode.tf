@@ -1,5 +1,5 @@
 resource "kubernetes_role" "k8s" {
-  count = var.scale_set_type == "k8s" ? 1 : 0
+  count = var.scale_set_type == "k8s" && var.migrate_arc_cluster == false ? 1 : 0
 
   metadata {
     name      = var.service_account
@@ -38,7 +38,7 @@ resource "kubernetes_role" "k8s" {
 }
 
 resource "kubernetes_role_binding" "k8s" {
-  count = var.scale_set_type == "k8s" ? 1 : 0
+  count = var.scale_set_type == "k8s" && var.migrate_arc_cluster == false ? 1 : 0
 
   metadata {
     name      = var.service_account

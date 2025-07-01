@@ -53,5 +53,6 @@ module "self_managed_node_group" {
 
   depends_on = [
     time_sleep.wait_300_seconds,
+    null_resource.create_calico_installation
   ]
 }

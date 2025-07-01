@@ -1,4 +1,5 @@
 resource "helm_release" "gha_runner_scale_set_controller" {
+  count     = var.migrate_arc_cluster == false ? 0 : 1
   name      = var.release_name
   namespace = var.namespace
   chart     = var.chart_name

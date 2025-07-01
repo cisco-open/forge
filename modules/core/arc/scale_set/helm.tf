@@ -1,4 +1,5 @@
 resource "kubernetes_config_map" "hook_extension" {
+  count = var.migrate_arc_cluster == false ? 0 : 1
   metadata {
     name      = "hook-extension-${var.scale_set_name}"
     namespace = var.namespace
@@ -23,6 +24,7 @@ resource "kubernetes_config_map" "hook_extension" {
 }
 
 resource "kubernetes_config_map" "hook_pre_post_job" {
+  count = var.migrate_arc_cluster == false ? 0 : 1
   metadata {
     name      = "hook-pre-post-job-${var.scale_set_name}"
     namespace = var.namespace
@@ -35,6 +37,7 @@ resource "kubernetes_config_map" "hook_pre_post_job" {
 }
 
 resource "helm_release" "gha_runner_scale_set" {
+  count     = var.migrate_arc_cluster == false ? 0 : 1
   name      = var.release_name
   namespace = var.namespace
   chart     = var.chart_name

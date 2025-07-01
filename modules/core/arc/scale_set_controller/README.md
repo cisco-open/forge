@@ -35,6 +35,7 @@ No modules.
 | <a name="input_chart_version"></a> [chart\_version](#input\_chart\_version) | Chart version for the Helm chart | `string` | n/a | yes |
 | <a name="input_controller_config"></a> [controller\_config](#input\_controller\_config) | n/a | <pre>object({<br/>    name = string<br/>  })</pre> | n/a | yes |
 | <a name="input_github_app"></a> [github\_app](#input\_github\_app) | GitHub App configuration | <pre>object({<br/>    key_base64      = string<br/>    id              = string<br/>    installation_id = string<br/>  })</pre> | n/a | yes |
+| <a name="input_migrate_arc_cluster"></a> [migrate\_arc\_cluster](#input\_migrate\_arc\_cluster) | Flag to indicate if the cluster is being migrated. | `bool` | `false` | no |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace for chart installation | `string` | n/a | yes |
 | <a name="input_release_name"></a> [release\_name](#input\_release\_name) | Name of the Helm release | `string` | n/a | yes |
 

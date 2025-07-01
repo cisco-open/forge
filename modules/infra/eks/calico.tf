@@ -1,3 +1,19 @@
+resource "null_resource" "apply_tigera_operator" {
+  provisioner "local-exec" {
+    command = "kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.1/manifests/tigera-operator.yaml"
+  }
+
+  depends_on = [
+    null_resource.update_kubeconfig,
+  ]
+}
+
+locals {
+  dockerhub_user  = data.aws_secretsmanager_secret_version.secrets["dockerhub_user"].secret_string
+  dockerhub_token = data.aws_secretsmanager_secret_version.secrets["dockerhub_token"].secret_string
+  dockerhub_email = data.aws_secretsmanager_secret_version.secrets["dockerhub_email"].secret_string
+  dockerhub_auth  = base64encode("${local.dockerhub_user}:${local.dockerhub_token}")
+}
 
 resource "kubernetes_secret" "calico_image_pull" {
   metadata {
@@ -8,26 +24,20 @@ resource "kubernetes_secret" "calico_image_pull" {
   type = "kubernetes.io/dockerconfigjson"
 
   data = {
-    ".dockerconfigjson" = base64encode(jsonencode({
+    ".dockerconfigjson" = jsonencode({
       auths = {
         "https://index.docker.io/v1/" = {
-          username = data.aws_secretsmanager_secret_version.secrets["dockerhub_user"].secret_string
-          password = data.aws_secretsmanager_secret_version.secrets["dockerhub_token"].secret_string
-          email    = data.aws_secretsmanager_secret_version.secrets["dockerhub_email"].secret_string
-          auth     = base64encode("${data.aws_secretsmanager_secret_version.secrets["dockerhub_user"].secret_string}:${data.aws_secretsmanager_secret_version.secrets["dockerhub_token"].secret_string}")
+          "username" = local.dockerhub_user
+          "password" = local.dockerhub_token
+          "email"    = local.dockerhub_email
+          "auth"     = local.dockerhub_auth
         }
       }
-    }))
-  }
-}
-
-resource "null_resource" "apply_tigera_operator" {
-  provisioner "local-exec" {
-    command = "kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.1/manifests/tigera-operator.yaml"
+    })
   }
 
   depends_on = [
-    null_resource.update_kubeconfig,
+    null_resource.apply_tigera_operator,
   ]
 }
 
@@ -51,7 +61,7 @@ EOF
   }
 
   depends_on = [
-    kubernetes_secret.calico_image_pull,
     null_resource.apply_tigera_operator,
+    kubernetes_secret.calico_image_pull,
   ]
 }

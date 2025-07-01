@@ -128,6 +128,12 @@ variable "arc_runner_specs" {
   }))
 }
 
+variable "migrate_arc_cluster" {
+  type        = string
+  description = "Name of the EKS cluster to migrate to."
+
+}
+
 variable "tags" {
   type        = map(string)
   description = "A map of tags to apply to resources."

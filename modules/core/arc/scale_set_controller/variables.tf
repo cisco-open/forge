@@ -32,3 +32,9 @@ variable "github_app" {
     installation_id = string
   })
 }
+
+variable "migrate_arc_cluster" {
+  type        = bool
+  description = "Flag to indicate if the cluster is being migrated."
+  default     = false
+}

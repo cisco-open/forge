@@ -15,6 +15,7 @@ module "arc_runners" {
 
   runner_configs = {
     arc_cluster_name                    = var.arc_cluster_name
+    migrate_arc_cluster                 = var.migrate_arc_cluster
     prefix                              = var.deployment_config.prefix
     ghes_url                            = var.ghes_url
     ghes_org                            = var.ghes_org

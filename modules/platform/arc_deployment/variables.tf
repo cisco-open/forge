@@ -19,6 +19,7 @@ variable "runner_configs" {
       id              = string
       installation_id = string
     })
+    migrate_arc_cluster                 = optional(bool, false)
     runner_iam_role_managed_policy_arns = list(string)
     runner_group_name                   = string
     runner_specs = map(object({
