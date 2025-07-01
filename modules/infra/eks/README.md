@@ -18,6 +18,7 @@
 | <a name="provider_aws"></a> [aws](#provider\_aws) | 5.100.0 |
 | <a name="provider_aws.karpenter"></a> [aws.karpenter](#provider\_aws.karpenter) | 5.100.0 |
 | <a name="provider_helm"></a> [helm](#provider\_helm) | 2.17.0 |
+| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | 2.36.0 |
 | <a name="provider_null"></a> [null](#provider\_null) | 3.2.3 |
 | <a name="provider_time"></a> [time](#provider\_time) | 0.13.1 |
 
@@ -37,6 +38,7 @@
 | [aws_eks_addon.aws_ebs_csi_driver](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_addon) | resource |
 | [aws_eks_addon.eks_pod_identity_agent](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_addon) | resource |
 | [helm_release.karpenter](https://registry.terraform.io/providers/hashicorp/helm/2.17.0/docs/resources/release) | resource |
+| [kubernetes_secret.calico_image_pull](https://registry.terraform.io/providers/hashicorp/kubernetes/2.36.0/docs/resources/secret) | resource |
 | [null_resource.apply_ec2_node_class](https://registry.terraform.io/providers/hashicorp/null/3.2.3/docs/resources/resource) | resource |
 | [null_resource.apply_node_pool](https://registry.terraform.io/providers/hashicorp/null/3.2.3/docs/resources/resource) | resource |
 | [null_resource.apply_tigera_operator](https://registry.terraform.io/providers/hashicorp/null/3.2.3/docs/resources/resource) | resource |
@@ -51,6 +53,8 @@
 | [aws_eks_addon_version.eks_pod_identity_agent](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_addon_version) | data source |
 | [aws_eks_cluster.cluster](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster) | data source |
 | [aws_eks_cluster_auth.cluster](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster_auth) | data source |
+| [aws_secretsmanager_secret.secrets](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/secretsmanager_secret) | data source |
+| [aws_secretsmanager_secret_version.secrets](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/secretsmanager_secret_version) | data source |
 
 ## Inputs
 
