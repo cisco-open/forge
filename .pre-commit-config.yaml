@@ -125,7 +125,7 @@ repos:
       - id: terraform_tflint
         args:
           - --hook-config=--tf-path=tofu
-        exclude: (modules/integrations/splunk_cloud_data_manager|modules/infra/forge_subscription|modules/integrations/splunk_secrets/)
+        exclude: (modules/integrations/splunk_cloud_data_manager|modules/infra/forge_subscription|modules/integrations/splunk_secrets/|modules/infra/eks_secrets/)
         always_run: true
       - id: terraform_validate
         args:
@@ -140,7 +140,7 @@ repos:
         args:
           - --hook-config=--tf-path=tofu
           - --args=--config=.terraform-docs.yml
-        exclude: (modules/integrations/splunk_cloud_data_manager|modules/infra/forge_subscription|modules/integrations/splunk_secrets/)
+        exclude: (modules/integrations/splunk_cloud_data_manager|modules/infra/forge_subscription|modules/integrations/splunk_secrets/|modules/infra/eks_secrets/)
 
   # Security Hooks
   - repo: https://github.com/gitleaks/gitleaks
