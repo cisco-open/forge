@@ -69,7 +69,7 @@ template:
             memory: ${container_requests_memory}
 
       - name: runner-logs
-        image: busybox
+        image: public.ecr.aws/docker/library/busybox:stable
         command:
           - sh
           - -c
@@ -96,7 +96,7 @@ template:
             memory: "64Mi"
 
       - name: hook
-        image: busybox
+        image: public.ecr.aws/docker/library/busybox:stable
         command:
           - sh
           - -c

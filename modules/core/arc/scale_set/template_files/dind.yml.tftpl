@@ -37,7 +37,7 @@ template:
 
       - name: init-dind-rootless
         imagePullPolicy: Always
-        image: docker:dind-rootless
+        image: public.ecr.aws/docker/library/docker:dind-rootless
         command:
           - sh
           - -c
@@ -127,7 +127,7 @@ template:
             memory: ${container_requests_memory}
 
       - name: dind
-        image: docker:dind-rootless
+        image: public.ecr.aws/docker/library/docker:dind-rootless
         imagePullPolicy: Always
         args: ["dockerd", "--host=unix:///home/runner/var/run/docker.sock"]
         securityContext:
@@ -157,7 +157,7 @@ template:
             memory: ${container_requests_memory}
 
       - name: runner-logs
-        image: busybox
+        image: public.ecr.aws/docker/library/busybox:stable
         command:
           - sh
           - -c
@@ -184,7 +184,7 @@ template:
             memory: "64Mi"
 
       - name: hook
-        image: busybox
+        image: public.ecr.aws/docker/library/busybox:stable
         command:
           - sh
           - -c
