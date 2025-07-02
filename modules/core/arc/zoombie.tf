@@ -4,6 +4,11 @@ resource "kubernetes_service_account_v1" "zombie_runner_cleanup" {
     name      = "zombie-runner-cleanup"
     namespace = var.controller_config.namespace
   }
+
+  depends_on = [
+    module.controller,
+    module.scale_sets
+  ]
 }
 
 resource "kubernetes_role_v1" "zombie_runner_cleanup" {
@@ -24,6 +29,11 @@ resource "kubernetes_role_v1" "zombie_runner_cleanup" {
     resources  = ["ephemeralrunners"]
     verbs      = ["get", "list", "delete", "watch"]
   }
+
+  depends_on = [
+    module.controller,
+    module.scale_sets
+  ]
 }
 
 resource "kubernetes_role_binding_v1" "zombie_runner_cleanup" {
@@ -44,6 +54,11 @@ resource "kubernetes_role_binding_v1" "zombie_runner_cleanup" {
     kind      = "Role"
     name      = kubernetes_role_v1.zombie_runner_cleanup[0].metadata[0].name
   }
+
+  depends_on = [
+    module.controller,
+    module.scale_sets
+  ]
 }
 
 resource "kubernetes_cron_job_v1" "zombie_runner_cleanup" {
@@ -90,4 +105,9 @@ resource "kubernetes_cron_job_v1" "zombie_runner_cleanup" {
       }
     }
   }
+
+  depends_on = [
+    module.controller,
+    module.scale_sets
+  ]
 }
