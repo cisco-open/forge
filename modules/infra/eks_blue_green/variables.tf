@@ -26,6 +26,7 @@ variable "default_tags" {
 variable "clusters" {
   type = object({
     blue = object({
+      tags            = map(string)
       cluster_name    = string
       cluster_version = string
       cluster_size = object({
@@ -46,6 +47,7 @@ variable "clusters" {
       cluster_ami_owners = list(string)
     })
     green = object({
+      tags            = map(string)
       cluster_name    = string
       cluster_version = string
       cluster_size = object({
