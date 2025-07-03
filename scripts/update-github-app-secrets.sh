@@ -27,7 +27,7 @@ validate_pem_file() {
 get_secret_name() {
     local terragrunt_dir="$1"
     local type="$2"
-    terragrunt output -json --terragrunt-working-dir "$terragrunt_dir" | jq -r --arg t "$type" '
+    terragrunt output -json --working-dir "$terragrunt_dir" | jq -r --arg t "$type" '
     .tenant.value as $tenant |
     "/cicd/common/\($tenant.name)/\($tenant.vpc_alias)/github_actions_runners_app_" + $t
   '
