@@ -2,8 +2,25 @@
 set -euo pipefail
 
 usage() {
-    echo "Usage: $0 --tf-dir <terragrunt directory> --context <k8s context alias>"
+    echo "Usage: $0 --tf-dir <terragrunt directory>"
     exit 1
+}
+
+get_terragrunt_var() {
+    local var_name="$1"
+    local dir="$2"
+    local value
+
+    pushd "$dir" >/dev/null
+    value=$(TF_LOG=ERROR terragrunt console <<<"var.${var_name}" 2>/dev/null | tail -n1 | sed 's/^"//;s/"$//')
+    popd >/dev/null
+
+    if [[ -z "$value" ]]; then
+        echo "❌ Terragrunt variable '${var_name}' not found or empty in ${dir}" >&2
+        exit 1
+    fi
+
+    echo "$value"
 }
 
 parse_args() {
@@ -13,10 +30,6 @@ parse_args() {
             TF_DIR="$2"
             shift 2
             ;;
-        --context)
-            FROM_CTX="$2"
-            shift 2
-            ;;
         *)
             echo "Unknown arg: $1"
             usage
@@ -24,7 +37,7 @@ parse_args() {
         esac
     done
 
-    [[ -z "${TF_DIR:-}" || -z "${FROM_CTX:-}" ]] && usage
+    [[ -z "${TF_DIR:-}" ]] && usage
 
     TENANT=$(basename "$TF_DIR")
     [[ -z "${TENANT:-}" ]] && {
@@ -32,6 +45,18 @@ parse_args() {
         exit 1
     }
     CONFIG_FILE="${TF_DIR}/config.yml"
+
+    arc_cluster_name=$(get_terragrunt_var arc_cluster_name "$TF_DIR")
+    aws_profile=$(get_terragrunt_var aws_profile "$TF_DIR")
+    aws_region=$(get_terragrunt_var aws_region "$TF_DIR")
+
+    aws eks update-kubeconfig \
+        --region "$aws_region" \
+        --name "$arc_cluster_name" \
+        --alias "${arc_cluster_name}-${aws_profile}-${aws_region}" \
+        --profile "$aws_profile"
+
+    FROM_CTX="$arc_cluster_name"
 }
 
 detect_clusters() {

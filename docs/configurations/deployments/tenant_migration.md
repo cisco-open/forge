@@ -47,7 +47,7 @@ To simplify and standardize the migration process, an automation script is avail
 Run the script by specifying the tenant’s Terraform directory and Kubernetes context alias:
 
 ```
-./scripts/migrate-tenant.sh --tf-dir /full/path/to/tenant_dir --context <kube-context-alias>
+./scripts/migrate-tenant.sh --tf-dir /full/path/to/tenant_dir
 ```
 
 The script will handle the rest, reducing human error and speeding up the migration process.
