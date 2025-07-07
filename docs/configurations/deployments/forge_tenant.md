@@ -69,8 +69,8 @@ From the environment root directory, deploy all tenants at once:
 
 ```sh
 cd examples/deployments/forge-tenant/terragrunt/environments/prod/
-terragrunt run-all plan
-terragrunt run-all apply
+terragrunt plan --all
+terragrunt apply --all
 ```
 
 Or deploy a single tenant individually by navigating to its folder:

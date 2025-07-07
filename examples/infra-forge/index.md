@@ -29,7 +29,7 @@ terragrunt apply terragrunt/environments/prod/regions/eu-west-1/vpcs/sl/tenants/
 ### Apply All Modules Recursively
 
 ```bash
-terragrunt run-all apply terragrunt/environments/prod/
+terragrunt apply --all terragrunt/environments/prod/
 ```
 
-> **Tip:** Always run `terragrunt run-all plan` first to validate changes before applying.
+> **Tip:** Always run `terragrunt plan --all` first to validate changes before applying.

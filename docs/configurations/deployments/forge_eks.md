@@ -68,8 +68,8 @@ To deploy all modules:
 
 ```sh
 cd examples/deployments/forge-eks/terragrunt/environments/prod/
-terragrunt run-all plan
-terragrunt run-all apply
+terragrunt plan --all
+terragrunt apply --all
 ```
 
 To deploy only the EKS module:
