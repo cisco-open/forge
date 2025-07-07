@@ -19,6 +19,26 @@ data "aws_iam_policy_document" "lambda_policy_document" {
       "arn:aws:s3:::${aws_s3_bucket.aws_billing_report.id}/*"
     ]
   }
+
+  statement {
+    actions = [
+      "secretsmanager:GetSecretValue"
+    ]
+    effect = "Allow"
+    resources = [
+      for s in data.aws_secretsmanager_secret.secrets : s.arn
+    ]
+  }
+
+  statement {
+    actions = [
+      "kms:Decrypt"
+    ]
+    effect = "Allow"
+    resources = [
+      for s in data.aws_secretsmanager_secret.secrets : s.kms_key_id
+    ]
+  }
 }
 
 resource "aws_iam_policy" "lambda_policy" {

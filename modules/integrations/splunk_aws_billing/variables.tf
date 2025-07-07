@@ -10,8 +10,9 @@ variable "aws_region" {
 
 variable "splunk_aws_billing_config" {
   type = object({
-    splunk_hec_url = string
-    splunk_index   = string
+    splunk_hec_url     = string
+    splunk_index       = string
+    splunk_metrics_url = string
   })
   description = "Configuration object for Splunk AWS billing integration."
 }

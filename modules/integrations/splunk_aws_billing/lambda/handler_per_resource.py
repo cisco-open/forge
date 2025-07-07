@@ -4,6 +4,7 @@ import io
 import json
 import os
 import re
+import time
 from decimal import ROUND_HALF_UP, Decimal
 from urllib.parse import unquote
 
@@ -14,6 +15,8 @@ import requests
 SPLUNK_HEC_URL = os.environ['SPLUNK_HEC_URL']
 SPLUNK_HEC_TOKEN = os.environ['SPLUNK_HEC_TOKEN']
 SPLUNK_INDEX = os.environ.get('SPLUNK_INDEX')
+SPLUNK_METRICS_TOKEN = os.environ['SPLUNK_METRICS_TOKEN']
+SPLUNK_METRICS_URL = os.environ['SPLUNK_METRICS_URL']
 
 s3 = boto3.client('s3')
 
@@ -32,6 +35,29 @@ def send_to_splunk(event):
         print(f'[HTTPError] {e.response.status_code} - {e.response.text}')
     except requests.RequestException as e:
         print(f'[RequestException] Error sending to Splunk: {e}')
+
+
+def send_metric_to_o11y(metric_name, value, timestamp, dimensions):
+    headers = {
+        'X-SF-TOKEN': SPLUNK_METRICS_TOKEN,
+        'Content-Type': 'application/json'
+    }
+    payload = {
+        'gauge': [{
+            'metric': metric_name,
+            'value': value,
+            'timestamp': timestamp * 1000,
+            'dimensions': dimensions
+        }]
+    }
+    try:
+        resp = requests.post(SPLUNK_METRICS_URL,
+                             headers=headers, json=payload, timeout=5)
+        print(
+            f'[O11y] Metric {metric_name} sent: {resp.status_code} {resp.text}')
+        resp.raise_for_status()
+    except requests.RequestException as e:
+        print(f'[O11y ERROR] Failed to send metric {metric_name}: {e}')
 
 
 def extract_arn_parts(arn):
@@ -81,13 +107,13 @@ def preprocess_df(df):
         'line_item_usage_start_date',
         'line_item_product_code',
         'user_aws_application',
+        'line_item_resource_id',
         'identity_line_item_id'
     ]
     df = df.sort_values('ingest_time', ascending=False)
     df = df.drop_duplicates(subset=key_cols, keep='first')
 
     print(f'[INFO] Preprocessed DataFrame shape: {df.shape}')
-    print(f'[INFO] Sample rows:\n{df.head()}')
     return df
 
 
@@ -105,43 +131,57 @@ def lambda_handler(event, context):
         df = preprocess_df(df)
 
         grouped = df.groupby(
-            ['usage_date', 'line_item_product_code', 'user_aws_application'],
+            ['usage_date', 'line_item_resource_id',
+                'line_item_product_code', 'user_aws_application'],
             as_index=False
         ).agg({
             'line_item_unblended_cost': 'sum',
             'line_item_net_unblended_cost': 'sum'
         })
 
-        print(f'[INFO] Grouped {len(grouped)} cost records to send to Splunk')
+        now_ts = int(time.time())
+
+        print(f'[INFO] Grouped {len(grouped)} records for Splunk')
 
         for _, row in grouped.iterrows():
             fields = extract_arn_parts(row['user_aws_application'])
-            event_time = calendar.timegm(pd.to_datetime(
-                str(row['usage_date'])).timetuple())
+            usage_date = str(row['usage_date'])
+            event_time = calendar.timegm(
+                pd.to_datetime(usage_date).timetuple())
 
             event_data = {
-                'source': 'aws-cur',
+                'source': 'aws-cur-per-resource',
                 'sourcetype': 'forgecicd:aws:billing:cur',
                 'index': SPLUNK_INDEX,
                 'event': {
                     'service': row['line_item_product_code'],
+                    'resource_id': row['line_item_resource_id'],
                     'aws_application': row['user_aws_application'],
-                    'cost_usd': float(
-                        Decimal(row['line_item_unblended_cost']).quantize(
-                            Decimal('0.00001'), rounding=ROUND_HALF_UP)
-                    ),
-                    'net_cost_usd': float(
-                        Decimal(row['line_item_net_unblended_cost']).quantize(
-                            Decimal('0.00001'), rounding=ROUND_HALF_UP)
-                    ),
-                    'usage_date': str(row['usage_date']),
+                    'cost_usd': float(Decimal(row['line_item_unblended_cost']).quantize(Decimal('0.00001'), rounding=ROUND_HALF_UP)),
+                    'net_cost_usd': float(Decimal(row['line_item_net_unblended_cost']).quantize(Decimal('0.00001'), rounding=ROUND_HALF_UP)),
+                    'usage_date': usage_date,
                     'event_time': event_time,
                     **fields
                 }
             }
 
-            print(f'[DEBUG] Sending event to Splunk: {json.dumps(event_data)}')
+            print(f'[DEBUG] Sending to HEC: {json.dumps(event_data)}')
             send_to_splunk(event_data)
+
+            dimensions = {
+                'usage_date': usage_date,
+                'service': row['line_item_product_code'],
+                'resource_id': row['resource_id'],
+                'aws_application': row['user_aws_application'],
+                **fields
+            }
+
+            print(f'[DEBUG] Sending to O11y: {json.dumps(dimensions)}')
+
+            send_metric_to_o11y('forge.per_resource.cost_usd',
+                                event_data['event']['cost_usd'], now_ts, dimensions)
+            send_metric_to_o11y('forge.per_resource.net_cost_usd',
+                                event_data['event']['net_cost_usd'], now_ts, dimensions)
 
     print('[INFO] Lambda execution finished.')
     return {'statusCode': 200}

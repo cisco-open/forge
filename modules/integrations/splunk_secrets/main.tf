@@ -18,6 +18,11 @@ locals {
       recovery_days = 7
     },
     {
+      name          = "${local.cicd_secrets_prefix}/splunk_o11y_metrics_token_aws_billing"
+      description   = "Splunk Observability Metrics token for aws billing"
+      recovery_days = 7
+    },
+    {
       name          = "${local.cicd_secrets_prefix}/splunk_cloud_username"
       description   = "Splunk Cloud Username"
       recovery_days = 7
