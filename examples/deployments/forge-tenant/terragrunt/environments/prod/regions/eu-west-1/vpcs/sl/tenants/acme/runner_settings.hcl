@@ -101,14 +101,16 @@ locals {
   arc_runner_specs = {
     for size, spec in local.runner_specs_raw.arc_runner_specs :
     size => {
-      runner_size               = spec.runner_size
-      scale_set_name            = spec.scale_set_name
-      scale_set_type            = spec.scale_set_type
-      container_actions_runner  = spec.container_actions_runner
-      container_requests_cpu    = spec.container_requests_cpu
-      container_requests_memory = spec.container_requests_memory
-      container_limits_cpu      = spec.container_limits_cpu
-      container_limits_memory   = spec.container_limits_memory
+      runner_size                  = spec.runner_size
+      scale_set_name               = spec.scale_set_name
+      scale_set_type               = spec.scale_set_type
+      container_actions_runner     = spec.container_actions_runner
+      container_requests_cpu       = spec.container_requests_cpu
+      container_requests_memory    = spec.container_requests_memory
+      container_limits_cpu         = spec.container_limits_cpu
+      container_limits_memory      = spec.container_limits_memory
+      volume_requests_storage_type = spec.volume_requests_storage_type
+      volume_requests_storage_size = spec.volume_requests_storage_size
     }
   }
 }

@@ -31,3 +31,5 @@ arc_runner_specs:
     container_requests_memory: <MEM>
     container_limits_cpu: <CPU>
     container_limits_memory: <MEM>
+    volume_requests_storage_type: <STORAGE_TYPE>
+    volume_requests_storage_size: <STORAGE_SIZE>

@@ -33,6 +33,8 @@ arc_runner_specs:
     container_requests_memory: 1Gi
     container_limits_cpu: '1'
     container_limits_memory: 2Gi
+    volume_requests_storage_type: gp2
+    volume_requests_storage_size: 10Gi
   k8s:
     runner_size:
       max_runners: 100
@@ -44,3 +46,5 @@ arc_runner_specs:
     container_requests_memory: 1Gi
     container_limits_cpu: '1'
     container_limits_memory: 2Gi
+    volume_requests_storage_type: gp2
+    volume_requests_storage_size: 10Gi
