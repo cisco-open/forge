@@ -18,18 +18,8 @@ locals {
   aws_account_id      = local.env_data.locals.aws_account_id
 
   # ─────────────────────────────────────────────────────────────────────────────
-  # Region Settings
-  # ─────────────────────────────────────────────────────────────────────────────
-  region_data = read_terragrunt_config(find_in_parent_folders("_region_wide_settings/_region.hcl"))
-  region      = local.region_data.locals.region_aws
-
-  # ─────────────────────────────────────────────────────────────────────────────
   # Tags
   # ─────────────────────────────────────────────────────────────────────────────
-  cluster_tags = {
-    TeleportDiscovery = "ForgeCICD-MT" # <REPLACE WITH YOUR VALUE>
-  }
-
   tags = {
     TeamName         = local.team_name
     TechnicalContact = local.group_email
@@ -45,34 +35,18 @@ locals {
     LastRevalidatedAt = "2025-05-15"
   }
 
-  eks_settings_data = read_terragrunt_config(find_in_parent_folders("eks/config.hcl"))
-}
-
-dependencies {
-  paths = [
-    find_in_parent_folders("eks_secrets")
-  ]
+  secrets_data = read_terragrunt_config(find_in_parent_folders("eks_secrets/config.hcl"))
 }
 
 inputs = {
   # Core Environment
-  env            = local.env_name
   aws_account_id = local.aws_account_id
   aws_profile    = local.default_aws_profile
-  aws_region     = local.region
+  aws_region     = local.default_aws_region
 
-  # EKS Cluster Settings
-  cluster_name       = local.eks_settings_data.locals.cluster_name
-  cluster_version    = local.eks_settings_data.locals.cluster_version
-  cluster_size       = local.eks_settings_data.locals.cluster_size
-  subnet_ids         = local.eks_settings_data.locals.subnet_ids
-  vpc_id             = local.eks_settings_data.locals.vpc_id
-  cluster_ami_filter = local.eks_settings_data.locals.cluster_ami_filter
-  cluster_ami_owners = local.eks_settings_data.locals.cluster_ami_owners
-  cluster_volume     = local.eks_settings_data.locals.cluster_volume
+  replica_regions = local.secrets_data.locals.replica_regions
 
   # Misc
-  cluster_tags = local.cluster_tags
   tags         = local.tags
   default_tags = local.default_tags
 }

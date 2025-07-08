@@ -9,4 +9,5 @@ locals {
   vpc_id             = local.config.vpc_id
   cluster_ami_filter = local.config.cluster_ami_filter
   cluster_ami_owners = local.config.cluster_ami_owners
+  cluster_volume     = local.config.cluster_volume
 }

@@ -62,7 +62,7 @@ repos:
       - id: script-must-have-extension
 
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.37.0
+    rev: v1.37.1
     hooks:
       - id: yamllint
 
@@ -94,7 +94,7 @@ repos:
       - id: autoflake
 
   - repo: https://github.com/PyCQA/flake8
-    rev: 7.2.0
+    rev: 7.3.0
     hooks:
       - id: flake8
         args:
@@ -102,7 +102,7 @@ repos:
 
   # JSON Schema Hooks
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.33.0
+    rev: 0.33.2
     hooks:
       - id: check-github-workflows
       - id: check-github-actions
@@ -111,12 +111,12 @@ repos:
 
   # Terraform Hooks
   - repo: https://github.com/gruntwork-io/pre-commit
-    rev: v0.1.29
+    rev: v0.1.30
     hooks:
       - id: terragrunt-hclfmt
 
   - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: v1.99.0
+    rev: v1.99.4
     hooks:
       - id: terraform_fmt
         args:
@@ -144,13 +144,13 @@ repos:
 
   # Security Hooks
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.25.1
+    rev: v8.27.2
     hooks:
       - id: gitleaks
         always_run: true
 
   # Ansible Hooks
   - repo: https://github.com/ansible-community/ansible-lint.git
-    rev: v25.2.1
+    rev: v25.6.1
     hooks:
       - id: ansible-lint

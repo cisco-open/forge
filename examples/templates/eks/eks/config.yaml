@@ -13,4 +13,9 @@ vpc_id: <VPC_ID>                              # e.g., "vpc-0abc1234def567890"
 cluster_ami_filter:
   - <AMI_FILTER>                              # e.g., "EKS1.31Ubuntu22-amd64-hvm-*"
 cluster_ami_owners:
-  - <AMI_OWNER>                              # e.g., "123456789012"
+  - <AMI_OWNER>                               # e.g., "123456789012"
+cluster_volume:
+  size: <VOLUME_SIZE>                         # e.g., 200
+  iops: <VOLUME_IOPS>                         # e.g., 3000
+  throughput: <VOLUME_THROUGHPUT>             # e.g., 125
+  type: <VOLUME_TYPE>                         # e.g., "gp3"

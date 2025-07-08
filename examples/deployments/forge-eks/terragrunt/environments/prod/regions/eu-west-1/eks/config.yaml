@@ -14,3 +14,8 @@ cluster_ami_filter:
   - EKS1.31Ubuntu22-amd64-hvm-*
 cluster_ami_owners:
   - '123456789012'
+cluster_volume:
+  size: 200
+  iops: 3000
+  throughput: 125
+  type: gp3
