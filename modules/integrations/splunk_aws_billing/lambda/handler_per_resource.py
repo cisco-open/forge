@@ -171,7 +171,7 @@ def lambda_handler(event, context):
             dimensions = {
                 'usage_date': usage_date,
                 'service': row['line_item_product_code'],
-                'resource_id': row['resource_id'],
+                'resource_id': row['line_item_resource_id'],
                 'aws_application': row['user_aws_application'],
                 **fields
             }

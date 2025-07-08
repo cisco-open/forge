@@ -126,3 +126,24 @@ resource "aws_s3_bucket_policy" "cur_bucket_policy" {
   bucket = aws_s3_bucket.aws_billing_report.id
   policy = data.aws_iam_policy_document.cur_bucket_policy.json
 }
+
+resource "aws_s3_bucket_notification" "cur_notification" {
+  bucket = aws_s3_bucket.aws_billing_report.id
+
+  lambda_function {
+    lambda_function_arn = aws_lambda_function.cur_per_service.arn
+    events              = ["s3:ObjectCreated:*"]
+    filter_prefix       = "cur-per-service/aws-billing-report-per-service/data/"
+  }
+
+  lambda_function {
+    lambda_function_arn = aws_lambda_function.cur_per_resource.arn
+    events              = ["s3:ObjectCreated:*"]
+    filter_prefix       = "cur-per-resource/aws-billing-report-per-resource/data/"
+  }
+
+  depends_on = [
+    aws_lambda_permission.cur_per_service,
+    aws_lambda_permission.cur_per_resource
+  ]
+}

@@ -148,7 +148,7 @@ def lambda_handler(event, context):
                 pd.to_datetime(usage_date).timetuple())
 
             event_data = {
-                'source': 'aws-cur',
+                'source': 'aws-cur-per-service',
                 'sourcetype': 'forgecicd:aws:billing:cur',
                 'index': SPLUNK_INDEX,
                 'event': {
