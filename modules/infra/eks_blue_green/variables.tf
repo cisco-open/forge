@@ -8,11 +8,6 @@ variable "aws_region" {
   description = "Default AWS region."
 }
 
-variable "cluster_tags" {
-  type        = map(string)
-  description = "Cluster tags"
-}
-
 variable "tags" {
   type        = map(string)
   description = "A map of tags to apply to resources."

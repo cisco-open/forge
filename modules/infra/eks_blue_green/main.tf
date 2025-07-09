@@ -15,7 +15,7 @@ module "green" {
   cluster_ami_filter = var.clusters.green.cluster_ami_filter
   cluster_ami_owners = var.clusters.green.cluster_ami_owners
 
-  cluster_tags = merge(var.cluster_tags, var.clusters.green.tags)
+  cluster_tags = var.clusters.green.tags
   tags         = var.tags
   default_tags = var.default_tags
 }
@@ -37,7 +37,7 @@ module "blue" {
   cluster_ami_filter = var.clusters.blue.cluster_ami_filter
   cluster_ami_owners = var.clusters.blue.cluster_ami_owners
 
-  cluster_tags = merge(var.cluster_tags, var.clusters.blue.tags)
+  cluster_tags = var.clusters.blue.tags
   tags         = var.tags
   default_tags = var.default_tags
 }
