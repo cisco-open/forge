@@ -1,12 +1,12 @@
 resource "null_resource" "install_dependencies_per_resource" {
   provisioner "local-exec" {
-    command = "bash ${path.module}/scripts/requirements_per_resource.sh /tmp/aws_billing/per_resource/${var.aws_profile}"
+    command = "bash ${path.module}/scripts/requirements.sh /tmp/aws_billing/per_resource/${var.aws_profile} handler_per_resource"
   }
 
   triggers = {
     lambda_source_hash        = filesha256("${path.module}/lambda/handler_per_resource.py")
     requirements_hash         = filesha256("${path.module}/lambda/requirements.txt")
-    requirements_handler_hash = filesha256("${path.module}/scripts/requirements_per_resource.sh")
+    requirements_handler_hash = filesha256("${path.module}/scripts/requirements.sh")
   }
 }
 
@@ -28,16 +28,6 @@ resource "aws_lambda_function" "cur_per_resource" {
   role          = aws_iam_role.lambda_exec_role.arn
   timeout       = 900
   memory_size   = 10240
-
-  environment {
-    variables = {
-      SPLUNK_HEC_URL       = var.splunk_aws_billing_config.splunk_hec_url
-      SPLUNK_HEC_TOKEN     = data.aws_secretsmanager_secret_version.secrets["splunk_cloud_hec_token_aws_billing"].secret_string
-      SPLUNK_INDEX         = var.splunk_aws_billing_config.splunk_index
-      SPLUNK_METRICS_TOKEN = data.aws_secretsmanager_secret_version.secrets["splunk_o11y_metrics_token_aws_billing"].secret_string
-      SPLUNK_METRICS_URL   = var.splunk_aws_billing_config.splunk_metrics_url
-    }
-  }
 }
 
 resource "aws_lambda_permission" "cur_per_resource" {

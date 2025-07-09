@@ -1,124 +1,33 @@
 # -*- coding: utf-8 -*-
-import calendar
 import io
 import json
-import os
-import re
-import time
-from decimal import ROUND_HALF_UP, Decimal
 from urllib.parse import unquote
 
 import boto3
 import pandas as pd
-import requests
-
-SPLUNK_HEC_URL = os.environ['SPLUNK_HEC_URL']
-SPLUNK_HEC_TOKEN = os.environ['SPLUNK_HEC_TOKEN']
-SPLUNK_INDEX = os.environ.get('SPLUNK_INDEX')
-SPLUNK_METRICS_TOKEN = os.environ['SPLUNK_METRICS_TOKEN']
-SPLUNK_METRICS_URL = os.environ['SPLUNK_METRICS_URL']
 
 s3 = boto3.client('s3')
 
 
-def send_to_splunk(event):
-    headers = {
-        'Authorization': f'Splunk {SPLUNK_HEC_TOKEN}',
-    }
-    try:
-        resp = requests.post(SPLUNK_HEC_URL, json=event,
-                             headers=headers, timeout=10)
-        print(
-            f'[Splunk Response] Status: {resp.status_code}, Body: {resp.text}')
-        resp.raise_for_status()
-    except requests.HTTPError as e:
-        print(f'[HTTPError] {e.response.status_code} - {e.response.text}')
-    except requests.RequestException as e:
-        print(f'[RequestException] Error sending to Splunk: {e}')
-
-
-def send_metric_to_o11y(metric_name, value, timestamp, dimensions):
-    headers = {
-        'X-SF-TOKEN': SPLUNK_METRICS_TOKEN,
-        'Content-Type': 'application/json'
-    }
-    payload = {
-        'gauge': [{
-            'metric': metric_name,
-            'value': value,
-            'timestamp': timestamp * 1000,
-            'dimensions': dimensions
-        }]
-    }
-    try:
-        resp = requests.post(SPLUNK_METRICS_URL,
-                             headers=headers, json=payload, timeout=5)
-        print(
-            f'[O11y] Metric {metric_name} sent: {resp.status_code} {resp.text}')
-        resp.raise_for_status()
-    except requests.RequestException as e:
-        print(f'[O11y ERROR] Failed to send metric {metric_name}: {e}')
-
-
-def extract_arn_parts(arn):
-    match = re.search(
-        r'arn:aws:resource-groups:(?P<aws_region>[\w-]+):(?P<account_id>\d+):group/(?P<forgecicd_tenant>[^-]+)-(?P<forgecicd_region_alias>[^-]+)-(?P<forgecicd_vpc_alias>[^/]+)/',
-        arn
-    )
-    if match:
-        return match.groupdict()
-    return {
-        'aws_region': 'unknown',
-        'account_id': 'unknown',
-        'forgecicd_tenant': 'unknown',
-        'forgecicd_region_alias': 'unknown',
-        'forgecicd_vpc_alias': 'unknown'
-    }
-
-
-def preprocess_df(df):
-    print(f'[INFO] Raw DataFrame shape: {df.shape}')
-    df['line_item_usage_start_date'] = pd.to_datetime(
-        df['line_item_usage_start_date'])
-    df['ingest_time'] = pd.Timestamp.now(tz='UTC')
-
-    def parse_tags(val):
-        if isinstance(val, list):
-            try:
-                return dict(val)
-            except (TypeError, ValueError):
-                return {}
-        elif isinstance(val, dict):
-            return val
-        elif isinstance(val, str):
-            try:
-                return json.loads(val)
-            except json.JSONDecodeError:
-                return {}
-        return {}
-
-    df['resource_tags'] = df['resource_tags'].apply(parse_tags)
-    df['user_aws_application'] = df['resource_tags'].apply(
-        lambda tags: tags.get('user_aws_application', 'unknown'))
-    df = df[df['user_aws_application'] != 'unknown']
-    df['usage_date'] = df['line_item_usage_start_date'].dt.date
-
-    key_cols = [
-        'line_item_usage_start_date',
-        'line_item_product_code',
-        'user_aws_application',
-        'line_item_resource_id',
-        'identity_line_item_id'
-    ]
-    df = df.sort_values('ingest_time', ascending=False)
-    df = df.drop_duplicates(subset=key_cols, keep='first')
-
-    print(f'[INFO] Preprocessed DataFrame shape: {df.shape}')
-    return df
+def parse_tags(val):
+    if isinstance(val, list):
+        try:
+            return dict(val)
+        except (TypeError, ValueError):
+            return {}
+    elif isinstance(val, dict):
+        return val
+    elif isinstance(val, str):
+        try:
+            return json.loads(val)
+        except json.JSONDecodeError:
+            return {}
+    return {}
 
 
 def lambda_handler(event, context):
     print(f'[INFO] Lambda triggered with event: {json.dumps(event)}')
+    total_days = 0
 
     for record in event['Records']:
         bucket = record['s3']['bucket']['name']
@@ -128,60 +37,29 @@ def lambda_handler(event, context):
         obj = s3.get_object(Bucket=bucket, Key=key)
         df = pd.read_parquet(io.BytesIO(obj['Body'].read()))
 
-        df = preprocess_df(df)
+        # Normalize and prepare data
+        df['line_item_usage_start_date'] = pd.to_datetime(
+            df['line_item_usage_start_date'])
+        df['usage_date'] = df['line_item_usage_start_date'].dt.date
 
-        grouped = df.groupby(
-            ['usage_date', 'line_item_resource_id',
-                'line_item_product_code', 'user_aws_application'],
-            as_index=False
-        ).agg({
-            'line_item_unblended_cost': 'sum',
-            'line_item_net_unblended_cost': 'sum'
-        })
+        # Clean tags and extract 'user_aws_application'
+        df['resource_tags'] = df['resource_tags'].apply(parse_tags)
+        df['user_aws_application'] = df['resource_tags'].apply(
+            lambda tags: tags.get('user_aws_application', 'unknown')
+        )
 
-        now_ts = int(time.time())
+        # Filter out rows without the tag
+        df = df[df['user_aws_application'] != 'unknown']
 
-        print(f'[INFO] Grouped {len(grouped)} records for Splunk')
+        # Group and write per-day files
+        for date, daily_df in df.groupby('usage_date'):
+            year, month, day = date.year, f'{date.month:02}', f'{date.day:02}'
+            tmp_file = f'/tmp/cur_{date}.parquet'
+            daily_df.to_parquet(tmp_file, index=False)
 
-        for _, row in grouped.iterrows():
-            fields = extract_arn_parts(row['user_aws_application'])
-            usage_date = str(row['usage_date'])
-            event_time = calendar.timegm(
-                pd.to_datetime(usage_date).timetuple())
+            s3_key = f'tmp/cur-per-resource/year={year}/month={month}/day={day}/data.parquet'
+            s3.upload_file(tmp_file, bucket, s3_key)
+            print(f'✅ Uploaded {s3_key} ({len(daily_df)} rows)')
+            total_days += 1
 
-            event_data = {
-                'source': 'aws-cur-per-resource',
-                'sourcetype': 'forgecicd:aws:billing:cur',
-                'index': SPLUNK_INDEX,
-                'event': {
-                    'service': row['line_item_product_code'],
-                    'resource_id': row['line_item_resource_id'],
-                    'aws_application': row['user_aws_application'],
-                    'cost_usd': float(Decimal(row['line_item_unblended_cost']).quantize(Decimal('0.00001'), rounding=ROUND_HALF_UP)),
-                    'net_cost_usd': float(Decimal(row['line_item_net_unblended_cost']).quantize(Decimal('0.00001'), rounding=ROUND_HALF_UP)),
-                    'usage_date': usage_date,
-                    'event_time': event_time,
-                    **fields
-                }
-            }
-
-            print(f'[DEBUG] Sending to HEC: {json.dumps(event_data)}')
-            send_to_splunk(event_data)
-
-            dimensions = {
-                'usage_date': usage_date,
-                'service': row['line_item_product_code'],
-                'resource_id': row['line_item_resource_id'],
-                'aws_application': row['user_aws_application'],
-                **fields
-            }
-
-            print(f'[DEBUG] Sending to O11y: {json.dumps(dimensions)}')
-
-            send_metric_to_o11y('forge.per_resource.cost_usd',
-                                event_data['event']['cost_usd'], now_ts, dimensions)
-            send_metric_to_o11y('forge.per_resource.net_cost_usd',
-                                event_data['event']['net_cost_usd'], now_ts, dimensions)
-
-    print('[INFO] Lambda execution finished.')
-    return {'statusCode': 200}
+    return {'statusCode': 200, 'days_processed': total_days}

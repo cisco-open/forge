@@ -1,12 +1,13 @@
 resource "null_resource" "install_dependencies_per_service" {
+
   provisioner "local-exec" {
-    command = "bash ${path.module}/scripts/requirements_per_service.sh /tmp/aws_billing/per_service/${var.aws_profile}"
+    command = "bash ${path.module}/scripts/requirements.sh /tmp/aws_billing/per_service/${var.aws_profile} handler_per_service"
   }
 
   triggers = {
     lambda_source_hash        = filesha256("${path.module}/lambda/handler_per_service.py")
     requirements_hash         = filesha256("${path.module}/lambda/requirements.txt")
-    requirements_handler_hash = filesha256("${path.module}/scripts/requirements_per_service.sh")
+    requirements_handler_hash = filesha256("${path.module}/scripts/requirements.sh")
   }
 }
 

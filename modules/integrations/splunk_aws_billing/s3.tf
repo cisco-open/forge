@@ -142,6 +142,12 @@ resource "aws_s3_bucket_notification" "cur_notification" {
     filter_prefix       = "cur-per-resource/aws-billing-report-per-resource/data/"
   }
 
+  lambda_function {
+    lambda_function_arn = aws_lambda_function.cur_per_resource_process.arn
+    events              = ["s3:ObjectCreated:*"]
+    filter_prefix       = "tmp/cur-per-resource/"
+  }
+
   depends_on = [
     aws_lambda_permission.cur_per_service,
     aws_lambda_permission.cur_per_resource
