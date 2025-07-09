@@ -9,6 +9,7 @@ LAMBDA_PACKAGE_DIR="${LAMBDA_PATH}/lambda_package"
 ZIP_PATH="${LAMBDA_PACKAGE_DIR}/lambda.zip"
 REQUIREMENTS_FILE="${LAMBDA_DIR}/requirements.txt"
 HANDLER_FILE="${LAMBDA_DIR}/${2}.py"
+COMMON_FILE="${LAMBDA_DIR}/common.py"
 
 # ────────────── PRECHECKS ──────────────
 if [[ ! -f "$REQUIREMENTS_FILE" ]]; then
@@ -48,7 +49,9 @@ zip -r9 "$ZIP_PATH" . >/dev/null
 
 cd "$LAMBDA_PACKAGE_DIR"
 cp "$HANDLER_FILE" .
+cp "$COMMON_FILE" .
 zip -g "$ZIP_PATH" "${2}.py" >/dev/null
+zip -g "$ZIP_PATH" "common.py" >/dev/null
 
 # ────────────── DONE ──────────────
 echo "{\"status\": \"success\", \"zip_path\": \"$ZIP_PATH\"}"
