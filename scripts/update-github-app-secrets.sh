@@ -27,10 +27,26 @@ validate_pem_file() {
 get_secret_name() {
     local terragrunt_dir="$1"
     local type="$2"
-    terragrunt output -json --working-dir "$terragrunt_dir" | jq -r --arg t "$type" '
-    .tenant.value as $tenant |
-    "/cicd/common/\($tenant.name)/\($tenant.vpc_alias)/github_actions_runners_app_" + $t
-  '
+    tenant_name=$(get_terragrunt_var "var.tenant.name" "$terragrunt_dir")
+    secret_suffix=$(get_terragrunt_var "var.deployment_config.secret_suffix" "$terragrunt_dir")
+    echo "/cicd/common/${tenant_name}/${secret_suffix}/github_actions_runners_app_${type}"
+}
+
+get_terragrunt_var() {
+    local var_name="$1"
+    local dir="$2"
+    local value
+
+    pushd "$dir" >/dev/null
+    value=$(TF_LOG=ERROR terragrunt console <<<"${var_name}" 2>/dev/null | tail -n1 | sed 's/^"//;s/"$//')
+    popd >/dev/null
+
+    if [[ -z "$value" ]]; then
+        echo "❌ Terragrunt variable '${var_name}' not found or empty in ${dir}" >&2
+        exit 1
+    fi
+
+    echo "$value"
 }
 
 encode_pem() {
