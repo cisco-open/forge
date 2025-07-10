@@ -17,7 +17,7 @@ resource "helm_release" "splunk_otel_collector" {
 
   set {
     name  = "splunkObservability.accessToken"
-    value = data.aws_secretsmanager_secret_version.secrets["splunk_access_ingest_token"].secret_string
+    value = data.aws_secretsmanager_secret_version.secrets["splunk_o11y_ingest_token_eks"].secret_string
   }
 
   set {

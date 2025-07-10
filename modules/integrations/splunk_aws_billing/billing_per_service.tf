@@ -35,7 +35,7 @@ resource "aws_lambda_function" "cur_per_service" {
       SPLUNK_HEC_URL       = var.splunk_aws_billing_config.splunk_hec_url
       SPLUNK_HEC_TOKEN     = data.aws_secretsmanager_secret_version.secrets["splunk_cloud_hec_token_aws_billing"].secret_string
       SPLUNK_INDEX         = var.splunk_aws_billing_config.splunk_index
-      SPLUNK_METRICS_TOKEN = data.aws_secretsmanager_secret_version.secrets["splunk_o11y_metrics_token_aws_billing"].secret_string
+      SPLUNK_METRICS_TOKEN = data.aws_secretsmanager_secret_version.secrets["splunk_o11y_ingest_token_aws_billing"].secret_string
       SPLUNK_METRICS_URL   = var.splunk_aws_billing_config.splunk_metrics_url
     }
   }

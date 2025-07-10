@@ -1,7 +1,7 @@
 locals {
   secrets = {
-    splunk_access_ingest_token = {
-      name = "/cicd/common/splunk_access_ingest_token"
+    splunk_o11y_ingest_token_eks = {
+      name = "/cicd/common/splunk_o11y_ingest_token_eks"
     }
     splunk_cloud_hec_token_eks = {
       name = "/cicd/common/splunk_cloud_hec_token_eks"

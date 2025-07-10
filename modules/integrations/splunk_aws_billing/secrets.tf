@@ -3,8 +3,8 @@ locals {
     splunk_cloud_hec_token_aws_billing = {
       name = "/cicd/common/splunk_cloud_hec_token_aws_billing"
     }
-    splunk_o11y_metrics_token_aws_billing = {
-      name = "/cicd/common/splunk_o11y_metrics_token_aws_billing"
+    splunk_o11y_ingest_token_aws_billing = {
+      name = "/cicd/common/splunk_o11y_ingest_token_aws_billing"
     }
   }
 }

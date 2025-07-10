@@ -1,7 +1,7 @@
 locals {
   secrets = {
-    splunk_access_ingest_token = {
-      name = "/cicd/common/splunk_access_ingest_token"
+    splunk_o11y_ingest_token_aws_integration = {
+      name = "/cicd/common/splunk_o11y_ingest_token_aws_integration"
     }
   }
 }

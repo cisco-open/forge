@@ -2,9 +2,15 @@ locals {
   cicd_secrets_prefix = "/cicd/common"
 
   secrets = [
+    # TO be removed
     {
       name          = "${local.cicd_secrets_prefix}/splunk_access_ingest_token"
       description   = "Splunk Observability Cloud Access Token for Ingest"
+      recovery_days = 7
+    },
+    {
+      name          = "${local.cicd_secrets_prefix}/splunk_o11y_metrics_token_aws_billing"
+      description   = "Splunk Observability Metrics token for aws billing"
       recovery_days = 7
     },
     {
@@ -15,11 +21,6 @@ locals {
     {
       name          = "${local.cicd_secrets_prefix}/splunk_o11y_password"
       description   = "Splunk o11y Password"
-      recovery_days = 7
-    },
-    {
-      name          = "${local.cicd_secrets_prefix}/splunk_o11y_metrics_token_aws_billing"
-      description   = "Splunk Observability Metrics token for aws billing"
       recovery_days = 7
     },
     {
@@ -34,17 +35,37 @@ locals {
     },
     {
       name          = "${local.cicd_secrets_prefix}/splunk_cloud_api_token"
-      description   = "Splunk Cloud API token"
+      description   = "Splunk Cloud API Token"
+      recovery_days = 7
+    },
+    {
+      name          = "${local.cicd_secrets_prefix}/splunk_o11y_ingest_token_aws_billing"
+      description   = "Splunk O11y Ingest Token for AWS Billing"
+      recovery_days = 7
+    },
+    {
+      name          = "${local.cicd_secrets_prefix}/splunk_o11y_ingest_token_aws_integration"
+      description   = "Splunk O11y Ingest Token for AWS Integration"
+      recovery_days = 7
+    },
+    {
+      name          = "${local.cicd_secrets_prefix}/splunk_o11y_ingest_token_ec2"
+      description   = "Splunk O11y Ingest Token for EC2 Runners"
+      recovery_days = 7
+    },
+    {
+      name          = "${local.cicd_secrets_prefix}/splunk_o11y_ingest_token_eks"
+      description   = "Splunk O11y Ingest Token for EKS Runners"
       recovery_days = 7
     },
     {
       name          = "${local.cicd_secrets_prefix}/splunk_cloud_hec_token_eks"
-      description   = "Splunk Cloud HEC token for eks"
+      description   = "Splunk Cloud HEC token for EKS Runners"
       recovery_days = 7
     },
     {
       name          = "${local.cicd_secrets_prefix}/splunk_cloud_hec_token_aws_billing"
-      description   = "Splunk Cloud HEC token for aws billing"
+      description   = "Splunk Cloud HEC token for AWS Billing"
       recovery_days = 7
     },
   ]
