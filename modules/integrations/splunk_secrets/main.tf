@@ -2,17 +2,6 @@ locals {
   cicd_secrets_prefix = "/cicd/common"
 
   secrets = [
-    # TO be removed
-    {
-      name          = "${local.cicd_secrets_prefix}/splunk_access_ingest_token"
-      description   = "Splunk Observability Cloud Access Token for Ingest"
-      recovery_days = 7
-    },
-    {
-      name          = "${local.cicd_secrets_prefix}/splunk_o11y_metrics_token_aws_billing"
-      description   = "Splunk Observability Metrics token for aws billing"
-      recovery_days = 7
-    },
     {
       name          = "${local.cicd_secrets_prefix}/splunk_o11y_username"
       description   = "Splunk o11y Username"
