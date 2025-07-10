@@ -63,9 +63,6 @@ locals {
       }
       ami_owners      = [spec.ami_owner]
       ami_kms_key_arn = spec.ami_kms_key_arn
-      aws_budget = {
-        budget_limit = 500
-      }
       runner_labels = [
         "type:${size}",
         "self-hosted",

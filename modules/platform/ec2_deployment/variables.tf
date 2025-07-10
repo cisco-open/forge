@@ -22,9 +22,6 @@ variable "runner_configs" {
         name  = list(string)
         state = list(string)
       })
-      aws_budget = object({
-        budget_limit = number
-      })
       ami_kms_key_arn = string
       ami_owners      = list(string)
       runner_labels   = list(string)
