@@ -70,7 +70,7 @@ resource "helm_release" "gha_runner_scale_set" {
       }
     )
   ]
-  upgrade_install = true
+  force_update    = true
   cleanup_on_fail = true
   timeout         = 1200
 }
