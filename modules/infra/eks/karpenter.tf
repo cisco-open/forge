@@ -20,11 +20,7 @@ module "karpenter" {
   create_pod_identity_association = true
 
   depends_on = [
-    module.self_managed_node_group,
-    null_resource.create_calico_installation,
-    data.aws_eks_cluster_auth.cluster,
-    aws_eks_addon.aws_ebs_csi_driver,
-    aws_eks_addon.eks_pod_identity_agent,
+    time_sleep.wait_300_seconds,
   ]
 
 }
