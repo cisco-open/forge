@@ -5,67 +5,59 @@ resource "helm_release" "splunk_otel_collector" {
   version          = "0.126.0"
   namespace        = "splunk-otel-collector"
   create_namespace = true
-  set {
-    name  = "cloudProvider"
-    value = "aws"
-  }
 
-  set {
-    name  = "distribution"
-    value = "eks"
-  }
+  set = [
+    {
+      name  = "cloudProvider"
+      value = "aws"
+    },
+    {
+      name  = "distribution"
+      value = "eks"
+    },
+    {
+      name  = "splunkObservability.accessToken"
+      value = data.aws_secretsmanager_secret_version.secrets["splunk_o11y_ingest_token_eks"].secret_string
+    },
+    {
+      name  = "clusterName"
+      value = var.cluster_name
+    },
+    {
+      name  = "splunkObservability.realm"
+      value = var.splunk_otel_collector.splunk_observability_realm
+    },
+    {
+      name  = "splunkPlatform.endpoint"
+      value = var.splunk_otel_collector.splunk_platform_endpoint
+    },
+    {
+      name  = "splunkPlatform.index"
+      value = var.splunk_otel_collector.splunk_platform_index
+    },
+    {
+      name  = "splunkPlatform.token"
+      value = data.aws_secretsmanager_secret_version.secrets["splunk_cloud_hec_token_eks"].secret_string
+    },
+    {
+      name  = "gateway.enabled"
+      value = var.splunk_otel_collector.gateway
+    },
+    {
+      name  = "splunkObservability.profilingEnabled"
+      value = var.splunk_otel_collector.splunk_observability_profiling
+    },
+    {
+      name  = "environment"
+      value = var.splunk_otel_collector.environment
+    },
+    {
+      name  = "agent.discovery.enabled"
+      value = var.splunk_otel_collector.discovery
+    }
+  ]
 
-  set {
-    name  = "splunkObservability.accessToken"
-    value = data.aws_secretsmanager_secret_version.secrets["splunk_o11y_ingest_token_eks"].secret_string
-  }
-
-  set {
-    name  = "clusterName"
-    value = var.cluster_name
-  }
-
-  set {
-    name  = "splunkObservability.realm"
-    value = var.splunk_otel_collector.splunk_observability_realm
-  }
-
-  set {
-    name  = "splunkPlatform.endpoint"
-    value = var.splunk_otel_collector.splunk_platform_endpoint
-  }
-
-  set {
-    name  = "splunkPlatform.index"
-    value = var.splunk_otel_collector.splunk_platform_index
-  }
-
-  set {
-    name  = "splunkPlatform.token"
-    value = data.aws_secretsmanager_secret_version.secrets["splunk_cloud_hec_token_eks"].secret_string
-  }
-
-  set {
-    name  = "gateway.enabled"
-    value = var.splunk_otel_collector.gateway
-  }
-
-  set {
-    name  = "splunkObservability.profilingEnabled"
-    value = var.splunk_otel_collector.splunk_observability_profiling
-  }
-
-  set {
-    name  = "environment"
-    value = var.splunk_otel_collector.environment
-  }
-
-  set {
-    name  = "agent.discovery.enabled"
-    value = var.splunk_otel_collector.discovery
-  }
-
-  upgrade_install = true
+  force_update    = true
   cleanup_on_fail = true
   timeout         = 1200
 }
