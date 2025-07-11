@@ -57,7 +57,7 @@ data "external" "download_lambdas" {
 module "runners" {
   # Using multi-runner example as a baseline.
   # renovate: datasource=github-tags depName=github-aws-runners/terraform-aws-github-runner registryUrl=https://github.com/
-  source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=26e223733e28602b3b4ca8aee1134225f006b73f" # 6.5.4
+  source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=4b33b88a323f1a47bb250c9b31168e2289b0b15d" # 6.7.2
 
   aws_region = var.aws_region
 
