@@ -8,7 +8,7 @@ fi
 
 DOWNLOAD_PATH="$1"
 # renovate: datasource=github-tags depName=github-aws-runners/terraform-aws-github-runner registryUrl=https://github.com/
-VERSION="6.5.5"
+VERSION="6.7.2"
 
 rm -rf "$DOWNLOAD_PATH"
 mkdir -p "$DOWNLOAD_PATH"
