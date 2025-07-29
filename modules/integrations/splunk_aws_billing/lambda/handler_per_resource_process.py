@@ -2,7 +2,6 @@
 import calendar
 import io
 import json
-import time
 from decimal import ROUND_HALF_UP, Decimal
 from urllib.parse import unquote
 
@@ -41,7 +40,7 @@ def send_batches(batch, metrics_batch):
         common.send_metric_to_o11y_batch(metrics_batch)
 
 
-def process_grouped_rows(grouped, now_ts):
+def process_grouped_rows(grouped):
     batch = []
     current_size = 0
     metrics_batch = []
@@ -72,13 +71,11 @@ def process_grouped_rows(grouped, now_ts):
         metrics_batch.append({
             'metric': 'forge.per_resource.cost_usd',
             'value': event_body['event']['cost_usd'],
-            'timestamp': now_ts,
             'dimensions': dimensions
         })
         metrics_batch.append({
             'metric': 'forge.per_resource.net_cost_usd',
             'value': event_body['event']['net_cost_usd'],
-            'timestamp': now_ts,
             'dimensions': dimensions
         })
 
@@ -112,9 +109,7 @@ def lambda_handler(event, context):
 
         print(f'[INFO] Grouped {len(grouped)} records for Splunk')
 
-        now_ts = int(time.time())
-
-        process_grouped_rows(grouped, now_ts)
+        process_grouped_rows(grouped)
 
     print('[INFO] Lambda execution finished.')
     return {'statusCode': 200}

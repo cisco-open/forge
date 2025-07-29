@@ -6,6 +6,7 @@ resource "null_resource" "install_dependencies_per_service" {
 
   triggers = {
     lambda_source_hash        = filesha256("${path.module}/lambda/handler_per_service.py")
+    common_source_hash        = filesha256("${path.module}/lambda/common.py")
     requirements_hash         = filesha256("${path.module}/lambda/requirements.txt")
     requirements_handler_hash = filesha256("${path.module}/scripts/requirements.sh")
   }
