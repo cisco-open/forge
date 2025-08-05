@@ -1,5 +1,7 @@
 resource "null_resource" "update_github_app_webhook" {
   triggers = {
+    ghes_org       = var.ghes_org
+    ghes_url       = var.ghes_url
     webhook_url    = module.ec2_runners.webhook_endpoint
     secret         = random_id.random.hex
     secret_version = data.aws_secretsmanager_secret_version.data_cicd_secrets["${local.cicd_secrets_prefix}github_actions_runners_app_key"].id

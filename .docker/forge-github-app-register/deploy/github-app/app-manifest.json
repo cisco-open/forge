@@ -7,13 +7,13 @@
   },
   "redirect_url": "http://localhost:5000/oauth/callback",
   "callback_urls": [],
-  "public": false,
+  "public": true,
   "default_permissions": {
     "actions": "read",
     "checks": "read",
     "metadata": "read",
     "organization_self_hosted_runners": "write",
-    "organization_administration": "write"
+    "organization_administration": "read"
   },
   "default_events": [
     "workflow_job"
