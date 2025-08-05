@@ -15,6 +15,8 @@ data "aws_iam_policy_document" "cloud_custodian_policy" {
       "ec2:DescribeNetworkInterfaces",
       "ec2:DescribeLaunchTemplateVersions",
       "ec2:DescribeSecurityGroupReferences",
+      "ec2:DescribeVolumes",
+      "ec2:DeleteVolume",
     ]
     resources = ["*"]
   }

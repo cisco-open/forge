@@ -52,6 +52,8 @@ module "eks" {
     }
   }
 
+  cloudwatch_log_group_retention_in_days = 3
+
   tags = local.all_security_tags
 
   cluster_tags = var.cluster_tags
