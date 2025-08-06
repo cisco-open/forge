@@ -44,7 +44,7 @@ resource "kubernetes_secret" "calico_image_pull" {
 resource "null_resource" "create_calico_installation" {
   provisioner "local-exec" {
     command = <<EOF
-kubectl create -f - <<EOF2
+kubectl apply -f - <<EOF
 kind: Installation
 apiVersion: operator.tigera.io/v1
 metadata:
