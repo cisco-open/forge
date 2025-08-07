@@ -12,3 +12,8 @@ examples/build/ansible/roles/teleport/tasks/main.yml no-changed-when
 examples/build/ansible/roles/teleport/tasks/main.yml risky-shell-pipe
 examples/build/ansible/roles/teleport/tasks/main.yml risky-file-permissions
 examples/build/ansible/roles/teleport/tasks/main.yml risky-file-permissions
+examples/build/ansible/roles/deps/tasks/cli-tools.yml var-naming[no-role-prefix]
+examples/build/ansible/roles/deps/tasks/docker.yml var-naming[no-role-prefix]
+examples/build/ansible/roles/deps/tasks/gh.yml var-naming[no-role-prefix]
+examples/build/ansible/roles/splunk_otel_collector/tasks/main.yml var-naming[no-role-prefix]
+examples/build/ansible/roles/teleport/tasks/main.yml var-naming[no-role-prefix]
