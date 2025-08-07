@@ -67,6 +67,7 @@ resource "helm_release" "gha_runner_scale_set" {
         controller_service_account   = var.controller.service_account
         container_actions_runner     = var.container_actions_runner
         runner_role                  = aws_iam_role.runner_role.arn
+        tenant                       = var.controller.namespace
       }
     )
   ]

@@ -69,7 +69,7 @@ resource "kubernetes_cron_job_v1" "zombie_runner_cleanup" {
   }
 
   spec {
-    schedule = "*/10 * * * *"
+    schedule = "*/60 * * * *"
 
     job_template {
       metadata {

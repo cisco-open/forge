@@ -11,19 +11,19 @@ terraform {
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = "2.36.0"
+      version = ">= 2.36.0"
     }
     null = {
       source  = "hashicorp/null"
-      version = "3.2.3"
+      version = ">= 3.2.3"
     }
     kubectl = {
       source  = "gavinbunney/kubectl"
-      version = "1.19.0"
+      version = ">= 1.19.0"
     }
     time = {
       source  = "hashicorp/time"
-      version = "0.13.1"
+      version = ">= 0.13.1"
     }
   }
 

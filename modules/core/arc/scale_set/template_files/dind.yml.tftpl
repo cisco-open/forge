@@ -251,6 +251,29 @@ template:
                 expirationSeconds: 3600
                 audience: sts.amazonaws.com
 
+    tolerations:
+      - key: "forge.local/scale_set_type"
+        operator: "Equal"
+        value: "dind"
+        effect: "NoSchedule"
+      - key: "forge.local/tenant"
+        operator: "Equal"
+        value: "${tenant}"
+        effect: "NoSchedule"
+
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: forge.local/scale_set_type
+                  operator: In
+                  values:
+                    - dind
+                - key: forge.local/tenant
+                  operator: In
+                  values:
+                    - ${tenant}
 
 controllerServiceAccount:
   namespace: ${controller_namespace}
