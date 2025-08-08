@@ -54,6 +54,10 @@ resource "helm_release" "splunk_otel_collector" {
     {
       name  = "agent.discovery.enabled"
       value = var.splunk_otel_collector.discovery
+    },
+    {
+      name  = "tolerations[0].operator"
+      value = "Exists"
     }
   ]
 
