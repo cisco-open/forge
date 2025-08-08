@@ -92,8 +92,8 @@ locals {
 resource "null_resource" "apply_ec2_node_class" {
   provisioner "local-exec" {
     command = <<EOF
-kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} patch ec2nodeclass karpenter -n karpenter --type='merge' -p '{"metadata":{"finalizers":[]}}' || true
-kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} delete ec2nodeclass karpenter -n karpenter || true
+kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} patch ec2nodeclass karpenter --type='merge' -p '{"metadata":{"finalizers":[]}}' || true
+kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} delete ec2nodeclass karpenter || true
 echo "${local.ec2_node_class_manifest}" | kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} apply -f -
 EOF
   }

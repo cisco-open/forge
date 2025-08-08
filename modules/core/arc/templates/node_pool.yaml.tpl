@@ -35,7 +35,7 @@
         nodeClassRef:
           group: karpenter.k8s.aws
           kind: EC2NodeClass
-          name: karpenter
+          name: karpenter-${tenant}
         taints:
           - key: forge.local/scale_set_type
             value: dind

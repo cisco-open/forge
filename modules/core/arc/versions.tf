@@ -4,6 +4,10 @@ terraform {
       source  = "hashicorp/aws"
       version = ">= 5.27"
     }
+    external = {
+      source  = "hashicorp/external"
+      version = ">= 2.3"
+    }
     helm = {
       source  = "hashicorp/helm"
       version = ">= 3.0.0"
