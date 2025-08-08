@@ -24,7 +24,7 @@ resource "null_resource" "update_kubeconfig" {
 resource "null_resource" "apply_node_pool" {
   provisioner "local-exec" {
     command = <<EOF
-echo "${local.node_pool_manifest}" | kubectl apply -f -
+echo "${local.node_pool_manifest}" | kubectl --context ${var.eks_cluster_name}-${var.aws_profile}-${var.aws_region} apply -f -
 EOF
   }
 
