@@ -21,6 +21,7 @@ data "aws_iam_policy_document" "ec2_tags" {
         "ghr:ref",
         "ghr:run_attempt",
         "ghr:run_number",
+        "ghr:workflow_url",
         "ghr:actor",
       ]
     }

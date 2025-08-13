@@ -3,6 +3,7 @@
 LOG_FILE="$HOME/hook.log"
 TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
 
+INSTANCE_ID=$(wget -q -O - http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.instanceId')
 aws ec2 create-tags \
   --resources "$INSTANCE_ID" \
   --tags \
@@ -14,6 +15,7 @@ aws ec2 create-tags \
     Key=ghr:ref,Value="$GITHUB_REF" \
     Key=ghr:run_attempt,Value="$GITHUB_RUN_ATTEMPT" \
     Key=ghr:run_number,Value="$GITHUB_RUN_NUMBER" \
+    Key=ghr:workflow_url,Value="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/attempts/${GITHUB_RUN_ATTEMPT}" \
     Key=ghr:actor,Value="$GITHUB_ACTOR"
 
 {
