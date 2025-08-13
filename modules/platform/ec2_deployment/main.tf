@@ -188,12 +188,17 @@ module "runners" {
             "log_stream_name" : "{instance_id}/hook"
           },
         ]
-        ami_owners                          = val["ami_owners"]
-        ami_filter                          = val["ami_filter"]
-        ami_kms_key_arn                     = val["ami_kms_key_arn"]
-        instance_target_capacity_type       = val["instance_target_capacity_type"]
-        enable_job_queued_check             = false
-        runner_iam_role_managed_policy_arns = var.runner_configs.runner_iam_role_managed_policy_arns
+        ami_owners                    = val["ami_owners"]
+        ami_filter                    = val["ami_filter"]
+        ami_kms_key_arn               = val["ami_kms_key_arn"]
+        instance_target_capacity_type = val["instance_target_capacity_type"]
+        enable_job_queued_check       = false
+        runner_iam_role_managed_policy_arns = concat(
+          var.runner_configs.runner_iam_role_managed_policy_arns,
+          [
+            aws_iam_policy.ec2_tags.arn,
+          ]
+        )
         # Yes; we want runners (even pool runners) to self-terminate after a
         # job is complete (and, in the case of pool runners, spawn a new
         # instance to replace it when done).
