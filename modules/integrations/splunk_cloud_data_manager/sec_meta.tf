@@ -45,6 +45,7 @@ locals {
     }
   }
   splunk_cloud_input_security_metadata_json = jsonencode(local.splunk_cloud_input_security_metadata_map)
+
 }
 
 module "splunk_security_metadata" {
@@ -99,5 +100,67 @@ resource "aws_cloudformation_stack" "cf_splunk_security_metadata_region" {
   depends_on = [
     module.splunk_security_metadata,
     aws_cloudformation_stack.cf_splunk_security_metadata_iam_region
+  ]
+}
+
+data "aws_lambda_function" "splunk_dm_metadata_ec2inst" {
+  for_each      = var.security_metadata_config.enabled ? toset(var.security_metadata_config.regions) : []
+  provider      = aws.by_region[each.value]
+  function_name = "SplunkDMMetadataEC2Inst"
+
+  depends_on = [
+    module.splunk_security_metadata,
+    aws_cloudformation_stack.cf_splunk_security_metadata_iam_region,
+    aws_cloudformation_stack.cf_splunk_security_metadata_region,
+  ]
+}
+
+resource "aws_cloudwatch_event_rule" "ec2_tag_changes" {
+  for_each    = var.security_metadata_config.enabled ? toset(var.security_metadata_config.regions) : []
+  provider    = aws.by_region[each.value]
+  name        = "SplunkDMMetadataEC2InstPatternTags"
+  description = "Trigger Lambda when EC2 tags are added"
+  event_pattern = jsonencode({
+    source        = ["aws.ec2"],
+    "detail-type" = ["AWS API Call via CloudTrail"],
+    detail = {
+      eventSource = ["ec2.amazonaws.com"],
+      eventName   = ["CreateTags"]
+    }
+  })
+
+  depends_on = [
+    module.splunk_security_metadata,
+    aws_cloudformation_stack.cf_splunk_security_metadata_iam_region,
+    aws_cloudformation_stack.cf_splunk_security_metadata_region,
+  ]
+}
+
+resource "aws_cloudwatch_event_target" "ec2_tag_changes" {
+  for_each = var.security_metadata_config.enabled ? toset(var.security_metadata_config.regions) : []
+  provider = aws.by_region[each.value]
+  rule     = aws_cloudwatch_event_rule.ec2_tag_changes[each.key].name
+  arn      = data.aws_lambda_function.splunk_dm_metadata_ec2inst[each.key].arn
+
+  depends_on = [
+    module.splunk_security_metadata,
+    aws_cloudformation_stack.cf_splunk_security_metadata_iam_region,
+    aws_cloudformation_stack.cf_splunk_security_metadata_region,
+  ]
+}
+
+resource "aws_lambda_permission" "ec2_tag_changes" {
+  for_each      = var.security_metadata_config.enabled ? toset(var.security_metadata_config.regions) : []
+  provider      = aws.by_region[each.value]
+  statement_id  = "AllowExecutionFromEventBridge"
+  action        = "lambda:InvokeFunction"
+  function_name = data.aws_lambda_function.splunk_dm_metadata_ec2inst[each.key].function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.ec2_tag_changes[each.key].arn
+
+  depends_on = [
+    module.splunk_security_metadata,
+    aws_cloudformation_stack.cf_splunk_security_metadata_iam_region,
+    aws_cloudformation_stack.cf_splunk_security_metadata_region,
   ]
 }
