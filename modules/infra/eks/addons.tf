@@ -14,7 +14,7 @@ resource "aws_eks_addon" "aws_ebs_csi_driver" {
   cluster_name             = var.cluster_name
   addon_name               = "aws-ebs-csi-driver"
   addon_version            = data.aws_eks_addon_version.aws_ebs_csi_driver.version
-  service_account_role_arn = module.ebs_csi_irsa_role.iam_role_arn
+  service_account_role_arn = module.ebs_csi_irsa_role.arn
   timeouts {
     create = "60m"
     update = "60m"

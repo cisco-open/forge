@@ -1,6 +1,6 @@
 resource "null_resource" "apply_tigera_operator" {
   provisioner "local-exec" {
-    command = "kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.1/manifests/tigera-operator.yaml"
+    command = "kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} create -f https://raw.githubusercontent.com/projectcalico/calico/v3.30.2/manifests/tigera-operator.yaml"
   }
 
   depends_on = [
@@ -12,28 +12,26 @@ locals {
   dockerhub_user  = data.aws_secretsmanager_secret_version.secrets["dockerhub_user"].secret_string
   dockerhub_token = data.aws_secretsmanager_secret_version.secrets["dockerhub_token"].secret_string
   dockerhub_email = data.aws_secretsmanager_secret_version.secrets["dockerhub_email"].secret_string
-  dockerhub_auth  = base64encode("${local.dockerhub_user}:${local.dockerhub_token}")
+  # dockerhub_auth  = base64encode("${local.dockerhub_user}:${local.dockerhub_token}")
 }
 
-resource "kubernetes_secret" "calico_image_pull" {
-  metadata {
-    name      = "calico-regcred"
-    namespace = "tigera-operator"
+resource "null_resource" "create_or_update_calico_secret" {
+  provisioner "local-exec" {
+    command = <<EOF
+kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} create secret docker-registry calico-regcred \
+  --namespace=tigera-operator \
+  --docker-server=https://index.docker.io/v1/ \
+  --docker-username="${local.dockerhub_user}" \
+  --docker-password="${local.dockerhub_token}" \
+  --docker-email="${local.dockerhub_email}" \
+  --dry-run=client -o yaml | kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} apply -f -
+EOF
   }
 
-  type = "kubernetes.io/dockerconfigjson"
-
-  data = {
-    ".dockerconfigjson" = jsonencode({
-      auths = {
-        "https://index.docker.io/v1/" = {
-          "username" = local.dockerhub_user
-          "password" = local.dockerhub_token
-          "email"    = local.dockerhub_email
-          "auth"     = local.dockerhub_auth
-        }
-      }
-    })
+  triggers = {
+    dockerhub_user  = local.dockerhub_user
+    dockerhub_token = sha256(local.dockerhub_token)
+    dockerhub_email = local.dockerhub_email
   }
 
   depends_on = [
@@ -62,6 +60,6 @@ EOF
 
   depends_on = [
     null_resource.apply_tigera_operator,
-    kubernetes_secret.calico_image_pull,
+    null_resource.create_or_update_calico_secret,
   ]
 }

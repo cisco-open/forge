@@ -1,6 +1,6 @@
 module "karpenter" {
   source  = "terraform-aws-modules/eks/aws//modules/karpenter"
-  version = "20.37.1"
+  version = "v21.0.9"
 
   namespace    = "karpenter"
   cluster_name = var.cluster_name
@@ -15,8 +15,6 @@ module "karpenter" {
     AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
   }
 
-  enable_v1_permissions           = true
-  enable_pod_identity             = true
   create_pod_identity_association = true
 
   depends_on = [
@@ -55,7 +53,6 @@ resource "helm_release" "karpenter" {
   ]
 
   depends_on = [
-    null_resource.update_kubeconfig,
     module.karpenter,
     data.aws_eks_cluster_auth.cluster,
   ]

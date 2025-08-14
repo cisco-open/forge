@@ -1,10 +1,10 @@
 module "self_managed_node_group" {
   source  = "terraform-aws-modules/eks/aws//modules/self-managed-node-group"
-  version = "20.37.1"
+  version = "21.0.9"
 
   name                = var.cluster_name
   cluster_name        = var.cluster_name
-  cluster_version     = var.cluster_version
+  kubernetes_version  = var.cluster_version
   cluster_endpoint    = module.eks.cluster_endpoint
   cluster_auth_base64 = module.eks.cluster_certificate_authority_data
 
