@@ -25,25 +25,14 @@ module "karpenter" {
 
 }
 
-data "aws_ecrpublic_authorization_token" "token" {
-  provider = aws.karpenter
-
-  depends_on = [
-    time_sleep.wait_300_seconds,
-    module.eks
-  ]
-}
-
 resource "helm_release" "karpenter" {
-  name                = "karpenter"
-  namespace           = "karpenter"
-  create_namespace    = true
-  repository          = "oci://public.ecr.aws/karpenter"
-  repository_username = data.aws_ecrpublic_authorization_token.token.user_name
-  repository_password = data.aws_ecrpublic_authorization_token.token.password
-  chart               = "karpenter"
-  version             = "1.5.0"
-  wait                = false
+  name             = "karpenter"
+  namespace        = "karpenter"
+  create_namespace = true
+  repository       = "oci://public.ecr.aws/karpenter"
+  chart            = "karpenter"
+  version          = "1.6.1"
+  wait             = false
 
   values = [
     <<-EOT
