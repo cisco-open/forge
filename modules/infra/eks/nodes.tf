@@ -1,6 +1,6 @@
 module "self_managed_node_group" {
   source  = "terraform-aws-modules/eks/aws//modules/self-managed-node-group"
-  version = "21.0.9"
+  version = "21.1.0"
 
   name                = var.cluster_name
   cluster_name        = var.cluster_name
@@ -36,7 +36,7 @@ module "self_managed_node_group" {
     module.eks.cluster_security_group_id,
   ]
 
-  ami_type = "AL2_x86_64"
+  ami_type = "AL2023_x86_64_STANDARD"
   ami_id   = data.aws_ami.eks_default.image_id
 
   bootstrap_extra_args = <<-EOT
@@ -56,6 +56,6 @@ module "self_managed_node_group" {
   tags = local.all_security_tags
 
   depends_on = [
-    time_sleep.wait_300_seconds,
+    null_resource.patch_calico_installation,
   ]
 }

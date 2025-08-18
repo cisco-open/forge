@@ -1,6 +1,6 @@
 module "karpenter" {
   source  = "terraform-aws-modules/eks/aws//modules/karpenter"
-  version = "v21.0.9"
+  version = "v21.1.0"
 
   namespace    = "karpenter"
   cluster_name = var.cluster_name
@@ -18,7 +18,7 @@ module "karpenter" {
   create_pod_identity_association = true
 
   depends_on = [
-    time_sleep.wait_300_seconds,
+    aws_eks_addon.aws_ebs_csi_driver,
   ]
 
 }

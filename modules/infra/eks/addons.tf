@@ -21,7 +21,10 @@ resource "aws_eks_addon" "aws_ebs_csi_driver" {
     delete = "60m"
   }
 
-  depends_on = [module.self_managed_node_group]
+  depends_on = [
+    module.self_managed_node_group,
+    null_resource.patch_calico_installation
+  ]
 }
 
 resource "aws_eks_addon" "eks_pod_identity_agent" {

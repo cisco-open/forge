@@ -10,7 +10,7 @@ data "aws_ami" "eks_default" {
 
 module "ebs_csi_irsa_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts"
-  version = "6.0.1"
+  version = "6.1.0"
 
   name                  = "${var.cluster_name}-${var.aws_region}-ebs-csi"
   use_name_prefix       = false
@@ -26,7 +26,7 @@ module "ebs_csi_irsa_role" {
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "v21.0.9"
+  version = "v21.1.0"
 
   name               = var.cluster_name
   kubernetes_version = var.cluster_version
@@ -85,13 +85,6 @@ resource "null_resource" "delete_daemonset" {
     module.eks
   ]
   provisioner "local-exec" {
-    command = "kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} delete daemonset -n kube-system aws-node"
+    command = "kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} delete daemonset -n kube-system aws-node || true"
   }
-}
-
-resource "time_sleep" "wait_300_seconds" {
-  depends_on = [
-    module.eks
-  ]
-  create_duration = "300s"
 }
