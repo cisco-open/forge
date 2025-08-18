@@ -10,6 +10,12 @@ data "aws_eks_addon_version" "eks_pod_identity_agent" {
   kubernetes_version = var.cluster_version
 }
 
+# Fetch the most recent version of the CoreDNS
+data "aws_eks_addon_version" "coredns" {
+  addon_name         = "coredns"
+  kubernetes_version = var.cluster_version
+}
+
 resource "aws_eks_addon" "aws_ebs_csi_driver" {
   cluster_name             = var.cluster_name
   addon_name               = "aws-ebs-csi-driver"
@@ -23,7 +29,6 @@ resource "aws_eks_addon" "aws_ebs_csi_driver" {
 
   depends_on = [
     module.self_managed_node_group,
-    null_resource.patch_calico_installation
   ]
 }
 
@@ -44,6 +49,19 @@ resource "aws_eks_addon" "eks_pod_identity_agent" {
       }
     }
   })
+
+  depends_on = [module.self_managed_node_group]
+}
+
+resource "aws_eks_addon" "coredns" {
+  cluster_name  = var.cluster_name
+  addon_name    = "coredns"
+  addon_version = data.aws_eks_addon_version.coredns.version
+  timeouts {
+    create = "60m"
+    update = "60m"
+    delete = "60m"
+  }
 
   depends_on = [module.self_managed_node_group]
 }

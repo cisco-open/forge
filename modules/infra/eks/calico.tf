@@ -1,40 +1,25 @@
-resource "helm_release" "calico" {
-  name             = "calico"
-  repository       = "https://docs.tigera.io/calico/charts"
-  chart            = "tigera-operator"
-  version          = "v3.30.2"
-  namespace        = "tigera-operator"
-  create_namespace = true
-  wait             = false
-
-  set = [
-    {
-      name  = "installation.kubernetesProvider"
-      value = "EKS"
-    },
-    {
-      name  = "installation.kubeletVolumePluginPath"
-      value = "/var/lib/kubelet"
-    },
-  ]
-
-  depends_on = [null_resource.delete_daemonset]
-}
-
 resource "null_resource" "patch_calico_installation" {
+  depends_on = [data.external.update_kubeconfig]
   provisioner "local-exec" {
     command = <<EOF
-kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} patch installation default \
-  --namespace tigera-operator \
-  --type='json' \
-  -p='[
-    {"op": "replace", "path": "/spec/cni", "value":{"type":"Calico"}},
-    {"op": "replace", "path": "/spec/calicoNetwork", "value":{"bgp":"Disabled"}},
-  ]'
+      kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} delete daemonset -n kube-system aws-node || true
+      kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.30.2/manifests/operator-crds.yaml --server-side
+      kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.30.2/manifests/tigera-operator.yaml --server-side
+
+      kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} apply -f - <<EOT
+apiVersion: operator.tigera.io/v1
+kind: Installation
+metadata:
+  name: default
+spec:
+  registry: quay.io/
+  imagePath: calico
+  kubernetesProvider: EKS
+  cni:
+    type: Calico
+  calicoNetwork:
+    bgp: Disabled
+EOT
 EOF
   }
-
-  depends_on = [
-    helm_release.calico,
-  ]
 }

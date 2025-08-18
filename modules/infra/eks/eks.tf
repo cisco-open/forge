@@ -14,6 +14,7 @@ module "ebs_csi_irsa_role" {
 
   name                  = "${var.cluster_name}-${var.aws_region}-ebs-csi"
   use_name_prefix       = false
+  policy_name           = "${var.cluster_name}-${var.aws_region}-ebs-csi"
   attach_ebs_csi_policy = true
 
   oidc_providers = {
@@ -26,13 +27,17 @@ module "ebs_csi_irsa_role" {
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "v21.1.0"
+  version = "21.1.0"
 
   name               = var.cluster_name
   kubernetes_version = var.cluster_version
 
   vpc_id     = var.vpc_id
   subnet_ids = var.subnet_ids
+
+  addons = {
+    kube-proxy = {}
+  }
 
   endpoint_public_access = var.cluster_endpoint_public_access
 
@@ -60,31 +65,16 @@ module "eks" {
   cluster_tags = var.cluster_tags
 }
 
-resource "null_resource" "update_kubeconfig" {
+data "external" "update_kubeconfig" {
   depends_on = [module.eks]
+  program = ["bash", "-c", <<EOT
+    aws eks update-kubeconfig \
+      --region '${var.aws_region}' \
+      --name '${module.eks.cluster_name}' \
+      --alias '${module.eks.cluster_name}-${var.aws_profile}-${var.aws_region}' \
+      --profile '${var.aws_profile}' >/dev/null 2>&1
 
-  # Use triggers to always run the provisioner
-  triggers = {
-    always_run = timestamp()
-  }
-
-  provisioner "local-exec" {
-    command = <<EOT
-      aws eks update-kubeconfig \
-        --region ${var.aws_region} \
-        --name ${module.eks.cluster_name} \
-        --alias ${module.eks.cluster_name}-${var.aws_profile}-${var.aws_region} \
-        --profile ${var.aws_profile}
-    EOT
-  }
-}
-
-resource "null_resource" "delete_daemonset" {
-  depends_on = [
-    null_resource.update_kubeconfig,
-    module.eks
+    echo '{"updated":"true"}'
+  EOT
   ]
-  provisioner "local-exec" {
-    command = "kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} delete daemonset -n kube-system aws-node || true"
-  }
 }

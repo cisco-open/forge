@@ -12,7 +12,7 @@ module "self_managed_node_group" {
 
   block_device_mappings = {
     xvda = {
-      device_name = "/dev/sda1"
+      device_name = "/dev/xvda"
       ebs = {
         volume_size           = var.cluster_volume.size
         volume_type           = var.cluster_volume.type
@@ -39,10 +39,7 @@ module "self_managed_node_group" {
   ami_type = "AL2023_x86_64_STANDARD"
   ami_id   = data.aws_ami.eks_default.image_id
 
-  bootstrap_extra_args = <<-EOT
-    --use-max-pods false
-    --max-pods 100
-  EOT
+  user_data_template_path = "${path.module}/templates/node_config.yaml.tpl"
 
   cluster_service_cidr = module.eks.cluster_service_cidr
 

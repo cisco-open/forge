@@ -3,7 +3,7 @@ kind: EC2NodeClass
 metadata:
   name: karpenter
 spec:
-  amiFamily: AL2
+  amiFamily: AL2023
   amiSelectorTerms:
     - id: ${ami_id}
   role: ${role_arn}
@@ -15,7 +15,7 @@ spec:
     - id: ${primary_security_group_id}
     - id: ${security_group_id}
   blockDeviceMappings:
-    - deviceName: /dev/sda1
+    - deviceName: /dev/xvda
       ebs:
         volumeSize: ${disk_size}Gi
         volumeType: ${disk_type}

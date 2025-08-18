@@ -1,6 +1,6 @@
 module "karpenter" {
   source  = "terraform-aws-modules/eks/aws//modules/karpenter"
-  version = "v21.1.0"
+  version = "21.1.0"
 
   namespace    = "karpenter"
   cluster_name = var.cluster_name
@@ -18,7 +18,7 @@ module "karpenter" {
   create_pod_identity_association = true
 
   depends_on = [
-    aws_eks_addon.aws_ebs_csi_driver,
+    null_resource.patch_calico_installation,
   ]
 
 }
@@ -95,7 +95,7 @@ EOF
   depends_on = [
     helm_release.karpenter,
     module.eks,
-    null_resource.update_kubeconfig,
+    data.external.update_kubeconfig,
     module.karpenter.node_iam_role_arn
   ]
 }
@@ -114,7 +114,7 @@ EOF
   depends_on = [
     helm_release.karpenter,
     module.eks,
-    null_resource.update_kubeconfig,
+    data.external.update_kubeconfig,
     null_resource.apply_ec2_node_class
   ]
 }

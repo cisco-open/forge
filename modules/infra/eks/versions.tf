@@ -25,6 +25,10 @@ terraform {
       source  = "hashicorp/time"
       version = ">= 0.13.1"
     }
+    external = {
+      source  = "hashicorp/external"
+      version = ">= 2.3"
+    }
   }
 
   # OpenTofu version.
