@@ -4,19 +4,33 @@ LOG_FILE="$HOME/hook.log"
 TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
 
 INSTANCE_ID=$(wget -q -O - http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.instanceId')
-aws ec2 create-tags \
-  --resources "$INSTANCE_ID" \
-  --tags \
-    Key=ghr:repository,Value="$GITHUB_REPOSITORY" \
-    Key=ghr:run_id,Value="$GITHUB_RUN_ID" \
-    Key=ghr:workflow,Value="$GITHUB_WORKFLOW" \
-    Key=ghr:job,Value="$GITHUB_JOB" \
-    Key=ghr:commit,Value="$GITHUB_SHA" \
-    Key=ghr:ref,Value="$GITHUB_REF" \
-    Key=ghr:run_attempt,Value="$GITHUB_RUN_ATTEMPT" \
-    Key=ghr:run_number,Value="$GITHUB_RUN_NUMBER" \
-    Key=ghr:workflow_url,Value="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/attempts/${GITHUB_RUN_ATTEMPT}" \
-    Key=ghr:actor,Value="$GITHUB_ACTOR"
+aws ec2 create-tags --cli-input-json "$(jq -n \
+  --arg instance "$INSTANCE_ID" \
+  --arg repository "$GITHUB_REPOSITORY" \
+  --arg run_id "$GITHUB_RUN_ID" \
+  --arg workflow "$GITHUB_WORKFLOW" \
+  --arg job "$GITHUB_JOB" \
+  --arg commit "$GITHUB_SHA" \
+  --arg ref "$GITHUB_REF" \
+  --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+  --arg run_number "$GITHUB_RUN_NUMBER" \
+  --arg workflow_url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/attempts/${GITHUB_RUN_ATTEMPT}" \
+  --arg actor "$GITHUB_ACTOR" \
+  '{
+    Resources: [$instance],
+    Tags: [
+      {Key:"ghr:repository", Value:$repository},
+      {Key:"ghr:run_id", Value:$run_id},
+      {Key:"ghr:workflow", Value:$workflow},
+      {Key:"ghr:job", Value:$job},
+      {Key:"ghr:commit", Value:$commit},
+      {Key:"ghr:ref", Value:$ref},
+      {Key:"ghr:run_attempt", Value:$run_attempt},
+      {Key:"ghr:run_number", Value:$run_number},
+      {Key:"ghr:workflow_url", Value:$workflow_url},
+      {Key:"ghr:actor", Value:$actor}
+    ]
+  }')"
 
 {
   echo "{"
