@@ -2,7 +2,7 @@
 repos:
   # General Hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-yaml
         always_run: true
@@ -31,8 +31,6 @@ repos:
       - id: mixed-line-ending
         always_run: true
       - id: debug-statements
-        always_run: true
-      - id: fix-encoding-pragma
         always_run: true
       - id: name-tests-test
         always_run: true
@@ -100,9 +98,14 @@ repos:
         args:
           - --ignore=E501
 
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.20.0
+    hooks:
+      - id: pyupgrade
+
   # JSON Schema Hooks
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.33.2
+    rev: 0.33.3
     hooks:
       - id: check-github-workflows
       - id: check-github-actions
@@ -113,10 +116,13 @@ repos:
   - repo: https://github.com/gruntwork-io/pre-commit
     rev: v0.1.30
     hooks:
-      - id: terragrunt-hclfmt
+      - id: terragrunt-hcl-fmt
+      - id: tofu-fmt
+      - id: tofu-validate
+      - id: packer-validate
 
   - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: v1.99.5
+    rev: v1.100.0
     hooks:
       - id: terraform_fmt
         args:
@@ -125,7 +131,7 @@ repos:
       - id: terraform_tflint
         args:
           - --hook-config=--tf-path=tofu
-        exclude: (modules/integrations/splunk_cloud_data_manager|modules/infra/forge_subscription|modules/integrations/splunk_secrets/|modules/infra/eks_secrets/)
+        exclude: (modules/integrations/splunk_cloud_data_manager|modules/infra/forge_subscription|modules/integrations/splunk_secrets/)
         always_run: true
       - id: terraform_validate
         args:
@@ -140,7 +146,7 @@ repos:
         args:
           - --hook-config=--tf-path=tofu
           - --args=--config=.terraform-docs.yml
-        exclude: (modules/integrations/splunk_cloud_data_manager|modules/infra/forge_subscription|modules/integrations/splunk_secrets/|modules/infra/eks_secrets/)
+        exclude: (modules/integrations/splunk_cloud_data_manager|modules/infra/forge_subscription|modules/integrations/splunk_secrets/)
 
   # Security Hooks
   - repo: https://github.com/gitleaks/gitleaks
@@ -151,6 +157,6 @@ repos:
 
   # Ansible Hooks
   - repo: https://github.com/ansible-community/ansible-lint.git
-    rev: v25.7.0
+    rev: v25.8.1
     hooks:
       - id: ansible-lint

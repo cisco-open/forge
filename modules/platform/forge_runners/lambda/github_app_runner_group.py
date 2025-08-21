@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import base64  # noqa: E402
 import json  # noqa: E402
 import logging  # noqa: E402
