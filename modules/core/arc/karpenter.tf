@@ -3,26 +3,21 @@ locals {
     tenant = var.controller_config.namespace
   })
 }
+data "external" "update_kubeconfig" {
+  program = ["bash", "-c", <<EOT
+    aws eks update-kubeconfig \
+      --region '${var.aws_region}' \
+      --name '${var.eks_cluster_name}' \
+      --alias '${var.eks_cluster_name}-${var.aws_profile}-${var.aws_region}' \
+      --profile '${var.aws_profile}' >/dev/null 2>&1
 
-resource "null_resource" "update_kubeconfig" {
-  # Use triggers to always run the provisioner
-  triggers = {
-    always_run = timestamp()
-  }
-
-  provisioner "local-exec" {
-    command = <<EOT
-      aws eks update-kubeconfig \
-        --region ${var.aws_region} \
-        --name ${var.eks_cluster_name} \
-        --alias ${var.eks_cluster_name}-${var.aws_profile}-${var.aws_region} \
-        --profile ${var.aws_profile}
-    EOT
-  }
+    echo '{"updated":"true"}'
+  EOT
+  ]
 }
 
 data "external" "karpenter_ec2nodeclass" {
-  depends_on = [null_resource.update_kubeconfig]
+  depends_on = [data.external.update_kubeconfig]
 
   program = [
     "bash",
@@ -52,13 +47,17 @@ data "external" "karpenter_ec2nodeclass" {
   ]
 }
 
-
 resource "null_resource" "apply_ec2_node_class" {
   provisioner "local-exec" {
     command = <<EOF
-kubectl --context ${var.eks_cluster_name}-${var.aws_profile}-${var.aws_region} patch ec2nodeclass "karpenter-${var.controller_config.namespace}" --type='merge' -p '{"metadata":{"finalizers":[]}}' || true
-kubectl --context ${var.eks_cluster_name}-${var.aws_profile}-${var.aws_region} delete ec2nodeclass "karpenter-${var.controller_config.namespace}" || true
+# Delete existing EC2NodeClass if it exists (needed to update immutable fields)
+while kubectl --context ${var.eks_cluster_name}-${var.aws_profile}-${var.aws_region} get ec2nodeclasses.karpenter.k8s.aws "karpenter-${var.controller_config.namespace}" >/dev/null 2>&1; do
+  kubectl --context ${var.eks_cluster_name}-${var.aws_profile}-${var.aws_region} patch ec2nodeclasses.karpenter.k8s.aws "karpenter-${var.controller_config.namespace}" --type=merge -p '{"metadata":{"finalizers":[]}}' || true
+  kubectl --context ${var.eks_cluster_name}-${var.aws_profile}-${var.aws_region} delete ec2nodeclasses.karpenter.k8s.aws "karpenter-${var.controller_config.namespace}" --ignore-not-found || true
+  sleep 1
+done
 
+# Apply the new EC2NodeClass manifest only if not migrating
 if [ "${var.migrate_arc_cluster}" = "false" ]; then
   echo '${data.external.karpenter_ec2nodeclass.result.data}' \
     | yq eval -P - \
@@ -73,7 +72,7 @@ EOF
   }
 
   depends_on = [
-    null_resource.update_kubeconfig,
+    data.external.update_kubeconfig,
   ]
 }
 
@@ -81,9 +80,11 @@ resource "null_resource" "apply_node_pool" {
   provisioner "local-exec" {
     command = <<EOF
 if [ "${var.migrate_arc_cluster}" = "false" ]; then
-  echo "${local.node_pool_manifest}" | kubectl --context ${var.eks_cluster_name}-${var.aws_profile}-${var.aws_region} apply -f -
+  echo "${local.node_pool_manifest}" \
+    | kubectl --context ${var.eks_cluster_name}-${var.aws_profile}-${var.aws_region} apply -f -
 else
-  kubectl --context ${var.eks_cluster_name}-${var.aws_profile}-${var.aws_region} delete nodepools "karpenter-${var.controller_config.namespace}" || true
+  # Force delete NodePool resources if migration is active
+  kubectl --context ${var.eks_cluster_name}-${var.aws_profile}-${var.aws_region} delete nodepools.karpenter.sh "karpenter-${var.controller_config.namespace}" --ignore-not-found || true
 fi
 EOF
   }
@@ -95,6 +96,6 @@ EOF
 
   depends_on = [
     null_resource.apply_ec2_node_class,
-    null_resource.update_kubeconfig,
+    data.external.update_kubeconfig,
   ]
 }
