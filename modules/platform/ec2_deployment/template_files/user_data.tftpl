@@ -26,53 +26,78 @@ user_id=$(id -ru $user_name)
 # Configure cloudwatch logging agent.
 amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c ssm:${ssm_key_cloudwatch_agent_config}
 
-# Configure systemd for running service in users accounts.
-cat >/etc/systemd/user@UID.service <<-EOF
+os_version=$(lsb_release -rs)
 
-	[Unit]
-	Description=User Manager for UID %i
-	After=user-runtime-dir@%i.service
-	Wants=user-runtime-dir@%i.service
+if [ "$os_version" = "22.04" ]; then
+	# Configure systemd for running service in users accounts.
+	cat >/etc/systemd/user@UID.service <<-EOF
 
-	[Service]
-	LimitNOFILE=infinity
-	LimitNPROC=infinity
-	User=%i
-	PAMName=systemd-user
-	Type=notify
+		[Unit]
+		Description=User Manager for UID %i
+		After=user-runtime-dir@%i.service
+		Wants=user-runtime-dir@%i.service
 
-	[Install]
-	WantedBy=default.target
+		[Service]
+		LimitNOFILE=infinity
+		LimitNPROC=infinity
+		User=%i
+		PAMName=systemd-user
+		Type=notify
 
-EOF
+		[Install]
+		WantedBy=default.target
 
-# Set important paths.
-echo export XDG_RUNTIME_DIR=/run/user/$user_id >>/home/$user_name/.bashrc
+	EOF
 
-# Load our user manager service.
-systemctl daemon-reload
-systemctl enable user@UID.service
-systemctl start user@UID.service
+	# Set important paths.
+	echo export XDG_RUNTIME_DIR=/run/user/$user_id >>/home/$user_name/.bashrc
 
-# Setup "ubuntu" user's environment so future sessions can connect to docker.
-echo "export DOCKER_HOST=unix:///run/user/$user_id/docker.sock" >>/home/$user_name/.bashrc
-echo "export PATH=/home/$user_name/bin:\$PATH" >>/home/$user_name/.bashrc
-loginctl enable-linger $user_name
+	# Load our user manager service.
+	systemctl daemon-reload
+	systemctl enable user@UID.service
+	systemctl start user@UID.service
 
-# Install rootless docker (this doesn't download anything; all artifacts are already baked-in to the VM image).
-su -l $user_name -c "/usr/bin/dockerd-rootless-setuptool.sh install"
+	# Setup "ubuntu" user's environment so future sessions can connect to docker.
+	echo "export DOCKER_HOST=unix:///run/user/$user_id/docker.sock" >>/home/$user_name/.bashrc
+	echo "export PATH=/home/$user_name/bin:\$PATH" >>/home/$user_name/.bashrc
+	loginctl enable-linger $user_name
 
-# Config Actions to use rootless Docker.
-cd /opt/actions-runner/ || exit
-echo "DOCKER_HOST=unix:///run/user/$user_id/docker.sock" >>.env
-echo "PATH=/home/$user_name/bin:$PATH" >>.env
+	# Install rootless docker (this doesn't download anything; all artifacts are already baked-in to the VM image).
+	su -l $user_name -c "/usr/bin/dockerd-rootless-setuptool.sh install"
 
-# Install our dynamically-generated SSH public keys (i.e. team members,
-# so they can debug the runners via SSH + the AWS management console).
+elif [ "$os_version" = "24.04" ]; then
+	# configure systemd for running service in users accounts
+	mkdir -p /etc/systemd/system/user-$user_id.slice.d
+	cat > /etc/systemd/system/user-$user_id.slice.d/resources.conf <<- EOF
+	[Slice]
+	TasksMax=infinity
+	EOF
+	mkdir -p /home/$user_name/.config/systemd/
+	cat > /home/$user_name/.config/systemd/user.conf <<- EOF
+	[Manager]
+	DefaultLimitNOFILE=infinity
+	DefaultLimitNPROC=infinity
+	EOF
+	chown $user_name:$user_name /home/$user_name/.config/systemd/user.conf /home/$user_name/.config/systemd /home/$user_name/.config/
+
+	systemctl daemon-reload
+
+	echo export XDG_RUNTIME_DIR="/run/user/$user_id" >> "/home/$user_name/.bashrc"
+
+	# Run docker service by default
+	loginctl enable-linger $user_name
+	machinectl shell "$user_name@.host" /usr/bin/dockerd-rootless-setuptool.sh install
+	echo export DOCKER_HOST="unix:///run/user/$user_id/docker.sock" >> "/home/$user_name/.bashrc"
+	echo export PATH="/home/$user_name/bin:$PATH" >> "/home/$user_name/.bashrc"
+fi
+
+# config runner for rootless docker
+cd /opt/actions-runner/
+echo DOCKER_HOST="unix:///run/user/$user_id/docker.sock" >> .env
+echo PATH="/home/$user_name/bin:$PATH" >> .env
+
 ${post_install}
 
-# Register runner job hooks
-# Ref: https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/running-scripts-before-or-after-a-job
 %{ if hook_job_started != "" }
 cat > /opt/actions-runner/hook_job_started.sh <<'EOF'
 ${hook_job_started}
