@@ -118,5 +118,9 @@ curl "${splunk_cloud}/en-GB/splunkd/__raw/servicesNS/nobody/data_manager/cloudin
     -H "X-Splunk-Form-Key: $SPLUNKWEB_CSRF_TOKEN_8443" \
     -o /tmp/${splunk_input_uuid}_template.json >>/tmp/${splunk_input_uuid}_logs.txt 2>&1
 
+sed -i.bak 's/untag_eventbridge_rule(client, curr_reg, curr_act, rule, tags_to_be_removed)/#&/g' "/tmp/${splunk_input_uuid}_template.json"
+
+rm -f "/tmp/${splunk_input_uuid}_template.json.bak"
+
 # Output the version
 cat /tmp/${splunk_input_uuid}_input.json | jq -c '{version: .details.version}'
