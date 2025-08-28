@@ -158,31 +158,31 @@ module "runners" {
         block_device_mappings             = val["block_device_mappings"]
         runner_log_files = [
           {
-            "log_group_name" : "syslog",
+            "log_group_name" : "forge-logs",
             "prefix_log_group" : true,
             "file_path" : "/var/log/syslog",
             "log_stream_name" : "{instance_id}/syslog"
           },
           {
-            "log_group_name" : "user-data",
+            "log_group_name" : "forge-logs",
             "prefix_log_group" : true,
             "file_path" : "/var/log/user-data.log",
             "log_stream_name" : "{instance_id}/user-data"
           },
           {
-            "log_group_name" : "runner",
+            "log_group_name" : "forge-logs",
             "prefix_log_group" : true,
             "file_path" : "/opt/actions-runner/_diag/Runner_**.log",
             "log_stream_name" : "{instance_id}/runner"
           },
           {
-            "log_group_name" : "runner-logs",
+            "log_group_name" : "forge-logs",
             "prefix_log_group" : true,
             "file_path" : "/opt/actions-runner/_diag/pages/*.log",
             "log_stream_name" : "{instance_id}/runner-logs"
           },
           {
-            "log_group_name" : "hook",
+            "log_group_name" : "forge-logs",
             "prefix_log_group" : true,
             "file_path" : "/home/ubuntu/hook.log",
             "log_stream_name" : "{instance_id}/hook"
