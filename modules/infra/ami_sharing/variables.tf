@@ -18,7 +18,7 @@ variable "account_ids" {
   type        = list(string)
 }
 
-variable "ami_name_filter" {
+variable "ami_name_filters" {
   description = "AMI name filter to use to find AMIs to share"
-  type        = string
+  type        = list(string)
 }

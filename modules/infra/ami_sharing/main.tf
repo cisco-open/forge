@@ -1,17 +1,25 @@
 # Fetch all matching AMIs
-data "aws_ami_ids" "ami_filter" {
-  owners = ["self"]
+data "aws_ami" "selected" {
+  for_each    = toset(var.ami_name_filters)
+  most_recent = true
+  owners      = ["self"]
 
   filter {
     name   = "name"
-    values = [var.ami_name_filter]
+    values = [each.value]
+  }
+
+  filter {
+    name   = "state"
+    values = ["available"]
   }
 }
 
-# Create all AMI-account pairs
 locals {
+  selected_ami_ids = [for _, d in data.aws_ami.selected : d.id]
+
   ami_account_pairs = flatten([
-    for ami in data.aws_ami_ids.ami_filter.ids : [
+    for ami in local.selected_ami_ids : [
       for account in var.account_ids : {
         ami_id  = ami
         account = account
@@ -20,7 +28,6 @@ locals {
   ])
 }
 
-# Share AMIs with accounts
 resource "aws_ami_launch_permission" "share_amis" {
   for_each = { for pair in local.ami_account_pairs : "${pair.ami_id}-${pair.account}" => pair }
 
