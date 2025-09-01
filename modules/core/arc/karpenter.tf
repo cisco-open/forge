@@ -8,14 +8,14 @@ locals {
 
 data "external" "update_kubeconfig" {
   program = ["bash", "-c", <<EOT
+    set -euo pipefail
     mkdir -p "$(dirname '${local.kubeconfig_path}')"
 
-    aws eks update-kubeconfig \
+    AWS_PROFILE='${var.aws_profile}' aws eks update-kubeconfig \
       --region '${var.aws_region}' \
       --name '${var.eks_cluster_name}' \
       --alias '${var.eks_cluster_name}-${var.aws_profile}-${var.aws_region}' \
-      --profile '${var.aws_profile}' \
-      --kubeconfig '${local.kubeconfig_path}' >/dev/null 2>&1
+      --kubeconfig '${local.kubeconfig_path}' >/dev/null 2>&1 || true
 
     echo '{"updated":"true"}'
   EOT
@@ -29,7 +29,14 @@ data "external" "karpenter_ec2nodeclass" {
     "bash",
     "-c",
     <<-EOT
-      kubectl --kubeconfig '${local.kubeconfig_path}' --context ${var.eks_cluster_name}-${var.aws_profile}-${var.aws_region} get ec2nodeclasses.karpenter.k8s.aws karpenter -o yaml \
+      set -euo pipefail
+      YAML="$(kubectl --kubeconfig '${local.kubeconfig_path}' --context ${var.eks_cluster_name}-${var.aws_profile}-${var.aws_region} get ec2nodeclasses.karpenter.k8s.aws karpenter -o yaml 2>/dev/null || true)"
+      if [ -z "$YAML" ]; then
+        echo '{}' | jq -Rs '{ data: . }'
+        exit 0
+      fi
+
+      printf "%s" "$YAML" \
       | yq eval '
           del(
             .metadata.creationTimestamp,
@@ -45,8 +52,9 @@ data "external" "karpenter_ec2nodeclass" {
         ' - \
       | yq eval -o=json - \
       | jq --argjson newtags '${jsonencode(var.tags)}' --arg newname "karpenter-${var.controller_config.namespace}" '
-          .spec.tags *= $newtags
-          | .metadata.name = $newname
+          .spec.tags = (.spec.tags // {}) |
+          .spec.tags *= $newtags |
+          .metadata.name = $newname
         ' \
       | jq -c '.' | jq -Rs '{ data: . }'
     EOT
@@ -98,7 +106,7 @@ EOF
   }
 
   triggers = {
-    manifest_hash       = sha256("${path.module}/templates/node_pool.yaml.tpl")
+    manifest_hash       = sha256(local.node_pool_manifest)
     migrate_arc_cluster = var.migrate_arc_cluster
   }
 

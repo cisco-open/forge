@@ -96,7 +96,7 @@ module "runners" {
   # Configure the various types of runners we provide, along with on-demand
   # versus standby pools, etc.
   multi_runner_config = {
-    for key, val in coalesce(var.runner_configs.runner_specs, {}) :
+    for key, val in var.runner_configs.runner_specs :
     key => {
       matcherConfig : {
         # Generate all unique combinations of extra_labels and combine them with runner_labels

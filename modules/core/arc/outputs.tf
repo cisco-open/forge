@@ -3,5 +3,5 @@ output "runners_map" {
 }
 
 output "subnet_cidr_blocks" {
-  value = { for id, subnet in data.aws_subnet.eks_subnets : id => subnet.cidr_block }
+  value = length(var.multi_runner_config) < 1 ? [] : [for s in values(data.aws_subnet.eks_subnets) : s.cidr_block]
 }

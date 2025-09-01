@@ -16,7 +16,7 @@ data "aws_ami" "selected" {
 }
 
 locals {
-  selected_ami_ids = [for _, d in data.aws_ami.selected : d.id]
+  selected_ami_ids = distinct([for _, d in data.aws_ami.selected : d.id])
 
   ami_account_pairs = flatten([
     for ami in local.selected_ami_ids : [

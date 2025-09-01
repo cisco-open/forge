@@ -2,10 +2,12 @@
 # For generating a webhook secret. Apparently this is a cryptographically secure
 # PRNG.
 resource "random_id" "random" {
+  count       = length(var.ec2_runner_specs) > 0 ? 1 : 0
   byte_length = 20
 }
 
 module "ec2_runners" {
+  count = length(var.ec2_runner_specs) > 0 ? 1 : 0
   # Using multi-runner example as a baseline.
   source = "../ec2_deployment"
 
@@ -32,7 +34,7 @@ module "ec2_runners" {
     github_app = {
       key_base64     = data.aws_secretsmanager_secret_version.data_cicd_secrets["${local.cicd_secrets_prefix}github_actions_runners_app_key"].secret_string
       id             = data.aws_secretsmanager_secret_version.data_cicd_secrets["${local.cicd_secrets_prefix}github_actions_runners_app_id"].secret_string
-      webhook_secret = random_id.random.hex
+      webhook_secret = random_id.random[0].hex
     }
     runner_group_name = var.runner_group_name
     runner_specs      = var.ec2_runner_specs

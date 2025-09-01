@@ -2,8 +2,8 @@ resource "null_resource" "update_github_app_webhook" {
   triggers = {
     ghes_org       = var.ghes_org
     ghes_url       = var.ghes_url
-    webhook_url    = module.ec2_runners.webhook_endpoint
-    secret         = random_id.random.hex
+    webhook_url    = try(module.ec2_runners[0].webhook_endpoint, "https://cisco-open.github.io/forge")
+    secret         = try(random_id.random[0].hex, null)
     secret_version = data.aws_secretsmanager_secret_version.data_cicd_secrets["${local.cicd_secrets_prefix}github_actions_runners_app_key"].id
   }
 
