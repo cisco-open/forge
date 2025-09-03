@@ -13,8 +13,3 @@ spec:
         repo: git@github.com:cisco-open/forge.git
         module_path: modules/infra/eks
         ref: main
-      eks_secrets:
-        local_path: ../forge
-        repo: git@github.com:cisco-open/forge.git
-        module_path: modules/infra/eks_secrets
-        ref: main

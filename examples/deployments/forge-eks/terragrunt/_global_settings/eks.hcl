@@ -48,12 +48,6 @@ locals {
   eks_settings_data = read_terragrunt_config(find_in_parent_folders("eks/config.hcl"))
 }
 
-dependencies {
-  paths = [
-    find_in_parent_folders("eks_secrets")
-  ]
-}
-
 inputs = {
   # Core Environment
   env            = local.env_name
