@@ -19,13 +19,13 @@ module "update_runner_ami_lambda" {
   handler       = "update_ssm_ami_id.lambda_handler"
   runtime       = "python3.11"
 
-  # Build from local source
   source_path = [{
     path             = "${path.module}/lambda"
     pip_requirements = "${path.module}/lambda/requirements.txt"
   }]
 
-  logging_log_group = aws_cloudwatch_log_group.update_runner_ami_lambda.name
+  logging_log_group                 = aws_cloudwatch_log_group.update_runner_ami_lambda.name
+  use_existing_cloudwatch_log_group = true
 
   environment_variables = {
     RUNNER_AMI_MAP = local.runner_ami_map_json
@@ -33,14 +33,16 @@ module "update_runner_ami_lambda" {
 
   attach_policy_json = true
 
-  policy_json = data.aws_iam_policy_document.lambda_ssm_ami.json
+  policy_json = data.aws_iam_policy_document.update_runner_ami_lambda.json
 
   function_tags = var.tenant_configs.tags
   role_tags     = var.tenant_configs.tags
   tags          = var.tenant_configs.tags
+
+  depends_on = [aws_cloudwatch_log_group.update_runner_ami_lambda]
 }
 
-data "aws_iam_policy_document" "lambda_ssm_ami" {
+data "aws_iam_policy_document" "update_runner_ami_lambda" {
 
   statement {
     actions = [
@@ -79,4 +81,32 @@ resource "aws_cloudwatch_log_group" "update_runner_ami_lambda" {
   retention_in_days = var.runner_configs.logging_retention_in_days
   tags              = var.tenant_configs.tags
   tags_all          = var.tenant_configs.tags
+}
+
+resource "aws_cloudwatch_event_rule" "update_runner_ami_lambda" {
+  name                = "${var.runner_configs.prefix}-update-runner-ami-ten-minutes-rule"
+  description         = "Trigger Lambda every 10 minutes"
+  schedule_expression = "cron(*/10 * * * ? *)"
+
+  tags     = var.tenant_configs.tags
+  tags_all = var.tenant_configs.tags
+
+  depends_on = [module.update_runner_ami_lambda]
+}
+
+resource "aws_cloudwatch_event_target" "update_runner_ami_lambda" {
+  rule = aws_cloudwatch_event_rule.update_runner_ami_lambda.name
+  arn  = module.update_runner_ami_lambda.lambda_function_arn
+
+  depends_on = [module.update_runner_ami_lambda]
+}
+
+resource "aws_lambda_permission" "update_runner_ami_lambda" {
+  action        = "lambda:InvokeFunction"
+  function_name = "${var.runner_configs.prefix}-update-runner-ami"
+  principal     = "events.amazonaws.com"
+  statement_id  = "AllowExecutionFromCloudWatch"
+  source_arn    = aws_cloudwatch_event_rule.update_runner_ami_lambda.arn
+
+  depends_on = [module.update_runner_ami_lambda]
 }
