@@ -18,11 +18,14 @@ module "update_runner_ami_lambda" {
   function_name = "${var.runner_configs.prefix}-update-runner-ami"
   handler       = "update_ssm_ami_id.lambda_handler"
   runtime       = "python3.11"
+  architectures = ["x86_64"]
 
   source_path = [{
     path             = "${path.module}/lambda"
     pip_requirements = "${path.module}/lambda/requirements.txt"
   }]
+  build_in_docker  = true
+  docker_pip_cache = true
 
   logging_log_group                 = aws_cloudwatch_log_group.update_runner_ami_lambda.name
   use_existing_cloudwatch_log_group = true

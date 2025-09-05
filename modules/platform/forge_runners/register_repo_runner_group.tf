@@ -6,11 +6,15 @@ module "register_github_app_runner_group_lambda" {
   handler       = "github_app_runner_group.lambda_handler"
   runtime       = "python3.11"
   timeout       = 120
+  architectures = ["x86_64"]
 
   source_path = [{
     path             = "${path.module}/lambda"
     pip_requirements = "${path.module}/lambda/requirements.txt"
   }]
+  build_in_docker  = true
+  docker_image     = "public.ecr.aws/lambda/python:3.11"
+  docker_pip_cache = false
 
   logging_log_group                 = aws_cloudwatch_log_group.register_github_app_runner_group_lambda.name
   use_existing_cloudwatch_log_group = true

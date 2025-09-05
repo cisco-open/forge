@@ -33,8 +33,8 @@ def lambda_handler(event, context):
 
         try:
             current_ssm = ssm.get_parameter(Name=ssm_id)['Parameter']['Value']
-        except ssm.exceptions.ParameterNotFound:
-            current_ssm = None
+        except ssm.exceptions.ParameterNotFound as e:
+            raise RuntimeError(f'SSM parameter not found: {ssm_id}') from e
 
         if current_ssm != new_ami_id:
             ssm.put_parameter(
