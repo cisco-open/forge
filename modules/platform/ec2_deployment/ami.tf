@@ -6,6 +6,7 @@ data "aws_ssm_parameter" "ami_id" {
 
   name            = each.value
   with_decryption = true
+  depends_on      = [module.runners]
 }
 
 data "aws_ami" "runner_ami" {

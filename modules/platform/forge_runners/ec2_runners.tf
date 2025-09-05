@@ -25,6 +25,7 @@ module "ec2_runners" {
   }
 
   runner_configs = {
+    env                                 = var.env
     prefix                              = var.deployment_config.prefix
     ghes_url                            = var.ghes_url
     ghes_org                            = var.ghes_org

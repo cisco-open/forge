@@ -8,6 +8,10 @@ terraform {
       source  = "hashicorp/external"
       version = ">= 2.3"
     }
+    archive = {
+      source  = "hashicorp/archive"
+      version = ">= 2.7.0"
+    }
   }
 
   # OpenTofu version.

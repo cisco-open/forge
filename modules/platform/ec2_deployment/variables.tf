@@ -5,6 +5,7 @@ variable "aws_region" {
 
 variable "runner_configs" {
   type = object({
+    env                       = string
     prefix                    = string
     ghes_url                  = string
     ghes_org                  = string
