@@ -28,6 +28,16 @@ variable "ghes_url" {
   description = "GitHub Enterprise Server URL."
 }
 
+variable "repository_selection" {
+  type        = string
+  description = "Repository selection type."
+
+  validation {
+    condition     = contains(["all", "selected"], var.repository_selection)
+    error_message = "repository_selection must be 'all' or 'selected'."
+  }
+}
+
 variable "lambda_subnet_ids" {
   type        = list(string)
   description = "So the lambdas can run in our pre-determined subnets. They don't require the same security policy as the runners though."

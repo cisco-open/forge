@@ -23,6 +23,7 @@ module "register_github_app_runner_group_lambda" {
     GITHUB_API                  = local.github_api
     ORGANIZATION                = var.ghes_org
     RUNNER_GROUP_NAME           = var.runner_group_name
+    REPOSITORY_SELECTION        = var.repository_selection
     SECRET_NAME_APP_ID          = "${local.cicd_secrets_prefix}github_actions_runners_app_id"
     SECRET_NAME_PRIVATE_KEY     = "${local.cicd_secrets_prefix}github_actions_runners_app_key"
     SECRET_NAME_INSTALLATION_ID = "${local.cicd_secrets_prefix}github_actions_runners_app_installation_id"

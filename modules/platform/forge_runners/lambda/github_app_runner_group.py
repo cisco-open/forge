@@ -42,38 +42,6 @@ def get_installation_access_token(jwt_token: str, installation_id: str, github_a
     return response.json()['token']
 
 
-def get_installation_info(access_token: str, github_api: str, installation_id: str) -> Dict[str, Any]:
-    """
-    Fetch all installations of the GitHub App and return info for the installation matching installation_id.
-    """
-    url = f'{github_api}/app/installations'
-    headers = {
-        'Authorization': f'Bearer {access_token}',
-        'Accept': 'application/vnd.github+json',
-    }
-
-    installations = []
-    while url:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        data = response.json()
-        installations.extend(data)
-
-        # Handle pagination
-        url = response.links.get('next', {}).get('url', None)
-
-    # Filter for the specific installation_id
-    installation_info = next(
-        (inst for inst in installations if inst['id'] == installation_id),
-        None
-    )
-
-    if not installation_info:
-        raise ValueError(f'Installation ID {installation_id} not found')
-
-    return installation_info
-
-
 def list_repositories(access_token: str, github_api: str) -> List[Dict[str, Any]]:
     """List all repositories the GitHub App has access to."""
     headers = {
@@ -188,6 +156,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         secret_name_app_id = os.getenv('SECRET_NAME_APP_ID')
         secret_name_private_key = os.getenv('SECRET_NAME_PRIVATE_KEY')
         secret_name_installation_id = os.getenv('SECRET_NAME_INSTALLATION_ID')
+        repo_selection = os.getenv('REPOSITORY_SELECTION')
 
         logger.info('Fetching secrets from AWS Secrets Manager')
         app_id = get_secret(secret_name_app_id)
@@ -205,12 +174,6 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         logger.info('Getting installation access token')
         access_token = get_installation_access_token(
             jwt_token, installation_id, github_api)
-
-        logger.info('Checking installation repository selection')
-        installation_info = get_installation_info(
-            access_token, github_api, installation_id)
-        repo_selection = installation_info.get(
-            'repository_selection', 'selected')  # 'all' or 'selected'
 
         repos = []
         if repo_selection == 'selected':
