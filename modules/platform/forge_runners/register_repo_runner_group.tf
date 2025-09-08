@@ -13,6 +13,8 @@ module "register_github_app_runner_group_lambda" {
     pip_requirements = "${path.module}/lambda/requirements.txt"
   }]
 
+  quiet_archive_local_exec = true
+
   logging_log_group                 = aws_cloudwatch_log_group.register_github_app_runner_group_lambda.name
   use_existing_cloudwatch_log_group = true
 

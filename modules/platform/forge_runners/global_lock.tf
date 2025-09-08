@@ -83,6 +83,8 @@ module "clean_global_lock_lambda" {
     pip_requirements = "${path.module}/lambda/requirements.txt"
   }]
 
+  quiet_archive_local_exec = true
+
   logging_log_group                 = aws_cloudwatch_log_group.clean_global_lock_lambda.name
   use_existing_cloudwatch_log_group = true
 
