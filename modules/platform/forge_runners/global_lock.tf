@@ -151,7 +151,7 @@ resource "aws_cloudwatch_log_group" "clean_global_lock_lambda" {
 
 
 resource "aws_cloudwatch_event_rule" "clean_global_lock_lambda" {
-  name                = "${var.deployment_config.prefix}-clean-global-lock-ten-minutes-rule"
+  name                = "${var.deployment_config.prefix}-clean-global-lock"
   description         = "Trigger Lambda every 10 minutes"
   schedule_expression = "cron(*/10 * * * ? *)"
 

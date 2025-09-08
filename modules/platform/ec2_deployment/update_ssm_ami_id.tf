@@ -87,7 +87,7 @@ resource "aws_cloudwatch_log_group" "update_runner_ami_lambda" {
 }
 
 resource "aws_cloudwatch_event_rule" "update_runner_ami_lambda" {
-  name                = "${var.runner_configs.prefix}-update-runner-ami-ten-minutes-rule"
+  name                = "${var.runner_configs.prefix}-update-runner-ami"
   description         = "Trigger Lambda every 10 minutes"
   schedule_expression = "cron(*/10 * * * ? *)"
 

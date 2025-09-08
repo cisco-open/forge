@@ -70,7 +70,7 @@ resource "aws_cloudwatch_log_group" "register_github_app_runner_group_lambda" {
 }
 
 resource "aws_cloudwatch_event_rule" "register_github_app_runner_group_lambda" {
-  name                = "${var.deployment_config.prefix}-register-github-app-runner-group-ten-minutes-rule"
+  name                = "${var.deployment_config.prefix}-register-github-app-runner-group"
   description         = "Trigger Lambda every 10 minutes"
   schedule_expression = "cron(*/10 * * * ? *)"
 
