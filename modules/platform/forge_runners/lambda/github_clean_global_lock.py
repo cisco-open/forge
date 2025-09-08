@@ -17,8 +17,8 @@ import jwt  # noqa: E402
 import requests  # noqa: E402
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 DYNAMODB_TABLE = os.getenv('DYNAMODB_TABLE')
 

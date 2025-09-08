@@ -16,8 +16,8 @@ import jwt  # noqa: E402
 import requests  # noqa: E402
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 
 def generate_jwt(app_id: str, private_key: str) -> str:

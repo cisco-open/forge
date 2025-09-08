@@ -1,12 +1,16 @@
 import calendar
 import io
 import json
+import logging
 from decimal import ROUND_HALF_UP, Decimal
 from urllib.parse import unquote
 
 import boto3
 import common
 import pandas as pd
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 s3 = boto3.client('s3')
 
@@ -50,7 +54,6 @@ def process_grouped_rows(grouped):
         line = json.dumps(event_body)
         line_size = len(line.encode())
 
-        # Flush logs batch if limits reached
         if len(batch) >= common.MAX_BATCH_COUNT or current_size + line_size > common.MAX_BATCH_SIZE_BYTES:
             common.send_to_splunk_batch(batch)
             batch = []
@@ -59,7 +62,6 @@ def process_grouped_rows(grouped):
         batch.append(line)
         current_size += line_size
 
-        # Prepare metrics
         dimensions = {
             'usage_date': str(row['usage_date']),
             'service': row['line_item_product_code'],
@@ -78,7 +80,6 @@ def process_grouped_rows(grouped):
             'dimensions': dimensions
         })
 
-        # Flush metrics batch if big enough
         if len(metrics_batch) >= common.METRICS_BATCH_SIZE:
             common.send_metric_to_o11y_batch(metrics_batch)
             metrics_batch = []
@@ -87,28 +88,28 @@ def process_grouped_rows(grouped):
 
 
 def lambda_handler(event, context):
-    print(f'[INFO] Lambda triggered with event: {json.dumps(event)}')
+    logger.info('Lambda triggered with event: %s', json.dumps(event))
 
     for record in event['Records']:
         bucket = record['s3']['bucket']['name']
         key = unquote(record['s3']['object']['key'])
-        print(f'[INFO] Processing file from bucket: {bucket}, key: {key}')
+        logger.info('Processing file from bucket: %s, key: %s', bucket, key)
 
         obj = s3.get_object(Bucket=bucket, Key=key)
         df = pd.read_parquet(io.BytesIO(obj['Body'].read()))
 
         grouped = df.groupby(
             ['usage_date', 'line_item_resource_id',
-                'line_item_product_code', 'user_aws_application'],
+             'line_item_product_code', 'user_aws_application'],
             as_index=False
         ).agg({
             'line_item_unblended_cost': 'sum',
             'line_item_net_unblended_cost': 'sum'
         })
 
-        print(f'[INFO] Grouped {len(grouped)} records for Splunk')
+        logger.info('Grouped %d records for Splunk', len(grouped))
 
         process_grouped_rows(grouped)
 
-    print('[INFO] Lambda execution finished.')
+    logger.info('Lambda execution finished.')
     return {'statusCode': 200}

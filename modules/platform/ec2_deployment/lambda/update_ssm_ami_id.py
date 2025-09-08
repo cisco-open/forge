@@ -1,14 +1,17 @@
 import json
+import logging
 import os
 
 import boto3
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 ssm = boto3.client('ssm')
 ec2 = boto3.client('ec2')
 
 
 def lambda_handler(event, context):
-
     runner_map = json.loads(os.environ.get('RUNNER_AMI_MAP', '{}'))
 
     for runner_key, info in runner_map.items():
@@ -24,7 +27,7 @@ def lambda_handler(event, context):
         ).get('Images', [])
 
         if not images:
-            print(f'No AMIs found for runner {runner_key}')
+            logger.warning('No AMIs found for runner %s', runner_key)
             continue
 
         latest_ami = sorted(
@@ -34,6 +37,7 @@ def lambda_handler(event, context):
         try:
             current_ssm = ssm.get_parameter(Name=ssm_id)['Parameter']['Value']
         except ssm.exceptions.ParameterNotFound as e:
+            logger.error('SSM parameter not found: %s', ssm_id)
             raise RuntimeError(f'SSM parameter not found: {ssm_id}') from e
 
         if current_ssm != new_ami_id:
@@ -43,7 +47,7 @@ def lambda_handler(event, context):
                 Type='String',
                 Overwrite=True
             )
-            print(f'Updated {ssm_id} to {new_ami_id}')
+            logger.info('Updated %s to %s', ssm_id, new_ami_id)
 
             ssm.add_tags_to_resource(
                 ResourceType='Parameter',
@@ -55,7 +59,8 @@ def lambda_handler(event, context):
                 ]
             )
         else:
-            print(f'SSM parameter {ssm_id} already up-to-date')
+            logger.info('SSM parameter %s already up-to-date (%s)',
+                        ssm_id, current_ssm)
 
     return {
         'statusCode': 200,

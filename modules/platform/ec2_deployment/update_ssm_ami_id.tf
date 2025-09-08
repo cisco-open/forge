@@ -18,6 +18,7 @@ module "update_runner_ami_lambda" {
   function_name = "${var.runner_configs.prefix}-update-runner-ami"
   handler       = "update_ssm_ami_id.lambda_handler"
   runtime       = "python3.11"
+  timeout       = 900
   architectures = ["x86_64"]
 
   source_path = [{

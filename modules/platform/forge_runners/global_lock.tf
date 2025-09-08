@@ -75,7 +75,7 @@ module "clean_global_lock_lambda" {
   function_name = "${var.deployment_config.prefix}-clean-global-lock"
   handler       = "github_clean_global_lock.lambda_handler"
   runtime       = "python3.11"
-  timeout       = 120
+  timeout       = 900
   architectures = ["x86_64"]
 
   source_path = [{
