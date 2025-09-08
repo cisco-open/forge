@@ -42,6 +42,38 @@ def get_installation_access_token(jwt_token: str, installation_id: str, github_a
     return response.json()['token']
 
 
+def get_installation_info(access_token: str, github_api: str, installation_id: str) -> Dict[str, Any]:
+    """
+    Fetch all installations of the GitHub App and return info for the installation matching installation_id.
+    """
+    url = f'{github_api}/app/installations'
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+        'Accept': 'application/vnd.github+json',
+    }
+
+    installations = []
+    while url:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+        installations.extend(data)
+
+        # Handle pagination
+        url = response.links.get('next', {}).get('url', None)
+
+    # Filter for the specific installation_id
+    installation_info = next(
+        (inst for inst in installations if inst['id'] == installation_id),
+        None
+    )
+
+    if not installation_info:
+        raise ValueError(f'Installation ID {installation_id} not found')
+
+    return installation_info
+
+
 def list_repositories(access_token: str, github_api: str) -> List[Dict[str, Any]]:
     """List all repositories the GitHub App has access to."""
     headers = {
@@ -89,8 +121,7 @@ def get_all_runner_groups(url: str, headers: Dict[str, str]) -> List[Dict[str, A
     return runner_groups
 
 
-def create_runner_group(access_token: str, github_api: str, organization: str, runner_group_name: str) -> Dict[str, Any]:
-    """Create a new runner group in the GitHub organization."""
+def create_runner_group(access_token: str, github_api: str, organization: str, runner_group_name: str, visibility: str) -> Dict[str, Any]:
     url = f'{github_api}/orgs/{organization}/actions/runner-groups'
     headers = {
         'Authorization': f'Bearer {access_token}',
@@ -98,44 +129,50 @@ def create_runner_group(access_token: str, github_api: str, organization: str, r
     }
     payload = {
         'name': runner_group_name,
-        'visibility': 'selected',
+        'visibility': visibility,
         'selected_repository_ids': []
     }
     response = requests.post(url, json=payload, headers=headers)
     response.raise_for_status()
     logger.info(
-        f"Created runner group '{runner_group_name}' in org '{organization}'.")
+        f"Created runner group '{runner_group_name}' with visibility '{visibility}'.")
     return response.json()
 
 
-def save_to_runner_group(access_token: str, github_api: str, organization: str, runner_group_name: str, repos: List[Dict[str, Any]]):
-    """Add repositories to a GitHub Runner Group."""
+def save_to_runner_group(access_token: str, github_api: str, organization: str, runner_group_name: str, repos: List[Dict[str, Any]], visibility: str):
     headers = {
         'Authorization': f'Bearer {access_token}',
         'Accept': 'application/vnd.github+json',
     }
 
     url = f'{github_api}/orgs/{organization}/actions/runner-groups'
-
-    # Get all runner groups
     groups = get_all_runner_groups(url, headers)
 
-    # Find the Runner Group ID
-    group_id = next((g['id']
-                    for g in groups if g['name'] == runner_group_name), None)
-    if not group_id:
-        group = create_runner_group(
-            access_token, github_api, organization, runner_group_name)
-        group_id = group['id']
+    group = next((g for g in groups if g['name'] == runner_group_name), None)
 
-    # Add Repositories to the Runner Group
-    for repo in repos:
-        repo_id = repo['id']
-        add_url = f'{github_api}/orgs/{organization}/actions/runner-groups/{group_id}/repositories/{repo_id}'
-        response = requests.put(add_url, headers=headers)
+    if group:
+        group_id = group['id']
+        patch_payload = {'visibility': visibility}
+        patch_url = f'{github_api}/orgs/{organization}/actions/runner-groups/{group_id}'
+        response = requests.patch(
+            patch_url, json=patch_payload, headers=headers)
         response.raise_for_status()
         logger.info(
-            f"Added repository {repo['full_name']} to runner group {runner_group_name}.")
+            f"Updated runner group '{runner_group_name}' visibility to '{visibility}'.")
+    else:
+        group = create_runner_group(
+            access_token, github_api, organization, runner_group_name, visibility)
+        group_id = group['id']
+
+    # Only add repos if visibility is 'selected'
+    if visibility == 'selected':
+        for repo in repos:
+            repo_id = repo['id']
+            add_url = f'{github_api}/orgs/{organization}/actions/runner-groups/{group_id}/repositories/{repo_id}'
+            response = requests.put(add_url, headers=headers)
+            response.raise_for_status()
+            logger.info(
+                f"Added repository {repo['full_name']} to runner group {runner_group_name}.")
 
 
 def get_secret(secret_name: str) -> Dict[str, Any]:
@@ -148,7 +185,6 @@ def get_secret(secret_name: str) -> Dict[str, Any]:
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """AWS Lambda entry point."""
     try:
-        # Fetch secrets from Secrets Manager
         secret_name_app_id = os.getenv('SECRET_NAME_APP_ID')
         secret_name_private_key = os.getenv('SECRET_NAME_PRIVATE_KEY')
         secret_name_installation_id = os.getenv('SECRET_NAME_INSTALLATION_ID')
@@ -162,24 +198,30 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         github_api = os.getenv('GITHUB_API')
         runner_group_name = os.getenv('RUNNER_GROUP_NAME')
 
-        # Generate JWT
         logger.info('Generating JWT')
         private_key = private_key.replace('\\n', '\n')
         jwt_token = generate_jwt(app_id, private_key)
 
-        # Get installation access token
         logger.info('Getting installation access token')
         access_token = get_installation_access_token(
             jwt_token, installation_id, github_api)
 
-        # List repositories
-        logger.info('Listing repositories')
-        repos = list_repositories(access_token, github_api)
+        logger.info('Checking installation repository selection')
+        installation_info = get_installation_info(
+            access_token, github_api, installation_id)
+        repo_selection = installation_info.get(
+            'repository_selection', 'selected')  # 'all' or 'selected'
 
-        # Save to Runner Group
-        logger.info('Saving repositories to runner group')
+        repos = []
+        if repo_selection == 'selected':
+            logger.info('Listing selected repositories')
+            repos = list_repositories(access_token, github_api)
+        else:
+            logger.info('GitHub App installed on all repositories')
+
+        logger.info('Saving runner group configuration')
         save_to_runner_group(access_token, github_api, organization,
-                             runner_group_name, repos)
+                             runner_group_name, repos, visibility=repo_selection)
 
         return {
             'statusCode': 200,
