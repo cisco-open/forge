@@ -25,8 +25,6 @@ module "update_runner_ami_lambda" {
     path             = "${path.module}/lambda"
     pip_requirements = "${path.module}/lambda/requirements.txt"
   }]
-  build_in_docker  = true
-  docker_pip_cache = true
 
   logging_log_group                 = aws_cloudwatch_log_group.update_runner_ami_lambda.name
   use_existing_cloudwatch_log_group = true

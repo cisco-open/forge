@@ -82,9 +82,6 @@ module "clean_global_lock_lambda" {
     path             = "${path.module}/lambda"
     pip_requirements = "${path.module}/lambda/requirements.txt"
   }]
-  build_in_docker  = true
-  docker_image     = "public.ecr.aws/lambda/python:3.11"
-  docker_pip_cache = false
 
   logging_log_group                 = aws_cloudwatch_log_group.clean_global_lock_lambda.name
   use_existing_cloudwatch_log_group = true
