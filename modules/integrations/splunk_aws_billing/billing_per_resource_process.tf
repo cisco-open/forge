@@ -25,7 +25,7 @@ resource "aws_lambda_function" "cur_per_resource_process" {
   s3_key        = aws_s3_object.cur_per_resource_process.key
   handler       = "handler_per_resource_process.lambda_handler"
   architectures = ["x86_64"]
-  runtime       = "python3.11"
+  runtime       = "python3.12"
   role          = aws_iam_role.lambda_exec_role.arn
   timeout       = 900
   memory_size   = 10240
