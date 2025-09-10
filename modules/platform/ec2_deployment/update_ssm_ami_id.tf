@@ -47,18 +47,10 @@ module "update_runner_ami_lambda" {
 data "aws_iam_policy_document" "update_runner_ami_lambda" {
 
   statement {
-    actions = [
-      "logs:CreateLogStream",
-      "logs:PutLogEvents"
-    ]
-    effect    = "Allow"
-    resources = ["*"]
-  }
-
-  statement {
     effect = "Allow"
     actions = [
       "ssm:GetParameter",
+      "ssm:GetParameters",
       "ssm:PutParameter",
       "ssm:AddTagsToResource"
     ]
