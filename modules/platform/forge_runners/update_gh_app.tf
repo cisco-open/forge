@@ -16,6 +16,7 @@ resource "null_resource" "update_github_app_webhook" {
       WEBHOOK_URL = self.triggers.webhook_url
       SECRET      = self.triggers.secret
       GITHUB_API  = local.github_api
+      PREFIX      = "${var.env}-${var.deployment_config.prefix}"
     }
 
     command = "${path.module}/scripts/generate_and_patch_github_app.sh"
