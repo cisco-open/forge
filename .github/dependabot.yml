@@ -1,0 +1,42 @@
+---
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+    labels:
+      - dependencies
+      - github-actions
+
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: daily
+    labels:
+      - dependencies
+      - python
+
+  - package-ecosystem: terraform
+    directory: /modules
+    schedule:
+      interval: daily
+    labels:
+      - dependencies
+      - terraform
+
+  - package-ecosystem: terraform
+    directory: /examples/deployments
+    schedule:
+      interval: daily
+    labels:
+      - dependencies
+      - terraform
+
+  - package-ecosystem: docker
+    directory: /.docker
+    schedule:
+      interval: daily
+    labels:
+      - dependencies
+      - docker
