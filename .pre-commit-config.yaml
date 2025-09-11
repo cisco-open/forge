@@ -6,7 +6,7 @@ exclude: |
       .*cache.*/.*|       # Exclude cache directories
       .*venv.*/.*|        # Exclude virtual environment directories
   )$
-fail_fast: true
+fail_fast: false
 default_language_version:
   python: python3.12
 default_install_hook_types:
@@ -78,10 +78,6 @@ repos:
       - id: forbid-new-submodules
         name: Git · Forbid new submodules
         always_run: true
-      - id: no-commit-to-branch
-        name: Git · Protect main branches
-        always_run: true
-        args: [--branch, main]
 
   # ---------------------
   # Commit Message Hooks
@@ -143,28 +139,6 @@ repos:
     hooks:
       - id: hadolint
         name: Docker · Linter
-
-  # ---------------------
-  # Markdown Hooks
-  # ---------------------
-  - repo: https://github.com/Lucas-C/pre-commit-hooks-nodejs
-    rev: v1.1.2
-    hooks:
-      - id: markdown-toc
-        name: Markdown · TOC generator
-        args: [--indent, '    ', -i]
-
-  # - repo: https://github.com/hukkin/mdformat
-  #   rev: 0.7.21
-  #   hooks:
-  #     - id: mdformat
-  #       name: Markdown · Format markdown
-  #       always_run: true
-  #       additional_dependencies:
-  #         - mdformat-gfm
-  #         - mdformat-ruff
-  #         - mdformat-frontmatter
-  #         - ruff
 
   # ---------------------
   # Makefile Hooks
@@ -303,3 +277,18 @@ repos:
       - id: ansible-lint
         name: Ansible · Linter
         always_run: true
+
+  # ---------------------
+  # Markdown Hooks
+  # ---------------------
+  - repo: https://github.com/hukkin/mdformat
+    rev: 0.7.21
+    hooks:
+      - id: mdformat
+        name: Markdown · Format markdown
+        additional_dependencies:
+          - mdformat-gfm
+          - mdformat-ruff
+          - mdformat-frontmatter
+          - ruff
+        exclude: (modules/)

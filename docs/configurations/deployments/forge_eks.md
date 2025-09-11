@@ -4,8 +4,8 @@ This directory provides a working example of deploying **Forge EKS** using **Ter
 
 ## Module Overview
 
-| Module | Description                                                        |
-|--------|--------------------------------------------------------------------|
+| Module | Description                                                                        |
+| ------ | ---------------------------------------------------------------------------------- |
 | `eks`  | Configures an EKS cluster with Calico and Karpenter for networking and autoscaling |
 
 ## Prerequisites
@@ -36,12 +36,12 @@ examples/deployments/forge-eks/terragrunt/environments/<aws_account>/_environmen
 
 ### Edit the Config Files
 
-- **_global.yaml**  
-  Set global values such as team name, product name, AWS account prefix, GitHub organization, and contact email.  
+- **\_global.yaml**\
+  Set global values such as team name, product name, AWS account prefix, GitHub organization, and contact email.\
   *(Path: `_global_settings/_global.yaml`)*
 
-- **_environment.yaml**  
-  Define environment-wide settings like environment name, AWS region, and account ID.  
+- **\_environment.yaml**\
+  Define environment-wide settings like environment name, AWS region, and account ID.\
   *(Path: `environments/<aws_account>/_environment_wide_settings/_environment.yaml`)*
 
 **Be sure to replace all placeholder values (`<...>`) with your actual environment details.**

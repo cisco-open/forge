@@ -2,27 +2,31 @@
 
 **Dependabot** and **RenovateBot** are tools used for automating dependency management in software projects, ensuring that your dependencies (libraries, frameworks, etc.) stay up-to-date and secure. These tools are particularly useful in modern software development workflows, where keeping track of dependencies can become time-consuming and prone to errors.
 
----
+______________________________________________________________________
 
 <!-- toc -->
 
-    * [Dependabot](#dependabot)
-    * [RenovateBot](#renovatebot)
-    * [Comparison*](#comparison)
-    * [Conclusion](#conclusion)
+```
+* [Dependabot](#dependabot)
+* [RenovateBot](#renovatebot)
+* [Comparison\*](#comparison)
+* [Conclusion](#conclusion)
+```
+
 - [Setting Up Dependabot or RenovateBot](#setting-up-dependabot-or-renovatebot)
-    * [Dependabot Configuration Example](#dependabot-configuration-example)
-    * [Setting Up RenovateBot](#setting-up-renovatebot)
+  - [Dependabot Configuration Example](#dependabot-configuration-example)
+  - [Setting Up RenovateBot](#setting-up-renovatebot)
 
 <!-- tocstop -->
 
----
+______________________________________________________________________
 
 ### Dependabot
 
 **Dependabot** is a GitHub-native tool designed to automatically monitor and update dependencies in your project's `package.json`, `pom.xml`, `Gemfile`, or other configuration files.
 
 - **Key Features**:
+
   - Automatically creates pull requests when updates for dependencies are available.
   - Prioritizes security updates, ensuring that your project uses safe versions of libraries.
   - Integrates directly with GitHub repositories.
@@ -34,13 +38,14 @@
 - **Use Case**:
   Dependabot is particularly useful for teams who want to ensure that their software stays secure by automatically handling security patches and version upgrades.
 
----
+______________________________________________________________________
 
 ### RenovateBot
 
 **RenovateBot** is another automated dependency management tool, similar to Dependabot, but it provides more customization options and supports a broader range of package managers and configurations.
 
 - **Key Features**:
+
   - Offers fine-grained configuration options, including scheduling updates, limiting the frequency of updates, and creating multiple pull requests for different updates.
   - Supports a wide range of ecosystems, including Docker, Python, JavaScript, Ruby, Go, and more.
   - Allows for more advanced strategies, such as grouping updates or separating major and minor version updates.
@@ -52,26 +57,25 @@
 - **Use Case**:
   RenovateBot is ideal for teams that need more control over the frequency, scope, and method of dependency updates. It is particularly useful for complex projects that require more customization.
 
----
+______________________________________________________________________
 
-### Comparison*
+### Comparison\*
 
-| Feature               | Dependabot                          | RenovateBot                        |
-|-----------------------|-------------------------------------|------------------------------------|
-| **Supported Platforms**| GitHub only                         | GitHub, GitLab, Bitbucket, others  |
-| **Customization**      | Limited                             | Highly customizable                |
-| **Focus**              | Primarily security updates         | General dependency updates with advanced options |
-| **Integration**        | Native to GitHub                    | Works across multiple platforms    |
-| **Frequency Control**  | Basic                              | Advanced (scheduling, grouping)    |
+| Feature                 | Dependabot                 | RenovateBot                                      |
+| ----------------------- | -------------------------- | ------------------------------------------------ |
+| **Supported Platforms** | GitHub only                | GitHub, GitLab, Bitbucket, others                |
+| **Customization**       | Limited                    | Highly customizable                              |
+| **Focus**               | Primarily security updates | General dependency updates with advanced options |
+| **Integration**         | Native to GitHub           | Works across multiple platforms                  |
+| **Frequency Control**   | Basic                      | Advanced (scheduling, grouping)                  |
 
----
+______________________________________________________________________
 
 ### Conclusion
 
 Both **Dependabot** and **RenovateBot** are excellent tools for automating dependency updates and improving software security. **Dependabot** is a simpler, GitHub-integrated tool, perfect for teams looking for an easy, no-fuss solution. **RenovateBot**, on the other hand, offers more flexibility and customization, making it a better choice for complex projects or teams that need more control over how dependencies are updated.
 
-
----
+______________________________________________________________________
 
 ## Setting Up Dependabot or RenovateBot
 
@@ -96,7 +100,7 @@ updates:
 
 For further details, refer to the [official Dependabot docs](https://docs.github.com/en/code-security/getting-started/dependabot-quickstart-guide).
 
----
+______________________________________________________________________
 
 ### Setting Up RenovateBot
 

@@ -2,7 +2,7 @@
 
 This directory provides a working example of deploying **Forge integrations** using **Terragrunt** for layered configuration management.
 
----
+______________________________________________________________________
 
 ## Module Overview
 
@@ -11,7 +11,7 @@ This directory provides a working example of deploying **Forge integrations** us
 | `splunk_cloud_data_manager` | Configures Splunk Cloud Data Manager for ingesting logs and events            |
 | `splunk_cloud_conf_shared`  | Applies shared Splunk Observability configurations (dashboards, alerts, etc.) |
 
----
+______________________________________________________________________
 
 ## Prerequisites
 
@@ -27,7 +27,7 @@ Before deploying:
 - The `splunk_cloud_forgecicd` module depends on tenant definitions.
   - To define tenants, follow: [New Tenant Guide](./new_tenant.md)
 
----
+______________________________________________________________________
 
 ## Deployment
 

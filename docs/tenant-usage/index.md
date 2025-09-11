@@ -2,26 +2,27 @@
 
 <!-- toc -->
 
-- [Forge Tenant Quick Start Guide](#forge-tenant-quick-start-guide)
-    * [What is Forge?](#what-is-forge)
-    * [How to use Forge runners](#how-to-use-forge-runners)
-    * [Adding your repository to Forge](#adding-your-repository-to-forge)
-- [Forge Multi-Tenant Overview](#forge-multi-tenant-overview)
-    * [🔄 Dependency Management](#%F0%9F%94%84-dependency-management)
-- [⚙️ Advanced Configuration (Optional)](#%E2%9A%99%EF%B8%8F-advanced-configuration-optional)
-    * [🔐 Optional AWS Access for Runners](#%F0%9F%94%90-optional-aws-access-for-runners)
-        + [⚙️ Configuring AWS Access (Optional)](#%E2%9A%99%EF%B8%8F-configuring-aws-access-optional)
-        + [🔄 Example: Assume Role in External AWS Account (Optional)](#%F0%9F%94%84-example-assume-role-in-external-aws-account-optional)
-        + [🐳 Running Jobs in Containers](#%F0%9F%90%B3-running-jobs-in-containers)
-            - [1. **Create an ECR Policy for the Forge Runner**](#1-create-an-ecr-policy-for-the-forge-runner)
-            - [2. **Attach the Policy to the Forge Runner IAM Role**](#2-attach-the-policy-to-the-forge-runner-iam-role)
-            - [3. **Configure the Runner to Access the ECR Repository**](#3-configure-the-runner-to-access-the-ecr-repository)
-    * [🔍 Observation](#%F0%9F%94%8D-observation)
-    * [🔧 How to Configure a Repository for Runners](#%F0%9F%94%A7-how-to-configure-a-repository-for-runners)
-        + [1. Navigate to the Repository](#1-navigate-to-the-repository)
-        + [2. Access Configuration Options](#2-access-configuration-options)
-        + [3. Select Repositories](#3-select-repositories)
-        + [5. Ready for Runners](#5-ready-for-runners)
+- [Forge Tenant Usage Guide](#forge-tenant-usage-guide)
+  - [Forge Tenant Quick Start Guide](#forge-tenant-quick-start-guide)
+    - [What is Forge?](#what-is-forge)
+    - [How to use Forge runners](#how-to-use-forge-runners)
+    - [Adding your repository to Forge](#adding-your-repository-to-forge)
+  - [Forge Multi-Tenant Overview](#forge-multi-tenant-overview)
+    - [🔄 Dependency Management](#-dependency-management)
+  - [⚙️ Advanced Configuration (Optional)](#%EF%B8%8F-advanced-configuration-optional)
+    - [🔐 Optional AWS Access for Runners](#-optional-aws-access-for-runners)
+      - [⚙️ Configuring AWS Access (Optional)](#%EF%B8%8F-configuring-aws-access-optional)
+      - [🔄 Example: Assume Role in External AWS Account (Optional)](#-example-assume-role-in-external-aws-account-optional)
+      - [🐳 Running Jobs in Containers](#-running-jobs-in-containers)
+        - [1. **Create an ECR Policy for the Forge Runner**](#1-create-an-ecr-policy-for-the-forge-runner)
+        - [2. **Attach the Policy to the Forge Runner IAM Role**](#2-attach-the-policy-to-the-forge-runner-iam-role)
+        - [3. **Configure the Runner to Access the ECR Repository**](#3-configure-the-runner-to-access-the-ecr-repository)
+    - [🔍 Observation](#-observation)
+    - [🔧 How to Configure a Repository for Runners](#-how-to-configure-a-repository-for-runners)
+      - [1. Navigate to the Repository](#1-navigate-to-the-repository)
+      - [2. Access Configuration Options](#2-access-configuration-options)
+      - [3. Select Repositories](#3-select-repositories)
+      - [5. Ready for Runners](#5-ready-for-runners)
 
 <!-- tocstop -->
 
@@ -73,43 +74,43 @@ If you need a runner type not listed here, contact the Forge team.
 
 4. **(Optional) AWS resource access**
 
-If your workflow needs to access external AWS resources (S3, EC2, etc.), check [advanced doc](#️-advanced-configuration-optional).
+If your workflow needs to access external AWS resources (S3, EC2, etc.), check [advanced doc](#%EF%B8%8F-advanced-configuration-optional).
 
----
+______________________________________________________________________
 
 ### Adding your repository to Forge
 
-* Make sure the Forge GitHub App is installed on your repo.
-* Go to your repo Settings → Installed GitHub Apps → Configure Forge app.
-* Select the repos you want Forge runners enabled for.
-* Once configured, push workflows using `runs-on: self-hosted` and Forge runners will pick them up.
+- Make sure the Forge GitHub App is installed on your repo.
+- Go to your repo Settings → Installed GitHub Apps → Configure Forge app.
+- Select the repos you want Forge runners enabled for.
+- Once configured, push workflows using `runs-on: self-hosted` and Forge runners will pick them up.
 
----
+______________________________________________________________________
 
 ## Forge Multi-Tenant Overview
 
 Forge is designed for flexible, secure, and scalable CI/CD operations, integrating seamlessly with GitHub Actions. Key features include:
 
-* ⚡ **Flexible Scaling**: Choose from predefined runner types (`dependabot`, `small`, `standard`, `large`, `metal`) to match workload needs.
-* 🐳 **Container Support**: Run jobs in Docker containers for isolated execution.
-* 🔐 **IAM Role-Based Access**: Securely access external AWS accounts with per-tenant IAM roles, ensuring strict permission control.
-* 🖥️ **Secure Remote Access**: Enable SSH access via Teleport for debugging and troubleshooting.
-* 📊 **Centralized Logging & Monitoring**: Automatically send logs to Splunk and integrate with CloudWatch for monitoring.
-* 🔄 **Seamless GitHub Actions Integration**: Optimize CI/CD workflows effortlessly.
-* 📦 **Automated Dependency Management**: Utilize **Dependabot** and **Renovate Bot** for automated updates.
+- ⚡ **Flexible Scaling**: Choose from predefined runner types (`dependabot`, `small`, `standard`, `large`, `metal`) to match workload needs.
+- 🐳 **Container Support**: Run jobs in Docker containers for isolated execution.
+- 🔐 **IAM Role-Based Access**: Securely access external AWS accounts with per-tenant IAM roles, ensuring strict permission control.
+- 🖥️ **Secure Remote Access**: Enable SSH access via Teleport for debugging and troubleshooting.
+- 📊 **Centralized Logging & Monitoring**: Automatically send logs to Splunk and integrate with CloudWatch for monitoring.
+- 🔄 **Seamless GitHub Actions Integration**: Optimize CI/CD workflows effortlessly.
+- 📦 **Automated Dependency Management**: Utilize **Dependabot** and **Renovate Bot** for automated updates.
 
----
+______________________________________________________________________
 
 ### 🔄 Dependency Management
 
 Forge supports automated dependency updates using **Dependabot** and **Renovate Bot**:
 
-* 🤖 **Dependabot**: A GitHub-native tool that creates PRs to update dependencies automatically.
-* 🔧 **Renovate Bot**: Offers advanced versioning strategies, scheduling, and fine-grained configuration.
+- 🤖 **Dependabot**: A GitHub-native tool that creates PRs to update dependencies automatically.
+- 🔧 **Renovate Bot**: Offers advanced versioning strategies, scheduling, and fine-grained configuration.
 
 [See the detailed comparison guide](./dependency-management.md).
 
----
+______________________________________________________________________
 
 ## ⚙️ Advanced Configuration (Optional)
 
@@ -121,8 +122,8 @@ By default, Forge Runners do not require access to external AWS resources. Howev
 
 To allow the runner to access external AWS resources:
 
-1. **External AWS IAM Role (Optional)**: The external AWS account must have IAM roles configured with the necessary permissions (e.g., EC2, DynamoDB, S3).
-2. **Trust Relationship**: The external AWS role must trust the IAM role from the Forge account to allow the Forge runner to assume it.
+- 1. **External AWS IAM Role (Optional)**: The external AWS account must have IAM roles configured with the necessary permissions (e.g., EC2, DynamoDB, S3).
+- 2. **Trust Relationship**: The external AWS role must trust the IAM role from the Forge account to allow the Forge runner to assume it.
 
 #### 🔄 Example: Assume Role in External AWS Account (Optional)
 
@@ -143,7 +144,7 @@ To configure role assumption, the external AWS account must allow the Forge runn
 
 Once the Forge runner assumes this role, it will have the permissions defined in the external AWS account’s IAM role (e.g., to launch EC2 instances, access S3, pull ECR, etc.).
 
----
+______________________________________________________________________
 
 #### 🐳 Running Jobs in Containers
 
@@ -173,9 +174,9 @@ Example ECR policy (JSON):
 
 Replace:
 
-* `<aws-region>` with your ECR region
-* `<aws-account-id>` with your AWS account ID hosting the ECR
-* `<container-name>` with your ECR repo name
+- `<aws-region>` with your ECR region
+- `<aws-account-id>` with your AWS account ID hosting the ECR
+- `<container-name>` with your ECR repo name
 
 ##### 2. **Attach the Policy to the Forge Runner IAM Role**
 
@@ -201,14 +202,14 @@ jobs:
       image: <aws-account-id>.dkr.ecr.<aws-region>.amazonaws.com/<container-name>
 ```
 
----
+______________________________________________________________________
 
 ### 🔍 Observation
 
-* **Instance Selection**: Forge provisions the smallest available instance in the requested runner type within your AWS region.
-* **Network Latency**: Pulling container images from ECR in a different region may introduce latency.
+- **Instance Selection**: Forge provisions the smallest available instance in the requested runner type within your AWS region.
+- **Network Latency**: Pulling container images from ECR in a different region may introduce latency.
 
----
+______________________________________________________________________
 
 ### 🔧 How to Configure a Repository for Runners
 
@@ -218,13 +219,13 @@ Go to a repository where the **GitHub App for the tenant** is installed.
 
 #### 2. Access Configuration Options
 
-* Click **Configure** in repository settings.
-* You'll be redirected to the page where you select repos for the Forge GitHub App.
+- Click **Configure** in repository settings.
+- You'll be redirected to the page where you select repos for the Forge GitHub App.
 
 #### 3. Select Repositories
 
-* Select repos you want to enable Forge runners on.
-* For multiple repos, select them all.
+- Select repos you want to enable Forge runners on.
+- For multiple repos, select them all.
 
 #### 5. Ready for Runners
 

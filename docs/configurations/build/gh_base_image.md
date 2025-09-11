@@ -20,6 +20,7 @@ You must provide the following variables to Packer:
 - `aws_region`: The AWS region to build the image in
 
 Example values:
+
 - `subnet_id=subnet-0123456789abcdef0`
 - `vpc_id=vpc-0123456789abcdef0`
 - `allowed_ssh_cidrs=10.0.0.0/8`
@@ -37,6 +38,7 @@ export SPLUNK_REALM=<your_splunk_realm>
 If you want to include Teleport or Splunk OTel Collector roles in the build, enable them in your Ansible playbook by uncommenting the roles:
 
 `forge/examples/build/ansible/build_gh_base_image.yaml`
+
 ```yaml
 roles:
   - role: teleport  
@@ -58,6 +60,7 @@ packer build \
 ```
 
 **Example:**
+
 ```sh
 cd forge/examples/build/packer
 packer build \

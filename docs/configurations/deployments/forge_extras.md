@@ -6,13 +6,13 @@ This directory contains example configurations for deploying **Forge infrastruct
 
 The following modules are included in this deployment:
 
-| Module Name         | Description                                                      |
-|---------------------|------------------------------------------------------------------|
-| `cloud_custodian`   | Applies Cloud Custodian policies for AWS resource governance     |
-| `cloud_formation`   | Grants CloudFormation permissions for integrations and automation|
-| `ecr`               | Provisions ECR repositories for storing runner/container images  |
+| Module Name          | Description                                                                                                                                                                                           |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cloud_custodian`    | Applies Cloud Custodian policies for AWS resource governance                                                                                                                                          |
+| `cloud_formation`    | Grants CloudFormation permissions for integrations and automation                                                                                                                                     |
+| `ecr`                | Provisions ECR repositories for storing runner/container images                                                                                                                                       |
 | `forge_subscription` | Manages Forge subscription resources, allowing Forge runners to assume roles in tenant accounts and pull ECR images across accounts. Supports both self-subscription and tenant onboarding scenarios. |
-| `storage`           | Provisions S3 buckets for integrations and data storage          |
+| `storage`            | Provisions S3 buckets for integrations and data storage                                                                                                                                               |
 
 ## Prerequisites
 
@@ -42,12 +42,12 @@ examples/deployments/forge-extras/terragrunt/environments/<aws_account>/_environ
 
 ### Edit the Config Files
 
-- **_global.yaml**  
-  Set global values such as team name, product name, AWS account prefix, GitHub organization, and contact email.  
+- **\_global.yaml**\
+  Set global values such as team name, product name, AWS account prefix, GitHub organization, and contact email.\
   *(Path: `_global_settings/_global.yaml`)*
 
-- **_environment.yaml**  
-  Define environment-wide settings like environment name, AWS region, and account ID.  
+- **\_environment.yaml**\
+  Define environment-wide settings like environment name, AWS region, and account ID.\
   *(Path: `environments/<aws_account>/_environment_wide_settings/_environment.yaml`)*
 
 **Be sure to replace all placeholder values (`<...>`) with your actual environment details.**

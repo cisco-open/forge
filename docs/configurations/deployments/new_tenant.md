@@ -2,7 +2,7 @@
 
 This checklist tells you *exactly* what to update to onboard a new Forge tenant.
 
----
+______________________________________________________________________
 
 ## 1. Create Tenant Config Files
 
@@ -10,10 +10,10 @@ Copy these templates and place them at the correct paths.
 
 ### Templates to Copy
 
-* `examples/templates/tenant/_global_settings/tenant.hcl`
-* `examples/templates/tenant/tenant/terragrunt.hcl`
-* `examples/templates/tenant/tenant/runner_settings.hcl`
-* `examples/templates/tenant/tenant/config.yaml`
+- `examples/templates/tenant/_global_settings/tenant.hcl`
+- `examples/templates/tenant/tenant/terragrunt.hcl`
+- `examples/templates/tenant/tenant/runner_settings.hcl`
+- `examples/templates/tenant/tenant/config.yaml`
 
 ### Destination Paths
 
@@ -27,7 +27,7 @@ examples/deployments/forge-tenant/terragrunt/environments/<aws_account>/regions/
 examples/deployments/forge-tenant/terragrunt/environments/<aws_account>/regions/<aws_region>/vpcs/<vpc_alias>/tenants/<tenant_name>/config.yaml
 ```
 
-### Example for tenant=`sbg`, account=`sec-plat`, region=`eu-west-1`, vpc\_alias=`shared`
+### Example for tenant=`sbg`, account=`sec-plat`, region=`eu-west-1`, vpc_alias=`shared`
 
 ```bash
 cp examples/templates/tenant/_global_settings/tenant.hcl \
@@ -45,13 +45,13 @@ cp examples/templates/tenant/tenant/config.yaml \
    examples/deployments/forge-tenant/terragrunt/environments/sec-plat/regions/eu-west-1/vpcs/shared/tenants/sbg/config.yaml
 ```
 
----
+______________________________________________________________________
 
 ## 2. Edit `config.yaml` — Tenant Configuration Fields
 
 Controls GitHub integration, IAM roles, runner specs (EC2 & ARC).
 
----
+______________________________________________________________________
 
 ### Top-level Structure & Key Fields
 
@@ -94,31 +94,31 @@ arc_runner_specs:
 
 ```
 
----
+______________________________________________________________________
 
 ### Field Guidance & Gotchas
 
-* **`ghes_url`**: empty for github.com, full URL for GHES.
-* **`iam_roles_to_assume`**: full ARNs only, no wildcards.
-* **`ecr_registries`**: must be full URLs, including account and region.
-* **`ami_kms_key_arn`**: must be explicitly set to `''` if AMI not encrypted; otherwise runner fails.
-* **`max_instances`**: check AWS EC2 quota before setting.
-* **`instance_types`**: spot-compatible preferred for cost savings.
-* **`pool_config.schedule_expression`**: AWS cron syntax with 6 fields, **not** standard cron. Example: `cron(0 8 * * ? *)`. See [AWS docs](https://docs.aws.amazon.com/eventbridge/latest/userguide/scheduled-events.html#cron-expressions).
-* **`scale_set_type`**: only `dind` or `k8s`. Wrong values cause runtime errors.
-* **Kubernetes CPU/memory fields**: units mandatory (e.g., `500m`, `1Gi`). Missing units break pods.
+- **`ghes_url`**: empty for github.com, full URL for GHES.
+- **`iam_roles_to_assume`**: full ARNs only, no wildcards.
+- **`ecr_registries`**: must be full URLs, including account and region.
+- **`ami_kms_key_arn`**: must be explicitly set to `''` if AMI not encrypted; otherwise runner fails.
+- **`max_instances`**: check AWS EC2 quota before setting.
+- **`instance_types`**: spot-compatible preferred for cost savings.
+- **`pool_config.schedule_expression`**: AWS cron syntax with 6 fields, **not** standard cron. Example: `cron(0 8 * * ? *)`. See [AWS docs](https://docs.aws.amazon.com/eventbridge/latest/userguide/scheduled-events.html#cron-expressions).
+- **`scale_set_type`**: only `dind` or `k8s`. Wrong values cause runtime errors.
+- **Kubernetes CPU/memory fields**: units mandatory (e.g., `500m`, `1Gi`). Missing units break pods.
 
----
+______________________________________________________________________
 
 ### Common Pitfalls — Avoid These
 
-* Wildcard or invalid IAM roles → runner startup failures.
-* Forgetting `ami_kms_key_arn` = `''` when AMI isn’t encrypted → Terraform errors.
-* Incorrect cron syntax → scheduled warm pools don’t trigger.
-* Setting max runners beyond quotas → failures or throttling.
-* Missing units in k8s resource requests/limits → pod rejection.
+- Wildcard or invalid IAM roles → runner startup failures.
+- Forgetting `ami_kms_key_arn` = `''` when AMI isn’t encrypted → Terraform errors.
+- Incorrect cron syntax → scheduled warm pools don’t trigger.
+- Setting max runners beyond quotas → failures or throttling.
+- Missing units in k8s resource requests/limits → pod rejection.
 
----
+______________________________________________________________________
 
 ## 3. Minimal Working `config.yaml` Example
 
@@ -161,7 +161,7 @@ arc_runner_specs:
     container_limits_memory: 2Gi
 ```
 
----
+______________________________________________________________________
 
 ## 4. Deploy Secrets
 
@@ -179,7 +179,7 @@ terragrunt apply --target aws_secretsmanager_secret_version.cicd_secrets
 
 > **Pro tip:** Use `--target` carefully — only apply secrets here to avoid accidental resource changes in other modules.
 
----
+______________________________________________________________________
 
 ## 5. Create GitHub App
 
@@ -196,13 +196,14 @@ docker run --rm -p 5000:5000 ghcr.io/cisco-open/forge-forge-github-app-register:
 ```
 
 3. **Open the UI:**
-   Go to `http://localhost:5000/` in your browser.
+
+Go to `http://localhost:5000/` in your browser.
 
 4. **In the UI:**
 
-* Click **"Register App in Your Org"**
-* Log in with your GitHub org or GHES admin account
-* Use this pattern for the GitHub App name (replace variables):
+- Click **"Register App in Your Org"**
+- Log in with your GitHub org or GHES admin account
+- Use this pattern for the GitHub App name (replace variables):
 
 ```
 ${local.tenant_name}-${local.region_alias}-${local.vpc_alias}-${include.env.locals.runner_group_name_suffix}
@@ -214,34 +215,37 @@ Example:
 sec-plat-euw1-shared-sbg-cicd-forge
 ```
 
-* Click **“Create GitHub App”**
+- Click **“Create GitHub App”**
 
 5. **After creation:**
 
-* The app is created in your org or GHES instance.
-* The UI will download the app config JSON containing critical secrets and keys.
+- The app is created in your org or GHES instance.
+- The UI will download the app config JSON containing critical secrets and keys.
 
 ### Tips:
 
-* **Save the JSON file securely.** The private key (`pem`) in it is your authentication backbone. Lose it, and you start over.
-* You **need** these values from the JSON (or GitHub later) to configure Forge’s secrets:
+- **Save the JSON file securely.** The private key (`pem`) in it is your authentication backbone. Lose it, and you start over.
 
-  * `client_id`
-  * `id` (App ID)
-  * `installation_id` (get it by installing the app on repos/org)
-  * `pem` (private key)
-* Permissions must be **exactly**:
+- You **need** these values from the JSON (or GitHub later) to configure Forge’s secrets:
 
-  * `actions`: read
-  * `checks`: read
-  * `metadata`: read
-  * `organization_self_hosted_runners`: write
-  * `organization_administration`: write
-* Subscribe the app to `"workflow_job"` event — this is how your runners get triggered.
-* Don’t forget to install the GitHub App on the repositories or organizations that will use these runners.
+  - `client_id`
+  - `id` (App ID)
+  - `installation_id` (get it by installing the app on repos/org)
+  - `pem` (private key)
 
+- Permissions must be **exactly**:
 
----
+  - `actions`: read
+  - `checks`: read
+  - `metadata`: read
+  - `organization_self_hosted_runners`: write
+  - `organization_administration`: write
+
+- Subscribe the app to `"workflow_job"` event — this is how your runners get triggered.
+
+- Don’t forget to install the GitHub App on the repositories or organizations that will use these runners.
+
+______________________________________________________________________
 
 ## 6. Set GitHub App Secrets
 
@@ -257,12 +261,11 @@ Run the `update-github-app-secrets.sh` script to inject critical GitHub App valu
 
 ### Notes:
 
-* Use **absolute paths** for tenant directories and private key files to avoid path resolution issues inside the script.
-* Confirm the private key file has **correct permissions** (`chmod 600`) to avoid permission errors.
-* The script will update AWS Secrets Manager values — verify with `terragrunt plan` or AWS Console if you want to double-check.
+- Use **absolute paths** for tenant directories and private key files to avoid path resolution issues inside the script.
+- Confirm the private key file has **correct permissions** (`chmod 600`) to avoid permission errors.
+- The script will update AWS Secrets Manager values — verify with `terragrunt plan` or AWS Console if you want to double-check.
 
-
----
+______________________________________________________________________
 
 ## 7. Deploy
 
@@ -280,10 +283,10 @@ terragrunt apply
 
 3. **Verify success:**
 
-* No errors in Terraform apply output.
-* All expected AWS resources exist.
-* GitHub runners appear registered and are actively picking up jobs.
+- No errors in Terraform apply output.
+- All expected AWS resources exist.
+- GitHub runners appear registered and are actively picking up jobs.
 
----
+______________________________________________________________________
 
 > For more advanced scenarios or troubleshooting, see the [full documentation](../index.md).

@@ -2,16 +2,17 @@
 
 <!-- toc -->
 
-- [RenovateBot GitHub Actions Workflow Setup](#renovatebot-github-actions-workflow-setup)
-    * [File name: `renovatebot-github-actions.yml`](#file-name-renovatebot-github-actionsyml)
-    * [Key Parts Breakdown](#key-parts-breakdown)
-- [Renovate Configuration File (`config.json`)](#renovate-configuration-file-configjson)
-    * [File name: `config.json`](#file-name-configjson)
-    * [Key Sections Breakdown](#key-sections-breakdown)
-- [Renovate Configuration File (`default.json`)](#renovate-configuration-file-defaultjson)
-    * [File name: `default.json`](#file-name-defaultjson)
-    * [Key Sections Breakdown](#key-sections-breakdown-1)
-- [Security Considerations](#security-considerations)
+- [**Automated Dependency Management with RenovateBot Using GitHub Actions**](#automated-dependency-management-with-renovatebot-using-github-actions)
+  - [RenovateBot GitHub Actions Workflow Setup](#renovatebot-github-actions-workflow-setup)
+    - [File name: `renovatebot-github-actions.yml`](#file-name-renovatebot-github-actionsyml)
+    - [Key Parts Breakdown](#key-parts-breakdown)
+  - [Renovate Configuration File (`config.json`)](#renovate-configuration-file-configjson)
+    - [File name: `config.json`](#file-name-configjson)
+    - [Key Sections Breakdown](#key-sections-breakdown)
+  - [Renovate Configuration File (`default.json`)](#renovate-configuration-file-defaultjson)
+    - [File name: `default.json`](#file-name-defaultjson)
+    - [Key Sections Breakdown](#key-sections-breakdown-1)
+  - [Security Considerations](#security-considerations)
 
 <!-- tocstop -->
 
@@ -79,19 +80,22 @@ jobs:
 ### Key Parts Breakdown
 
 1. **Workflow Triggers**:
-   - The workflow runs every 4 hours (`cron`), and it can be manually triggered (`workflow_dispatch`).
+
+- The workflow runs every 4 hours (`cron`), and it can be manually triggered (`workflow_dispatch`).
 
 2. **Jobs**:
-   - **Checkout Repository**: Fetches the repository code.
-   - **Configure AWS Credentials**: Sets AWS credentials using IAM roles for cross-account access.
-   - **Get Secrets**: Retrieves necessary secrets from **AWS Secrets Manager**.
-   - **Install Terraform Providers**: Installs required Terraform providers.
-   - **Self-hosted Renovate**: Runs RenovateBot with the specified `config.json` file.
+
+- **Checkout Repository**: Fetches the repository code.
+- **Configure AWS Credentials**: Sets AWS credentials using IAM roles for cross-account access.
+- **Get Secrets**: Retrieves necessary secrets from **AWS Secrets Manager**.
+- **Install Terraform Providers**: Installs required Terraform providers.
+- **Self-hosted Renovate**: Runs RenovateBot with the specified `config.json` file.
 
 3. **Secrets Management**:
-   - Secrets (e.g., GitHub tokens, GPG keys, registry credentials) are securely fetched from **AWS Secrets Manager** and injected as GitHub secrets.
 
----
+- Secrets (e.g., GitHub tokens, GPG keys, registry credentials) are securely fetched from **AWS Secrets Manager** and injected as GitHub secrets.
+
+______________________________________________________________________
 
 ## Renovate Configuration File (`config.json`)
 
@@ -121,24 +125,30 @@ jobs:
 ### Key Sections Breakdown
 
 1. **`$schema`**:
+
    - Ensures the configuration follows Renovate’s schema.
 
-2. **`endpoint`**:
+1. **`endpoint`**:
+
    - Specifies the GitHub API endpoint for Renovate to communicate with. Can be customized if using a self-hosted GitHub instance.
 
-3. **`prHourlyLimit`**:
+1. **`prHourlyLimit`**:
+
    - Limits the number of pull requests Renovate can create per hour. Set to `2` in this example.
 
-4. **`allowedPostUpgradeCommands`**:
+1. **`allowedPostUpgradeCommands`**:
+
    - Defines custom scripts to run after dependencies are upgraded, ensuring proper post-upgrade handling.
 
-5. **`repositories`**:
+1. **`repositories`**:
+
    - Lists the repositories managed by Renovate. Add repositories as needed.
 
-6. **`hostRules`**:
+1. **`hostRules`**:
+
    - Configures authentication with different host types, such as GitHub (cloud and on-prem) and a Docker registry.
 
----
+______________________________________________________________________
 
 ## Renovate Configuration File (`default.json`)
 
@@ -222,21 +232,26 @@ jobs:
 ### Key Sections Breakdown
 
 1. **`baseBranches`**:
-   - Configures Renovate to operate only on the `main` branch (adjustable as needed).
+
+- Configures Renovate to operate only on the `main` branch (adjustable as needed).
 
 2. **`extends`**:
-   - Includes predefined settings for semantic commits, rebase stale PRs, etc.
+
+- Includes predefined settings for semantic commits, rebase stale PRs, etc.
 
 3. **`reviewers`**:
-   - Specifies the GitHub teams or users to review pull requests created by Renovate.
+
+- Specifies the GitHub teams or users to review pull requests created by Renovate.
 
 4. **`labels`**:
-   - Automatically labels pull requests with "Dependencies" and "Renovate".
+
+- Automatically labels pull requests with "Dependencies" and "Renovate".
 
 5. **`customManagers`**:
-   - Defines custom dependency managers using regex for specific file types like Terraform (`.tf`), YAML (`.yml`/`.yaml`), and HCL (`.hcl`).
 
----
+- Defines custom dependency managers using regex for specific file types like Terraform (`.tf`), YAML (`.yml`/`.yaml`), and HCL (`.hcl`).
+
+______________________________________________________________________
 
 ## Security Considerations
 

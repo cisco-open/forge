@@ -17,7 +17,6 @@ Before deploying Forge:
 - Configure **AWS credentials** (`aws configure`) with the correct profile.
 - You can use your existing infrastructure or deploy a new cluster using the [Forge EKS module](https://github.com/cisco-open/forge/tree/main/modules/infra/eks) (see the [EKS Example](./forge_eks.md)) or any standard setup.
 
-
 ## 1. Prepare Config Files — Global, Environment, and VPC
 
 Copy these templates and place them at the correct paths:
@@ -42,25 +41,24 @@ examples/deployments/forge-tenant/terragrunt/environments/<aws_account>/regions/
 
 Before editing your tenant's `config.yaml`, review and update these supporting configuration files:
 
-- **_global.yaml**  
-  Set global values such as team name, product name, AWS account prefix, GitHub organization, and contact email.  
+- **\_global.yaml**\
+  Set global values such as team name, product name, AWS account prefix, GitHub organization, and contact email.\
   *(Path: `_global_settings/_global.yaml`)*
 
-- **_environment.yaml**  
-  Define environment-wide settings like environment name, AWS region, and account ID.  
+- **\_environment.yaml**\
+  Define environment-wide settings like environment name, AWS region, and account ID.\
   *(Path: `environments/<aws_account>/_environment_wide_settings/_environment.yaml`)*
 
-- **_vpc.yaml**  
-  Specify VPC-wide settings including VPC alias, VPC ID, subnet IDs, and cluster name.  
+- **\_vpc.yaml**\
+  Specify VPC-wide settings including VPC alias, VPC ID, subnet IDs, and cluster name.\
   *(Path: `environments/<aws_account>/regions/<aws_region>/vpcs/<vpc_alias>/_vpc_wide_settings/_vpc.yaml`)*
 
-These files provide the foundational settings used by your tenant and runner modules.  
+These files provide the foundational settings used by your tenant and runner modules.\
 **Be sure to replace all placeholder values (`<...>`) with your actual environment details.**
-
 
 ## 2. Adding a New Tenant
 
-To provision a new tenant, follow the step-by-step guide:  
+To provision a new tenant, follow the step-by-step guide:\
 👉 [Deploy a New Tenant](./new_tenant.md)
 
 ## 3. How to Deploy
@@ -83,6 +81,6 @@ terragrunt apply
 
 Choose the approach that fits your workflow.
 
----
+______________________________________________________________________
 
 > For more advanced scenarios or troubleshooting, see the [full documentation](../index.md).

@@ -6,14 +6,14 @@ This directory provides a complete example for deploying **Forge Splunk integrat
 
 The following modules are included in this deployment:
 
-| Module Name                        | Description                                                                 |
-| ----------------------------------- | --------------------------------------------------------------------------- |
-| `splunk_cloud_data_manager`         | Manages Splunk Cloud Data Manager integration for log ingestion and storage |
-| `splunk_cloud_data_manager_common`    | Handles dependencies for Splunk Cloud Data Manager                          |
-| `splunk_o11y_aws_integration_common`           | Integrates Splunk Observability Cloud for metrics and events                |
-| `splunk_o11y_integration`  | Regional Splunk Observability integration                                   |
-| `splunk_otel_eks`                   | Deploys Splunk OpenTelemetry Collector on EKS                               |
-| `splunk_secrets`                    | Provisions required Splunk secrets in AWS Secrets Manager                   |
+| Module Name                          | Description                                                                 |
+| ------------------------------------ | --------------------------------------------------------------------------- |
+| `splunk_cloud_data_manager`          | Manages Splunk Cloud Data Manager integration for log ingestion and storage |
+| `splunk_cloud_data_manager_common`   | Handles dependencies for Splunk Cloud Data Manager                          |
+| `splunk_o11y_aws_integration_common` | Integrates Splunk Observability Cloud for metrics and events                |
+| `splunk_o11y_integration`            | Regional Splunk Observability integration                                   |
+| `splunk_otel_eks`                    | Deploys Splunk OpenTelemetry Collector on EKS                               |
+| `splunk_secrets`                     | Provisions required Splunk secrets in AWS Secrets Manager                   |
 
 ## Prerequisites
 
@@ -43,20 +43,19 @@ examples/deployments/forge-extras/terragrunt/environments/<aws_account>/_environ
 
 ### Edit the Config Files
 
-- **_global.yaml**  
-  Set global values such as team name, product name, AWS account prefix, GitHub organization, and contact email.  
+- **\_global.yaml**\
+  Set global values such as team name, product name, AWS account prefix, GitHub organization, and contact email.\
   *(Path: `_global_settings/_global.yaml`)*
 
-- **_environment.yaml**  
-  Define environment-wide settings like environment name, AWS region, and account ID.  
+- **\_environment.yaml**\
+  Define environment-wide settings like environment name, AWS region, and account ID.\
   *(Path: `environments/<aws_account>/_environment_wide_settings/_environment.yaml`)*
 
 **Be sure to replace all placeholder values (`<...>`) with your actual environment details.**
 
-
 ## Secrets Setup
 
-Before deploying integrations, you must provision the required Splunk secrets in AWS Secrets Manager.  
+Before deploying integrations, you must provision the required Splunk secrets in AWS Secrets Manager.\
 See the [Secrets Inventory](../secrets.md) for the full list and descriptions.
 
 **Deploy secrets first:**

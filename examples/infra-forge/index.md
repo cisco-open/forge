@@ -4,19 +4,19 @@ This folder provides a complete, multi-tenant **Forge** deployment using **Terra
 
 > **⚠️ Important:** Replace all `<ADD YOUR VALUE>` placeholders with actual values (e.g., tokens, ARNs, config IDs) before deploying.
 
----
+______________________________________________________________________
 
 ## ⚠️ Prerequisites
 
 Before deploying, ensure:
 
-* All `<ADD YOUR VALUE>` placeholders are replaced
-* Secrets are created in **AWS Secrets Manager**
+- All `<ADD YOUR VALUE>` placeholders are replaced
+- Secrets are created in **AWS Secrets Manager**
   → See [`docs/configurations/secrets.md`](../../docs/configurations/secrets.md)
-* Infra dependencies (e.g., IAM, S3) are in place
+- Infra dependencies (e.g., IAM, S3) are in place
   → See [`docs/configurations/dependency.md`](../../docs/configurations/dependency.md)
 
----
+______________________________________________________________________
 
 ## 🚀 Deployment
 
