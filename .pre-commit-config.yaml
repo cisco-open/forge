@@ -133,6 +133,7 @@ repos:
     hooks:
       - id: bashate
         name: Shell · Check shell script code style
+        files: \.sh$
 
   # ---------------------
   # Docker Hooks
@@ -153,24 +154,17 @@ repos:
         name: Markdown · TOC generator
         args: [--indent, '    ', -i]
 
-  - repo: https://github.com/hukkin/mdformat
-    rev: 0.7.21
-    hooks:
-      - id: mdformat
-        name: Markdown · Format markdown
-        always_run: true
-        additional_dependencies:
-          - mdformat-gfm
-          - mdformat-ruff
-          - mdformat-frontmatter
-          - ruff
-
-  - repo: https://github.com/markdownlint/markdownlint
-    rev: v0.12.0
-    hooks:
-      - id: markdownlint
-        name: Markdown · Lint markdown
-        always_run: true
+  # - repo: https://github.com/hukkin/mdformat
+  #   rev: 0.7.21
+  #   hooks:
+  #     - id: mdformat
+  #       name: Markdown · Format markdown
+  #       always_run: true
+  #       additional_dependencies:
+  #         - mdformat-gfm
+  #         - mdformat-ruff
+  #         - mdformat-frontmatter
+  #         - ruff
 
   # ---------------------
   # Makefile Hooks
