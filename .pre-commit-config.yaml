@@ -1,162 +1,313 @@
 ---
+exclude: |
+  (?x)^(
+      .*\{\{.*\}\}.*|     # Exclude any files with cookiecutter variables
+      \.history/.*|       # Exclude history files
+      .*cache.*/.*|       # Exclude cache directories
+      .*venv.*/.*|        # Exclude virtual environment directories
+  )$
+fail_fast: true
+default_language_version:
+  python: python3.12
+default_install_hook_types:
+  - pre-commit
+  - commit-msg
 repos:
+  # ---------------------
   # General Hooks
+  # ---------------------
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
       - id: check-yaml
+        name: YAML · Syntax check
         always_run: true
       - id: end-of-file-fixer
+        name: Files · End-of-file fixer
         always_run: true
       - id: trailing-whitespace
+        name: Whitespace · Trim trailing
         always_run: true
         args: [--markdown-linebreak-ext=md]
       - id: check-merge-conflict
+        name: Git · Merge conflict markers
         always_run: true
       - id: check-added-large-files
+        name: Git · Large file guard
         always_run: true
         exclude: (docs/img)
       - id: check-ast
+        name: Python · Parse (AST)
         always_run: true
       - id: check-builtin-literals
+        name: Python · Builtin literals
         always_run: true
       - id: check-json
+        name: JSON · Syntax check
         always_run: true
       - id: check-toml
+        name: TOML · Syntax check
         always_run: true
       - id: check-xml
+        name: XML · Syntax check
         always_run: true
       - id: detect-private-key
+        name: Security · Detect private keys
         always_run: true
       - id: mixed-line-ending
+        name: Whitespace · Normalize line endings
         always_run: true
       - id: debug-statements
+        name: Python · Debug statements
         always_run: true
       - id: name-tests-test
+        name: Python · Test file naming
         always_run: true
       - id: destroyed-symlinks
+        name: Git · Destroyed symlinks
         always_run: true
       - id: check-docstring-first
+        name: Python · Docstring first
         always_run: true
       - id: check-case-conflict
+        name: Git · Case conflict
         always_run: true
       - id: double-quote-string-fixer
+        name: Python · Double quote fixer
         always_run: true
+      - id: forbid-new-submodules
+        name: Git · Forbid new submodules
+        always_run: true
+      - id: no-commit-to-branch
+        name: Git · Protect main branches
+        always_run: true
+        args: [--branch, main]
 
+  # ---------------------
+  # Commit Message Hooks
+  # ---------------------
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v4.1.0
+    hooks:
+      - id: commitizen
+        name: Git · Validate commit message
+        stages: [commit-msg]
+        always_run: true
+        additional_dependencies: [cz-conventional-gitmoji]
+
+  # ---------------------
+  # YAML Hooks
+  # ---------------------
   - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
     rev: 0.2.3
     hooks:
       - id: yamlfmt
+        name: YAML · Formatter
         always_run: true
         args: [--mapping, '2', --sequence, '4', --offset, '2', --width, '180']
         exclude: (build/ansible/)
-
-  - repo: http://github.com/jumanjihouse/pre-commit-hooks
-    rev: 3.0.0
-    hooks:
-      - id: shellcheck
-      - id: shfmt
-        args: [-i, '4', -w]
-      - id: script-must-have-extension
 
   - repo: https://github.com/adrienverge/yamllint
     rev: v1.37.1
     hooks:
       - id: yamllint
+        name: YAML · Linter
+        always_run: true
 
+  # ---------------------
+  # Shell Hooks
+  # ---------------------
+  - repo: http://github.com/jumanjihouse/pre-commit-hooks
+    rev: 3.0.0
+    hooks:
+      - id: shellcheck
+        name: Shell · Shellcheck
+        files: \.sh$
+      - id: shfmt
+        name: Shell · Formatter
+        args: [-i, '4', -w]
+      - id: script-must-have-extension
+        name: Shell · Must have extension
+
+  - repo: https://github.com/openstack/bashate
+    rev: 2.1.1
+    hooks:
+      - id: bashate
+        name: Shell · Check shell script code style
+
+  # ---------------------
+  # Docker Hooks
+  # ---------------------
   - repo: https://github.com/hadolint/hadolint
-    rev: v2.13.1-beta
+    rev: v2.13.1
     hooks:
       - id: hadolint
+        name: Docker · Linter
+        always_run: true
 
+  # ---------------------
+  # Markdown Hooks
+  # ---------------------
   - repo: https://github.com/Lucas-C/pre-commit-hooks-nodejs
     rev: v1.1.2
     hooks:
       - id: markdown-toc
+        name: Markdown · TOC generator
         args: [--indent, '    ', -i]
 
+  - repo: https://github.com/hukkin/mdformat
+    rev: 0.7.21
+    hooks:
+      - id: mdformat
+        name: Markdown · Format markdown
+        always_run: true
+        additional_dependencies:
+          - mdformat-gfm
+          - mdformat-ruff
+          - mdformat-frontmatter
+          - ruff
+
+  - repo: https://github.com/markdownlint/markdownlint
+    rev: v0.12.0
+    hooks:
+      - id: markdownlint
+        name: Markdown · Lint markdown
+        always_run: true
+
+  # ---------------------
+  # Makefile Hooks
+  # ---------------------
+  - repo: https://github.com/mrtazz/checkmake.git
+    rev: 0.2.2
+    hooks:
+      - id: checkmake
+        name: Makefile · Lint Makefile
+
+  # ---------------------
   # Python Hooks
+  # ---------------------
   - repo: https://github.com/hhatto/autopep8
     rev: v2.3.2
     hooks:
       - id: autopep8
+        name: Python · autopep8
 
   - repo: https://github.com/PyCQA/isort
     rev: 6.0.1
     hooks:
       - id: isort
+        name: Python · Import sorter
 
   - repo: https://github.com/PyCQA/autoflake
     rev: v2.3.1
     hooks:
       - id: autoflake
+        name: Python · Remove unused imports
 
   - repo: https://github.com/PyCQA/flake8
     rev: 7.3.0
     hooks:
       - id: flake8
-        args:
-          - --ignore=E501
+        name: Python · Linter
+        args: [--ignore=E501]
 
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.20.0
     hooks:
       - id: pyupgrade
+        name: Python · Upgrade syntax
+        always_run: true
 
+  - repo: https://github.com/abravalheri/validate-pyproject
+    rev: v0.23
+    hooks:
+      - id: validate-pyproject
+        name: Python · Validate pyproject.toml
+        always_run: true
+        additional_dependencies: ['validate-pyproject-schema-store[all]']
+
+  # ---------------------
   # JSON Schema Hooks
+  # ---------------------
   - repo: https://github.com/python-jsonschema/check-jsonschema
     rev: 0.33.3
     hooks:
       - id: check-github-workflows
+        name: JSON Schema · GitHub workflows
       - id: check-github-actions
+        name: JSON Schema · GitHub Actions
         args: [--verbose]
+      - id: check-compose-spec
+        name: JSON Schema · Docker Compose files
+      - id: check-dependabot
+        name: JSON Schema · Dependabot Config (v2)
       - id: check-renovate
+        name: JSON Schema · Renovate
 
-  # Terraform Hooks
+  # ---------------------
+  # Terraform / IaC Hooks
+  # ---------------------
   - repo: https://github.com/gruntwork-io/pre-commit
     rev: v0.1.30
     hooks:
       - id: terragrunt-hcl-fmt
+        name: Terraform/IaC · Terragrunt fmt
+        always_run: true
       - id: tofu-fmt
+        name: Terraform/IaC · Tofu fmt
+        always_run: true
       - id: tofu-validate
+        name: Terraform/IaC · Tofu validate
+        always_run: true
       - id: packer-validate
+        name: Terraform/IaC · Packer validate
+        always_run: true
 
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: v1.100.0
     hooks:
       - id: terraform_fmt
-        args:
-          - --hook-config=--tf-path=tofu
+        name: Terraform · Formatter
         always_run: true
+        args: [--hook-config=--tf-path=tofu]
       - id: terraform_tflint
-        args:
-          - --hook-config=--tf-path=tofu
-        exclude: (modules/integrations/splunk_cloud_data_manager|modules/infra/forge_subscription|modules/integrations/splunk_secrets/)
+        name: Terraform · Linter
         always_run: true
+        args: [--hook-config=--tf-path=tofu]
+        exclude: (modules/integrations/splunk_cloud_data_manager|modules/infra/forge_subscription|modules/integrations/splunk_secrets/)
       - id: terraform_validate
+        name: Terraform · Validate
+        always_run: true
         args:
           - --hook-config=--retry-once-with-cleanup=true
           - --tf-init-args=-backend=false
           - --tf-init-args=--upgrade=true
           - --hook-config=--tf-path=tofu
         exclude: (modules/integrations/splunk_cloud_data_manager)
-        always_run: true
       - id: terraform_docs
+        name: Terraform · Docs generator
         always_run: true
         args:
           - --hook-config=--tf-path=tofu
           - --args=--config=.terraform-docs.yml
         exclude: (modules/integrations/splunk_cloud_data_manager|modules/infra/forge_subscription|modules/integrations/splunk_secrets/)
 
+  # ---------------------
   # Security Hooks
+  # ---------------------
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.28.0
     hooks:
       - id: gitleaks
+        name: Security · Gitleaks
         always_run: true
 
+  # ---------------------
   # Ansible Hooks
+  # ---------------------
   - repo: https://github.com/ansible-community/ansible-lint.git
-    rev: v25.8.1
+    rev: v25.8.2
     hooks:
       - id: ansible-lint
+        name: Ansible · Linter
+        always_run: true

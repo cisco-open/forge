@@ -137,6 +137,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     python3.12 \
     python3-pip \
+    ruby3.2 \
+    build-essential \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Copy tools from build stage
