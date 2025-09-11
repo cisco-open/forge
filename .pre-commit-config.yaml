@@ -112,7 +112,6 @@ repos:
     hooks:
       - id: yamllint
         name: YAML · Linter
-        always_run: true
 
   # ---------------------
   # Shell Hooks
@@ -143,7 +142,6 @@ repos:
     hooks:
       - id: hadolint
         name: Docker · Linter
-        always_run: true
 
   # ---------------------
   # Markdown Hooks

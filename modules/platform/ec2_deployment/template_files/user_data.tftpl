@@ -9,7 +9,7 @@ exec > >(tee /var/log/user-data.log | logger -t user-data -s 2>/dev/console) 2>&
 # As side effect all command, set +x disable debugging explicitly.
 #
 # An alternative for masking tokens could be: exec > >(sed 's/--token\ [^ ]* /--token\ *** /g' > /var/log/user-data.log) 2>&1
-exec > >(sed 's/--token\ [^ ]* /--token\ *** /g' > /var/log/user-data.log) 2>&1
+exec > >(sed 's/--token\ [^ ]* /--token\ *** /g' >/var/log/user-data.log) 2>&1
 
 set +x
 %{ if enable_debug_logging }
@@ -29,8 +29,8 @@ amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c ssm:${ssm_key_cloudwatc
 os_version=$(lsb_release -rs)
 
 if [ "$os_version" = "22.04" ]; then
-	# Configure systemd for running service in users accounts.
-	cat >/etc/systemd/user@UID.service <<-EOF
+    # Configure systemd for running service in users accounts.
+    cat >/etc/systemd/user@UID.service <<-EOF
 
 		[Unit]
 		Description=User Manager for UID %i
@@ -49,64 +49,64 @@ if [ "$os_version" = "22.04" ]; then
 
 	EOF
 
-	# Set important paths.
-	echo export XDG_RUNTIME_DIR=/run/user/$user_id >>/home/$user_name/.bashrc
+    # Set important paths.
+    echo export XDG_RUNTIME_DIR=/run/user/$user_id >>/home/$user_name/.bashrc
 
-	# Load our user manager service.
-	systemctl daemon-reload
-	systemctl enable user@UID.service
-	systemctl start user@UID.service
+    # Load our user manager service.
+    systemctl daemon-reload
+    systemctl enable user@UID.service
+    systemctl start user@UID.service
 
-	# Setup "ubuntu" user's environment so future sessions can connect to docker.
-	echo "export DOCKER_HOST=unix:///run/user/$user_id/docker.sock" >>/home/$user_name/.bashrc
-	echo "export PATH=/home/$user_name/bin:\$PATH" >>/home/$user_name/.bashrc
-	loginctl enable-linger $user_name
+    # Setup "ubuntu" user's environment so future sessions can connect to docker.
+    echo "export DOCKER_HOST=unix:///run/user/$user_id/docker.sock" >>/home/$user_name/.bashrc
+    echo "export PATH=/home/$user_name/bin:\$PATH" >>/home/$user_name/.bashrc
+    loginctl enable-linger $user_name
 
-	# Install rootless docker (this doesn't download anything; all artifacts are already baked-in to the VM image).
-	su -l $user_name -c "/usr/bin/dockerd-rootless-setuptool.sh install"
+    # Install rootless docker (this doesn't download anything; all artifacts are already baked-in to the VM image).
+    su -l $user_name -c "/usr/bin/dockerd-rootless-setuptool.sh install"
 
 elif [ "$os_version" = "24.04" ]; then
-	# configure systemd for running service in users accounts
-	mkdir -p /etc/systemd/system/user-$user_id.slice.d
-	cat > /etc/systemd/system/user-$user_id.slice.d/resources.conf <<- EOF
+    # configure systemd for running service in users accounts
+    mkdir -p /etc/systemd/system/user-$user_id.slice.d
+    cat >/etc/systemd/system/user-$user_id.slice.d/resources.conf <<-EOF
 	[Slice]
 	TasksMax=infinity
 	EOF
-	mkdir -p /home/$user_name/.config/systemd/
-	cat > /home/$user_name/.config/systemd/user.conf <<- EOF
+    mkdir -p /home/$user_name/.config/systemd/
+    cat >/home/$user_name/.config/systemd/user.conf <<-EOF
 	[Manager]
 	DefaultLimitNOFILE=infinity
 	DefaultLimitNPROC=infinity
 	EOF
-	chown $user_name:$user_name /home/$user_name/.config/systemd/user.conf /home/$user_name/.config/systemd /home/$user_name/.config/
+    chown $user_name:$user_name /home/$user_name/.config/systemd/user.conf /home/$user_name/.config/systemd /home/$user_name/.config/
 
-	systemctl daemon-reload
+    systemctl daemon-reload
 
-	echo export XDG_RUNTIME_DIR="/run/user/$user_id" >> "/home/$user_name/.bashrc"
+    echo export XDG_RUNTIME_DIR="/run/user/$user_id" >>"/home/$user_name/.bashrc"
 
-	# Run docker service by default
-	loginctl enable-linger $user_name
-	machinectl shell "$user_name@.host" /usr/bin/dockerd-rootless-setuptool.sh install
-	echo export DOCKER_HOST="unix:///run/user/$user_id/docker.sock" >> "/home/$user_name/.bashrc"
-	echo export PATH="/home/$user_name/bin:$PATH" >> "/home/$user_name/.bashrc"
+    # Run docker service by default
+    loginctl enable-linger $user_name
+    machinectl shell "$user_name@.host" /usr/bin/dockerd-rootless-setuptool.sh install
+    echo export DOCKER_HOST="unix:///run/user/$user_id/docker.sock" >>"/home/$user_name/.bashrc"
+    echo export PATH="/home/$user_name/bin:$PATH" >>"/home/$user_name/.bashrc"
 fi
 
 # config runner for rootless docker
 cd /opt/actions-runner/
-echo DOCKER_HOST="unix:///run/user/$user_id/docker.sock" >> .env
-echo PATH="/home/$user_name/bin:$PATH" >> .env
+echo DOCKER_HOST="unix:///run/user/$user_id/docker.sock" >>.env
+echo PATH="/home/$user_name/bin:$PATH" >>.env
 
 ${post_install}
 
 %{ if hook_job_started != "" }
-cat > /opt/actions-runner/hook_job_started.sh <<'EOF'
+cat >/opt/actions-runner/hook_job_started.sh <<'EOF'
 ${hook_job_started}
 EOF
 echo ACTIONS_RUNNER_HOOK_JOB_STARTED=/opt/actions-runner/hook_job_started.sh | tee -a /opt/actions-runner/.env
 %{ endif }
 
 %{ if hook_job_completed != "" }
-cat > /opt/actions-runner/hook_job_completed.sh <<'EOF'
+cat >/opt/actions-runner/hook_job_completed.sh <<'EOF'
 ${hook_job_completed}
 EOF
 echo ACTIONS_RUNNER_HOOK_JOB_COMPLETED=/opt/actions-runner/hook_job_completed.sh | tee -a /opt/actions-runner/.env
