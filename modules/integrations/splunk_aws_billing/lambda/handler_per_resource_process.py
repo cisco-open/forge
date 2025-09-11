@@ -17,7 +17,12 @@ s3 = boto3.client('s3')
 
 def create_event_body(row, fields):
     usage_date = str(row['usage_date'])
-    event_time = calendar.timegm(pd.to_datetime(usage_date).timetuple())
+    dt = pd.to_datetime(usage_date)
+
+    event_time = calendar.timegm(dt.timetuple())
+
+    usage_year = str(dt.year)
+    usage_month = str(dt.month).zfill(2)
 
     return {
         'source': 'aws-cur-per-resource',
@@ -30,6 +35,8 @@ def create_event_body(row, fields):
             'cost_usd': float(Decimal(row['line_item_unblended_cost']).quantize(Decimal('0.00001'), rounding=ROUND_HALF_UP)),
             'net_cost_usd': float(Decimal(row['line_item_net_unblended_cost']).quantize(Decimal('0.00001'), rounding=ROUND_HALF_UP)),
             'usage_date': usage_date,
+            'usage_year': usage_year,
+            'usage_month': usage_month,
             'event_time': event_time,
             **fields
         }
@@ -62,8 +69,14 @@ def process_grouped_rows(grouped):
         batch.append(line)
         current_size += line_size
 
+        dt = pd.to_datetime(row['usage_date'])
+        usage_year = str(dt.year)
+        usage_month = str(dt.month).zfill(2)
+
         dimensions = {
             'usage_date': str(row['usage_date']),
+            'usage_year': usage_year,
+            'usage_month': usage_month,
             'service': row['line_item_product_code'],
             'resource_id': row['line_item_resource_id'],
             'aws_application': row['user_aws_application'],

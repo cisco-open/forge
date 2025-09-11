@@ -31,7 +31,7 @@ pip3 install -r "$REQUIREMENTS_FILE" \
     --platform manylinux2014_x86_64 \
     --target="$PACKAGE_DIR" \
     --implementation cp \
-    --python-version 3.11 \
+    --python-version 3.12 \
     --only-binary=:all: \
     --upgrade \
     --no-cache-dir >/dev/null
