@@ -3,6 +3,17 @@
 LOG_FILE="$HOME/hook.log"
 TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
 
+INSTANCE_ID=$(wget -q -O - http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.instanceId')
+aws ec2 create-tags --cli-input-json "$(jq -n \
+    --arg instance "$INSTANCE_ID" \
+    --arg completed_at "$(TZ=UTC date +"%Y-%m-%dT%H:%M:%SZ")" \
+    '{
+    Resources: [$instance],
+    Tags: [
+      {Key:"ghr:completed_at", Value:$completed_at}
+    ]
+  }')"
+
 {
     echo "{"
     echo "  \"timestamp\": \"$TIMESTAMP\","

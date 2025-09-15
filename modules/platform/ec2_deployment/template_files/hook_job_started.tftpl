@@ -16,6 +16,7 @@ aws ec2 create-tags --cli-input-json "$(jq -n \
     --arg run_number "$GITHUB_RUN_NUMBER" \
     --arg workflow_url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/attempts/${GITHUB_RUN_ATTEMPT}" \
     --arg actor "$GITHUB_ACTOR" \
+    --arg started_at "$(TZ=UTC date +"%Y-%m-%dT%H:%M:%SZ")" \
     '{
     Resources: [$instance],
     Tags: [
@@ -28,7 +29,8 @@ aws ec2 create-tags --cli-input-json "$(jq -n \
       {Key:"ghr:run_attempt", Value:$run_attempt},
       {Key:"ghr:run_number", Value:$run_number},
       {Key:"ghr:workflow_url", Value:$workflow_url},
-      {Key:"ghr:actor", Value:$actor}
+      {Key:"ghr:actor", Value:$actor},
+      {Key:"ghr:started_at", Value:$started_at}
     ]
   }')"
 

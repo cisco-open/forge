@@ -23,6 +23,8 @@ data "aws_iam_policy_document" "ec2_tags" {
         "ghr:run_number",
         "ghr:workflow_url",
         "ghr:actor",
+        "ghr:started_at",
+        "ghr:completed_at",
       ]
     }
   }
