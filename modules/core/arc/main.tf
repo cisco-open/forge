@@ -45,7 +45,7 @@ module "scale_sets" {
   container_requests_cpu       = each.value.runner_config.container_requests_cpu
   container_requests_memory    = each.value.runner_config.container_requests_memory
   volume_requests_storage_size = each.value.runner_config.volume_requests_storage_size
-  volume_requests_storage_type = each.value.runner_config.volume_requests_storage_type
+  volume_requests_storage_type = "${each.value.runner_set_configs.namespace}-${each.value.runner_config.volume_requests_storage_type}-${sha1(join(",", [for k in sort(keys(var.tags)) : "${k}=${var.tags[k]}"]))}"
   container_ecr_registries     = each.value.runner_config.container_ecr_registries
   scale_set_name               = each.value.runner_config.scale_set_name
   scale_set_type               = each.value.runner_config.scale_set_type
