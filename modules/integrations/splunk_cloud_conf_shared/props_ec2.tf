@@ -67,6 +67,9 @@ resource "splunk_configs_conf" "forgecicd_metadata" {
 
   variables = {
     "REPORT-forgecicd_metadata_tenant_fields" = "forgecicd_metadata_tenant_fields"
+    "REPORT-forgecicd_metadata_instance_id"   = "forgecicd_metadata_instance_id"
+    "REPORT-forgecicd_metadata_image_id"      = "forgecicd_metadata_image_id"
+    "REPORT-forgecicd_metadata_instance_type" = "forgecicd_metadata_instance_type"
   }
 
   lifecycle {
