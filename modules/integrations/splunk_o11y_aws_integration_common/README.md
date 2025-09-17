@@ -5,7 +5,7 @@
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9.1 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.90 |
-| <a name="requirement_signalfx"></a> [signalfx](#requirement\_signalfx) | >= 9.19 |
+| <a name="requirement_signalfx"></a> [signalfx](#requirement\_signalfx) | 9.20 |
 | <a name="requirement_time"></a> [time](#requirement\_time) | >= 0.13 |
 
 ## Providers
@@ -27,8 +27,8 @@ No modules.
 | [aws_iam_role.splunk_integration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role_policy.splunk_integration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy) | resource |
 | [aws_iam_role_policy.splunk_managed_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy) | resource |
-| [signalfx_aws_external_integration.integration](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/aws_external_integration) | resource |
-| [signalfx_aws_integration.integration](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/aws_integration) | resource |
+| [signalfx_aws_external_integration.integration](https://registry.terraform.io/providers/splunk-terraform/signalfx/9.20/docs/resources/aws_external_integration) | resource |
+| [signalfx_aws_integration.integration](https://registry.terraform.io/providers/splunk-terraform/signalfx/9.20/docs/resources/aws_integration) | resource |
 | [time_sleep.wait_30_seconds](https://registry.terraform.io/providers/hashicorp/time/latest/docs/resources/sleep) | resource |
 | [aws_iam_policy_document.assume_role_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.splunk_integration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
