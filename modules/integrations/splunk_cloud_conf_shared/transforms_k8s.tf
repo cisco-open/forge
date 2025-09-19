@@ -2,7 +2,7 @@ resource "splunk_configs_conf" "forgecicd_kube_container_runner_tenant_fields" {
   name = "transforms/forgecicd_kube_container_runner_tenant_fields"
 
   variables = {
-    "REGEX"      = "\\/var\\/log\\/pods\\/(?<forgecicd_tenant>[a-z0-9]+)_(?<forgecicd_instance_id>(?<forgecicd_runner_type>[a-z0-9]+)-[a-z0-9]+-(?<forgecicd_log_type>runner)-[a-z0-9]+)"
+    "REGEX"      = "\\/var\\/log\\/pods\\/(?<forgecicd_tenant>[a-z0-9]+)_(?<forgecicd_instance_id>(?<forgecicd_runner_type>[a-z0-9]+)-[a-z0-9-]+(?:_[0-9a-f-]+)?)\\/(?<forgecicd_log_type>[a-z0-9-]+)\\/\\d+\\.log"
     "FORMAT"     = "forgecicd_tenant::$1 forgecicd_instance_id::$2 forgecicd_runner_type::$3 forgecicd_type::arc"
     "SOURCE_KEY" = "source"
     "CLEAN_KEYS" = "0"
