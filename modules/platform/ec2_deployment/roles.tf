@@ -19,7 +19,6 @@ data "aws_iam_policy_document" "ec2_tags" {
         "ghr:workflow",
         "ghr:workflow_url",
         "ghr:job",
-        "ghr:job_url",
         "ghr:run_id",
         "ghr:run_attempt",
         "ghr:run_number",

@@ -18,7 +18,6 @@ aws ec2 create-tags --cli-input-json "$(jq -n \
     --arg workflow "$GITHUB_WORKFLOW" \
     --arg workflow_url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/attempts/${GITHUB_RUN_ATTEMPT}" \
     --arg job "$GITHUB_JOB" \
-    --arg job_url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/job/${GITHUB_JOB_ID}" \
     --arg run_id "$GITHUB_RUN_ID" \
     --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
     --arg run_number "$GITHUB_RUN_NUMBER" \
@@ -33,7 +32,6 @@ aws ec2 create-tags --cli-input-json "$(jq -n \
       {Key:"ghr:workflow", Value:$workflow},
       {Key:"ghr:workflow_url", Value:$workflow_url},
       {Key:"ghr:job", Value:$job},
-      {Key:"ghr:job_url", Value:$job_url},
       {Key:"ghr:run_id", Value:$run_id},
       {Key:"ghr:run_attempt", Value:$run_attempt},
       {Key:"ghr:run_number", Value:$run_number},
