@@ -7,7 +7,7 @@ terraform {
     }
     signalfx = {
       source  = "splunk-terraform/signalfx"
-      version = "9.20"
+      version = "< 10.0.0"
     }
     time = {
       source  = "hashicorp/time"

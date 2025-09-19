@@ -7,28 +7,30 @@ INSTANCE_ID=$(wget -q -O - http://169.254.169.254/latest/dynamic/instance-identi
 aws ec2 create-tags --cli-input-json "$(jq -n \
     --arg instance "$INSTANCE_ID" \
     --arg repository "$GITHUB_REPOSITORY" \
-    --arg run_id "$GITHUB_RUN_ID" \
-    --arg workflow "$GITHUB_WORKFLOW" \
-    --arg job "$GITHUB_JOB" \
-    --arg commit "$GITHUB_SHA" \
     --arg ref "$GITHUB_REF" \
+    --arg commit "$GITHUB_SHA" \
+    --arg workflow "$GITHUB_WORKFLOW" \
+    --arg workflow_url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/attempts/${GITHUB_RUN_ATTEMPT}" \
+    --arg job "$GITHUB_JOB" \
+    --arg job_url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/job/${GITHUB_JOB_ID}" \
+    --arg run_id "$GITHUB_RUN_ID" \
     --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
     --arg run_number "$GITHUB_RUN_NUMBER" \
-    --arg workflow_url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/attempts/${GITHUB_RUN_ATTEMPT}" \
     --arg actor "$GITHUB_ACTOR" \
     --arg started_at "$(TZ=UTC date +"%Y-%m-%dT%H:%M:%SZ")" \
     '{
     Resources: [$instance],
     Tags: [
       {Key:"ghr:repository", Value:$repository},
-      {Key:"ghr:run_id", Value:$run_id},
-      {Key:"ghr:workflow", Value:$workflow},
-      {Key:"ghr:job", Value:$job},
-      {Key:"ghr:commit", Value:$commit},
       {Key:"ghr:ref", Value:$ref},
+      {Key:"ghr:commit", Value:$commit},
+      {Key:"ghr:workflow", Value:$workflow},
+      {Key:"ghr:workflow_url", Value:$workflow_url},
+      {Key:"ghr:job", Value:$job},
+      {Key:"ghr:job_url", Value:$job_url},
+      {Key:"ghr:run_id", Value:$run_id},
       {Key:"ghr:run_attempt", Value:$run_attempt},
       {Key:"ghr:run_number", Value:$run_number},
-      {Key:"ghr:workflow_url", Value:$workflow_url},
       {Key:"ghr:actor", Value:$actor},
       {Key:"ghr:started_at", Value:$started_at}
     ]
