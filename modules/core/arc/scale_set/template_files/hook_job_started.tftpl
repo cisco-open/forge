@@ -3,6 +3,13 @@
 LOG_FILE="$HOME/_diag/hook.log"
 TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
 
+if [[ -n "${GITHUB_EVENT_PATH:-}" && -f "${GITHUB_EVENT_PATH}" ]]; then
+  EVENT_JSON="$(jq -c '.' "${GITHUB_EVENT_PATH}" 2>/dev/null || echo '{}')"
+else
+  EVENT_JSON="{}"
+fi
+
+
 {
     echo "{"
     echo "  \"timestamp\": \"$TIMESTAMP\","
@@ -50,7 +57,8 @@ TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
     echo "  \"RUNNER_NAME\": \"${RUNNER_NAME}\","
     echo "  \"RUNNER_OS\": \"${RUNNER_OS}\","
     echo "  \"RUNNER_TEMP\": \"${RUNNER_TEMP}\","
-    echo "  \"RUNNER_TOOL_CACHE\": \"${RUNNER_TOOL_CACHE}\""
+    echo "  \"RUNNER_TOOL_CACHE\": \"${RUNNER_TOOL_CACHE}\","
+    echo "  \"GITHUB_EVENT\": ${EVENT_JSON}"
     echo "}"
 } | jq -c . >>"$LOG_FILE"
 

@@ -3,6 +3,12 @@
 LOG_FILE="$HOME/hook.log"
 TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
 
+if [[ -n "${GITHUB_EVENT_PATH:-}" && -f "${GITHUB_EVENT_PATH}" ]]; then
+  EVENT_JSON="$(jq -c '.' "${GITHUB_EVENT_PATH}" 2>/dev/null || echo '{}')"
+else
+  EVENT_JSON="{}"
+fi
+
 INSTANCE_ID=$(wget -q -O - http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.instanceId')
 aws ec2 create-tags --cli-input-json "$(jq -n \
     --arg instance "$INSTANCE_ID" \
@@ -61,7 +67,8 @@ aws ec2 create-tags --cli-input-json "$(jq -n \
     echo "  \"RUNNER_NAME\": \"${RUNNER_NAME}\","
     echo "  \"RUNNER_OS\": \"${RUNNER_OS}\","
     echo "  \"RUNNER_TEMP\": \"${RUNNER_TEMP}\","
-    echo "  \"RUNNER_TOOL_CACHE\": \"${RUNNER_TOOL_CACHE}\""
+    echo "  \"RUNNER_TOOL_CACHE\": \"${RUNNER_TOOL_CACHE}\","
+    echo "  \"GITHUB_EVENT\": ${EVENT_JSON}"
     echo "}"
 } | jq -c . >>"$LOG_FILE"
 
