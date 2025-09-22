@@ -16,7 +16,7 @@
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.14.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.14.1 |
 | <a name="provider_null"></a> [null](#provider\_null) | 3.2.4 |
 | <a name="provider_random"></a> [random](#provider\_random) | 3.7.2 |
 | <a name="provider_time"></a> [time](#provider\_time) | 0.13.1 |
@@ -28,6 +28,7 @@
 | <a name="module_arc_runners"></a> [arc\_runners](#module\_arc\_runners) | ../arc_deployment | n/a |
 | <a name="module_clean_global_lock_lambda"></a> [clean\_global\_lock\_lambda](#module\_clean\_global\_lock\_lambda) | terraform-aws-modules/lambda/aws | 8.1.0 |
 | <a name="module_ec2_runners"></a> [ec2\_runners](#module\_ec2\_runners) | ../ec2_deployment | n/a |
+| <a name="module_github_webhook_relay_source"></a> [github\_webhook\_relay\_source](#module\_github\_webhook\_relay\_source) | ../../integrations/webhook-relay/source | n/a |
 | <a name="module_register_github_app_runner_group_lambda"></a> [register\_github\_app\_runner\_group\_lambda](#module\_register\_github\_app\_runner\_group\_lambda) | terraform-aws-modules/lambda/aws | 8.1.0 |
 
 ## Resources
@@ -50,6 +51,7 @@
 | [aws_secretsmanager_secret_version.cicd_secrets](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret_version) | resource |
 | [aws_servicecatalogappregistry_application.forge](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/servicecatalogappregistry_application) | resource |
 | [null_resource.update_github_app_webhook](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
+| [random_id.github_webhook_relay_source_secret](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
 | [random_id.random](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
 | [time_sleep.wait_60_seconds](https://registry.terraform.io/providers/hashicorp/time/latest/docs/resources/sleep) | resource |
 | [aws_iam_policy_document.clean_global_lock_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
@@ -76,6 +78,7 @@
 | <a name="input_env"></a> [env](#input\_env) | Deployment environments. | `string` | n/a | yes |
 | <a name="input_ghes_org"></a> [ghes\_org](#input\_ghes\_org) | GitHub organization. | `string` | n/a | yes |
 | <a name="input_ghes_url"></a> [ghes\_url](#input\_ghes\_url) | GitHub Enterprise Server URL. | `string` | n/a | yes |
+| <a name="input_github_webhook_relay"></a> [github\_webhook\_relay](#input\_github\_webhook\_relay) | Configuration for the (optional) webhook relay source module.<br/>If enabled=true we provision the API Gateway + source EventBridge forwarding rule.<br/>destination\_event\_bus\_name must already exist or be created in the destination account (or via the destination submodule run there). | <pre>object({<br/>    enabled                    = bool<br/>    destination_account_id     = string<br/>    destination_event_bus_name = string<br/>    destination_region         = string<br/>  })</pre> | <pre>{<br/>  "destination_account_id": "",<br/>  "destination_event_bus_name": "",<br/>  "destination_region": "",<br/>  "enabled": false<br/>}</pre> | no |
 | <a name="input_lambda_subnet_ids"></a> [lambda\_subnet\_ids](#input\_lambda\_subnet\_ids) | So the lambdas can run in our pre-determined subnets. They don't require the same security policy as the runners though. | `list(string)` | n/a | yes |
 | <a name="input_log_level"></a> [log\_level](#input\_log\_level) | Log level for application logging (e.g., INFO, DEBUG, WARN, ERROR) | `string` | n/a | yes |
 | <a name="input_logging_retention_in_days"></a> [logging\_retention\_in\_days](#input\_logging\_retention\_in\_days) | Logging retention period in days. | `string` | n/a | yes |
@@ -97,6 +100,8 @@
 | <a name="output_ec2_runners_arn_map"></a> [ec2\_runners\_arn\_map](#output\_ec2\_runners\_arn\_map) | n/a |
 | <a name="output_ec2_subnet_cidr_blocks"></a> [ec2\_subnet\_cidr\_blocks](#output\_ec2\_subnet\_cidr\_blocks) | n/a |
 | <a name="output_github_app_installation"></a> [github\_app\_installation](#output\_github\_app\_installation) | n/a |
+| <a name="output_github_webhook_relay_source_secret"></a> [github\_webhook\_relay\_source\_secret](#output\_github\_webhook\_relay\_source\_secret) | n/a |
+| <a name="output_github_webhook_relay_source_webhook_endpoint"></a> [github\_webhook\_relay\_source\_webhook\_endpoint](#output\_github\_webhook\_relay\_source\_webhook\_endpoint) | The webhook endpoint for GitHub webhook relay. |
 | <a name="output_runner_group_name"></a> [runner\_group\_name](#output\_runner\_group\_name) | n/a |
 | <a name="output_tenant"></a> [tenant](#output\_tenant) | n/a |
 | <a name="output_webhook_endpoint"></a> [webhook\_endpoint](#output\_webhook\_endpoint) | Needed for the GitHub App to issue callbacks. |

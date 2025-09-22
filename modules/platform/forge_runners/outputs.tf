@@ -40,3 +40,13 @@ output "runner_group_name" {
 output "tenant" {
   value = var.tenant
 }
+
+output "github_webhook_relay_source_secret" {
+  value     = try(random_id.github_webhook_relay_source_secret[0].hex, null)
+  sensitive = true
+}
+
+output "github_webhook_relay_source_webhook_endpoint" {
+  description = "The webhook endpoint for GitHub webhook relay."
+  value       = module.github_webhook_relay_source[0].webhook_endpoint
+}

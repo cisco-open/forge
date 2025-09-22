@@ -160,3 +160,23 @@ variable "logging_retention_in_days" {
   type        = string
   description = "Logging retention period in days."
 }
+
+variable "github_webhook_relay" {
+  description = <<-EOT
+  Configuration for the (optional) webhook relay source module.
+  If enabled=true we provision the API Gateway + source EventBridge forwarding rule.
+  destination_event_bus_name must already exist or be created in the destination account (or via the destination submodule run there).
+  EOT
+  type = object({
+    enabled                    = bool
+    destination_account_id     = string
+    destination_event_bus_name = string
+    destination_region         = string
+  })
+  default = {
+    enabled                    = false
+    destination_account_id     = ""
+    destination_event_bus_name = ""
+    destination_region         = ""
+  }
+}
