@@ -1,3 +1,40 @@
+# Webhook Relay Destination Module
+
+Creates the destination EventBridge bus, grants the source account permission to PutEvents, and wires multiple (or single) Lambda targets via per‑rule event patterns.
+
+## Architecture
+
+```
+graph TD
+  SourceAcct[(Source Account<br/>Relay Module)] -- PutEvents --> DestBus[(EventBridge Destination Bus)]
+
+  Policy[Bus Policy<br/>Allow source_account_id<br/>events:PutEvents] -.attached.-> DestBus
+
+  subgraph Destination Account
+    DestBus --> R0{{Rule 0..N<br/>for_each target}}
+    R0 --> L0[(Lambda Function 0)]
+    R0 --> L1[(Lambda Function 1)]
+    R0 --> Ln[(Lambda Function n)]
+  end
+
+  %% Legend (conceptual)
+  SourceAcct:::acct
+  DestBus:::bus
+  Policy:::policy
+  R0:::rule
+  L0:::lambda
+  L1:::lambda
+  Ln:::lambda
+
+  %% Styling
+
+  classDef acct fill:#e6f2ff,stroke:#336699,stroke-width:1px;
+  classDef bus fill:#ffe6cc,stroke:#d97b00,stroke-width:1px;
+  classDef policy fill:#fafafa,stroke:#555,stroke-dasharray:3 3;
+  classDef rule fill:#f7e8ff,stroke:#8040b3,stroke-width:1px;
+  classDef lambda fill:#d9f7d9,stroke:#2d7a2d,stroke-width:1px;
+```
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 

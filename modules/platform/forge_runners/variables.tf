@@ -168,15 +168,17 @@ variable "github_webhook_relay" {
   destination_event_bus_name must already exist or be created in the destination account (or via the destination submodule run there).
   EOT
   type = object({
-    enabled                    = bool
-    destination_account_id     = string
-    destination_event_bus_name = string
-    destination_region         = string
+    enabled                     = bool
+    destination_account_id      = string
+    destination_event_bus_name  = string
+    destination_region          = string
+    destination_reader_role_arn = string
   })
   default = {
-    enabled                    = false
-    destination_account_id     = ""
-    destination_event_bus_name = ""
-    destination_region         = ""
+    enabled                     = false
+    destination_account_id      = ""
+    destination_event_bus_name  = ""
+    destination_region          = ""
+    destination_reader_role_arn = ""
   }
 }

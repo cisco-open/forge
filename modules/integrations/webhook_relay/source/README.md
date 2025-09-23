@@ -1,3 +1,59 @@
+# Webhook Relay Module
+
+Ingest arbitrary HTTPS webhook POSTs and forward them (optionally cross‑account) via EventBridge.
+
+## Architecture
+```mermaid
+graph TD
+  subgraph Source Account
+    C[Webhook Sender] --> H[API Gateway HTTP API]
+    H -- "EventBridge-PutEvents" --> EBSource[(EventBridge Source Bus)]
+    H -.-> R1[(IAM Role: apigw-events)]
+    R1 -.-> EBSource
+    EBSource --> Rule[EventBridge Rule<br/>pattern: source = var.event_source]
+    Rule -.-> R2[(IAM Role: events-forward)]
+  end
+
+  subgraph Destination Account
+    DestBus[(Destination EventBridge Bus)]
+  end
+
+  R2 -.-> DestBus
+
+  %% Styling
+  classDef bus fill:#ffe6cc,stroke:#d97b00,stroke-width:2px;
+  classDef role fill:#e6f2ff,stroke:#336699,stroke-width:2px;
+  classDef rule fill:#f7e8ff,stroke:#8040b3,stroke-width:2px;
+  class EBSource,DestBus bus
+  class R1,R2 role
+  class Rule rule
+
+```
+
+## Usage
+```hcl
+module "webhook_relay" {
+  source                    = "./source"
+  name_prefix               = "webhook-relay-src"
+  source_event_bus_name     = "webhook-relay-source"
+  event_source              = "webhook.relay"
+  destination_account_id    = "123456789012"
+  destination_event_bus_name= "central-bus"
+  destination_region        = "us-east-1"
+  tags = {
+    app = "webhook-relay"
+    env = "dev"
+  }
+}
+```
+
+After apply, use:
+```
+curl -X POST "$(terraform output -raw webhook_endpoint)/webhook" \
+  -H "Content-Type: application/json" \
+  -d '{"hello":"world"}'
+```
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 

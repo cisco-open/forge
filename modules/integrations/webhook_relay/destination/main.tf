@@ -28,9 +28,6 @@ locals {
   }
 }
 
-############################################
-# Rules per target
-############################################
 resource "aws_cloudwatch_event_rule" "receive" {
   for_each       = local.targets_indexed
   name           = "${var.name_prefix}-receive-${each.key}"
@@ -40,17 +37,11 @@ resource "aws_cloudwatch_event_rule" "receive" {
   tags           = var.tags
 }
 
-############################################
-# Lambda lookups per target
-############################################
 data "aws_lambda_function" "receiver" {
   for_each      = local.targets_indexed
   function_name = each.value.lambda_function_name
 }
 
-############################################
-# Event targets
-############################################
 resource "aws_cloudwatch_event_target" "lambda" {
   for_each       = aws_cloudwatch_event_rule.receive
   rule           = each.value.name
@@ -58,9 +49,6 @@ resource "aws_cloudwatch_event_target" "lambda" {
   arn            = data.aws_lambda_function.receiver[each.key].arn
 }
 
-############################################
-# Lambda permissions
-############################################
 resource "aws_lambda_permission" "allow_events" {
   for_each      = aws_cloudwatch_event_rule.receive
   statement_id  = "AllowEventBridgeInvoke-${each.key}"

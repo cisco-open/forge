@@ -1,10 +1,8 @@
-############################################################
-# Webhook Relay Source (API Gateway HTTP API -> EventBridge -> XAcct)
-############################################################
+# Webhook relay: HTTP API -> EventBridge source bus -> cross-account destination bus
+
 locals {
   webhook           = "webhook"
-  dest_region       = var.destination_region
-  destination_bus   = "arn:aws:events:${local.dest_region}:${var.destination_account_id}:event-bus/${var.destination_event_bus_name}"
+  destination_bus   = "arn:aws:events:${var.destination_region}:${var.destination_account_id}:event-bus/${var.destination_event_bus_name}"
   tags              = var.tags
   api_name          = "${var.name_prefix}-http-api"
   rule_name         = "${var.name_prefix}-forward"
@@ -12,17 +10,13 @@ locals {
   forward_role_name = "${var.name_prefix}-events-forward"
 }
 
-#####################################
-# EventBridge (source) Bus
-#####################################
+# Source EventBridge bus
 resource "aws_cloudwatch_event_bus" "source" {
   name = var.source_event_bus_name
   tags = local.tags
 }
 
-#####################################
-# IAM: API Gateway -> EventBridge
-#####################################
+# Role for API Gateway to PutEvents on source bus
 resource "aws_iam_role" "apigw_events" {
   name = local.apigw_role_name
   assume_role_policy = jsonencode({
@@ -49,9 +43,7 @@ resource "aws_iam_role_policy" "apigw_put_events" {
   })
 }
 
-#####################################
-# IAM: EventBridge Rule -> Destination Bus (cross-account)
-#####################################
+# Role for EventBridge rule to forward to destination (cross-account)
 resource "aws_iam_role" "events_forward" {
   name = local.forward_role_name
   assume_role_policy = jsonencode({
@@ -78,9 +70,7 @@ resource "aws_iam_role_policy" "events_forward_put" {
   })
 }
 
-#####################################
-# API Gateway HTTP API -> EventBridge
-#####################################
+# HTTP API receiving webhook POSTs -> EventBridge (service integration)
 resource "aws_apigatewayv2_api" "webhook" {
   name          = local.api_name
   protocol_type = "HTTP"
@@ -95,7 +85,7 @@ resource "aws_apigatewayv2_integration" "events" {
   credentials_arn        = aws_iam_role.apigw_events.arn
   payload_format_version = "1.0"
   timeout_milliseconds   = 3000
-
+  # Body is passed directly as the event Detail
   request_parameters = {
     Detail       = "$request.body"
     DetailType   = "generic.event"
@@ -117,9 +107,7 @@ resource "aws_apigatewayv2_stage" "this" {
   tags        = local.tags
 }
 
-#####################################
-# Event Forwarding Rule (Source -> Destination Bus)
-#####################################
+# Forward only events from the expected source to destination bus
 resource "aws_cloudwatch_event_rule" "forward" {
   name           = local.rule_name
   description    = "Forward webhook events to destination bus"
