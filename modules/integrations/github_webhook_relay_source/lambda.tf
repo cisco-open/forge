@@ -46,7 +46,7 @@ data "aws_iam_policy_document" "validate_signature_lambda" {
 
 resource "aws_cloudwatch_log_group" "validate_signature_lambda" {
   name              = "/aws/lambda/${var.name_prefix}-validate-signature"
-  retention_in_days = 3
+  retention_in_days = var.log_retention_in_days
   tags              = var.tags
   tags_all          = var.tags
 }

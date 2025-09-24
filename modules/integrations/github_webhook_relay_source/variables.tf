@@ -42,3 +42,9 @@ variable "destination_event_bus_name" {
   description = "Destination bus name in destination account"
   type        = string
 }
+
+variable "log_retention_in_days" {
+  description = "Log retention period in days"
+  type        = number
+  default     = 3
+}
