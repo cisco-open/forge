@@ -10,6 +10,11 @@ variable "tags" {
   default     = {}
 }
 
+variable "webhook_secret" {
+  description = "Secret used to validate incoming webhooks"
+  type        = string
+}
+
 variable "event_source" {
   description = "EventBridge source field for emitted events"
   type        = string

@@ -6,10 +6,11 @@ resource "random_id" "github_webhook_relay_source_secret" {
 module "github_webhook_relay_source" {
   count = var.github_webhook_relay.enabled ? 1 : 0
 
-  source = "../../integrations/webhook_relay/source"
+  source = "../../integrations/github_webhook_relay_source"
 
   name_prefix           = "${var.deployment_config.prefix}-github-webhook-relay"
   source_event_bus_name = "${var.deployment_config.prefix}-webhook-relay-source"
+  webhook_secret        = random_id.github_webhook_relay_source_secret[0].hex
 
   destination_account_id     = var.github_webhook_relay.destination_account_id
   destination_region         = var.github_webhook_relay.destination_region
