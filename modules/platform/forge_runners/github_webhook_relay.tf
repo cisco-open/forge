@@ -20,6 +20,7 @@ module "github_webhook_relay_source" {
 }
 
 resource "aws_kms_key" "github_webhook_relay" {
+  count      = var.github_webhook_relay.enabled ? 1 : 0
   is_enabled = true
 
   tags = merge(
@@ -32,8 +33,9 @@ resource "aws_kms_key" "github_webhook_relay" {
 }
 
 resource "aws_kms_alias" "github_webhook_relay" {
+  count         = var.github_webhook_relay.enabled ? 1 : 0
   name          = "alias/${var.deployment_config.prefix}-webhook-relay"
-  target_key_id = aws_kms_key.github_webhook_relay.key_id
+  target_key_id = aws_kms_key.github_webhook_relay[0].key_id
 }
 
 resource "aws_secretsmanager_secret" "github_webhook_relay" {
@@ -41,7 +43,7 @@ resource "aws_secretsmanager_secret" "github_webhook_relay" {
 
   name        = "/cicd/common/${var.tenant.name}/${var.deployment_config.secret_suffix}/webhook_relay"
   description = "GitHub webhook relay endpoint + secret"
-  kms_key_id  = aws_kms_key.github_webhook_relay.id
+  kms_key_id  = aws_kms_key.github_webhook_relay[0].id
   tags        = local.all_security_tags
 }
 
@@ -90,12 +92,12 @@ data "aws_iam_policy_document" "secret_reader_permissions" {
   }
 
   dynamic "statement" {
-    for_each = length(aws_kms_key.github_webhook_relay.arn) > 0 ? [1] : []
+    for_each = length(aws_kms_key.github_webhook_relay[0].arn) > 0 ? [1] : []
     content {
       sid       = "AllowKmsDecrypt"
       effect    = "Allow"
       actions   = ["kms:Decrypt"]
-      resources = [aws_kms_key.github_webhook_relay.arn]
+      resources = [aws_kms_key.github_webhook_relay[0].arn]
     }
   }
 }
