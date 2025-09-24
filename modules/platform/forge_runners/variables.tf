@@ -169,10 +169,10 @@ variable "github_webhook_relay" {
   EOT
   type = object({
     enabled                     = bool
-    destination_account_id      = string
-    destination_event_bus_name  = string
-    destination_region          = string
-    destination_reader_role_arn = string
+    destination_account_id      = optional(string)
+    destination_event_bus_name  = optional(string)
+    destination_region          = optional(string)
+    destination_reader_role_arn = optional(string)
   })
   default = {
     enabled                     = false
