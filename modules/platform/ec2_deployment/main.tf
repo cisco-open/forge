@@ -50,10 +50,6 @@ data "aws_subnet" "runner_subnet" {
   id       = each.value
 }
 
-data "external" "download_lambdas" {
-  program = ["bash", "${path.module}/scripts/download_lambdas.sh", "/tmp/${var.runner_configs.prefix}/"]
-}
-
 module "runners" {
   # Using multi-runner example as a baseline.
   # renovate: datasource=github-tags depName=github-aws-runners/terraform-aws-github-runner registryUrl=https://github.com/
@@ -87,11 +83,6 @@ module "runners" {
 
   # Retention period for the logs in days.
   logging_retention_in_days = var.runner_configs.logging_retention_in_days
-
-  # Grab the lambda packages from local directory. Must run "ci/build.sh" first.
-  webhook_lambda_zip                = "/tmp/${var.runner_configs.prefix}/webhook.zip"
-  runner_binaries_syncer_lambda_zip = "/tmp/${var.runner_configs.prefix}/runner-binaries-syncer.zip"
-  runners_lambda_zip                = "/tmp/${var.runner_configs.prefix}/runners.zip"
 
   # Configure the various types of runners we provide, along with on-demand
   # versus standby pools, etc.
@@ -213,7 +204,4 @@ module "runners" {
     }
   }
 
-  depends_on = [
-    data.external.download_lambdas,
-  ]
 }
