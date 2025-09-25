@@ -22,8 +22,7 @@ module "update_runner_ami_lambda" {
   architectures = ["x86_64"]
 
   source_path = [{
-    path             = "${path.module}/lambda"
-    pip_requirements = "${path.module}/lambda/requirements.txt"
+    path = "${path.module}/lambda"
   }]
 
   logging_log_group                 = aws_cloudwatch_log_group.update_runner_ami_lambda.name

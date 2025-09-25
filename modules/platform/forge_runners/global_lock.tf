@@ -83,6 +83,10 @@ module "clean_global_lock_lambda" {
     pip_requirements = "${path.module}/lambda/requirements.txt"
   }]
 
+  layers = [
+    "arn:aws:lambda:${var.aws_region}:770693421928:layer:Klayers-p312-cryptography:17"
+  ]
+
   logging_log_group                 = aws_cloudwatch_log_group.clean_global_lock_lambda.name
   use_existing_cloudwatch_log_group = true
 
