@@ -12,6 +12,8 @@ ec2_runner_specs:
     ami_name: <AMI_NAME_PATTERN>
     ami_owner: <ACCOUNT_ID>
     ami_kms_key_arn: <KMS_ARN>
+    runner_os: <OS>
+    runner_architecture: <ARCH>
     max_instances: <MAX_PARALLEL>
     instance_types:
       - <AWS_INSTANCE_TYPE>

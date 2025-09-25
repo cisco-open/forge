@@ -9,9 +9,11 @@ tenant:
     - 123456789012.dkr.ecr.eu-west-1.amazonaws.com
 ec2_runner_specs:
   small:
-    ami_name: forge-gh-runner-v*
+    ami_name: forge-gh-runner-amd64-v*
     ami_owner: '123456789012'
     ami_kms_key_arn: ''
+    runner_os: linux
+    runner_architecture: x64
     max_instances: 1
     instance_types:
       - t2.small
@@ -20,6 +22,18 @@ ec2_runner_specs:
       - t3.small
       - t3.medium
       - t3.large
+    pool_config: []
+  small-arm:
+    ami_name: forge-gh-runner-arm64-v*
+    ami_owner: '123456789012'
+    ami_kms_key_arn: ''
+    runner_os: linux
+    runner_architecture: arm64
+    max_instances: 1
+    instance_types:
+      - t4g.small
+      - t4g.medium
+      - t4g.large
     pool_config: []
 arc_runner_specs:
   dependabot:

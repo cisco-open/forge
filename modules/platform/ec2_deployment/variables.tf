@@ -23,13 +23,15 @@ variable "runner_configs" {
         name  = list(string)
         state = list(string)
       })
-      ami_kms_key_arn = string
-      ami_owners      = list(string)
-      runner_labels   = list(string)
-      extra_labels    = list(string)
-      max_instances   = number
-      min_run_time    = number
-      instance_types  = list(string)
+      ami_kms_key_arn     = string
+      ami_owners          = list(string)
+      runner_labels       = list(string)
+      runner_os           = string
+      runner_architecture = string
+      extra_labels        = list(string)
+      max_instances       = number
+      min_run_time        = number
+      instance_types      = list(string)
       pool_config = list(object({
         size                         = number
         schedule_expression          = string

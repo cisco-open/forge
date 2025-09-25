@@ -133,8 +133,8 @@ module "runners" {
         }
         runner_ec2_tags                      = var.tenant_configs.tags
         runner_binaries_s3_sse_configuration = local.s3_security_settings
-        runner_os                            = "linux"
-        runner_architecture                  = "x64"
+        runner_os                            = val["runner_os"]
+        runner_architecture                  = val["runner_architecture"]
         runner_extra_labels                  = val["extra_labels"]
         enable_ssm_on_runners                = true
         instance_types                       = val["instance_types"]

@@ -13,7 +13,7 @@
 | Name | Version |
 |------|---------|
 | <a name="provider_aws"></a> [aws](#provider\_aws) | 6.14.1 |
-| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.21.1 |
+| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.21.2 |
 | <a name="provider_time"></a> [time](#provider\_time) | 0.13.1 |
 
 ## Modules

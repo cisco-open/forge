@@ -64,9 +64,11 @@ locals {
       runner_labels = [
         "type:${size}",
         "self-hosted",
-        "x64",
+        spec.runner_architecture,
         "env:ops-${include.env.locals.env}",
       ]
+      runner_os           = spec.runner_os
+      runner_architecture = spec.runner_architecture
       extra_labels = [
         "rgn:${local.region_alias}",
         "vpc:${local.vpc_alias}",
