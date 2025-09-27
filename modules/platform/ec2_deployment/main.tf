@@ -25,6 +25,7 @@ locals {
       }
     }
   }
+
 }
 
 # Enable AWS-managed encryption key.
@@ -51,13 +52,11 @@ data "aws_subnet" "runner_subnet" {
 }
 
 data "external" "download_lambdas" {
-  program = ["bash", "${path.module}/scripts/download_lambdas.sh", "/tmp/${var.runner_configs.prefix}/"]
+  program = ["bash", "${path.module}/scripts/download_lambdas.sh", "/tmp/${var.runner_configs.prefix}/", "v6.7.8"]
 }
 
 module "runners" {
-  # Using multi-runner example as a baseline.
-  # renovate: datasource=github-tags depName=github-aws-runners/terraform-aws-github-runner registryUrl=https://github.com/
-  source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=4b33b88a323f1a47bb250c9b31168e2289b0b15d" # 6.7.2
+  source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=v6.7.8"
 
   aws_region = var.aws_region
 

@@ -19,7 +19,7 @@
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_runners"></a> [runners](#module\_runners) | git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner | 4b33b88a323f1a47bb250c9b31168e2289b0b15d |
+| <a name="module_runners"></a> [runners](#module\_runners) | git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner | v6.7.8 |
 | <a name="module_update_runner_ami_lambda"></a> [update\_runner\_ami\_lambda](#module\_update\_runner\_ami\_lambda) | terraform-aws-modules/lambda/aws | 8.1.0 |
 
 ## Resources
