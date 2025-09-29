@@ -62,14 +62,14 @@ resource "aws_cloudwatch_event_bus" "source" {
 
 # CloudWatch Log Delivery Sources for INFO, ERROR logs
 resource "aws_cloudwatch_log_delivery_source" "info_logs" {
-  name         = "EventBusSource-${aws_cloudwatch_event_bus.source.name}-INFO_LOGS"
+  name         = "${aws_cloudwatch_event_bus.source.name}-INFO_LOGS"
   log_type     = "INFO_LOGS"
   resource_arn = aws_cloudwatch_event_bus.source.arn
   tags         = var.tags
 }
 
 resource "aws_cloudwatch_log_delivery_source" "error_logs" {
-  name         = "EventBusSource-${aws_cloudwatch_event_bus.source.name}-ERROR_LOGS"
+  name         = "${aws_cloudwatch_event_bus.source.name}-ERROR_LOGS"
   log_type     = "ERROR_LOGS"
   resource_arn = aws_cloudwatch_event_bus.source.arn
   tags         = var.tags
