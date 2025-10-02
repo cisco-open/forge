@@ -39,14 +39,14 @@ locals {
 
   logging_retention_in_days = 3
 
-  arc_cluster_name = include.vpc.locals.cluster_name
-
   # Load and parse runner specs YAML once
   runner_specs_raw = yamldecode(file("config.yaml"))
 
   # GitHub App settings
-  ghes_url = local.runner_specs_raw.gh_config.ghes_url
-  ghes_org = local.runner_specs_raw.gh_config.ghes_org
+  ghes_url             = local.runner_specs_raw.gh_config.ghes_url
+  ghes_org             = local.runner_specs_raw.gh_config.ghes_org
+  repository_selection = local.runner_specs_raw.gh_config.repository_selection
+  github_webhook_relay = local.runner_specs_raw.gh_config.github_webhook_relay
 
   tenant = {
     name                = local.tenant_name
@@ -61,16 +61,16 @@ locals {
         name  = [spec.ami_name],
         state = ["available"],
       }
-      ami_owners      = [spec.ami_owner]
-      ami_kms_key_arn = spec.ami_kms_key_arn
+      ami_owners          = [spec.ami_owner]
+      ami_kms_key_arn     = spec.ami_kms_key_arn
+      runner_os           = spec.runner_os
+      runner_architecture = spec.runner_architecture
       runner_labels = [
-        "type:${size}",
+        "type:${spec.type}",
         "self-hosted",
         spec.runner_architecture,
         "env:ops-${include.env.locals.env}",
       ]
-      runner_os           = spec.runner_os
-      runner_architecture = spec.runner_architecture
       extra_labels = [
         "rgn:${local.region_alias}",
         "vpc:${local.vpc_alias}",
@@ -84,18 +84,20 @@ locals {
       instance_types                = spec.instance_types
       block_device_mappings = [{
         delete_on_termination = true
-        device_name           = "/dev/sda1"
+        device_name           = spec.volume.device_name
         encrypted             = true
-        iops                  = null
+        iops                  = spec.volume.iops
         kms_key_id            = null
         snapshot_id           = null
-        throughput            = null
-        volume_size           = 80
-        volume_type           = "gp3"
+        throughput            = spec.volume.throughput
+        volume_size           = spec.volume.size
+        volume_type           = spec.volume.type
       }]
       pool_config = spec.pool_config
     }
   }
+  arc_cluster_name    = local.runner_specs_raw.arc_cluster_name
+  migrate_arc_cluster = local.runner_specs_raw.migrate_arc_cluster
 
   arc_runner_specs = {
     for size, spec in local.runner_specs_raw.arc_runner_specs :

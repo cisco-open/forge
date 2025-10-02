@@ -26,8 +26,7 @@ locals {
   # ─────────────────────────────────────────────────────────────────────────────
   # Tenant Settings
   # ─────────────────────────────────────────────────────────────────────────────
-  tenant_name          = basename(path_relative_to_include("root"))
-  runner_settings_data = read_terragrunt_config(find_in_parent_folders("${local.tenant_name}/runner_settings.hcl"))
+  runner_settings_data = read_terragrunt_config("runner_settings.hcl")
   tenant               = local.runner_settings_data.locals.tenant
 
   # ─────────────────────────────────────────────────────────────────────────────
@@ -62,14 +61,17 @@ inputs = {
   lambda_subnet_ids = local.runner_settings_data.locals.lambda_subnet_ids
 
   # Runners (EC2/ARC)
-  ec2_runner_specs = local.runner_settings_data.locals.ec2_runner_specs
-  arc_cluster_name = local.runner_settings_data.locals.arc_cluster_name
-  arc_runner_specs = local.runner_settings_data.locals.arc_runner_specs
+  ec2_runner_specs    = local.runner_settings_data.locals.ec2_runner_specs
+  arc_cluster_name    = local.runner_settings_data.locals.arc_cluster_name
+  arc_runner_specs    = local.runner_settings_data.locals.arc_runner_specs
+  migrate_arc_cluster = local.runner_settings_data.locals.migrate_arc_cluster
 
   # GitHub Settings
-  ghes_url          = local.runner_settings_data.locals.ghes_url
-  ghes_org          = local.runner_settings_data.locals.ghes_org
-  runner_group_name = local.runner_settings_data.locals.runner_group_name
+  ghes_url             = local.runner_settings_data.locals.ghes_url
+  ghes_org             = local.runner_settings_data.locals.ghes_org
+  repository_selection = local.runner_settings_data.locals.repository_selection
+  runner_group_name    = local.runner_settings_data.locals.runner_group_name
+  github_webhook_relay = local.runner_settings_data.locals.github_webhook_relay
 
   # Misc
   deployment_config         = local.runner_settings_data.locals.deployment_config

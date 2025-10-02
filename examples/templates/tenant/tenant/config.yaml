@@ -2,13 +2,17 @@
 gh_config:
   ghes_url: <GITHUB_URL>
   ghes_org: <GITHUB_ORG>
+  repository_selection: <REPOSITORY_SELECTION>
+  github_webhook_relay:
+    enabled: <GITHUB_WEBHOOK_RELAY_ENABLED>
 tenant:
   iam_roles_to_assume:
     - arn:aws:iam::<ACCOUNT_ID>:role/<ROLE_NAME>
   ecr_registries:
     - <ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com
 ec2_runner_specs:
-  <runner_type>:
+  <runner_type-alias>:
+    type: <runner_type>
     ami_name: <AMI_NAME_PATTERN>
     ami_owner: <ACCOUNT_ID>
     ami_kms_key_arn: <KMS_ARN>
@@ -21,6 +25,12 @@ ec2_runner_specs:
       - size: <RUNNERS_STARTING_SIZE>
         schedule_expression: <CRON_EXPRESSION>
         schedule_expression_timezone: <TIMEZONE>
+    volume:
+      size: <VOLUME_SIZE>
+      device_name: <VOLUME_DEVICE_NAME>
+      iops: <VOLUME_IOPS>
+      throughput: <VOLUME_THROUGHPUT>
+      type: <VOLUME_TYPE>
 arc_runner_specs:
   <runner_type>:
     runner_size:
@@ -35,3 +45,5 @@ arc_runner_specs:
     container_limits_memory: <MEM>
     volume_requests_storage_type: <STORAGE_TYPE>
     volume_requests_storage_size: <STORAGE_SIZE>
+arc_cluster_name: <CLUSTER_NAME>
+migrate_arc_cluster: <MIGRATE_ARC_CLUSTER>

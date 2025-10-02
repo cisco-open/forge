@@ -17,10 +17,11 @@ include "env" {
 
 # Tenant-specific settings.
 include "tenant_global" {
-  path   = find_in_parent_folders("_global_settings/tenants/${basename(get_terragrunt_dir())}.hcl")
+  path   = find_in_parent_folders("_global_settings/tenant.hcl")
   expose = true
 }
 
+# Version of module to use.
 locals {
   module_name = "forge_runners"
   project     = include.global.locals.project_name
