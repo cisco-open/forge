@@ -28,15 +28,27 @@ module "update_ec2_tags" {
 
 data "aws_iam_policy_document" "update_ec2_tags" {
 
+  # Allow DescribeInstances without condition
+  statement {
+    effect    = "Allow"
+    actions   = ["ec2:DescribeInstances"]
+    resources = ["*"]
+  }
+
+  # Allow tagging operations conditioned on environment tag
   statement {
     effect = "Allow"
     actions = [
-      "ec2:DescribeImages",
-      "ec2:DescribeInstances",
       "ec2:CreateTags",
       "ec2:DeleteTags"
     ]
-    resources = ["*"] # Restrict to tenant Ec2
+    resources = ["*"]
+
+    condition {
+      test     = "StringLike"
+      variable = "ec2:ResourceTag/ghr:environment"
+      values   = ["${var.runner_configs.prefix}-*"]
+    }
   }
 }
 
