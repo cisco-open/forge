@@ -206,7 +206,10 @@ module "runners" {
         enable_organization_runners     = true
         job_queue_retention_in_seconds  = 172800
         # We only have a standby pool for the lower-cost standard workers.
-        pool_config       = val["pool_config"]
+        pool_config = val["pool_config"]
+        job_retry = {
+          enabled = true
+        }
         pool_runner_owner = var.runner_configs.ghes_org
       }
     }
