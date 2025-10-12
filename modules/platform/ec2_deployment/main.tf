@@ -141,20 +141,16 @@ module "runners" {
         scale_down_schedule_expression       = "cron(*/5 * * * ? *)"
         minimum_running_time_in_minutes      = val["min_run_time"]
         runner_group_name                    = var.runner_configs.runner_group_name
-        # Enable the binaries if we're using a vanilla Ubuntu image. Otherwise,
-        # if we've pre-baked Docker, actions runner, etc.; set to false. Without
-        # it, runners will launch, but will not be able to register as runners
-        # with GitHub ES, and jobs will stall indefinitely.
-        enable_runner_binaries_syncer     = true
-        enable_userdata                   = val["enable_userdata"]
-        userdata_template                 = local.user_data_template_runner
-        userdata_pre_install              = "# No pre-install steps."
-        userdata_post_install             = local.userdata_post_install
-        runner_hook_job_started           = local.runner_hook_job_started
-        runner_hook_job_completed         = local.runner_hook_job_completed
-        enable_runner_detailed_monitoring = true
-        runner_run_as                     = val["runner_user"]
-        block_device_mappings             = val["block_device_mappings"]
+        enable_runner_binaries_syncer        = false
+        enable_userdata                      = val["enable_userdata"]
+        userdata_template                    = local.user_data_template_runner
+        userdata_pre_install                 = "# No pre-install steps."
+        userdata_post_install                = local.userdata_post_install
+        runner_hook_job_started              = local.runner_hook_job_started
+        runner_hook_job_completed            = local.runner_hook_job_completed
+        enable_runner_detailed_monitoring    = true
+        runner_run_as                        = val["runner_user"]
+        block_device_mappings                = val["block_device_mappings"]
         runner_log_files = [
           {
             "log_group_name" : "forge-logs",
@@ -198,17 +194,18 @@ module "runners" {
             aws_iam_policy.ec2_tags.arn,
           ]
         )
-        # Yes; we want runners (even pool runners) to self-terminate after a
-        # job is complete (and, in the case of pool runners, spawn a new
-        # instance to replace it when done).
         enable_ephemeral_runners        = true
         create_service_linked_role_spot = true
         enable_organization_runners     = true
         job_queue_retention_in_seconds  = 172800
-        # We only have a standby pool for the lower-cost standard workers.
-        pool_config = val["pool_config"]
+        pool_config                     = val["pool_config"]
         job_retry = {
-          enabled = true
+          enable             = true
+          delay_in_seconds   = 300
+          delay_backoff      = 2
+          lambda_memory_size = 256
+          lambda_timeout     = 30
+          max_attempts       = 1
         }
         pool_runner_owner = var.runner_configs.ghes_org
       }
