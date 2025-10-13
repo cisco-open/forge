@@ -15,6 +15,8 @@ module "update_ec2_tags" {
   logging_log_group                 = aws_cloudwatch_log_group.update_ec2_tags.name
   use_existing_cloudwatch_log_group = true
 
+  trigger_on_package_timestamp = false
+
   attach_policy_json = true
 
   policy_json = data.aws_iam_policy_document.update_ec2_tags.json

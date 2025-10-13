@@ -17,6 +17,8 @@ module "splunk_dm_metadata_ec2inst_pattern_tags_lambda" {
   logging_log_group                 = aws_cloudwatch_log_group.splunk_dm_metadata_ec2inst_pattern_tags_lambda.name
   use_existing_cloudwatch_log_group = true
 
+  trigger_on_package_timestamp = false
+
   environment_variables = var.environment_variables
 
   attach_policy_json = true

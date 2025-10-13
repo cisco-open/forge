@@ -90,6 +90,8 @@ module "clean_global_lock_lambda" {
   logging_log_group                 = aws_cloudwatch_log_group.clean_global_lock_lambda.name
   use_existing_cloudwatch_log_group = true
 
+  trigger_on_package_timestamp = false
+
   environment_variables = {
     DYNAMODB_TABLE              = "${var.deployment_config.prefix}-gh-actions-lock"
     SECRET_NAME_APP_ID          = "${local.cicd_secrets_prefix}github_actions_runners_app_id"

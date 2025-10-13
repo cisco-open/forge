@@ -28,6 +28,8 @@ module "update_runner_ami_lambda" {
   logging_log_group                 = aws_cloudwatch_log_group.update_runner_ami_lambda.name
   use_existing_cloudwatch_log_group = true
 
+  trigger_on_package_timestamp = false
+
   environment_variables = {
     RUNNER_AMI_MAP = local.runner_ami_map_json
   }

@@ -15,6 +15,8 @@ module "validate_signature_lambda" {
   logging_log_group                 = aws_cloudwatch_log_group.validate_signature_lambda.name
   use_existing_cloudwatch_log_group = true
 
+  trigger_on_package_timestamp = false
+
   environment_variables = {
     EVENT_BUS      = var.source_event_bus_name
     WEBHOOK_SECRET = var.webhook_secret

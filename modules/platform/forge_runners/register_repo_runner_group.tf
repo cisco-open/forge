@@ -20,6 +20,8 @@ module "register_github_app_runner_group_lambda" {
   logging_log_group                 = aws_cloudwatch_log_group.register_github_app_runner_group_lambda.name
   use_existing_cloudwatch_log_group = true
 
+  trigger_on_package_timestamp = false
+
   environment_variables = {
     GITHUB_API                  = local.github_api
     ORGANIZATION                = var.ghes_org
