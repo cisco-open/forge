@@ -46,7 +46,6 @@ module "update_runner_ami_lambda" {
 }
 
 data "aws_iam_policy_document" "update_runner_ami_lambda" {
-
   statement {
     effect = "Allow"
     actions = [

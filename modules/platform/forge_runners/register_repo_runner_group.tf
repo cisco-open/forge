@@ -46,14 +46,6 @@ module "register_github_app_runner_group_lambda" {
 data "aws_iam_policy_document" "register_github_app_runner_group_lambda" {
   statement {
     actions = [
-      "logs:CreateLogStream",
-      "logs:PutLogEvents"
-    ]
-    effect    = "Allow"
-    resources = ["*"]
-  }
-  statement {
-    actions = [
       "secretsmanager:GetSecretValue",
       "secretsmanager:DescribeSecret",
     ]

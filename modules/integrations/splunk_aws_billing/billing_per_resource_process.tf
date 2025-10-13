@@ -36,10 +36,9 @@ module "cur_per_resource_process" {
 
   attach_policy_jsons = true
   policy_jsons = [
-    data.aws_iam_policy_document.cur_per_resource_process.json,
     data.aws_iam_policy_document.lambda_policy_document.json,
   ]
-  number_of_policy_jsons = 2
+  number_of_policy_jsons = 1
 
   tags = local.all_security_tags
 
@@ -63,18 +62,4 @@ resource "aws_cloudwatch_log_group" "cur_per_resource_process" {
   retention_in_days = 3
   tags              = local.all_security_tags
   tags_all          = local.all_security_tags
-}
-
-data "aws_iam_policy_document" "cur_per_resource_process" {
-  statement {
-    actions = [
-      "logs:CreateLogStream",
-      "logs:PutLogEvents"
-    ]
-    effect = "Allow"
-
-    resources = [
-      "arn:aws:logs:*:${data.aws_caller_identity.current.account_id}:log-group:${aws_cloudwatch_log_group.cur_per_resource_process.name}*:*"
-    ]
-  }
 }

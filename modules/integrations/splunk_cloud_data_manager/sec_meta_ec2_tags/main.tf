@@ -33,17 +33,6 @@ module "splunk_dm_metadata_ec2inst_pattern_tags_lambda" {
 }
 
 data "aws_iam_policy_document" "splunk_dm_metadata_ec2inst_pattern_tags_lambda" {
-  statement {
-    actions = [
-      "logs:CreateLogStream",
-      "logs:PutLogEvents"
-    ]
-    effect = "Allow"
-
-    resources = [
-      "arn:aws:logs:*:${data.aws_caller_identity.current.account_id}:log-group:${aws_cloudwatch_log_group.splunk_dm_metadata_ec2inst_pattern_tags_lambda.name}*:*"
-    ]
-  }
 
   statement {
     actions = [

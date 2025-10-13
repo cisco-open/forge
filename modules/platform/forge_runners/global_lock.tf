@@ -113,14 +113,6 @@ module "clean_global_lock_lambda" {
 data "aws_iam_policy_document" "clean_global_lock_lambda" {
   statement {
     actions = [
-      "logs:CreateLogStream",
-      "logs:PutLogEvents"
-    ]
-    effect    = "Allow"
-    resources = ["*"]
-  }
-  statement {
-    actions = [
       "secretsmanager:GetSecretValue",
       "secretsmanager:DescribeSecret",
     ]
