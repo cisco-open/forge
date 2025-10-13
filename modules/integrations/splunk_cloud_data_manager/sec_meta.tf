@@ -103,15 +103,25 @@ resource "aws_cloudformation_stack" "cf_splunk_security_metadata_region" {
   ]
 }
 
+resource "null_resource" "splunk_dm_metadata_trigger" {
+  triggers = {
+    config_hash = md5(local.splunk_cloud_input_security_metadata_json)
+  }
+
+  depends_on = [
+    module.splunk_security_metadata,
+    aws_cloudformation_stack.cf_splunk_security_metadata_iam_region,
+    aws_cloudformation_stack.cf_splunk_security_metadata_region,
+  ]
+}
+
 data "aws_lambda_function" "splunk_dm_metadata_ec2inst" {
   for_each      = var.security_metadata_config.enabled ? toset(var.security_metadata_config.regions) : []
   provider      = aws.by_region[each.value]
   function_name = "SplunkDMMetadataEC2Inst"
 
   depends_on = [
-    module.splunk_security_metadata,
-    aws_cloudformation_stack.cf_splunk_security_metadata_iam_region,
-    aws_cloudformation_stack.cf_splunk_security_metadata_region,
+    null_resource.splunk_dm_metadata_trigger
   ]
 }
 
@@ -125,22 +135,14 @@ module "splunk_dm_metadata_ec2inst" {
   region = each.value
 
   environment_variables = {
-    SPLUNK_DATA_MANAGER_INPUT_ID = lookup(
-      data.aws_lambda_function.splunk_dm_metadata_ec2inst[each.value].environment[0].variables,
-      "SPLUNK_DATA_MANAGER_INPUT_ID",
-      ""
-    )
-    SPLUNK_HEC_HOST = lookup(
-      data.aws_lambda_function.splunk_dm_metadata_ec2inst[each.value].environment[0].variables,
-      "SPLUNK_HEC_HOST",
-      ""
-    )
-    SPLUNK_HEC_TOKEN = lookup(
-      data.aws_lambda_function.splunk_dm_metadata_ec2inst[each.value].environment[0].variables,
-      "SPLUNK_HEC_TOKEN",
-      ""
-    )
+    SPLUNK_DATA_MANAGER_INPUT_ID = data.aws_lambda_function.splunk_dm_metadata_ec2inst[each.value].environment[0].variables
+    SPLUNK_HEC_HOST              = data.aws_lambda_function.splunk_dm_metadata_ec2inst[each.value].environment[0].variables
+    SPLUNK_HEC_TOKEN             = data.aws_lambda_function.splunk_dm_metadata_ec2inst[each.value].environment[0].variables
   }
 
   tags = module.splunk_security_metadata[0].splunk_integration_tags
+
+  depends_on = [
+    null_resource.splunk_dm_metadata_trigger
+  ]
 }
