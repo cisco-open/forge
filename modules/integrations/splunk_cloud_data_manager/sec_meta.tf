@@ -135,9 +135,18 @@ module "splunk_dm_metadata_ec2inst" {
   region = each.value
 
   environment_variables = {
-    SPLUNK_DATA_MANAGER_INPUT_ID = data.aws_lambda_function.splunk_dm_metadata_ec2inst[each.value].environment[0].variables
-    SPLUNK_HEC_HOST              = data.aws_lambda_function.splunk_dm_metadata_ec2inst[each.value].environment[0].variables
-    SPLUNK_HEC_TOKEN             = data.aws_lambda_function.splunk_dm_metadata_ec2inst[each.value].environment[0].variables
+    SPLUNK_DATA_MANAGER_INPUT_ID = lookup(data.aws_lambda_function.splunk_dm_metadata_ec2inst[each.value].environment[0].variables,
+      "SPLUNK_DATA_MANAGER_INPUT_ID",
+      ""
+    )
+    SPLUNK_HEC_HOST = lookup(data.aws_lambda_function.splunk_dm_metadata_ec2inst[each.value].environment[0].variables,
+      "SPLUNK_HEC_HOST",
+      ""
+    )
+    SPLUNK_HEC_TOKEN = lookup(data.aws_lambda_function.splunk_dm_metadata_ec2inst[each.value].environment[0].variables,
+      "SPLUNK_HEC_TOKEN",
+      ""
+    )
   }
 
   tags = module.splunk_security_metadata[0].splunk_integration_tags
