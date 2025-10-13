@@ -122,8 +122,25 @@ module "splunk_dm_metadata_ec2inst" {
   }
   source = "./sec_meta_ec2_tags"
 
-  region                = each.value
-  environment_variables = data.aws_lambda_function.splunk_dm_metadata_ec2inst[each.value].environment[0].variables
+  region = each.value
+
+  environment_variables = {
+    SPLUNK_DATA_MANAGER_INPUT_ID = lookup(
+      data.aws_lambda_function.splunk_dm_metadata_ec2inst[each.value].environment[0].variables,
+      "SPLUNK_DATA_MANAGER_INPUT_ID",
+      ""
+    )
+    SPLUNK_HEC_HOST = lookup(
+      data.aws_lambda_function.splunk_dm_metadata_ec2inst[each.value].environment[0].variables,
+      "SPLUNK_HEC_HOST",
+      ""
+    )
+    SPLUNK_HEC_TOKEN = lookup(
+      data.aws_lambda_function.splunk_dm_metadata_ec2inst[each.value].environment[0].variables,
+      "SPLUNK_HEC_TOKEN",
+      ""
+    )
+  }
 
   tags = module.splunk_security_metadata[0].splunk_integration_tags
 }
