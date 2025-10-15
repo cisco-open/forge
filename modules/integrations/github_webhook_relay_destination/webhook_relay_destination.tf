@@ -4,8 +4,7 @@ resource "aws_cloudwatch_event_bus" "destination" {
     include_detail = "NONE"
     level          = "OFF"
   }
-  tags     = local.all_security_tags
-  tags_all = local.all_security_tags
+  tags = var.tags
 }
 
 resource "aws_cloudwatch_event_bus_policy" "allow_source" {
@@ -26,8 +25,7 @@ resource "aws_cloudwatch_event_bus_policy" "allow_source" {
 
 locals {
   targets_indexed = {
-    for idx, t in var.webhook_relay_destination_config.targets :
-    idx => t
+    for idx, t in var.webhook_relay_destination_config.targets : idx => t
   }
 }
 
@@ -37,27 +35,12 @@ resource "aws_cloudwatch_event_rule" "receive" {
   description    = "Webhook relay target ${each.key}"
   event_bus_name = aws_cloudwatch_event_bus.destination.name
   event_pattern  = each.value.event_pattern
-  tags           = local.all_security_tags
-  tags_all       = local.all_security_tags
-}
-
-data "aws_lambda_function" "receiver" {
-  for_each      = local.targets_indexed
-  function_name = each.value.lambda_function_name
+  tags           = var.tags
 }
 
 resource "aws_cloudwatch_event_target" "lambda" {
   for_each       = aws_cloudwatch_event_rule.receive
   rule           = each.value.name
   event_bus_name = each.value.event_bus_name
-  arn            = data.aws_lambda_function.receiver[each.key].arn
-}
-
-resource "aws_lambda_permission" "allow_events" {
-  for_each      = aws_cloudwatch_event_rule.receive
-  statement_id  = "AllowEventBridgeInvoke-${each.key}"
-  action        = "lambda:InvokeFunction"
-  function_name = data.aws_lambda_function.receiver[each.key].function_name
-  principal     = "events.amazonaws.com"
-  source_arn    = each.value.arn
+  arn            = local.targets_indexed[each.key].lambda_function_arn
 }

@@ -44,8 +44,8 @@ variable "webhook_relay_destination_config" {
     destination_event_bus_name = string
     source_account_id          = string
     targets = list(object({
-      event_pattern        = string
-      lambda_function_name = string
+      event_pattern       = string
+      lambda_function_arn = string
     }))
   })
   default = {

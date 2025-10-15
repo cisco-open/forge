@@ -66,10 +66,8 @@ No modules.
 | [aws_cloudwatch_event_target.lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_target) | resource |
 | [aws_iam_role.reader](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role_policy.allow_assume_external_inline](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy) | resource |
-| [aws_lambda_permission.allow_events](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission) | resource |
 | [aws_iam_policy_document.allow_assume_external](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.trust](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
-| [aws_lambda_function.receiver](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/lambda_function) | data source |
 | [aws_secretsmanager_secret_version.target](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/secretsmanager_secret_version) | data source |
 | [external_external.reader_profile](https://registry.terraform.io/providers/hashicorp/external/latest/docs/data-sources/external) | data source |
 
@@ -82,7 +80,7 @@ No modules.
 | <a name="input_default_tags"></a> [default\_tags](#input\_default\_tags) | n/a | `map(string)` | n/a | yes |
 | <a name="input_reader_config"></a> [reader\_config](#input\_reader\_config) | Configuration for IAM role creation and secret retrieval | <pre>object({<br/>    role_name              = string<br/>    role_trust_principals  = list(string)<br/>    source_secret_role_arn = string<br/>    enable_secret_fetch    = bool<br/>    source_secret_arn      = string<br/>    source_secret_region   = string<br/>  })</pre> | <pre>{<br/>  "enable_secret_fetch": false,<br/>  "role_name": "github-webhook-relay-secret-reader",<br/>  "role_trust_principals": [],<br/>  "source_secret_arn": "",<br/>  "source_secret_region": "",<br/>  "source_secret_role_arn": ""<br/>}</pre> | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | n/a | `map(string)` | `{}` | no |
-| <a name="input_webhook_relay_destination_config"></a> [webhook\_relay\_destination\_config](#input\_webhook\_relay\_destination\_config) | All configuration for the destination EventBridge relay | <pre>object({<br/>    name_prefix                = string<br/>    destination_event_bus_name = string<br/>    source_account_id          = string<br/>    targets = list(object({<br/>      event_pattern        = string<br/>      lambda_function_name = string<br/>    }))<br/>  })</pre> | <pre>{<br/>  "destination_event_bus_name": "webhook-relay-destination",<br/>  "name_prefix": "webhook-relay-destination",<br/>  "source_account_id": "",<br/>  "targets": []<br/>}</pre> | no |
+| <a name="input_webhook_relay_destination_config"></a> [webhook\_relay\_destination\_config](#input\_webhook\_relay\_destination\_config) | All configuration for the destination EventBridge relay | <pre>object({<br/>    name_prefix                = string<br/>    destination_event_bus_name = string<br/>    source_account_id          = string<br/>    targets = list(object({<br/>      event_pattern       = string<br/>      lambda_function_arn = string<br/>    }))<br/>  })</pre> | <pre>{<br/>  "destination_event_bus_name": "webhook-relay-destination",<br/>  "name_prefix": "webhook-relay-destination",<br/>  "source_account_id": "",<br/>  "targets": []<br/>}</pre> | no |
 
 ## Outputs
 
