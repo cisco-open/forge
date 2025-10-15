@@ -1,5 +1,6 @@
 import gzip
 import json
+import logging
 import os
 import re
 
@@ -17,6 +18,9 @@ MAX_BATCH_SIZE_BYTES = 950_000
 MAX_BATCH_COUNT = 500
 METRICS_BATCH_SIZE = 500
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
 s3 = boto3.client('s3')
 
 
@@ -33,13 +37,17 @@ def send_to_splunk_batch(events):
     compressed_payload = gzip.compress(payload.encode())
 
     try:
-        resp = requests.post(SPLUNK_HEC_URL, headers=headers,
-                             data=compressed_payload, timeout=10)
-        print(
-            f'[Splunk Batch] Sent {len(events)} events | Status: {resp.status_code}')
+        resp = requests.post(
+            SPLUNK_HEC_URL,
+            headers=headers,
+            data=compressed_payload,
+            timeout=10,
+        )
+        logger.info('[Splunk Batch] Sent %d events | Status: %s',
+                    len(events), resp.status_code)
         resp.raise_for_status()
     except requests.RequestException as e:
-        print(f'[ERROR] Failed to send batch to Splunk: {e}')
+        logger.error('Failed to send batch to Splunk: %s', e)
 
 
 def send_metric_to_o11y_batch(metrics):
@@ -54,13 +62,17 @@ def send_metric_to_o11y_batch(metrics):
         'Content-Type': 'application/json'
     }
     try:
-        resp = requests.post(SPLUNK_METRICS_URL,
-                             headers=headers, json=payload, timeout=10)
-        print(
-            f'[O11y Batch] Sent {len(metrics)} metrics | Status: {resp.status_code}')
+        resp = requests.post(
+            SPLUNK_METRICS_URL,
+            headers=headers,
+            json=payload,
+            timeout=10,
+        )
+        logger.info('[O11y Batch] Sent %d metrics | Status: %s',
+                    len(metrics), resp.status_code)
         resp.raise_for_status()
     except requests.RequestException as e:
-        print(f'[O11y ERROR] Failed to send metric batch: {e}')
+        logger.error('Failed to send metric batch: %s', e)
 
 
 def extract_arn_parts(arn):
@@ -96,7 +108,7 @@ def parse_tags(val):
 
 
 def preprocess_df(df):
-    print(f'[INFO] Raw DataFrame shape: {df.shape}')
+    logger.info('Raw DataFrame shape: %s', df.shape)
 
     df['line_item_usage_start_date'] = pd.to_datetime(
         df['line_item_usage_start_date'])
@@ -107,5 +119,5 @@ def preprocess_df(df):
         lambda tags: tags.get('user_aws_application', 'unknown'))
     df = df[df['user_aws_application'] != 'unknown']
 
-    print(f'[INFO] Preprocessed DataFrame shape: {df.shape}')
+    logger.info('Preprocessed DataFrame shape: %s', df.shape)
     return df

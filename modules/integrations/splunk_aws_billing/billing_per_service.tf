@@ -17,14 +17,19 @@ module "cur_per_service" {
   publish       = true
 
   source_path = [{
-    path             = "${path.module}/lambda"
-    pip_requirements = "${path.module}/lambda/requirements.txt"
+    path = "${path.module}/lambda",
   }]
+
+  layers = [
+    "arn:aws:lambda:${var.aws_region}:770693421928:layer:Klayers-p312-requests:17",
+    "arn:aws:lambda:${var.aws_region}:336392948345:layer:AWSSDKPandas-Python312:19"
+  ]
+
 
   logging_log_group                 = aws_cloudwatch_log_group.cur_per_service.name
   use_existing_cloudwatch_log_group = true
 
-  trigger_on_package_timestamp = false
+  trigger_on_package_timestamp = true
 
   environment_variables = {
     SPLUNK_HEC_URL       = var.splunk_aws_billing_config.splunk_hec_url
@@ -46,13 +51,13 @@ module "cur_per_service" {
   s3_object_tags_only = true
   s3_object_tags      = var.default_tags
   s3_bucket           = aws_s3_bucket.aws_billing_report.id
-  s3_prefix           = "lambda/aws_billing_lambda_function_per_resource_process"
+  s3_prefix           = "lambda/billing_per_service"
 }
 
 resource "aws_lambda_permission" "cur_per_service" {
   statement_id  = "AllowS3Invoke"
   action        = "lambda:InvokeFunction"
-  function_name = local.cur_per_service_lambda_name
+  function_name = module.cur_per_service.lambda_function_name
   principal     = "s3.amazonaws.com"
   source_arn    = "arn:aws:s3:::${aws_s3_bucket.aws_billing_report.id}"
 }

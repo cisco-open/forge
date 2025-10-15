@@ -149,6 +149,7 @@ resource "aws_s3_bucket_notification" "cur_notification" {
   }
 
   depends_on = [
+    aws_lambda_permission.cur_per_resource_process,
     aws_lambda_permission.cur_per_service,
     aws_lambda_permission.cur_per_resource
   ]
