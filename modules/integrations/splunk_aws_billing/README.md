@@ -14,7 +14,7 @@
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.16.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.17.0 |
 
 ## Modules
 
