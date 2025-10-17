@@ -53,7 +53,7 @@ data "aws_iam_policy_document" "internal_s3_reader_policy_doc" {
 }
 
 resource "aws_iam_policy" "internal_s3_reader_policy" {
-  name   = "InternalS3ReaderPolicy"
+  name   = "${var.prefix}-s3-reader-policy"
   policy = data.aws_iam_policy_document.internal_s3_reader_policy_doc.json
 }
 
