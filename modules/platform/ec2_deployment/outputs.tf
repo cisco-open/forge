@@ -17,3 +17,7 @@ output "ec2_runners_ami_name_map" {
 output "subnet_cidr_blocks" {
   value = { for id, subnet in data.aws_subnet.runner_subnet : id => subnet.cidr_block }
 }
+
+output "event_bus_name" {
+  value = module.runners.webhook.eventbridge.event_bus.name
+}

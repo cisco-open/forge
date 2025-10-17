@@ -102,9 +102,10 @@ variable "subnet_ids" {
 variable "tenant" {
   description = "Map of tenant configs"
   type = object({
-    name                = string
-    iam_roles_to_assume = optional(list(string), [])
-    ecr_registries      = optional(list(string), [])
+    name                         = string
+    iam_roles_to_assume          = optional(list(string), [])
+    ecr_registries               = optional(list(string), [])
+    github_logs_reader_role_arns = optional(list(string), [])
   })
 }
 

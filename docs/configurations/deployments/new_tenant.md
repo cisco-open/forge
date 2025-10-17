@@ -59,12 +59,22 @@ ______________________________________________________________________
 gh_config:
   ghes_url: <GITHUB_URL>              # Empty string for github.com, full GHES URL otherwise
   ghes_org: <GITHUB_ORG>              # Exact GitHub organization name
+  repository_selection: <repository_selection> # Type of repository selection (all or selected)
+  github_webhook_relay:               # (Optional) Forward incoming GitHub webhook events cross-account via EventBridge
+    enabled: false                    # Set true to forward events to another account/region
+    destination_account_id: ""       # Target AWS account ID owning the destination EventBridge bus
+    destination_event_bus_name: ""    # Destination EventBridge bus name (blank => default bus when supported)
+    destination_region: ""            # Destination AWS region for the forwarding rule
+    destination_reader_role_arn: ""   # IAM role in destination allowed to read forwarded events (leave blank if not needed)
+    # NOTE: Leave all destination_* fields blank when enabled=false; they are ignored.
 
 tenant:
-  iam_roles_to_assume:                # List of full AWS IAM role ARNs for runner assume roles
+  iam_roles_to_assume:                # List of full AWS IAM role ARNs runners may assume for workloads
     - arn:aws:iam::<ACCOUNT_ID>:role/<ROLE_NAME>
-  ecr_registries:                    # Allowed ECR repo URLs (full), e.g. 123456789012.dkr.ecr.us-east-1.amazonaws.com
+  ecr_registries:                     # Allowed ECR repo URLs (full), e.g. 123456789012.dkr.ecr.us-east-1.amazonaws.com
     - <ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com
+  github_logs_reader_role_arns:       # (Optional) IAM role ARNs granted read (+ KMS decrypt) access to archived GitHub job/workflow logs
+    - arn:aws:iam::<ACCOUNT_ID>:role/<ROLE_NAME>
 
 ec2_runner_specs:
   <runner_type>:                     # e.g. small, medium, gpu
@@ -101,12 +111,26 @@ ______________________________________________________________________
 - **`ghes_url`**: empty for github.com, full URL for GHES.
 - **`iam_roles_to_assume`**: full ARNs only, no wildcards.
 - **`ecr_registries`**: must be full URLs, including account and region.
+- **`github_logs_reader_role_arns`**:
+  - Provide a list of IAM Role ARNs that need read (and KMS decrypt) access to archived GitHub job/workflow logs.
+  - Leave the list empty (or omit) if no external roles should access logs.
+  - Roles are added to the S3 bucket policy (GetObject/ListBucket) and KMS key policy (Decrypt/Describe/GenerateDataKey\*).
+  - Avoid granting organization-wide wildcard roles; principle of least privilege.
 - **`ami_kms_key_arn`**: must be explicitly set to `''` if AMI not encrypted; otherwise runner fails.
 - **`max_instances`**: check AWS EC2 quota before setting.
 - **`instance_types`**: spot-compatible preferred for cost savings.
 - **`pool_config.schedule_expression`**: AWS cron syntax with 6 fields, **not** standard cron. Example: `cron(0 8 * * ? *)`. See [AWS docs](https://docs.aws.amazon.com/eventbridge/latest/userguide/scheduled-events.html#cron-expressions).
 - **`scale_set_type`**: only `dind` or `k8s`. Wrong values cause runtime errors.
 - **Kubernetes CPU/memory fields**: units mandatory (e.g., `500m`, `1Gi`). Missing units break pods.
+
+#### `github_webhook_relay` Guidance
+
+- Set `enabled: true` only when you need to forward GitHub webhook events (e.g., `workflow_job`) to a central or cross-account EventBridge bus.
+- When enabled, you must supply at least `destination_account_id` and usually `destination_region`.
+- `destination_event_bus_name`: Leave blank to target the default bus; specify to use a custom bus.
+- `destination_reader_role_arn`: Provide if a specific role in the destination account needs read access for diagnostics/metrics; leave blank otherwise.
+- All `destination_*` keys are ignored when `enabled: false` (can be left as placeholders).
+- Typical use cases: central analytics, multi-account runner orchestration, or security event aggregation.
 
 ______________________________________________________________________
 
@@ -126,12 +150,20 @@ ______________________________________________________________________
 gh_config:
   ghes_url: ''
   ghes_org: cisco-sbg
+  github_webhook_relay:  
+    enabled: false
+    destination_account_id: ""
+    destination_event_bus_name: ""
+    destination_region: ""
+    destination_reader_role_arn: ""
 
 tenant:
   iam_roles_to_assume:
     - arn:aws:iam::123456789012:role/role_for_forge_runners
   ecr_registries:
     - 123456789012.dkr.ecr.us-east-1.amazonaws.com
+  github_logs_reader_role_arns:
+    - arn:aws:iam::123456789012:role/github_logs_reader
 
 ec2_runner_specs:
   small:

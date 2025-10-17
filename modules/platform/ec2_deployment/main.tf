@@ -167,12 +167,6 @@ module "runners" {
           {
             "log_group_name" : "forge-logs",
             "prefix_log_group" : true,
-            "file_path" : "/opt/actions-runner/_diag/pages/*.log",
-            "log_stream_name" : "{instance_id}/runner-logs"
-          },
-          {
-            "log_group_name" : "forge-logs",
-            "prefix_log_group" : true,
             "file_path" : "/home/ubuntu/hook.log",
             "log_stream_name" : "{instance_id}/hook"
           },

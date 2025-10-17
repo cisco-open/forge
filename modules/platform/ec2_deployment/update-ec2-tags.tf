@@ -73,7 +73,7 @@ resource "aws_lambda_permission" "update_ec2_tags" {
 
 resource "aws_cloudwatch_event_rule" "update_ec2_tags" {
   name           = "${var.runner_configs.prefix}-update-ec2-tags"
-  description    = "Workflow job event rule for job queued."
+  description    = "Workflow job event rule to update EC2 tags."
   event_bus_name = module.runners.webhook.eventbridge.event_bus.name
 
   tags     = var.tenant_configs.tags

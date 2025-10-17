@@ -49,9 +49,10 @@ locals {
   github_webhook_relay = local.runner_specs_raw.gh_config.github_webhook_relay
 
   tenant = {
-    name                = local.tenant_name
-    iam_roles_to_assume = local.runner_specs_raw.tenant.iam_roles_to_assume
-    ecr_registries      = local.runner_specs_raw.tenant.ecr_registries
+    name                         = local.tenant_name
+    iam_roles_to_assume          = local.runner_specs_raw.tenant.iam_roles_to_assume
+    ecr_registries               = local.runner_specs_raw.tenant.ecr_registries
+    github_logs_reader_role_arns = local.runner_specs_raw.tenant.github_logs_reader_role_arns
   }
 
   ec2_runner_specs = {

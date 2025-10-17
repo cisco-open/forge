@@ -12,7 +12,7 @@
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.16.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.17.0 |
 | <a name="provider_external"></a> [external](#provider\_external) | 2.3.5 |
 
 ## Modules
@@ -63,6 +63,7 @@
 |------|-------------|
 | <a name="output_ec2_runners_ami_name_map"></a> [ec2\_runners\_ami\_name\_map](#output\_ec2\_runners\_ami\_name\_map) | n/a |
 | <a name="output_ec2_runners_arn_map"></a> [ec2\_runners\_arn\_map](#output\_ec2\_runners\_arn\_map) | n/a |
+| <a name="output_event_bus_name"></a> [event\_bus\_name](#output\_event\_bus\_name) | n/a |
 | <a name="output_subnet_cidr_blocks"></a> [subnet\_cidr\_blocks](#output\_subnet\_cidr\_blocks) | n/a |
 | <a name="output_webhook_endpoint"></a> [webhook\_endpoint](#output\_webhook\_endpoint) | n/a |
 <!-- END_TF_DOCS -->

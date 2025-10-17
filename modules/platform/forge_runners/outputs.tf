@@ -58,3 +58,11 @@ output "github_webhook_relay_source_secret_arn" {
 output "github_webhook_relay_source_secret_role_arn" {
   value = try(aws_iam_role.secret_reader[0].id, null)
 }
+
+output "github_actions_job_logs" {
+  description = "Map containing GitHub Actions job logs resources (bucket_arn, internal_reader_role_arn)."
+  value = {
+    bucket_arn               = try(module.github_actions_job_logs[0].s3_bucket_arn, null)
+    internal_reader_role_arn = try(module.github_actions_job_logs[0].internal_s3_reader_role_arn, null)
+  }
+}

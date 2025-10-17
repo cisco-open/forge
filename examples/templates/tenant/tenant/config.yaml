@@ -5,11 +5,17 @@ gh_config:
   repository_selection: <REPOSITORY_SELECTION>
   github_webhook_relay:
     enabled: <GITHUB_WEBHOOK_RELAY_ENABLED>
+    destination_account_id: <DESTINATION_ACCOUNT_ID>
+    destination_event_bus_name: <DESTINATION_EVENT_BUS_NAME>
+    destination_region: <DESTINATION_REGION>
+    destination_reader_role_arn: <DESTINATION_READER_ROLE_ARN>
 tenant:
   iam_roles_to_assume:
     - arn:aws:iam::<ACCOUNT_ID>:role/<ROLE_NAME>
   ecr_registries:
     - <ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com
+  github_logs_reader_role_arns:
+    - arn:aws:iam::<ACCOUNT_ID>:role/<ROLE_NAME>
 ec2_runner_specs:
   <runner_type-alias>:
     type: <runner_type>

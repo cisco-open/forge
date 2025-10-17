@@ -16,7 +16,7 @@
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.16.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.17.0 |
 | <a name="provider_null"></a> [null](#provider\_null) | 3.2.4 |
 | <a name="provider_random"></a> [random](#provider\_random) | 3.7.2 |
 | <a name="provider_time"></a> [time](#provider\_time) | 0.13.1 |
@@ -28,6 +28,7 @@
 | <a name="module_arc_runners"></a> [arc\_runners](#module\_arc\_runners) | ../arc_deployment | n/a |
 | <a name="module_clean_global_lock_lambda"></a> [clean\_global\_lock\_lambda](#module\_clean\_global\_lock\_lambda) | terraform-aws-modules/lambda/aws | 8.1.0 |
 | <a name="module_ec2_runners"></a> [ec2\_runners](#module\_ec2\_runners) | ../ec2_deployment | n/a |
+| <a name="module_github_actions_job_logs"></a> [github\_actions\_job\_logs](#module\_github\_actions\_job\_logs) | ./github_actions_job_logs | n/a |
 | <a name="module_github_webhook_relay_source"></a> [github\_webhook\_relay\_source](#module\_github\_webhook\_relay\_source) | ../../integrations/github_webhook_relay_source | n/a |
 | <a name="module_register_github_app_runner_group_lambda"></a> [register\_github\_app\_runner\_group\_lambda](#module\_register\_github\_app\_runner\_group\_lambda) | terraform-aws-modules/lambda/aws | 8.1.0 |
 
@@ -95,7 +96,7 @@
 | <a name="input_runner_group_name"></a> [runner\_group\_name](#input\_runner\_group\_name) | Name of the group applied to all runners. | `string` | n/a | yes |
 | <a name="input_subnet_ids"></a> [subnet\_ids](#input\_subnet\_ids) | Subnet(s) in which our runners will be deployed. Supplied by the underlying AWS-based CI/CD stack. | `list(string)` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to apply to resources. | `map(string)` | n/a | yes |
-| <a name="input_tenant"></a> [tenant](#input\_tenant) | Map of tenant configs | <pre>object({<br/>    name                = string<br/>    iam_roles_to_assume = optional(list(string), [])<br/>    ecr_registries      = optional(list(string), [])<br/>  })</pre> | n/a | yes |
+| <a name="input_tenant"></a> [tenant](#input\_tenant) | Map of tenant configs | <pre>object({<br/>    name                         = string<br/>    iam_roles_to_assume          = optional(list(string), [])<br/>    ecr_registries               = optional(list(string), [])<br/>    github_logs_reader_role_arns = optional(list(string), [])<br/>  })</pre> | n/a | yes |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | VPC in which our runners will be deployed. Supplied by the underlying AWS-based CI/CD stack. | `string` | n/a | yes |
 
 ## Outputs
@@ -107,6 +108,7 @@
 | <a name="output_ec2_runners_ami_name_map"></a> [ec2\_runners\_ami\_name\_map](#output\_ec2\_runners\_ami\_name\_map) | n/a |
 | <a name="output_ec2_runners_arn_map"></a> [ec2\_runners\_arn\_map](#output\_ec2\_runners\_arn\_map) | n/a |
 | <a name="output_ec2_subnet_cidr_blocks"></a> [ec2\_subnet\_cidr\_blocks](#output\_ec2\_subnet\_cidr\_blocks) | n/a |
+| <a name="output_github_actions_job_logs"></a> [github\_actions\_job\_logs](#output\_github\_actions\_job\_logs) | Map containing GitHub Actions job logs resources (bucket\_arn, internal\_reader\_role\_arn). |
 | <a name="output_github_app_installation"></a> [github\_app\_installation](#output\_github\_app\_installation) | n/a |
 | <a name="output_github_webhook_relay_source_secret"></a> [github\_webhook\_relay\_source\_secret](#output\_github\_webhook\_relay\_source\_secret) | n/a |
 | <a name="output_github_webhook_relay_source_secret_arn"></a> [github\_webhook\_relay\_source\_secret\_arn](#output\_github\_webhook\_relay\_source\_secret\_arn) | n/a |
