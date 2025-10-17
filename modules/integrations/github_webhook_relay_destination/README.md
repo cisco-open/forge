@@ -4,7 +4,7 @@ Creates the destination EventBridge bus, grants the source account permission to
 
 ## Architecture
 
-```
+```mermaid
 graph TD
   SourceAcct[(Source Account<br/>Relay Module)] -- PutEvents --> DestBus[(EventBridge Destination Bus)]
 

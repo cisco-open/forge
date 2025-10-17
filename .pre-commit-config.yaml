@@ -250,13 +250,6 @@ repos:
           - --tf-init-args=--upgrade=true
           - --hook-config=--tf-path=tofu
         exclude: (modules/integrations/splunk_cloud_data_manager)
-      - id: terraform_docs
-        name: Terraform · Docs generator
-        always_run: true
-        args:
-          - --hook-config=--tf-path=tofu
-          - --args=--config=.terraform-docs.yml
-        exclude: (modules/integrations/splunk_cloud_data_manager|modules/infra/forge_subscription|modules/integrations/splunk_secrets/)
 
   # ---------------------
   # Security Hooks
