@@ -4,7 +4,7 @@ output "role_arn" {
 }
 
 output "webhook" {
-  value       = try(jsondecode(data.aws_secretsmanager_secret_version.target[0].secret_string), null)
+  value       = try(data.external.fetch_secret_value[0].result.secret_value, null)
   sensitive   = true
   description = "Webhook relay and secret fetched from source account."
 }

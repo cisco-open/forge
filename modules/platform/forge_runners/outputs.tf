@@ -25,7 +25,7 @@ output "forge_webhook_relay" {
   description = "Webhook relay integration outputs."
   value = {
     source_secret_arn      = try(aws_secretsmanager_secret.github_webhook_relay[0].arn, null)
-    source_secret_role_arn = try(aws_iam_role.secret_reader[0].id, null)
+    source_secret_role_arn = try(aws_iam_role.secret_reader[0].arn, null)
   }
 }
 

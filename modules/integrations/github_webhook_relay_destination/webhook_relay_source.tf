@@ -34,36 +34,25 @@ resource "aws_iam_role_policy" "allow_assume_external_inline" {
   policy = data.aws_iam_policy_document.allow_assume_external[0].json
 }
 
+# Use an external script that:
+# 1. Assumes the reader role (first hop)
+# 2. From that session, assumes the external source_secret_role_arn (second hop)
+# 3. Fetches the secret from source_secret_arn
+# 4. Returns the secret value to Terraform as JSON
+data "external" "fetch_secret_value" {
+  count = var.reader_config.enable_secret_fetch ? 1 : 0
 
-data "external" "reader_profile" {
   program = [
     "bash",
-    "${path.module}/scripts/create_assume_profile.sh",
+    "${path.module}/scripts/fetch_secret_value.sh",
     aws_iam_role.reader.arn,
+    var.reader_config.source_secret_role_arn,
+    var.reader_config.source_secret_arn,
     var.aws_profile,
-    "reader-temp",
     var.aws_region
   ]
 
-  depends_on = [aws_iam_role.reader]
-}
-
-
-provider "aws" {
-  alias   = "external_secret"
-  profile = data.external.reader_profile.result.profile
-  region  = var.reader_config.source_secret_region
-
-  dynamic "assume_role" {
-    for_each = var.reader_config.enable_secret_fetch ? [1] : []
-    content {
-      role_arn = var.reader_config.source_secret_role_arn
-    }
-  }
-}
-
-data "aws_secretsmanager_secret_version" "target" {
-  count     = var.reader_config.enable_secret_fetch ? 1 : 0
-  provider  = aws.external_secret
-  secret_id = var.reader_config.source_secret_arn
+  depends_on = [
+    aws_iam_role_policy.allow_assume_external_inline
+  ]
 }
