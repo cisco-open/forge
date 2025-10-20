@@ -112,4 +112,5 @@ resource "aws_bcmdataexports_export" "cur_per_resource" {
       frequency = "SYNCHRONOUS"
     }
   }
+  tags = local.all_security_tags
 }

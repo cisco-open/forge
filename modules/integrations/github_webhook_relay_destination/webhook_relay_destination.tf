@@ -4,7 +4,8 @@ resource "aws_cloudwatch_event_bus" "destination" {
     include_detail = "NONE"
     level          = "OFF"
   }
-  tags = var.tags
+  tags     = local.all_security_tags
+  tags_all = local.all_security_tags
 }
 
 resource "aws_cloudwatch_event_bus_policy" "allow_source" {
@@ -35,7 +36,8 @@ resource "aws_cloudwatch_event_rule" "receive" {
   description    = "Webhook relay target ${each.key}"
   event_bus_name = aws_cloudwatch_event_bus.destination.name
   event_pattern  = each.value.event_pattern
-  tags           = var.tags
+  tags           = local.all_security_tags
+  tags_all       = local.all_security_tags
 }
 
 resource "aws_cloudwatch_event_target" "lambda" {

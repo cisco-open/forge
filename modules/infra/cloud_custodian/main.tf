@@ -78,6 +78,8 @@ resource "aws_iam_policy" "cloud_custodian_policy" {
   name        = "CloudCustodianPolicy"
   description = "Cloud Custodian Policy for managing EC2 resources"
   policy      = data.aws_iam_policy_document.cloud_custodian_policy.json
+  tags        = local.all_security_tags
+  tags_all    = local.all_security_tags
 }
 
 data "aws_iam_policy_document" "assume_role_for_cloud_custodian" {
@@ -105,5 +107,7 @@ resource "aws_iam_role" "cloud_custodian" {
   name                 = "cloud_custodian"
   assume_role_policy   = data.aws_iam_policy_document.assume_role_for_cloud_custodian.json
   max_session_duration = 21600 # Allow role to last for up to 6 hours.
-  tags_all             = local.all_security_tags
+
+  tags     = local.all_security_tags
+  tags_all = local.all_security_tags
 }

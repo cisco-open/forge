@@ -33,5 +33,6 @@ resource "aws_iam_role" "role_for_forge_runners" {
   name                 = "role_for_forge_runners"
   assume_role_policy   = data.aws_iam_policy_document.assume_role_for_forge_runners.json
   max_session_duration = 21600 # Allow role to last for up to 6 hours.
+  tags                 = local.all_security_tags
   tags_all             = local.all_security_tags
 }
