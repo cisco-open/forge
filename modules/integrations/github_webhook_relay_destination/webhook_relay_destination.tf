@@ -46,3 +46,11 @@ resource "aws_cloudwatch_event_target" "lambda" {
   event_bus_name = each.value.event_bus_name
   arn            = local.targets_indexed[each.key].lambda_function_arn
 }
+
+resource "aws_lambda_permission" "eventbridge_invoke" {
+  for_each      = aws_cloudwatch_event_rule.receive
+  action        = "lambda:InvokeFunction"
+  function_name = local.targets_indexed[each.key].lambda_function_arn
+  principal     = "events.amazonaws.com"
+  source_arn    = each.value.arn
+}
