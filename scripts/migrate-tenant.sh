@@ -12,7 +12,7 @@ get_terragrunt_var() {
     local value
 
     pushd "$dir" >/dev/null
-    value=$(TF_LOG=ERROR terragrunt console <<<"var.${var_name}" 2>/dev/null | tail -n1 | sed 's/^"//;s/"$//')
+    value=$(TF_LOG=ERROR terragrunt run -- console <<<"var.${var_name}" 2>/dev/null | tail -n1 | sed 's/^"//;s/"$//')
     popd >/dev/null
 
     if [[ -z "$value" ]]; then
@@ -95,7 +95,7 @@ scale_down_runners() {
 terragrunt_apply() {
     local target="$1"
     echo "🔧 Applying Terragrunt target: $target"
-    terragrunt apply --target "$target" -working-dir "$TF_DIR" -non-interactive -auto-approve
+    terragrunt apply --target "$target" --working-dir "$TF_DIR" --non-interactive -auto-approve
 }
 
 update_config() {

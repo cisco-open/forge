@@ -1,5 +1,6 @@
 #!/bin/bash
-SCRIPT="./migrate-tenant.sh"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+SCRIPT="$SCRIPT_DIR/migrate-tenant.sh"
 TENANTS_DIR=$1
 
 for tenant in "$TENANTS_DIR"/*; do
