@@ -6,23 +6,6 @@ usage() {
     exit 1
 }
 
-get_terragrunt_var() {
-    local var_name="$1"
-    local dir="$2"
-    local value
-
-    pushd "$dir" >/dev/null
-    value=$(TF_LOG=ERROR terragrunt run -- console <<<"var.${var_name}" 2>/dev/null | tail -n1 | sed 's/^"//;s/"$//')
-    popd >/dev/null
-
-    if [[ -z "$value" ]]; then
-        echo "❌ Terragrunt variable '${var_name}' not found or empty in ${dir}" >&2
-        exit 1
-    fi
-
-    echo "$value"
-}
-
 parse_args() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -46,9 +29,10 @@ parse_args() {
     }
     CONFIG_FILE="${TF_DIR}/config.yml"
 
-    arc_cluster_name=$(get_terragrunt_var arc_cluster_name "$TF_DIR")
-    aws_profile=$(get_terragrunt_var aws_profile "$TF_DIR")
-    aws_region=$(get_terragrunt_var aws_region "$TF_DIR")
+    rendered=$(terragrunt render --format json)
+    arc_cluster_name=$(echo "$rendered" | jq -r '.inputs.arc_cluster_name')
+    aws_profile=$(echo "$rendered" | jq -r '.inputs.aws_profile')
+    aws_region=$(echo "$rendered" | jq -r '.inputs.aws_region')
 
     aws eks update-kubeconfig \
         --region "$aws_region" \
