@@ -29,7 +29,7 @@ parse_args() {
     }
     CONFIG_FILE="${TF_DIR}/config.yml"
 
-    rendered=$(terragrunt render --format json)
+    rendered=$(terragrunt render --format json --working-dir "$TF_DIR")
     arc_cluster_name=$(echo "$rendered" | jq -r '.inputs.arc_cluster_name')
     aws_profile=$(echo "$rendered" | jq -r '.inputs.aws_profile')
     aws_region=$(echo "$rendered" | jq -r '.inputs.aws_region')
