@@ -1,9 +1,11 @@
 data "aws_caller_identity" "current" {}
 
 data "aws_eks_cluster" "cluster" {
-  name = data.external.update_kubeconfig.result.cluster_name
+  name       = module.eks.cluster_name
+  depends_on = [module.eks]
 }
 
 data "aws_eks_cluster_auth" "cluster" {
-  name = data.external.update_kubeconfig.result.cluster_name
+  name       = module.eks.cluster_name
+  depends_on = [module.eks]
 }
