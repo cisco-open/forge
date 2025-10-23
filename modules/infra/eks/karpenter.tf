@@ -56,7 +56,7 @@ resource "helm_release" "karpenter" {
   ]
 
   depends_on = [
-    module.eks
+    null_resource.wait_for_cluster
   ]
 }
 
