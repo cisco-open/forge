@@ -7,10 +7,10 @@ terraform {
     }
     time = {
       source  = "hashicorp/time"
-      version = ">= 0.13"
+      version = ">= 0.13.1"
     }
   }
 
   # OpenTofu version.
-  required_version = "~> 1.10"
+  required_version = ">= 1.9.1"
 }
