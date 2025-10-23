@@ -162,7 +162,7 @@ def load_webex_secret() -> tuple[str, str]:
     if not token.lower().startswith('bearer '):
         token = f"Bearer {token}"
 
-    log.info('Loaded Webex secret for room %s', room)
+    log.info('Successfully loaded Webex secret.')
     return token, room
 
 
@@ -173,7 +173,8 @@ def send_webex_card(card: Dict[str, Any]) -> None:
         'text': 'GitHub Actions workflow alert',  # required by Webex
         'attachments': card.get('attachments', [])
     }
-    log.info(payload)
+    log.info('Prepared payload for Webex message with %d attachments',
+             len(payload.get('attachments', [])))
 
     req = urllib.request.Request(
         'https://webexapis.com/v1/messages',
@@ -187,7 +188,7 @@ def send_webex_card(card: Dict[str, Any]) -> None:
             if not (200 <= resp.status < 300):
                 body = resp.read().decode()
                 raise RuntimeError(f"Webex send failed: {resp.status} {body}")
-            log.info('Webex Adaptive Card sent successfully to room %s', room)
+            log.info('Webex Adaptive Card sent successfully')
     except urllib.error.HTTPError as e:
         error_body = e.read().decode()
         raise RuntimeError(
