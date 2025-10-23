@@ -48,6 +48,7 @@ data "external" "fetch_secret_value" {
     aws_iam_role.reader.arn,
     var.reader_config.source_secret_role_arn,
     var.reader_config.source_secret_arn,
+    var.reader_config.source_secret_region,
     var.aws_profile,
     var.aws_region
   ]

@@ -4,8 +4,9 @@ set -euo pipefail
 READER_ROLE_ARN="$1"
 SOURCE_ROLE_ARN="$2"
 SOURCE_SECRET_ARN="$3"
-AWS_PROFILE="$4"
-AWS_REGION="$5"
+SOURCE_SECRET_REGION="$4"
+AWS_PROFILE="$5"
+AWS_REGION="$6"
 
 ############################################
 # 1. Assume the reader role (first hop)
@@ -42,7 +43,7 @@ aws configure set aws_session_token "$(jq -r .SessionToken /tmp/source-creds.jso
 ############################################
 SECRET_VALUE=$(aws secretsmanager get-secret-value \
     --secret-id "$SOURCE_SECRET_ARN" \
-    --region "$AWS_REGION" \
+    --region "$SOURCE_SECRET_REGION" \
     --query 'SecretString' \
     --profile source-temp \
     --output text)
