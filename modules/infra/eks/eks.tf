@@ -65,8 +65,21 @@ module "eks" {
   cluster_tags = var.cluster_tags
 }
 
+resource "null_resource" "wait_for_cluster" {
+  triggers = {
+    cluster_name = module.eks.cluster_name
+  }
+
+  provisioner "local-exec" {
+    command = <<EOT
+    # Wait until EKS API returns active
+    aws eks wait cluster-active --name ${module.eks.cluster_name} --region ${var.aws_region} --profile '${var.aws_profile}'
+    EOT
+  }
+}
+
 data "external" "update_kubeconfig" {
-  depends_on = [module.eks]
+  depends_on = [null_resource.wait_for_cluster]
   program = ["bash", "-c", <<EOT
     aws eks update-kubeconfig \
       --region '${var.aws_region}' \
