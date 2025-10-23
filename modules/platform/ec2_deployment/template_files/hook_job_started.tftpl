@@ -9,37 +9,6 @@ else
   EVENT_JSON="{}"
 fi
 
-INSTANCE_ID=$(wget -q -O - http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.instanceId')
-aws ec2 create-tags --cli-input-json "$(jq -n \
-    --arg instance "$INSTANCE_ID" \
-    --arg repository "$GITHUB_REPOSITORY" \
-    --arg ref "$GITHUB_REF" \
-    --arg commit "$GITHUB_SHA" \
-    --arg workflow "$GITHUB_WORKFLOW" \
-    --arg workflow_url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/attempts/${GITHUB_RUN_ATTEMPT}" \
-    --arg job "$GITHUB_JOB" \
-    --arg run_id "$GITHUB_RUN_ID" \
-    --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
-    --arg run_number "$GITHUB_RUN_NUMBER" \
-    --arg actor "$GITHUB_ACTOR" \
-    --arg started_at "$(TZ=UTC date +"%Y-%m-%dT%H:%M:%SZ")" \
-    '{
-    Resources: [$instance],
-    Tags: [
-      {Key:"ghr:repository", Value:$repository},
-      {Key:"ghr:ref", Value:$ref},
-      {Key:"ghr:commit", Value:$commit},
-      {Key:"ghr:workflow", Value:$workflow},
-      {Key:"ghr:workflow_url", Value:$workflow_url},
-      {Key:"ghr:job", Value:$job},
-      {Key:"ghr:run_id", Value:$run_id},
-      {Key:"ghr:run_attempt", Value:$run_attempt},
-      {Key:"ghr:run_number", Value:$run_number},
-      {Key:"ghr:actor", Value:$actor},
-      {Key:"ghr:started_at", Value:$started_at}
-    ]
-  }')"
-
 {
     echo "{"
     echo "  \"timestamp\": \"$TIMESTAMP\","
@@ -93,3 +62,36 @@ aws ec2 create-tags --cli-input-json "$(jq -n \
 } | jq -c . >>"$LOG_FILE"
 
 echo "GitHub Actions environment variables exported to $LOG_FILE"
+
+INSTANCE_ID=$(wget -q -O - http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.instanceId')
+aws ec2 create-tags --cli-input-json "$(jq -n \
+    --arg instance "$INSTANCE_ID" \
+    --arg repository "$GITHUB_REPOSITORY" \
+    --arg ref "$GITHUB_REF" \
+    --arg commit "$GITHUB_SHA" \
+    --arg workflow "$GITHUB_WORKFLOW" \
+    --arg workflow_url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/attempts/${GITHUB_RUN_ATTEMPT}" \
+    --arg job "$GITHUB_JOB" \
+    --arg run_id "$GITHUB_RUN_ID" \
+    --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+    --arg run_number "$GITHUB_RUN_NUMBER" \
+    --arg actor "$GITHUB_ACTOR" \
+    --arg started_at "$(TZ=UTC date +"%Y-%m-%dT%H:%M:%SZ")" \
+    '{
+    Resources: [$instance],
+    Tags: [
+      {Key:"ghr:repository", Value:$repository},
+      {Key:"ghr:ref", Value:$ref},
+      {Key:"ghr:commit", Value:$commit},
+      {Key:"ghr:workflow", Value:$workflow},
+      {Key:"ghr:workflow_url", Value:$workflow_url},
+      {Key:"ghr:job", Value:$job},
+      {Key:"ghr:run_id", Value:$run_id},
+      {Key:"ghr:run_attempt", Value:$run_attempt},
+      {Key:"ghr:run_number", Value:$run_number},
+      {Key:"ghr:actor", Value:$actor},
+      {Key:"ghr:started_at", Value:$started_at}
+    ]
+  }')"
+
+echo "Instance $INSTANCE_ID tagged with GitHub Actions metadata"

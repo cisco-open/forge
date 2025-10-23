@@ -9,17 +9,6 @@ else
   EVENT_JSON="{}"
 fi
 
-INSTANCE_ID=$(wget -q -O - http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.instanceId')
-aws ec2 create-tags --cli-input-json "$(jq -n \
-    --arg instance "$INSTANCE_ID" \
-    --arg completed_at "$(TZ=UTC date +"%Y-%m-%dT%H:%M:%SZ")" \
-    '{
-    Resources: [$instance],
-    Tags: [
-      {Key:"ghr:completed_at", Value:$completed_at}
-    ]
-  }')"
-
 {
     echo "{"
     echo "  \"timestamp\": \"$TIMESTAMP\","
@@ -73,3 +62,25 @@ aws ec2 create-tags --cli-input-json "$(jq -n \
 } | jq -c . >>"$LOG_FILE"
 
 echo "GitHub Actions environment variables exported to $LOG_FILE"
+
+unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_PROFILE AWS_DEFAULT_PROFILE
+
+TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" \
+  -H "X-aws-ec2-metadata-token-ttl-seconds: 300")
+
+# Get instance ID and region
+INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+  http://169.254.169.254/latest/meta-data/instance-id)
+REGION=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+  http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .region)
+
+# Generate timestamp
+COMPLETED_AT=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+# Tag instance
+aws ec2 create-tags \
+  --region "$REGION" \
+  --resources "$INSTANCE_ID" \
+  --tags "Key=ghr:completed_at,Value=$COMPLETED_AT"
+
+echo "Tagged $INSTANCE_ID with completion timestamp ($COMPLETED_AT)"
