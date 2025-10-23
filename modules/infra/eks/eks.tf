@@ -73,7 +73,10 @@ data "external" "update_kubeconfig" {
       --alias '${module.eks.cluster_name}-${var.aws_profile}-${var.aws_region}' \
       --profile '${var.aws_profile}' >/dev/null 2>&1
 
-    echo '{"updated":"true"}'
+    echo '{
+      "kubeconfig_alias":"'"${module.eks.cluster_name}-${var.aws_profile}-${var.aws_region}"'",
+      "cluster_name":"'"${module.eks.cluster_name}"'"
+    }'
   EOT
   ]
 }

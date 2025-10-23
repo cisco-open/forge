@@ -1,12 +1,11 @@
 resource "null_resource" "patch_calico_installation" {
-  depends_on = [data.external.update_kubeconfig]
   provisioner "local-exec" {
     command = <<EOF
-      kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} delete daemonset -n kube-system aws-node || true
-      kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.30.2/manifests/operator-crds.yaml --server-side
-      kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.30.2/manifests/tigera-operator.yaml --server-side
+      kubectl --context ${data.external.update_kubeconfig.result.kubeconfig_alias} delete daemonset -n kube-system aws-node || true
+      kubectl --context ${data.external.update_kubeconfig.result.kubeconfig_alias} apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.30.2/manifests/operator-crds.yaml --server-side
+      kubectl --context ${data.external.update_kubeconfig.result.kubeconfig_alias} apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.30.2/manifests/tigera-operator.yaml --server-side
 
-      kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} apply -f - <<EOT
+      kubectl --context ${data.external.update_kubeconfig.result.kubeconfig_alias} apply -f - <<EOT
 apiVersion: operator.tigera.io/v1
 kind: Installation
 metadata:
