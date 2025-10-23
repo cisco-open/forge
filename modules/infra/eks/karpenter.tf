@@ -56,7 +56,6 @@ resource "helm_release" "karpenter" {
   ]
 
   depends_on = [
-    module.karpenter,
     data.aws_eks_cluster_auth.cluster,
   ]
 }
@@ -97,9 +96,7 @@ EOF
 
   depends_on = [
     helm_release.karpenter,
-    module.eks,
     data.external.update_kubeconfig,
-    module.karpenter.node_iam_role_arn
   ]
 }
 
@@ -115,9 +112,6 @@ EOF
   }
 
   depends_on = [
-    helm_release.karpenter,
-    module.eks,
-    data.external.update_kubeconfig,
     null_resource.apply_ec2_node_class
   ]
 }

@@ -66,7 +66,6 @@ module "eks" {
 }
 
 data "external" "update_kubeconfig" {
-  depends_on = [module.eks]
   program = ["bash", "-c", <<EOT
     aws eks update-kubeconfig \
       --region '${var.aws_region}' \
