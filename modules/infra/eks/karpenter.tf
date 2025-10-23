@@ -41,7 +41,7 @@ resource "helm_release" "karpenter" {
       name: ${module.karpenter.service_account}
     dnsPolicy: Default
     settings:
-      clusterName: ${data.aws_eks_cluster_auth.cluster.id}
+      clusterName: ${module.eks.cluster_name}
       clusterEndpoint: ${module.eks.cluster_endpoint}
       interruptionQueue: ${module.karpenter.queue_name}
     tolerations:
@@ -53,6 +53,10 @@ resource "helm_release" "karpenter" {
     webhook:
       enabled: false
     EOT
+  ]
+
+  depends_on = [
+    module.eks
   ]
 }
 
