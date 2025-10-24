@@ -1,3 +1,12 @@
+data "aws_ami" "eks_default" {
+  most_recent = true
+  owners      = var.cluster_ami_owners
+
+  filter {
+    name   = "name"
+    values = var.cluster_ami_filter
+  }
+}
 module "self_managed_node_group" {
   source  = "terraform-aws-modules/eks/aws//modules/self-managed-node-group"
   version = "21.1.0"
@@ -26,10 +35,7 @@ module "self_managed_node_group" {
   }
 
   iam_role_additional_policies = {
-    AmazonSSMManagedInstanceCore       = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-    AmazonEC2ContainerRegistryReadOnly = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-    AmazonEKS_CNI_Policy               = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-    AmazonEKSWorkerNodePolicy          = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+    "AmazonSSMManagedInstanceCore" = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
   }
 
   // The following variables are necessary if you decide to use the module outside of the parent EKS module context.
@@ -53,9 +59,6 @@ module "self_managed_node_group" {
   launch_template_name = var.cluster_name
   instance_type        = var.cluster_size.instance_type
 
-  tags = local.all_security_tags
+  tags = merge(local.all_security_tags, { "calico_dependency" = local._wait_for_calico })
 
-  depends_on = [
-    null_resource.patch_calico_installation,
-  ]
 }

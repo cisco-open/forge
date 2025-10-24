@@ -21,7 +21,13 @@ variable "cluster_version" {
 variable "cluster_endpoint_public_access" {
   description = "Whether the EKS cluster endpoint is publicly accessible"
   type        = bool
-  default     = true
+  default     = false
+}
+
+variable "external_access_cidr_blocks" {
+  description = "External CIDR Blocks to access k8s api"
+  type        = list(string)
+  default     = []
 }
 
 variable "cluster_size" {

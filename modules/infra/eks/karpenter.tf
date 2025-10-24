@@ -9,20 +9,13 @@ module "karpenter" {
   create_instance_profile = true
   create_access_entry     = true
 
-  tags = local.all_security_tags
+  tags = merge(local.all_security_tags, { "calico_dependency" = local._wait_for_calico })
 
   node_iam_role_additional_policies = {
-    AmazonSSMManagedInstanceCore       = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-    AmazonEC2ContainerRegistryReadOnly = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-    AmazonEKS_CNI_Policy               = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-    AmazonEKSWorkerNodePolicy          = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+    AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
   }
 
   create_pod_identity_association = true
-
-  depends_on = [
-    null_resource.patch_calico_installation,
-  ]
 
 }
 
@@ -54,10 +47,6 @@ resource "helm_release" "karpenter" {
       enabled: false
     EOT
   ]
-
-  depends_on = [
-    null_resource.wait_for_cluster
-  ]
 }
 
 locals {
@@ -80,9 +69,9 @@ locals {
 resource "null_resource" "apply_ec2_node_class" {
   provisioner "local-exec" {
     command = <<EOF
-kubectl --context ${data.external.update_kubeconfig.result.kubeconfig_alias} patch ec2nodeclass karpenter --type='merge' -p '{"metadata":{"finalizers":[]}}' || true
-kubectl --context ${data.external.update_kubeconfig.result.kubeconfig_alias} delete ec2nodeclass karpenter || true
-echo "${local.ec2_node_class_manifest}" | kubectl --context ${data.external.update_kubeconfig.result.kubeconfig_alias} apply -f -
+kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} patch ec2nodeclass karpenter --type='merge' -p '{"metadata":{"finalizers":[]}}' || true
+kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} delete ec2nodeclass karpenter || true
+echo "${local.ec2_node_class_manifest}" | kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} apply -f -
 EOF
   }
 
@@ -102,7 +91,7 @@ EOF
 resource "null_resource" "apply_node_pool" {
   provisioner "local-exec" {
     command = <<EOF
-echo "${local.node_pool_manifest}" | kubectl --context ${data.external.update_kubeconfig.result.kubeconfig_alias} apply -f -
+echo "${local.node_pool_manifest}" | kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} apply -f -
 EOF
   }
 

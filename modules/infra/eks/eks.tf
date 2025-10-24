@@ -1,13 +1,3 @@
-data "aws_ami" "eks_default" {
-  most_recent = true
-  owners      = var.cluster_ami_owners
-
-  filter {
-    name   = "name"
-    values = var.cluster_ami_filter
-  }
-}
-
 module "ebs_csi_irsa_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts"
   version = "6.1.0"
@@ -40,6 +30,16 @@ module "eks" {
   }
 
   endpoint_public_access = var.cluster_endpoint_public_access
+  security_group_additional_rules = length(var.external_access_cidr_blocks) > 0 ? {
+    external-access = {
+      cidr_blocks = var.external_access_cidr_blocks
+      description = "Allow external access to k8s api"
+      from_port   = 443
+      to_port     = 443
+      protocol    = "TCP"
+      type        = "ingress"
+    }
+  } : {}
 
   authentication_mode = "API_AND_CONFIG_MAP"
 
@@ -74,6 +74,11 @@ resource "null_resource" "wait_for_cluster" {
     command = <<EOT
     # Wait until EKS API returns active
     aws eks wait cluster-active --name ${module.eks.cluster_name} --region ${var.aws_region} --profile '${var.aws_profile}'
+    aws eks update-kubeconfig \
+      --region '${var.aws_region}' \
+      --name '${module.eks.cluster_name}' \
+      --alias '${module.eks.cluster_name}-${var.aws_profile}-${var.aws_region}' \
+      --profile '${var.aws_profile}' >/dev/null 2>&1
     EOT
   }
 }
@@ -83,13 +88,13 @@ data "external" "update_kubeconfig" {
   program = ["bash", "-c", <<EOT
     aws eks update-kubeconfig \
       --region '${var.aws_region}' \
-      --name '${module.eks.cluster_name}' \
-      --alias '${module.eks.cluster_name}-${var.aws_profile}-${var.aws_region}' \
+      --name '${var.cluster_name}' \
+      --alias '${var.cluster_name}-${var.aws_profile}-${var.aws_region}' \
       --profile '${var.aws_profile}' >/dev/null 2>&1
 
     echo '{
-      "kubeconfig_alias":"'"${module.eks.cluster_name}-${var.aws_profile}-${var.aws_region}"'",
-      "cluster_name":"'"${module.eks.cluster_name}"'"
+      "kubeconfig_alias":"'"${var.cluster_name}-${var.aws_profile}-${var.aws_region}"'",
+      "cluster_name":"'"${var.cluster_name}"'"
     }'
   EOT
   ]

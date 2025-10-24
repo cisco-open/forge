@@ -39,13 +39,11 @@ jobs:
       - name: Cache Terraform/OpenTofu providers
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
-          path: $HOME/.terraform.d/plugin-cache
-          key: tf-providers-${{ hashFiles('**/*.tf*') }}
-          restore-keys: |
-            tf-providers-
+          path: /github/home/.terraform.d/plugin
+          key: tf-providers
 
       - name: Set Terraform plugin cache
-        run: echo "TF_PLUGIN_CACHE_DIR=$HOME/.terraform.d/plugin-cache" >> $GITHUB_ENV
+        run: echo "TF_PLUGIN_CACHE_DIR=/github/home/.terraform.d/plugin" >> $GITHUB_ENV
 
       - name: Mark repository as safe
         shell: bash
