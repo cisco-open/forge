@@ -4,7 +4,7 @@ locals {
     length(var.tenant.iam_roles_to_assume) > 0 ? [aws_iam_policy.role_assumption_for_forge_runners[0].arn] : [],
     [
       aws_iam_policy.ecr_access_for_ec2_instances.arn,
-      aws_iam_policy.dynamodb_policy.arn,
+      module.github_global_lock.dynamodb_policy_arn,
     ]
   )
 
