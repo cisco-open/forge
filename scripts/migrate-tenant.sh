@@ -107,6 +107,11 @@ main() {
     terragrunt_apply 'module.arc_runners'
 
     # Step 3
+    echo "🚀 Disabling ARC for tenant on new cluster '$TO'"
+    update_config true "$TO"
+    terragrunt_apply 'module.arc_runners'
+
+    # Step 4
     echo "🚀 Enabling ARC for tenant on new cluster '$TO'"
     update_config false "$TO"
     terragrunt_apply 'module.arc_runners'
