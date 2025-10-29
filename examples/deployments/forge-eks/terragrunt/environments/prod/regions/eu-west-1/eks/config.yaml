@@ -19,3 +19,7 @@ cluster_volume:
   iops: 3000
   throughput: 125
   type: gp3
+cluster_endpoint_public_access: false
+external_access_cidr_blocks:
+  - 10.0.0.0/8
+cluster_admin_role_arn: arn:aws:iam::123456789012:role/eks-cluster-admin

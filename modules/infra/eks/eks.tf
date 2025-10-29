@@ -45,7 +45,7 @@ module "eks" {
 
   access_entries = {
     super-admin = {
-      principal_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/owner"
+      principal_arn = var.cluster_admin_role_arn
 
       policy_associations = {
         this = {

@@ -56,14 +56,17 @@ inputs = {
   aws_region     = local.region
 
   # EKS Cluster Settings
-  cluster_name       = local.eks_settings_data.locals.cluster_name
-  cluster_version    = local.eks_settings_data.locals.cluster_version
-  cluster_size       = local.eks_settings_data.locals.cluster_size
-  subnet_ids         = local.eks_settings_data.locals.subnet_ids
-  vpc_id             = local.eks_settings_data.locals.vpc_id
-  cluster_ami_filter = local.eks_settings_data.locals.cluster_ami_filter
-  cluster_ami_owners = local.eks_settings_data.locals.cluster_ami_owners
-  cluster_volume     = local.eks_settings_data.locals.cluster_volume
+  cluster_name                   = local.eks_settings_data.locals.cluster_name
+  cluster_version                = local.eks_settings_data.locals.cluster_version
+  cluster_size                   = local.eks_settings_data.locals.cluster_size
+  subnet_ids                     = local.eks_settings_data.locals.subnet_ids
+  vpc_id                         = local.eks_settings_data.locals.vpc_id
+  cluster_ami_filter             = local.eks_settings_data.locals.cluster_ami_filter
+  cluster_ami_owners             = local.eks_settings_data.locals.cluster_ami_owners
+  cluster_volume                 = local.eks_settings_data.locals.cluster_volume
+  cluster_endpoint_public_access = local.eks_settings_data.locals.cluster_endpoint_public_access
+  external_access_cidr_blocks    = local.eks_settings_data.locals.external_access_cidr_blocks
+  cluster_admin_role_arn         = local.eks_settings_data.locals.cluster_admin_role_arn
 
   # Misc
   cluster_tags = local.cluster_tags

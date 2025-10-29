@@ -19,3 +19,8 @@ cluster_volume:
   iops: <VOLUME_IOPS>                         # e.g., 3000
   throughput: <VOLUME_THROUGHPUT>             # e.g., 125
   type: <VOLUME_TYPE>                         # e.g., "gp3"
+cluster_endpoint_public_access: <CLUSTER_ENDPOINT_PUBLIC_ACCESS>   # e.g., false
+external_access_cidr_blocks:                                        # e.g., [ "10.0.0.0/8" ]
+  - <EXTERNAL_ACCESS_CIDR_BLOCK_1>
+  - <EXTERNAL_ACCESS_CIDR_BLOCK_2>
+cluster_admin_role_arn: <CLUSTER_ADMIN_ROLE_ARN>                   # e.g., "arn:aws:iam::123456789012:role/eks-cluster-admin"

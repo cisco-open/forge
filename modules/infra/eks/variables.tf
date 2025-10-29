@@ -84,3 +84,9 @@ variable "cluster_ami_owners" {
   description = "The AWS account ID that owns the EKS cluster AMI."
   type        = list(string)
 }
+
+variable "cluster_admin_role_arn" {
+  description = "Full ARN of IAM role for EKS cluster admin access."
+  type        = string
+  default     = ""
+}
