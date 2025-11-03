@@ -41,10 +41,6 @@ def _get_installation_token(installation_id: str, jwt_token: str, api: str) -> s
     return r.json()['token']
 
 
-# Previously we enumerated all jobs in a run; for workflow_job "completed" events
-# only the single job's log needs archiving, so we removed the bulk listing logic.
-
-
 def _download_job_logs(owner: str, repo: str, job_id: int, token: str, api: str) -> bytes:
     url = f"{api}/repos/{owner}/{repo}/actions/jobs/{job_id}/logs"
     headers = {'Authorization': f"token {token}",
@@ -57,11 +53,29 @@ def _download_job_logs(owner: str, repo: str, job_id: int, token: str, api: str)
     return r.content
 
 
-def _put_log_object(bucket: str, key: str, body: bytes, kms_key_arn: str) -> None:
+def _serialize_tags(tags: Dict[str, str]) -> str:
+    from urllib.parse import quote
+    return '&'.join(f"{quote(k, safe='')}={quote(v, safe='')}" for k, v in tags.items() if v is not None)
+
+
+def _put_log_object(bucket: str, key: str, body: bytes, kms_key_arn: str, tags: Dict[str, str]) -> None:
     extra: Dict[str, Any] = {
-        'ContentType': 'application/zip',
+        'ContentType': 'text/plain',
         'ServerSideEncryption': 'aws:kms',
         'SSEKMSKeyId': kms_key_arn,
+        'Tagging': _serialize_tags(tags),
+    }
+    S3.put_object(Bucket=bucket, Key=key, Body=body, **extra)
+
+
+def _put_json_object(bucket: str, key: str, payload: Dict[str, Any], kms_key_arn: str, tags: Dict[str, str]) -> None:
+    body = json.dumps(payload, separators=(',', ':'),
+                      ensure_ascii=False).encode()
+    extra: Dict[str, Any] = {
+        'ContentType': 'application/json',
+        'ServerSideEncryption': 'aws:kms',
+        'SSEKMSKeyId': kms_key_arn,
+        'Tagging': _serialize_tags(tags),
     }
     S3.put_object(Bucket=bucket, Key=key, Body=body, **extra)
 
@@ -148,15 +162,30 @@ def lambda_handler(event: Dict[str, Any], _context: Any) -> Dict[str, Any]:  # p
     install_token = _get_installation_token(
         installation_id, jwt_token, api_base)
 
-    # Use repository name instead of workflow name in object path (user request)
-    key = f"{repo_full_name}/{run_id}/{run_attempt}/{job_id}.log"
+    base_path = f"{repo_full_name}/{run_id}/{run_attempt}/{job_id}"
+    log_key = f"{base_path}.log"
+    event_key = f"{base_path}.json"
     try:
+        # Prepare object tags (keep count within S3 tag limits)
+        obj_tags = {
+            'repo': repo_full_name,
+            'run_id': str(run_id),
+            'attempt': str(run_attempt),
+            'job_id': str(job_id),
+            'workflow': workflow_name[:100],  # trim to avoid excessive length
+        }
         body = _download_job_logs(owner, repo, int(
             job_id), install_token, api_base)
-        _put_log_object(bucket_name, key, body, kms_key_arn)
+        _put_log_object(bucket_name, log_key, body, kms_key_arn, obj_tags)
         size = len(body)
         LOG.info('Archived job log repo=%s run=%s attempt=%s job=%s size=%d bucket=%s key=%s',
-                 repo_full_name, run_id, run_attempt, job_id, size, bucket_name, key)
+                 repo_full_name, run_id, run_attempt, job_id, size, bucket_name, log_key)
+
+        _put_json_object(bucket_name, event_key,
+                         gh_event, kms_key_arn, obj_tags)
+        LOG.info('Archived event metadata repo=%s run=%s attempt=%s job=%s bucket=%s key=%s',
+                 repo_full_name, run_id, run_attempt, job_id, bucket_name, event_key)
+
         return {
             'status': 'ok',
             'job_id': job_id,
@@ -164,7 +193,8 @@ def lambda_handler(event: Dict[str, Any], _context: Any) -> Dict[str, Any]:  # p
             'run_attempt': run_attempt,
             'workflow_name': workflow_name,
             'repository': repo_full_name,
-            'key': key,
+            'log_key': log_key,
+            'event_key': event_key,
             'size': size
         }
     except Exception as e:  # pragma: no cover

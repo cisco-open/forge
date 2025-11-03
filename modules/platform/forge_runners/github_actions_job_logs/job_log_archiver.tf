@@ -57,7 +57,9 @@ data "aws_iam_policy_document" "job_log_archiver" {
       "s3:AbortMultipartUpload",
       "s3:ListMultipartUploadParts",
       "s3:ListBucket",
-      "s3:GetObject"
+      "s3:GetObject",
+      "s3:PutObjectTagging",
+      "s3:GetObjectTagging"
     ]
     resources = [
       "arn:aws:s3:::${aws_s3_bucket.gh_logs.id}",
