@@ -30,11 +30,6 @@ variable "log_level" {
   default     = "INFO"
 }
 
-variable "s3_bucket_names" {
-  description = "List of existing S3 bucket names storing GitHub runner job logs"
-  type        = list(string)
-}
-
 variable "splunk_hec_host" {
   description = "Hostname (without protocol) of Splunk HEC endpoint"
   type        = string
@@ -46,7 +41,13 @@ variable "splunk_hec_port" {
   default     = 8088
 }
 
-variable "filter_suffix" {
-  description = "S3 object key suffix to filter on"
+variable "splunk_hec_sourcetype" {
+  description = "Sourcetype to assign to logs ingested via HEC"
   type        = string
+}
+
+variable "regions" {
+  description = "List of AWS regions where S3 buckets are located"
+  type        = list(string)
+  default     = ["us-east-1"]
 }

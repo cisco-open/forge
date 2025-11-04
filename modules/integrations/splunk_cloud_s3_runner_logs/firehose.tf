@@ -64,7 +64,7 @@ resource "aws_kinesis_firehose_delivery_stream" "splunk_firehose" {
   }
   splunk_configuration {
     hec_endpoint               = "https://${var.splunk_hec_host}:${var.splunk_hec_port}/services/collector/raw"
-    hec_token                  = data.aws_secretsmanager_secret_version.secrets[local.secrets.splunk_cloud_hec_token_s3_integration].secret_string
+    hec_token                  = data.aws_secretsmanager_secret_version.secrets["splunk_cloud_hec_token_s3_integration"].secret_string
     hec_acknowledgment_timeout = 180
     retry_duration             = 300
     s3_backup_mode             = "FailedEventsOnly" # adjust if you want AllEvents

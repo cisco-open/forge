@@ -7,3 +7,16 @@ provider "aws" {
     tags = merge(var.default_tags, )
   }
 }
+
+provider "aws" {
+  alias = "by_region"
+  # supported by opentofu >= 1.9.0
+  for_each = toset(var.regions)
+  profile  = var.aws_profile
+  region   = each.key
+
+  # Required, as per security guidelines.
+  default_tags {
+    tags = var.default_tags
+  }
+}

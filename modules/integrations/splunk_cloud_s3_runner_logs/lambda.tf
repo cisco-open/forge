@@ -20,8 +20,7 @@ module "s3_to_kinesis_lambda" {
 
   environment_variables = {
     KINESIS_STREAM_NAME = aws_kinesis_stream.log_lines_stream.name
-    MAX_RECORDS_BATCH   = 500
-    MAX_BATCH_BYTES     = 4000000
+    SOURCETYPE          = var.splunk_hec_sourcetype
     LOG_LEVEL           = var.log_level
   }
 
@@ -42,7 +41,7 @@ data "aws_iam_policy_document" "s3_to_kinesis_lambda" {
     sid       = "S3Read"
     effect    = "Allow"
     actions   = ["s3:GetObject", "s3:GetObjectVersion"]
-    resources = [for b in var.s3_bucket_names : "arn:aws:s3:::${b}/*"]
+    resources = [for b in local.bucket_list : "arn:aws:s3:::${b.name}/*"]
   }
 
   statement {

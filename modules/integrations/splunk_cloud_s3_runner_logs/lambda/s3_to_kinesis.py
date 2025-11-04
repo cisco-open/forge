@@ -82,8 +82,27 @@ def lambda_handler(event, _context):
                 LOG.warning(
                     'tag_fetch_failed bucket=%s key=%s err=%s', bucket, key, tag_err)
 
-            line_iter = stream_s3_object_lines(bucket, key)
-            shipped = ship_lines_to_kinesis(line_iter, bucket, key, tags)
+            # Decide ingestion strategy based on file type.
+            if key.endswith('.json'):
+                # Treat entire JSON file as a single event line.
+                try:
+                    obj = s3_client.get_object(Bucket=bucket, Key=key)
+                    raw = obj['Body'].read()
+                    text = raw.decode('utf-8', errors='replace')
+                    shipped = ship_lines_to_kinesis([text], bucket, key, tags)
+                    LOG.info(
+                        'json_object_ingested bucket=%s key=%s size=%d', bucket, key, len(raw))
+                except Exception as json_err:  # pragma: no cover
+                    LOG.warning(
+                        'json_object_failed bucket=%s key=%s err=%s', bucket, key, json_err)
+                    continue
+            elif key.endswith('.log'):
+                # Line-by-line streaming for log files.
+                line_iter = stream_s3_object_lines(bucket, key)
+                shipped = ship_lines_to_kinesis(line_iter, bucket, key, tags)
+            else:
+                LOG.info('unsupported_object_skip bucket=%s key=%s', bucket, key)
+                continue
             total_lines += shipped
             LOG.info('object_complete bucket=%s key=%s lines=%d',
                      bucket, key, shipped)
