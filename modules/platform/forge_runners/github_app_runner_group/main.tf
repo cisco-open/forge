@@ -31,6 +31,7 @@ module "register_github_app_runner_group_lambda" {
     SECRET_NAME_APP_ID          = local.secrets.github_actions_runners_app_id.name
     SECRET_NAME_PRIVATE_KEY     = local.secrets.github_actions_runners_app_key.name
     SECRET_NAME_INSTALLATION_ID = local.secrets.github_actions_runners_app_installation_id.name
+    LOG_LEVEL                   = var.log_level
   }
 
   attach_policy_json = true

@@ -76,7 +76,7 @@ data "aws_iam_policy_document" "s3_to_kinesis_lambda" {
 
 resource "aws_cloudwatch_log_group" "s3_to_kinesis_lambda" {
   name              = "/aws/lambda/github-runner-logs-s3-to-kinesis-lambda"
-  retention_in_days = var.log_retention_in_days
+  retention_in_days = var.logging_retention_in_days
   tags              = var.tags
   tags_all          = var.tags
 }

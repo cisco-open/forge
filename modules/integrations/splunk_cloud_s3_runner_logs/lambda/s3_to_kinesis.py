@@ -22,8 +22,8 @@ from typing import Iterable
 
 import boto3
 
-log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
+LOG = logging.getLogger()
+LOG.setLevel(os.environ.get('LOG_LEVEL', logging.INFO))
 
 s3_client = boto3.client('s3')
 kinesis_client = boto3.client('kinesis')
@@ -47,7 +47,7 @@ def lambda_handler(event, _context):
     """Entry point for Lambda: processes SQS event containing S3 notifications."""
     records = event.get('Records', [])
     if not records:
-        log.info('lambda_no_records')
+        LOG.info('lambda_no_records')
         return {'statusCode': 200, 'body': 'No messages'}
 
     total_lines = 0
@@ -58,16 +58,16 @@ def lambda_handler(event, _context):
         try:
             body_json = json.loads(body)
         except json.JSONDecodeError:
-            log.warning('invalid_json_body_skip')
+            LOG.warning('invalid_json_body_skip')
             continue
 
         for s3_rec in body_json.get('Records', []):
             bucket = s3_rec.get('s3', {}).get('bucket', {}).get('name')
             key = s3_rec.get('s3', {}).get('object', {}).get('key')
             if not bucket or not key:
-                log.warning('missing_bucket_or_key')
+                LOG.warning('missing_bucket_or_key')
                 continue
-            log.info('processing_object bucket=%s key=%s', bucket, key)
+            LOG.info('processing_object bucket=%s key=%s', bucket, key)
             # Fetch object tags once per object
             tags: dict[str, str] = {}
             try:
@@ -78,13 +78,13 @@ def lambda_handler(event, _context):
                     if k is not None and v is not None:
                         tags[k] = v
             except Exception as tag_err:  # pragma: no cover
-                log.warning(
+                LOG.warning(
                     'tag_fetch_failed bucket=%s key=%s err=%s', bucket, key, tag_err)
 
             line_iter = stream_s3_object_lines(bucket, key)
             shipped = ship_lines_to_kinesis(line_iter, bucket, key, tags)
             total_lines += shipped
-            log.info('object_complete bucket=%s key=%s lines=%d',
+            LOG.info('object_complete bucket=%s key=%s lines=%d',
                      bucket, key, shipped)
 
     return {'statusCode': 200, 'body': json.dumps({'lines': total_lines})}
@@ -173,7 +173,7 @@ def ship_lines_to_kinesis(lines: Iterable[str], bucket: str, key: str, tags: dic
             records = new_records
             attempt += 1
             backoff = 2 ** attempt * 0.25
-            log.warning(
+            LOG.warning(
                 'kinesis_put_retry failed=%d attempt=%d backoff=%.2f',
                 failed,
                 attempt,
@@ -181,7 +181,7 @@ def ship_lines_to_kinesis(lines: Iterable[str], bucket: str, key: str, tags: dic
             )
             time.sleep(backoff)
         else:
-            log.error(
+            LOG.error(
                 'kinesis_put_failed_after_retries remaining=%d', len(records))
         buffer = []
         current_bytes = 0
@@ -195,7 +195,7 @@ def ship_lines_to_kinesis(lines: Iterable[str], bucket: str, key: str, tags: dic
         payload = wrap_line(line, ts, bucket, key, tags).encode('utf-8')
         payload_len = len(payload)
         if payload_len > 1000000:  # Guard insanely long lines
-            log.warning('line_too_large_skip size=%d', payload_len)
+            LOG.warning('line_too_large_skip size=%d', payload_len)
             continue
         if len(buffer) >= MAX_RECORDS_BATCH or (current_bytes + payload_len) >= MAX_BATCH_BYTES:
             flush()
@@ -217,7 +217,7 @@ if __name__ == '__main__':
                             {
                                 's3': {
                                     'bucket': {'name': 'example-bucket'},
-                                    'object': {'key': 'logs/log.txt'},
+                                    'object': {'key': 'logs/LOG.txt'},
                                 }
                             }
                         ]

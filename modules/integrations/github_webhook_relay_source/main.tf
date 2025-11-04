@@ -78,7 +78,7 @@ resource "aws_cloudwatch_log_delivery_source" "error_logs" {
 # Logging to CloudWatch Log Group
 resource "aws_cloudwatch_log_group" "event_bus_logs" {
   name              = "/aws/vendedlogs/events/event-bus/${aws_cloudwatch_event_bus.source.name}"
-  retention_in_days = var.log_retention_in_days
+  retention_in_days = var.logging_retention_in_days
   tags              = var.tags
   tags_all          = var.tags
 }

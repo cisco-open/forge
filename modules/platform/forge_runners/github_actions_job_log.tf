@@ -10,6 +10,7 @@ module "github_actions_job_logs" {
   secrets_prefix            = local.cicd_secrets_prefix
   shared_role_arns          = var.tenant.github_logs_reader_role_arns
   logging_retention_in_days = var.logging_retention_in_days
+  log_level                 = var.log_level
   tags                      = local.all_security_tags
   event_bus_name            = module.ec2_runners[0].event_bus_name
   ghes_url                  = var.ghes_url

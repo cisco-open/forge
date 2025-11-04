@@ -14,7 +14,8 @@ module "github_webhook_relay_source" {
   destination_region         = var.github_webhook_relay.destination_region
   destination_event_bus_name = var.github_webhook_relay.destination_event_bus_name
 
-  log_retention_in_days = var.logging_retention_in_days
+  logging_retention_in_days = var.logging_retention_in_days
+  log_level                 = var.log_level
 
   tags = var.tags
 }

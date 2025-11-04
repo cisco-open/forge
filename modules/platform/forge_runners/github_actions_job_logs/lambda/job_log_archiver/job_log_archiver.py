@@ -12,7 +12,7 @@ import requests
 from requests.exceptions import RequestException
 
 LOG = logging.getLogger()
-LOG.setLevel(logging.INFO)
+LOG.setLevel(os.environ.get('LOG_LEVEL', logging.INFO))
 
 SECRETS = boto3.client('secretsmanager')
 S3 = boto3.client('s3')

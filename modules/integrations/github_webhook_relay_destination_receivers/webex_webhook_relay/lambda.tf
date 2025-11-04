@@ -1,6 +1,6 @@
 resource "aws_cloudwatch_log_group" "webex" {
   name              = "/aws/lambda/webex-webhook-relay-destination-receiver"
-  retention_in_days = var.log_retention_days
+  retention_in_days = var.logging_retention_in_days
   tags_all          = local.all_security_tags
   tags              = local.all_security_tags
 }
@@ -26,6 +26,7 @@ module "webex" {
 
   environment_variables = {
     WEBEX_BOT_TOKEN_SECRET_NAME = "/cicd/common/webex_webhook_relay_bot_token"
+    LOG_LEVEL                   = var.log_level
   }
 
   attach_policy_json = true

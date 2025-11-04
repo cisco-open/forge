@@ -7,8 +7,8 @@ from typing import Any, Dict
 
 import boto3
 
-log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
+LOG = logging.getLogger()
+LOG.setLevel(os.environ.get('LOG_LEVEL', logging.INFO))
 
 DEFAULT_FAILURES = {'cancelled', 'failure',
                     'timed_out', 'timeout', 'startup_failure'}
@@ -162,7 +162,7 @@ def load_webex_secret() -> tuple[str, str]:
     if not token.lower().startswith('bearer '):
         token = f"Bearer {token}"
 
-    log.info('Successfully loaded Webex secret.')
+    LOG.info('Successfully loaded Webex secret.')
     return token, room
 
 
@@ -173,7 +173,7 @@ def send_webex_card(card: Dict[str, Any]) -> None:
         'text': 'GitHub Actions workflow alert',  # required by Webex
         'attachments': card.get('attachments', [])
     }
-    log.info('Prepared payload for Webex message with %d attachments',
+    LOG.info('Prepared payload for Webex message with %d attachments',
              len(payload.get('attachments', [])))
 
     req = urllib.request.Request(
@@ -188,7 +188,7 @@ def send_webex_card(card: Dict[str, Any]) -> None:
             if not (200 <= resp.status < 300):
                 body = resp.read().decode()
                 raise RuntimeError(f"Webex send failed: {resp.status} {body}")
-            log.info('Webex Adaptive Card sent successfully')
+            LOG.info('Webex Adaptive Card sent successfully')
     except urllib.error.HTTPError as e:
         error_body = e.read().decode()
         raise RuntimeError(
@@ -202,7 +202,7 @@ def lambda_handler(event, _context):
         detail = event.get('detail', {})
         run = detail.get('workflow_run')
         if not isinstance(run, dict):
-            log.info('lambda_skip reason=no_workflow_run')
+            LOG.info('lambda_skip reason=no_workflow_run')
             return {'statusCode': 200, 'body': 'No workflow_run'}
 
         branch = run.get('head_branch')
@@ -210,16 +210,16 @@ def lambda_handler(event, _context):
         repo = (detail.get('repository') or {}).get('full_name') or (
             run.get('head_repository') or {}).get('full_name') or 'unknown repo'
         job_url = run.get('html_url')
-        log.info('run_info repo=%s branch=%s conclusion=%s job_url=%s',
+        LOG.info('run_info repo=%s branch=%s conclusion=%s job_url=%s',
                  repo, branch, conclusion, job_url)
 
         if branch != 'main':
-            log.info('lambda_skip reason=branch_not_main repo=%s branch=%s conclusion=%s job_url=%s',
+            LOG.info('lambda_skip reason=branch_not_main repo=%s branch=%s conclusion=%s job_url=%s',
                      repo, branch, conclusion, job_url)
             return {'statusCode': 200, 'body': f"Skipped (branch={branch})"}
 
         if conclusion not in DEFAULT_FAILURES:
-            log.info('lambda_skip reason=non_failure repo=%s branch=%s conclusion=%s job_url=%s',
+            LOG.info('lambda_skip reason=non_failure repo=%s branch=%s conclusion=%s job_url=%s',
                      repo, branch, conclusion, job_url)
             return {'statusCode': 200, 'body': f"Skipped ({conclusion})"}
 
@@ -230,5 +230,5 @@ def lambda_handler(event, _context):
         return {'statusCode': 200, 'body': 'Alert sent'}
 
     except Exception as exc:
-        log.exception('lambda_error error=%s', exc)
+        LOG.exception('lambda_error error=%s', exc)
         return {'statusCode': 500, 'body': f"Error: {exc}"}

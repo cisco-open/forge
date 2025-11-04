@@ -8,6 +8,7 @@ module "github_app_runner_group" {
   prefix                    = var.deployment_config.prefix
   secrets_prefix            = local.cicd_secrets_prefix
   logging_retention_in_days = var.logging_retention_in_days
+  log_level                 = var.log_level
   tags                      = local.all_security_tags
   github_api                = local.github_api
   ghes_org                  = var.ghes_org

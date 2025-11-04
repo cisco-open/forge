@@ -13,8 +13,14 @@ variable "default_tags" {
   description = "A map of tags to apply to resources."
 }
 
-variable "log_retention_days" {
+variable "logging_retention_in_days" {
   type        = number
   description = "Number of days to retain logs in CloudWatch."
   default     = 3
+}
+
+variable "log_level" {
+  type        = string
+  description = "Log level for application logging (e.g., INFO, DEBUG, WARN, ERROR)"
+  default     = "INFO"
 }

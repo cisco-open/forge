@@ -15,6 +15,12 @@ variable "logging_retention_in_days" {
   default     = 30
 }
 
+variable "log_level" {
+  type        = string
+  description = "Log level for application logging (e.g., INFO, DEBUG, WARN, ERROR)"
+  default     = "INFO"
+}
+
 variable "secret_prefix" {
   description = "Prefix for secret"
   type        = string

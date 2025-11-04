@@ -43,8 +43,14 @@ variable "destination_event_bus_name" {
   type        = string
 }
 
-variable "log_retention_in_days" {
+variable "logging_retention_in_days" {
   description = "Log retention period in days"
   type        = number
   default     = 3
+}
+
+variable "log_level" {
+  type        = string
+  description = "Log level for application logging (e.g., INFO, DEBUG, WARN, ERROR)"
+  default     = "INFO"
 }

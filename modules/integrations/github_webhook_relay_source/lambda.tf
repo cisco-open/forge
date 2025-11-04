@@ -20,6 +20,7 @@ module "validate_signature_lambda" {
   environment_variables = {
     EVENT_BUS      = var.source_event_bus_name
     WEBHOOK_SECRET = var.webhook_secret
+    LOG_LEVEL      = var.log_level
   }
 
   attach_policy_json = true
@@ -48,7 +49,7 @@ data "aws_iam_policy_document" "validate_signature_lambda" {
 
 resource "aws_cloudwatch_log_group" "validate_signature_lambda" {
   name              = "/aws/lambda/${var.name_prefix}-validate-signature"
-  retention_in_days = var.log_retention_in_days
+  retention_in_days = var.logging_retention_in_days
   tags              = var.tags
   tags_all          = var.tags
 }

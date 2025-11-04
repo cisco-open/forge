@@ -37,10 +37,16 @@ variable "webhook_relay_destination_config" {
   })
 }
 
-variable "log_retention_days" {
+variable "logging_retention_in_days" {
   description = "Number of days to retain logs."
   type        = number
   default     = 3
+}
+
+variable "log_level" {
+  type        = string
+  description = "Log level for application logging (e.g., INFO, DEBUG, WARN, ERROR)"
+  default     = "INFO"
 }
 
 variable "enable_webex_webhook_relay" {

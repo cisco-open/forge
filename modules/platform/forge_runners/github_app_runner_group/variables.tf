@@ -20,6 +20,12 @@ variable "logging_retention_in_days" {
   default     = 30
 }
 
+variable "log_level" {
+  type        = string
+  description = "Log level for application logging (e.g., INFO, DEBUG, WARN, ERROR)"
+  default     = "INFO"
+}
+
 variable "github_api" {
   description = "Base URL for the GitHub API (set to GHES API endpoint if using Enterprise)."
   type        = string

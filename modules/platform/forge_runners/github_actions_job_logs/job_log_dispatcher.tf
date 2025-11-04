@@ -24,6 +24,7 @@ module "job_log_dispatcher" {
 
   environment_variables = {
     QUEUE_URL = aws_sqs_queue.jobs.url
+    LOG_LEVEL = var.log_level
   }
 
   attach_policy_json = true

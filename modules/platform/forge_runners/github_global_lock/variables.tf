@@ -19,3 +19,9 @@ variable "logging_retention_in_days" {
   type        = number
   default     = 30
 }
+
+variable "log_level" {
+  type        = string
+  description = "Log level for application logging (e.g., INFO, DEBUG, WARN, ERROR)"
+  default     = "INFO"
+}

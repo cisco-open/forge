@@ -10,6 +10,12 @@ variable "logging_retention_in_days" {
   default     = 30
 }
 
+variable "log_level" {
+  type        = string
+  description = "Log level for application logging (e.g., INFO, DEBUG, WARN, ERROR)"
+  default     = "INFO"
+}
+
 variable "tags" {
   description = "Tags to apply to created resources."
   type        = map(string)
