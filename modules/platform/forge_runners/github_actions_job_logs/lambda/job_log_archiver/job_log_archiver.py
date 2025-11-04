@@ -3,17 +3,23 @@ import json
 import logging
 import os
 import time
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
+from urllib.parse import quote
 
 import boto3
 import jwt
 import requests
+from requests.exceptions import RequestException
 
 LOG = logging.getLogger()
 LOG.setLevel(logging.INFO)
 
 SECRETS = boto3.client('secretsmanager')
 S3 = boto3.client('s3')
+
+MAX_S3_TAGS = 10
+GITHUB_RETRY_ATTEMPTS = 3
+GITHUB_RETRY_DELAY = 2
 
 
 def _get_secret_value(secret_id: str) -> str:
@@ -32,11 +38,23 @@ def _generate_jwt(app_id: str, private_key_pem: str) -> str:
     return token
 
 
+def _retry_request(func, attempts=GITHUB_RETRY_ATTEMPTS, delay=GITHUB_RETRY_DELAY, **kwargs):
+    for attempt in range(attempts):
+        try:
+            return func(**kwargs)
+        except RequestException as e:
+            if attempt < attempts - 1:
+                LOG.warning('Retrying GitHub request due to error: %s', e)
+                time.sleep(delay * (2 ** attempt))
+            else:
+                raise
+
+
 def _get_installation_token(installation_id: str, jwt_token: str, api: str) -> str:
     url = f"{api}/app/installations/{installation_id}/access_tokens"
     headers = {'Authorization': f"Bearer {jwt_token}",
                'Accept': 'application/vnd.github+json'}
-    r = requests.post(url, headers=headers, timeout=10)
+    r = _retry_request(requests.post, url=url, headers=headers, timeout=10)
     r.raise_for_status()
     return r.json()['token']
 
@@ -45,17 +63,19 @@ def _download_job_logs(owner: str, repo: str, job_id: int, token: str, api: str)
     url = f"{api}/repos/{owner}/{repo}/actions/jobs/{job_id}/logs"
     headers = {'Authorization': f"token {token}",
                'Accept': 'application/vnd.github+json'}
-    r = requests.get(url, headers=headers, timeout=60)
+
+    r = _retry_request(requests.get, url=url, headers=headers, timeout=60)
     if r.status_code == 404:
-        # Logs may be unavailable briefly after completion
         raise RuntimeError(f"Job logs not found (job_id={job_id})")
     r.raise_for_status()
     return r.content
 
 
 def _serialize_tags(tags: Dict[str, str]) -> str:
-    from urllib.parse import quote
-    return '&'.join(f"{quote(k, safe='')}={quote(v, safe='')}" for k, v in tags.items() if v is not None)
+    # Only keep first MAX_S3_TAGS keys
+    safe_tags = {k: v for i, (k, v) in enumerate(
+        tags.items()) if i < MAX_S3_TAGS and v is not None}
+    return '&'.join(f"{quote(k, safe='')}={quote(v, safe='')}" for k, v in safe_tags.items())
 
 
 def _put_log_object(bucket: str, key: str, body: bytes, kms_key_arn: str, tags: Dict[str, str]) -> None:
@@ -80,111 +100,107 @@ def _put_json_object(bucket: str, key: str, payload: Dict[str, Any], kms_key_arn
     S3.put_object(Bucket=bucket, Key=key, Body=body, **extra)
 
 
-def _extract_repo_full_name(detail: Dict[str, Any], workflow_job: Dict[str, Any]) -> str | None:
-    """Derive repository full_name from possible locations in the workflow_job event."""
-    for candidate in (
-        workflow_job.get('repository'),
-        detail.get('repository'),
-        workflow_job.get('head_repository'),
-    ):
-        if isinstance(candidate, dict):
-            full = candidate.get('full_name')
-            if full:
-                return full
-    return None
-
-
-def lambda_handler(event: Dict[str, Any], _context: Any) -> Dict[str, Any]:  # pragma: no cover
-    """Process a single workflow_job completed event delivered via SQS mapping.
-
-    The SQS event source mapping is configured with batch_size=1 so we expect
-    either {"Records": [{"body": "<event json>"}]} or a direct test invocation
-    containing the event JSON itself.
-    """
-    LOG.debug('Event: %s', json.dumps(event))
-
-    # When invoked via SQS event source mapping we receive {"Records": [{"body": "<json>"}]}
+def _parse_event(event: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     if isinstance(event.get('Records'), list) and event['Records']:
         raw_body = event['Records'][0].get('body', '{}')
         try:
             gh_event = json.loads(raw_body)
         except json.JSONDecodeError:
-            LOG.error('Invalid JSON in SQS body')
-            return {'status': 'error', 'error': 'invalid_json'}
+            raise ValueError('invalid_json')
     else:
         gh_event = event
-
     detail = gh_event.get('detail', {})
-    action = detail.get('action')
     workflow_job = detail.get('workflow_job') or {}
-    if action != 'completed' or not workflow_job:
-        LOG.info('Ignoring event (action=%s has_workflow_job=%s)',
-                 action, bool(workflow_job))
-        return {'status': 'ignored'}
+    return gh_event, workflow_job
 
-    # Resolve repository full name before env validation dependent returns.
-    repo_full_name = _extract_repo_full_name(detail, workflow_job)
 
-    secret_app_id = os.getenv('SECRET_NAME_APP_ID')
-    secret_private_key = os.getenv('SECRET_NAME_PRIVATE_KEY')
-    secret_installation_id = os.getenv('SECRET_NAME_INSTALLATION_ID')
-    bucket_name = os.getenv('BUCKET_NAME')
-    kms_key_arn = os.getenv('KMS_KEY_ARN')
-    api_base = os.getenv('GITHUB_API')
+def _get_env() -> Dict[str, str]:
+    keys = [
+        'SECRET_NAME_APP_ID', 'SECRET_NAME_PRIVATE_KEY', 'SECRET_NAME_INSTALLATION_ID',
+        'BUCKET_NAME', 'KMS_KEY_ARN', 'GITHUB_API'
+    ]
+    env = {k: os.getenv(k) for k in keys}
+    missing = [k for k, v in env.items() if not v]
+    if missing:
+        raise RuntimeError(f'missing_env:{";".join(missing)}')
+    return env
 
-    if not all([secret_app_id, secret_private_key, secret_installation_id, bucket_name, api_base]):
-        LOG.error('Missing required environment variables')
-        return {'status': 'error', 'error': 'missing_env'}
 
-    if not repo_full_name:
-        LOG.warning('Missing repository full_name; skipping job_id=%s',
-                    workflow_job.get('id'))
-        return {'status': 'error', 'error': 'missing_repository'}
-
-    owner, repo = repo_full_name.split('/', 1)
-    job_id = workflow_job.get('id')
-    run_id = workflow_job.get('run_id')
-    run_attempt = workflow_job.get('run_attempt', 1)
-    workflow_name = workflow_job.get(
-        'workflow_name') or workflow_job.get('name') or 'unknown-workflow'
-
-    if not all([job_id, run_id]):
-        LOG.warning('Missing job_id or run_id in workflow_job; skipping')
-        return {'status': 'error', 'error': 'missing_ids'}
-
-    # Auth (single job so do it inline)
+def _github_auth(secret_app_id: str, secret_private_key: str, secret_installation_id: str, api_base: str) -> str:
     app_id = _get_secret_value(secret_app_id).strip()
     installation_id = _get_secret_value(secret_installation_id).strip()
     private_key_b64 = _get_secret_value(secret_private_key).strip()
     private_key_pem = base64.b64decode(
         private_key_b64).decode().replace('\\n', '\n')
     jwt_token = _generate_jwt(app_id, private_key_pem)
-    install_token = _get_installation_token(
-        installation_id, jwt_token, api_base)
+    return _get_installation_token(installation_id, jwt_token, api_base)
 
-    base_path = f"{repo_full_name}/{run_id}/{run_attempt}/{job_id}"
-    log_key = f"{base_path}.log"
-    event_key = f"{base_path}.json"
+
+def _keys(repo_full_name: str, run_id: Any, run_attempt: Any, job_id: Any) -> Tuple[str, str, str]:
+    run_attempt = run_attempt or 1
+    safe_repo = repo_full_name.replace('/', '_')
+    base_path = f"{safe_repo}/{run_id}/{run_attempt}/{job_id}"
+    return base_path, f"{base_path}.log", f"{base_path}.json"
+
+
+def _tags(wf: Dict[str, Any]) -> Dict[str, str]:
+    return {
+        'runner_name': str(wf.get('runner_name') or ''),
+        'conclusion': str(wf.get('conclusion') or ''),
+        'status': str(wf.get('status') or ''),
+        'html_url': str(wf.get('html_url') or ''),
+        'created_at': str(wf.get('created_at') or ''),
+        'started_at': str(wf.get('started_at') or ''),
+        'completed_at': str(wf.get('completed_at') or ''),
+    }
+
+
+def lambda_handler(event: Dict[str, Any], _context: Any) -> Dict[str, Any]:  # pragma: no cover
+    LOG.debug('Event: %s', json.dumps(event))
     try:
-        # Prepare object tags (keep count within S3 tag limits)
-        obj_tags = {
-            'repo': repo_full_name,
-            'run_id': str(run_id),
-            'attempt': str(run_attempt),
-            'job_id': str(job_id),
-            'workflow': workflow_name[:100],  # trim to avoid excessive length
-        }
-        body = _download_job_logs(owner, repo, int(
-            job_id), install_token, api_base)
-        _put_log_object(bucket_name, log_key, body, kms_key_arn, obj_tags)
-        size = len(body)
-        LOG.info('Archived job log repo=%s run=%s attempt=%s job=%s size=%d bucket=%s key=%s',
-                 repo_full_name, run_id, run_attempt, job_id, size, bucket_name, log_key)
+        gh_event, workflow_job = _parse_event(event)
+    except ValueError:
+        LOG.error('Invalid JSON in SQS body')
+        return {'status': 'error', 'error': 'invalid_json'}
 
-        _put_json_object(bucket_name, event_key,
-                         gh_event, kms_key_arn, obj_tags)
-        LOG.info('Archived event metadata repo=%s run=%s attempt=%s job=%s bucket=%s key=%s',
-                 repo_full_name, run_id, run_attempt, job_id, bucket_name, event_key)
+    detail = gh_event.get('detail', {})
+    if detail.get('action') != 'completed' or not workflow_job:
+        return {'status': 'ignored'}
+
+    repo_full_name = (detail.get('repository') or {}).get('full_name')
+    if not repo_full_name:
+        return {'status': 'error', 'error': 'missing_repository'}
+
+    try:
+        env = _get_env()
+    except RuntimeError as e:
+        LOG.error(str(e))
+        return {'status': 'error', 'error': 'missing_env'}
+
+    owner, repo = repo_full_name.split('/', 1)
+    job_id = workflow_job.get('id')
+    run_id = workflow_job.get('run_id')
+    runner_name = workflow_job.get('runner_name')
+    run_attempt = workflow_job.get('run_attempt')
+    workflow_name = workflow_job.get('workflow_name')
+
+    if not all([runner_name, run_id, job_id]):
+        return {'status': 'error', 'error': 'missing_ids'}
+
+    try:
+        install_token = _github_auth(
+            env['SECRET_NAME_APP_ID'], env['SECRET_NAME_PRIVATE_KEY'], env['SECRET_NAME_INSTALLATION_ID'], env['GITHUB_API']
+        )
+        _, log_key, event_key = _keys(
+            repo_full_name, run_id, run_attempt, job_id)
+        obj_tags = _tags(workflow_job)
+        body = _download_job_logs(owner, repo, int(
+            job_id), install_token, env['GITHUB_API'])
+        _put_log_object(env['BUCKET_NAME'], log_key, body,
+                        env['KMS_KEY_ARN'], obj_tags)
+        size = len(body)
+        _put_json_object(env['BUCKET_NAME'], event_key,
+                         gh_event, env['KMS_KEY_ARN'], obj_tags)
 
         return {
             'status': 'ok',
@@ -197,7 +213,6 @@ def lambda_handler(event: Dict[str, Any], _context: Any) -> Dict[str, Any]:  # p
             'event_key': event_key,
             'size': size
         }
-    except Exception as e:  # pragma: no cover
-        LOG.warning('Failed to archive job_id=%s run_id=%s: %s',
-                    job_id, run_id, e)
-        return {'status': 'error', 'job_id': job_id, 'run_id': run_id, 'error': str(e)}
+    except Exception:
+        LOG.exception('archive_failed job_id=%s run_id=%s', job_id, run_id)
+        return {'status': 'error', 'job_id': job_id, 'run_id': run_id, 'error': 'see logs'}
