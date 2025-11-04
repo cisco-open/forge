@@ -22,6 +22,7 @@ module "s3_to_kinesis_lambda" {
     KINESIS_STREAM_NAME = aws_kinesis_stream.log_lines_stream.name
     MAX_RECORDS_BATCH   = 500
     MAX_BATCH_BYTES     = 4000000
+    LOG_LEVEL           = var.log_level
   }
 
   attach_policy_json = true

@@ -24,6 +24,12 @@ variable "logging_retention_in_days" {
   default     = 3
 }
 
+variable "log_level" {
+  type        = string
+  description = "Log level for application logging (e.g., INFO, DEBUG, WARN, ERROR)"
+  default     = "INFO"
+}
+
 variable "s3_bucket_names" {
   description = "List of existing S3 bucket names storing GitHub runner job logs"
   type        = list(string)
