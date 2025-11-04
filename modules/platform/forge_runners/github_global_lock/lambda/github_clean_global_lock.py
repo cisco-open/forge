@@ -17,8 +17,9 @@ import jwt  # noqa: E402
 import requests  # noqa: E402
 
 # Configure logging
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+LOG = logging.getLogger()
+level_str = os.environ.get('LOG_LEVEL', 'INFO').upper()
+LOG.setLevel(getattr(logging, level_str, logging.INFO))
 
 DYNAMODB_TABLE = os.getenv('DYNAMODB_TABLE')
 
@@ -120,19 +121,19 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         secret_name_installation_id = os.getenv('SECRET_NAME_INSTALLATION_ID')
         os.getenv('AWS_REGION')
 
-        logger.info('Fetching secrets from AWS Secrets Manager')
+        LOG.info('Fetching secrets from AWS Secrets Manager')
         app_id = get_secret(secret_name_app_id)
         private_key = base64.b64decode(get_secret(
             secret_name_private_key)).decode('utf-8')
         installation_id = get_secret(secret_name_installation_id)
 
         # Generate JWT
-        logger.info('Generating JWT')
+        LOG.info('Generating JWT')
         private_key = private_key.replace('\\n', '\n')
         jwt_token = generate_jwt(app_id, private_key)
 
         # Get installation access token
-        logger.info('Getting installation access token')
+        LOG.info('Getting installation access token')
         access_token = get_installation_access_token(
             jwt_token, installation_id)
 
@@ -143,7 +144,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'message': 'Cleaned lock successfully.'})
         }
     except Exception as e:
-        logger.error(f'Error: {str(e)}')
+        LOG.error(f'Error: {str(e)}')
         return {
             'statusCode': 500,
             'body': json.dumps({'message': 'An error occurred', 'error': str(e)})

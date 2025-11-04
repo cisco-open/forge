@@ -16,8 +16,9 @@ import jwt  # noqa: E402
 import requests  # noqa: E402
 
 # Configure logging
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+LOG = logging.getLogger()
+level_str = os.environ.get('LOG_LEVEL', 'INFO').upper()
+LOG.setLevel(getattr(logging, level_str, logging.INFO))
 
 
 def generate_jwt(app_id: str, private_key: str) -> str:
@@ -102,7 +103,7 @@ def create_runner_group(access_token: str, github_api: str, organization: str, r
     }
     response = requests.post(url, json=payload, headers=headers)
     response.raise_for_status()
-    logger.info(
+    LOG.info(
         f"Created runner group '{runner_group_name}' with visibility '{visibility}'.")
     return response.json()
 
@@ -125,7 +126,7 @@ def save_to_runner_group(access_token: str, github_api: str, organization: str, 
         response = requests.patch(
             patch_url, json=patch_payload, headers=headers)
         response.raise_for_status()
-        logger.info(
+        LOG.info(
             f"Updated runner group '{runner_group_name}' visibility to '{visibility}'.")
     else:
         group = create_runner_group(
@@ -139,7 +140,7 @@ def save_to_runner_group(access_token: str, github_api: str, organization: str, 
             add_url = f'{github_api}/orgs/{organization}/actions/runner-groups/{group_id}/repositories/{repo_id}'
             response = requests.put(add_url, headers=headers)
             response.raise_for_status()
-            logger.info(
+            LOG.info(
                 f"Added repository {repo['full_name']} to runner group {runner_group_name}.")
 
 
@@ -158,7 +159,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         secret_name_installation_id = os.getenv('SECRET_NAME_INSTALLATION_ID')
         repo_selection = os.getenv('REPOSITORY_SELECTION')
 
-        logger.info('Fetching secrets from AWS Secrets Manager')
+        LOG.info('Fetching secrets from AWS Secrets Manager')
         app_id = get_secret(secret_name_app_id)
         private_key = base64.b64decode(get_secret(
             secret_name_private_key)).decode('utf-8')
@@ -167,22 +168,22 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         github_api = os.getenv('GITHUB_API')
         runner_group_name = os.getenv('RUNNER_GROUP_NAME')
 
-        logger.info('Generating JWT')
+        LOG.info('Generating JWT')
         private_key = private_key.replace('\\n', '\n')
         jwt_token = generate_jwt(app_id, private_key)
 
-        logger.info('Getting installation access token')
+        LOG.info('Getting installation access token')
         access_token = get_installation_access_token(
             jwt_token, installation_id, github_api)
 
         repos = []
         if repo_selection == 'selected':
-            logger.info('Listing selected repositories')
+            LOG.info('Listing selected repositories')
             repos = list_repositories(access_token, github_api)
         else:
-            logger.info('GitHub App installed on all repositories')
+            LOG.info('GitHub App installed on all repositories')
 
-        logger.info('Saving runner group configuration')
+        LOG.info('Saving runner group configuration')
         save_to_runner_group(access_token, github_api, organization,
                              runner_group_name, repos, visibility=repo_selection)
 
@@ -191,7 +192,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'message': 'Repositories added to runner group successfully.'})
         }
     except Exception as e:
-        logger.error(f'Error: {str(e)}')
+        LOG.error(f'Error: {str(e)}')
         return {
             'statusCode': 500,
             'body': json.dumps({'message': 'An error occurred', 'error': str(e)})

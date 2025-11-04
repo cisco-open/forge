@@ -8,10 +8,9 @@ from typing import Any, Dict, List
 
 import boto3
 
-logger = logging.getLogger()
-if not logger.handlers:
-    logging.basicConfig(level=logging.INFO)
-logger.setLevel(logging.INFO)
+LOG = logging.getLogger()
+level_str = os.environ.get('LOG_LEVEL', 'INFO').upper()
+LOG.setLevel(getattr(logging, level_str, logging.INFO))
 
 SPLUNK_MAX_BATCH_BYTES = 600_000_000
 SPLUNK_MAX_RETRIES = 5
@@ -21,7 +20,7 @@ SPLUNK_RETRY_BASE_SLEEP = 1.0
 def lambda_handler(event: Dict[str, Any], _context) -> None:
     instance_ids = extract_instance_ids_from_createtags(event)
     if not instance_ids:
-        logger.info(
+        LOG.info(
             'No instance IDs found (non-CreateTags event or none starting with i-)')
         return
 
@@ -58,7 +57,7 @@ def lambda_handler(event: Dict[str, Any], _context) -> None:
         send_events(req, batch)
         total_sent += len(batch)
 
-    logger.info('Completed. Total event objects sent: %s', total_sent)
+    LOG.info('Completed. Total event objects sent: %s', total_sent)
 
 
 def _json_default(obj):
@@ -88,18 +87,18 @@ def send_events(req: urllib.request.Request, events: List[str]) -> None:
             resp_raw = urllib.request.urlopen(req, timeout=30).read()
             resp = json.loads(resp_raw.decode('utf-8'))
             if resp.get('text') == 'Success':
-                logger.info('Successfully sent %s events (bytes=%s)',
-                            len(events), len(data))
+                LOG.info('Successfully sent %s events (bytes=%s)',
+                         len(events), len(data))
                 return
             raise RuntimeError(f"Unexpected HEC response: {resp}")
         except Exception as exc:  # noqa: BLE001
             if retries >= SPLUNK_MAX_RETRIES:
-                logger.error('Failed after %s retries: %s',
-                             SPLUNK_MAX_RETRIES, exc)
+                LOG.error('Failed after %s retries: %s',
+                          SPLUNK_MAX_RETRIES, exc)
                 return
             sleep_for = SPLUNK_RETRY_BASE_SLEEP + random.random()
-            logger.warning('Send failed (%s); retry %s/%s in %.2fs',
-                           exc, retries + 1, SPLUNK_MAX_RETRIES, sleep_for)
+            LOG.warning('Send failed (%s); retry %s/%s in %.2fs',
+                        exc, retries + 1, SPLUNK_MAX_RETRIES, sleep_for)
             time.sleep(sleep_for)
             retries += 1
 

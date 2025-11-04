@@ -18,8 +18,9 @@ MAX_BATCH_SIZE_BYTES = 950_000
 MAX_BATCH_COUNT = 500
 METRICS_BATCH_SIZE = 500
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+LOG = logging.getLogger()
+level_str = os.environ.get('LOG_LEVEL', 'INFO').upper()
+LOG.setLevel(getattr(logging, level_str, logging.INFO))
 
 s3 = boto3.client('s3')
 
@@ -43,11 +44,11 @@ def send_to_splunk_batch(events):
             data=compressed_payload,
             timeout=10,
         )
-        logger.info('[Splunk Batch] Sent %d events | Status: %s',
-                    len(events), resp.status_code)
+        LOG.info('[Splunk Batch] Sent %d events | Status: %s',
+                 len(events), resp.status_code)
         resp.raise_for_status()
     except requests.RequestException as e:
-        logger.error('Failed to send batch to Splunk: %s', e)
+        LOG.error('Failed to send batch to Splunk: %s', e)
 
 
 def send_metric_to_o11y_batch(metrics):
@@ -68,11 +69,11 @@ def send_metric_to_o11y_batch(metrics):
             json=payload,
             timeout=10,
         )
-        logger.info('[O11y Batch] Sent %d metrics | Status: %s',
-                    len(metrics), resp.status_code)
+        LOG.info('[O11y Batch] Sent %d metrics | Status: %s',
+                 len(metrics), resp.status_code)
         resp.raise_for_status()
     except requests.RequestException as e:
-        logger.error('Failed to send metric batch: %s', e)
+        LOG.error('Failed to send metric batch: %s', e)
 
 
 def extract_arn_parts(arn):
@@ -108,7 +109,7 @@ def parse_tags(val):
 
 
 def preprocess_df(df):
-    logger.info('Raw DataFrame shape: %s', df.shape)
+    LOG.info('Raw DataFrame shape: %s', df.shape)
 
     df['line_item_usage_start_date'] = pd.to_datetime(
         df['line_item_usage_start_date'])
@@ -119,5 +120,5 @@ def preprocess_df(df):
         lambda tags: tags.get('user_aws_application', 'unknown'))
     df = df[df['user_aws_application'] != 'unknown']
 
-    logger.info('Preprocessed DataFrame shape: %s', df.shape)
+    LOG.info('Preprocessed DataFrame shape: %s', df.shape)
     return df

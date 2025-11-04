@@ -1,25 +1,27 @@
 import io
 import json
 import logging
+import os
 from urllib.parse import unquote
 
 import boto3
 import common
 import pandas as pd
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+LOG = logging.getLogger()
+level_str = os.environ.get('LOG_LEVEL', 'INFO').upper()
+LOG.setLevel(getattr(logging, level_str, logging.INFO))
 
 s3 = boto3.client('s3')
 
 
 def lambda_handler(event, context):
-    logger.info('Lambda triggered with event: %s', json.dumps(event))
+    LOG.info('Lambda triggered with event: %s', json.dumps(event))
 
     for record in event['Records']:
         bucket = record['s3']['bucket']['name']
         key = unquote(record['s3']['object']['key'])
-        logger.info('Processing file from bucket: %s, key: %s', bucket, key)
+        LOG.info('Processing file from bucket: %s, key: %s', bucket, key)
 
         obj = s3.get_object(Bucket=bucket, Key=key)
         df = pd.read_parquet(io.BytesIO(obj['Body'].read()))
@@ -37,6 +39,6 @@ def lambda_handler(event, context):
             s3_key = f'tmp/cur-per-resource/{key}/day={day}/data.parquet'
             s3.upload_file(tmp_path, bucket, s3_key)
 
-            logger.info('Uploaded %s (%d rows)', s3_key, len(daily_df))
+            LOG.info('Uploaded %s (%d rows)', s3_key, len(daily_df))
 
     return {'statusCode': 200}

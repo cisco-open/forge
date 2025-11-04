@@ -12,7 +12,8 @@ import requests
 from requests.exceptions import RequestException
 
 LOG = logging.getLogger()
-LOG.setLevel(os.environ.get('LOG_LEVEL', logging.INFO))
+level_str = os.environ.get('LOG_LEVEL', 'INFO').upper()
+LOG.setLevel(getattr(logging, level_str, logging.INFO))
 
 SECRETS = boto3.client('secretsmanager')
 S3 = boto3.client('s3')
@@ -138,8 +139,7 @@ def _github_auth(secret_app_id: str, secret_private_key: str, secret_installatio
 
 def _keys(repo_full_name: str, run_id: Any, run_attempt: Any, job_id: Any) -> Tuple[str, str, str]:
     run_attempt = run_attempt or 1
-    safe_repo = repo_full_name.replace('/', '_')
-    base_path = f"{safe_repo}/{run_id}/{run_attempt}/{job_id}"
+    base_path = f"{repo_full_name}/{run_id}/{run_attempt}/{job_id}"
     return base_path, f"{base_path}.log", f"{base_path}.json"
 
 

@@ -23,7 +23,8 @@ from typing import Iterable
 import boto3
 
 LOG = logging.getLogger()
-LOG.setLevel(os.environ.get('LOG_LEVEL', logging.INFO))
+level_str = os.environ.get('LOG_LEVEL', 'INFO').upper()
+LOG.setLevel(getattr(logging, level_str, logging.INFO))
 
 s3_client = boto3.client('s3')
 kinesis_client = boto3.client('kinesis')

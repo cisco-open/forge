@@ -17,6 +17,11 @@ module "update_ec2_tags" {
 
   trigger_on_package_timestamp = false
 
+  environment_variables = {
+    LOG_LEVEL = var.runner_configs.log_level
+  }
+
+
   attach_policy_json = true
 
   policy_json = data.aws_iam_policy_document.update_ec2_tags.json

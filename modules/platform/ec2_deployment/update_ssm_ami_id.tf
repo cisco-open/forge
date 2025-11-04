@@ -32,6 +32,7 @@ module "update_runner_ami_lambda" {
 
   environment_variables = {
     RUNNER_AMI_MAP = local.runner_ami_map_json
+    LOG_LEVEL      = var.runner_configs.log_level
   }
 
   attach_policy_json = true

@@ -8,7 +8,8 @@ from typing import Any, Dict
 import boto3
 
 LOG = logging.getLogger()
-LOG.setLevel(os.environ.get('LOG_LEVEL', logging.INFO))
+level_str = os.environ.get('LOG_LEVEL', 'INFO').upper()
+LOG.setLevel(getattr(logging, level_str, logging.INFO))
 
 DEFAULT_FAILURES = {'cancelled', 'failure',
                     'timed_out', 'timeout', 'startup_failure'}

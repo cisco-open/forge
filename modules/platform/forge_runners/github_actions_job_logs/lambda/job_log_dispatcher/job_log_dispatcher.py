@@ -5,7 +5,8 @@ import os
 import boto3
 
 LOG = logging.getLogger()
-LOG.setLevel(os.environ.get('LOG_LEVEL', logging.INFO))
+level_str = os.environ.get('LOG_LEVEL', 'INFO').upper()
+LOG.setLevel(getattr(logging, level_str, logging.INFO))
 
 sqs = boto3.client('sqs')
 
