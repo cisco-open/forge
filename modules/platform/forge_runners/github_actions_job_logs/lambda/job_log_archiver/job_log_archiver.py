@@ -200,7 +200,7 @@ def lambda_handler(event: Dict[str, Any], _context: Any) -> Dict[str, Any]:  # p
                         env['KMS_KEY_ARN'], obj_tags)
         size = len(body)
         _put_json_object(env['BUCKET_NAME'], event_key,
-                         gh_event, env['KMS_KEY_ARN'], obj_tags)
+                         detail, env['KMS_KEY_ARN'], obj_tags)
 
         return {
             'status': 'ok',

@@ -120,9 +120,8 @@ data "aws_iam_policy_document" "kms_s3" {
     }
   }
 
-  # Optional: wildcard for future buckets (if needed)
   statement {
-    sid    = "AllowS3SendMessageWildcard"
+    sid    = "AllowS3SendMessageToSQS"
     effect = "Allow"
     principals {
       type        = "Service"
@@ -130,31 +129,23 @@ data "aws_iam_policy_document" "kms_s3" {
     }
     actions = [
       "kms:Encrypt",
-      "kms:Decrypt",
       "kms:GenerateDataKey*"
     ]
     resources = ["*"]
-
-    condition {
-      test     = "ArnLike"
-      variable = "aws:SourceArn"
-      values   = ["arn:aws:s3:::*-forge-gh-logs-*"]
-    }
-
     condition {
       test     = "StringEquals"
       variable = "aws:SourceAccount"
       values   = [data.aws_caller_identity.current.account_id]
     }
     condition {
-      test     = "StringEquals"
-      variable = "kms:ViaService"
-      values   = ["sqs.${var.aws_region}.amazonaws.com"]
+      test     = "ArnLike"
+      variable = "aws:SourceArn"
+      values   = ["arn:aws:s3:::*-forge-gh-logs-*"]
     }
     condition {
       test     = "StringEquals"
-      variable = "kms:CallerAccount"
-      values   = [data.aws_caller_identity.current.account_id]
+      variable = "kms:ViaService"
+      values   = ["sqs.${var.aws_region}.amazonaws.com"]
     }
   }
 }

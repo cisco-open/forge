@@ -2,7 +2,7 @@ resource "aws_sqs_queue" "log_events_queue" {
   name                       = "github-runner-logs-s3-events"
   visibility_timeout_seconds = 900
   message_retention_seconds  = 86400
-  # kms_master_key_id          = aws_kms_key.log_lines_stream.arn
+  kms_master_key_id          = aws_kms_key.log_lines_stream.arn
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.log_events_dlq.arn
     maxReceiveCount     = 2
