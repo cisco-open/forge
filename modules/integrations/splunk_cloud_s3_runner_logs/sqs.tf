@@ -1,8 +1,8 @@
 resource "aws_sqs_queue" "log_events_queue" {
-  name                       = "github-runner-logs-s3-events"
+  name                       = "splunk-s3-runner-logs-events"
   visibility_timeout_seconds = 900
   message_retention_seconds  = 86400
-  kms_master_key_id          = aws_kms_key.log_lines_stream.arn
+  kms_master_key_id          = aws_kms_key.splunk_s3_runner_logs.arn
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.log_events_dlq.arn
     maxReceiveCount     = 2
@@ -11,9 +11,9 @@ resource "aws_sqs_queue" "log_events_queue" {
 }
 
 resource "aws_sqs_queue" "log_events_dlq" {
-  name                      = "github-runner-logs-s3-events-dlq"
+  name                      = "splunk-s3-runner-logs-events-dlq"
   message_retention_seconds = 1209600 # 14 days
-  kms_master_key_id         = aws_kms_key.log_lines_stream.arn
+  kms_master_key_id         = aws_kms_key.splunk_s3_runner_logs.arn
   tags                      = merge(var.tags, { Purpose = "dlq" })
 }
 

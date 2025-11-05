@@ -1,9 +1,9 @@
-############################################
-# IAM for Firehose
-############################################
+locals {
+  prefix_firehose = "splunk-s3-runner-logs-firehose"
+}
 
 resource "aws_iam_role" "firehose_role" {
-  name = "github-runner-logs-firehose-role-${var.aws_region}"
+  name = "${local.prefix_firehose}-role-${var.aws_region}"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -16,7 +16,7 @@ resource "aws_iam_role" "firehose_role" {
 }
 
 resource "aws_iam_policy" "firehose_policy" {
-  name        = "github-runner-logs-firehose-policy-${var.aws_region}"
+  name        = "${local.prefix_firehose}-policy-${var.aws_region}"
   description = "Permissions for Firehose to read Kinesis and write to Splunk + backup S3"
   policy = jsonencode({
     Version = "2012-10-17"
@@ -28,8 +28,9 @@ resource "aws_iam_policy" "firehose_policy" {
           "kinesis:DescribeStream",
           "kinesis:GetShardIterator",
           "kinesis:GetRecords",
-        "kinesis:ListShards"]
-        Resource = aws_kinesis_stream.log_lines_stream.arn
+          "kinesis:ListShards"
+        ]
+        Resource = aws_kinesis_stream.splunk_s3_runner_logs.arn
       },
       {
         Sid    = "S3BackupWrite"
@@ -51,7 +52,7 @@ resource "aws_iam_policy" "firehose_policy" {
         Sid      = "KMS"
         Effect   = "Allow"
         Action   = ["kms:Encrypt", "kms:Decrypt", "kms:GenerateDataKey", "kms:DescribeKey"]
-        Resource = aws_kms_key.log_lines_stream.arn
+        Resource = aws_kms_key.splunk_s3_runner_logs.arn
       },
       {
         Sid    = "LogsWrite"
@@ -80,10 +81,10 @@ resource "aws_iam_role_policy_attachment" "firehose_attach" {
 ############################################
 
 resource "aws_kinesis_firehose_delivery_stream" "splunk_firehose" {
-  name        = "github-runner-logs-to-splunk-${var.aws_region}"
+  name        = "${local.prefix_firehose}-${var.aws_region}"
   destination = "splunk"
   kinesis_source_configuration {
-    kinesis_stream_arn = aws_kinesis_stream.log_lines_stream.arn
+    kinesis_stream_arn = aws_kinesis_stream.splunk_s3_runner_logs.arn
     role_arn           = aws_iam_role.firehose_role.arn
   }
   splunk_configuration {
@@ -106,16 +107,13 @@ resource "aws_kinesis_firehose_delivery_stream" "splunk_firehose" {
       log_stream_name = "delivery"
     }
   }
-  tags       = var.tags
-  depends_on = [aws_iam_role_policy_attachment.firehose_attach]
+  tags = var.tags
 }
 
 # CloudWatch Log Group for Firehose delivery diagnostics
 resource "aws_cloudwatch_log_group" "firehose_splunk" {
-  name              = "/aws/kinesisfirehose/github-runner-logs-to-splunk-${var.aws_region}"
+  name              = "/aws/kinesisfirehose/${local.prefix_firehose}-${var.aws_region}"
   retention_in_days = var.logging_retention_in_days
-  kms_key_id        = aws_kms_key.log_lines_stream.arn
+  kms_key_id        = aws_kms_key.splunk_s3_runner_logs.arn
   tags              = var.tags
-
-  depends_on = [aws_kms_key.log_lines_stream]
 }

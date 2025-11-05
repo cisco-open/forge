@@ -30,7 +30,7 @@ data "aws_iam_policy_document" "kms_s3" {
     condition {
       test     = "StringEquals"
       variable = "kms:EncryptionContext:aws:logs:arn"
-      values   = ["arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/github-runner-logs-to-splunk-${var.aws_region}"]
+      values   = ["arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/${local.prefix_firehose}-${var.aws_region}"]
     }
 
     condition {
@@ -150,7 +150,7 @@ data "aws_iam_policy_document" "kms_s3" {
   }
 }
 
-resource "aws_kms_key" "log_lines_stream" {
+resource "aws_kms_key" "splunk_s3_runner_logs" {
   description             = "KMS key for GitHub logs ingestion pipeline"
   deletion_window_in_days = 30
   enable_key_rotation     = true
@@ -158,7 +158,7 @@ resource "aws_kms_key" "log_lines_stream" {
   policy                  = data.aws_iam_policy_document.kms_s3.json
 }
 
-resource "aws_kms_alias" "log_lines_stream" {
-  name          = "alias/github-runner-logs-lines"
-  target_key_id = aws_kms_key.log_lines_stream.arn
+resource "aws_kms_alias" "splunk_s3_runner_logs" {
+  name          = "alias/splunk-s3-runner-logs"
+  target_key_id = aws_kms_key.splunk_s3_runner_logs.arn
 }

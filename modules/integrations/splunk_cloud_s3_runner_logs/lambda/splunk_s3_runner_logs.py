@@ -1,17 +1,3 @@
-"""Lambda handler for streaming S3 log objects line-by-line to Kinesis with metadata.
-
-Pipeline: S3 -> SQS -> Lambda -> Kinesis Data Stream -> Firehose -> Splunk
-
-Features:
-- Memory efficient: never load full object into memory.
-- Gzip aware: transparently handle .gz objects.
-- Batch records: up to 500 records per PutRecords call or 4MB aggregate.
-- Retry failed records with exponential backoff (simple capped approach).
-- Adds metadata: source, sourcetype, AccountId, Region, data_manager_input_id.
-"""
-
-from __future__ import annotations
-
 import json
 import logging
 import os
@@ -74,11 +60,23 @@ def lambda_handler(event, _context):
             tags: dict[str, str] = {}
             try:
                 tag_resp = s3_client.get_object_tagging(Bucket=bucket, Key=key)
-                for t in tag_resp.get('TagSet', []):
+                tag_set = tag_resp.get('TagSet', [])
+                LOG.debug('Fetched %d tags for bucket=%s key=%s',
+                          len(tag_set), bucket, key)
+
+                for idx, t in enumerate(tag_set):
                     k = t.get('Key')
                     v = t.get('Value')
+                    LOG.debug(
+                        'Processing tag[%d]: Key=%s, Value=%s', idx, k, v)
                     if k is not None and v is not None:
                         tags[k] = v
+                    else:
+                        LOG.warning(
+                            'Skipped invalid tag[%d] bucket=%s key=%s tag=%s', idx, bucket, key, t)
+
+                LOG.debug('Final object_tags bucket=%s key=%s tag_count=%d tags=%s',
+                          bucket, key, len(tags), tags)
             except Exception as tag_err:  # pragma: no cover
                 LOG.warning(
                     'tag_fetch_failed bucket=%s key=%s err=%s', bucket, key, tag_err)
@@ -163,8 +161,8 @@ def wrap_line(line: str, ts: float, bucket: str, key: str, tags: dict[str, str])
     """
     base_fields = {
         'AccountId': ACCOUNT_ID,
+        **tags,
     }
-    base_fields.update(tags)
     event = {
         'event': line,
         'source': f"{bucket}:{key}",
@@ -172,6 +170,10 @@ def wrap_line(line: str, ts: float, bucket: str, key: str, tags: dict[str, str])
         'time': ts,
         'fields': base_fields,
     }
+    LOG.debug(
+        'wrap_line_debug bucket=%s key=%s event=%s',
+        bucket, key, event
+    )
     return json.dumps(event) + '\n'
 
 
