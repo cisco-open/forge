@@ -49,6 +49,7 @@ def _retry_request(func, attempts=GITHUB_RETRY_ATTEMPTS, delay=GITHUB_RETRY_DELA
                 time.sleep(delay * (2 ** attempt))
             else:
                 raise
+    return None
 
 
 def _get_installation_token(installation_id: str, jwt_token: str, api: str) -> str:
