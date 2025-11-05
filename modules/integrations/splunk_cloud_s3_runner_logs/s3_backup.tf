@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "firehose_backup" {
-  bucket = "${data.aws_caller_identity.current.account_id}-s3-to-kinesis"
+  bucket = "splunk-s3-runner-logs-failed-${data.aws_caller_identity.current.account_id}-${var.aws_region}"
   tags   = var.tags
 }
 

@@ -3,7 +3,7 @@ module "s3_to_kinesis_lambda" {
   source  = "terraform-aws-modules/lambda/aws"
   version = "8.1.0"
 
-  function_name = "github-runner-logs-s3-to-kinesis-lambda"
+  function_name = "github-runner-logs-s3-to-kinesis-lambda-${var.aws_region}"
   handler       = "s3_to_kinesis.lambda_handler"
   runtime       = "python3.12"
   timeout       = 900
@@ -20,7 +20,6 @@ module "s3_to_kinesis_lambda" {
 
   environment_variables = {
     KINESIS_STREAM_NAME = aws_kinesis_stream.log_lines_stream.name
-    SOURCETYPE          = var.splunk_hec_sourcetype
     LOG_LEVEL           = var.log_level
   }
 
@@ -72,10 +71,24 @@ data "aws_iam_policy_document" "s3_to_kinesis_lambda" {
     resources = [aws_kms_key.log_lines_stream.arn]
   }
 
+  statement {
+    sid    = "KMSBuckets"
+    effect = "Allow"
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:GenerateDataKey",
+      "kms:DescribeKey"
+    ]
+    resources = [
+      for b in local.bucket_list :
+      b.kms
+    ]
+  }
 }
 
 resource "aws_cloudwatch_log_group" "s3_to_kinesis_lambda" {
-  name              = "/aws/lambda/github-runner-logs-s3-to-kinesis-lambda"
+  name              = "/aws/lambda/github-runner-logs-s3-to-kinesis-lambda-${var.aws_region}"
   retention_in_days = var.logging_retention_in_days
   tags              = var.tags
   tags_all          = var.tags

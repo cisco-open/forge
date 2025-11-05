@@ -2,7 +2,7 @@ resource "aws_sqs_queue" "log_events_queue" {
   name                       = "github-runner-logs-s3-events"
   visibility_timeout_seconds = 900
   message_retention_seconds  = 86400
-  kms_master_key_id          = aws_kms_key.log_lines_stream.arn
+  # kms_master_key_id          = aws_kms_key.log_lines_stream.arn
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.log_events_dlq.arn
     maxReceiveCount     = 2
@@ -19,21 +19,32 @@ resource "aws_sqs_queue" "log_events_dlq" {
 
 resource "aws_sqs_queue_policy" "allow_s3" {
   queue_url = aws_sqs_queue.log_events_queue.url
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid       = "AllowForgeLogBucketsWildcard"
-        Effect    = "Allow"
-        Principal = { Service = "s3.amazonaws.com" }
-        Action    = "sqs:SendMessage"
-        Resource  = aws_sqs_queue.log_events_queue.arn
-        Condition = {
-          ArnLike = {
-            "aws:SourceArn" = "arn:aws:s3:::*forge-gh-logs-${data.aws_caller_identity.current.account_id}"
-          }
-        }
-      }
-    ]
-  })
+  policy    = data.aws_iam_policy_document.allow_s3.json
+}
+
+data "aws_iam_policy_document" "allow_s3" {
+  statement {
+    sid    = "AllowForgeLogBucketsWildcard"
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["s3.amazonaws.com"]
+    }
+
+    actions   = ["sqs:SendMessage"]
+    resources = [aws_sqs_queue.log_events_queue.arn]
+
+    condition {
+      test     = "ArnLike"
+      variable = "aws:SourceArn"
+      values   = ["arn:aws:s3:::*-forge-gh-logs-*"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceAccount"
+      values   = [data.aws_caller_identity.current.account_id]
+    }
+  }
 }

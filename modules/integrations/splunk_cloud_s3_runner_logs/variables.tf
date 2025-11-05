@@ -30,24 +30,7 @@ variable "log_level" {
   default     = "INFO"
 }
 
-variable "splunk_hec_host" {
-  description = "Hostname (without protocol) of Splunk HEC endpoint"
+variable "splunk_hec_endpoint" {
+  description = "Full URL of Splunk HEC endpoint"
   type        = string
-}
-
-variable "splunk_hec_port" {
-  description = "Port of Splunk HEC endpoint (e.g. 8088)"
-  type        = number
-  default     = 8088
-}
-
-variable "splunk_hec_sourcetype" {
-  description = "Sourcetype to assign to logs ingested via HEC"
-  type        = string
-}
-
-variable "regions" {
-  description = "List of AWS regions where S3 buckets are located"
-  type        = list(string)
-  default     = ["us-east-1"]
 }

@@ -31,6 +31,7 @@ kinesis_client = boto3.client('kinesis')
 sts_client = boto3.client('sts')
 
 SOURCETYPE = os.getenv('SOURCETYPE')
+INDEX = os.getenv('INDEX')
 KINESIS_STREAM_NAME = os.getenv('KINESIS_STREAM_NAME')
 MAX_RECORDS_BATCH = 500
 MAX_BATCH_BYTES = 4000000
@@ -130,19 +131,29 @@ def stream_s3_object_lines(bucket: str, key: str) -> Iterable[str]:
         yield buffer
 
 
-def extract_ts(line: str, last_ts: float | None) -> float:
+def extract_ts(line: str, last_ts: str | float | None) -> float:
     """
     Extract timestamp from log line if present, else use last_ts or current time.
+    Handles ISO8601 timestamps with more than 6 fractional digits.
+    Returns epoch seconds (float) for Splunk `_time`.
     """
+    def parse_iso8601(ts_str: str) -> float:
+        # truncate fractional seconds to microseconds
+        if '.' in ts_str:
+            base, frac = ts_str.rstrip('Z').split('.')
+            frac = (frac + '000000')[:6]  # pad/truncate to 6 digits
+            ts_str = f"{base}.{frac}Z"
+        dt = datetime.strptime(ts_str, '%Y-%m-%dT%H:%M:%S.%fZ')
+        dt = dt.replace(tzinfo=timezone.utc)
+        return round(dt.timestamp(), 3)
+
     m = TIMESTAMP_RE.match(line)
     if m:
         try:
-            dt = datetime.strptime(
-                m.group(1), '%Y-%m-%dT%H:%M:%S.%fZ').replace(tzinfo=timezone.utc)
-            return dt.timestamp()
+            return parse_iso8601(m.group(1))
         except Exception:
-            return time.time()
-    return last_ts if last_ts is not None else time.time()
+            return round(time.time(), 3)
+    return round(time.time(), 3)
 
 
 def wrap_line(line: str, ts: float, bucket: str, key: str, tags: dict[str, str]) -> str:
@@ -157,11 +168,11 @@ def wrap_line(line: str, ts: float, bucket: str, key: str, tags: dict[str, str])
     event = {
         'event': line,
         'source': f"{bucket}:{key}",
-        'sourcetype': SOURCETYPE,
+        'sourcetype': f"forgecicd:runner-logs:{'json' if key.endswith('.json') else 'logs'}",
         'time': ts,
         'fields': base_fields,
     }
-    return json.dumps(event, separators=(',', ':'))
+    return json.dumps(event) + '\n'
 
 
 def ship_lines_to_kinesis(lines: Iterable[str], bucket: str, key: str, tags: dict[str, str]) -> int:
@@ -224,26 +235,3 @@ def ship_lines_to_kinesis(lines: Iterable[str], bucket: str, key: str, tags: dic
 
     flush()
     return total_shipped
-
-
-if __name__ == '__main__':
-    # Simple local test harness
-    sample_event = {
-        'Records': [
-            {
-                'body': json.dumps(
-                    {
-                        'Records': [
-                            {
-                                's3': {
-                                    'bucket': {'name': 'example-bucket'},
-                                    'object': {'key': 'logs/LOG.txt'},
-                                }
-                            }
-                        ]
-                    }
-                )
-            }
-        ]
-    }
-    print(lambda_handler(sample_event, None))

@@ -2,6 +2,7 @@
 set -euo pipefail
 
 AWS_PROFILE="${1}"
+AWS_REGION="${2}"
 SUFFIX="forge-gh-logs"
 
 # Get buckets as JSON array
@@ -22,12 +23,21 @@ for BUCKET in $(echo "$BUCKETS_JSON" | jq -r '.[]'); do
     if [[ "$REGION" == "None" ]]; then
         REGION="us-east-1"
     fi
-    ITEM=$(jq -n --arg name "$BUCKET" --arg region "$REGION" '{name: $name, region: $region}')
-    RESULT=$(echo "$RESULT" | jq ". + [$ITEM]")
+
+    # Region filter: include bucket only if REGION matches AWS_REGION, or wildcard/empty
+    if [[ "$REGION" == "$AWS_REGION" ]]; then
+        # Try to get KMS key ID
+        KMS_KEY=$(aws s3api get-bucket-encryption \
+            --profile "${AWS_PROFILE}" \
+            --bucket "$BUCKET" \
+            --query "ServerSideEncryptionConfiguration.Rules[0].ApplyServerSideEncryptionByDefault.KMSMasterKeyID" \
+            --output text 2>/dev/null || echo "")
+
+        ITEM=$(jq -n --arg name "$BUCKET" --arg region "$REGION" --arg kms "$KMS_KEY" '{name: $name, region: $region, kms: $kms}')
+        RESULT=$(echo "$RESULT" | jq ". + [$ITEM]")
+    fi
 done
 
-# Encode the array as JSON string
-ENCODED=$(jq -n --argjson buckets "$RESULT" '$buckets | @json')
+ENCODED_STRING=$(jq -n --argjson arr "$RESULT" '$arr | @json')
 
-# Wrap in an object
-echo "{\"buckets\": $ENCODED}"
+echo "{\"buckets\": $ENCODED_STRING}"
