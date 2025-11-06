@@ -16,7 +16,7 @@
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.17.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.19.0 |
 | <a name="provider_null"></a> [null](#provider\_null) | 3.2.4 |
 | <a name="provider_random"></a> [random](#provider\_random) | 3.7.2 |
 | <a name="provider_time"></a> [time](#provider\_time) | 0.13.1 |
@@ -26,48 +26,26 @@
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_arc_runners"></a> [arc\_runners](#module\_arc\_runners) | ../arc_deployment | n/a |
-| <a name="module_clean_global_lock_lambda"></a> [clean\_global\_lock\_lambda](#module\_clean\_global\_lock\_lambda) | terraform-aws-modules/lambda/aws | 8.1.0 |
 | <a name="module_ec2_runners"></a> [ec2\_runners](#module\_ec2\_runners) | ../ec2_deployment | n/a |
 | <a name="module_github_actions_job_logs"></a> [github\_actions\_job\_logs](#module\_github\_actions\_job\_logs) | ./github_actions_job_logs | n/a |
-| <a name="module_github_webhook_relay_source"></a> [github\_webhook\_relay\_source](#module\_github\_webhook\_relay\_source) | ../../integrations/github_webhook_relay_source | n/a |
-| <a name="module_register_github_app_runner_group_lambda"></a> [register\_github\_app\_runner\_group\_lambda](#module\_register\_github\_app\_runner\_group\_lambda) | terraform-aws-modules/lambda/aws | 8.1.0 |
+| <a name="module_github_app_runner_group"></a> [github\_app\_runner\_group](#module\_github\_app\_runner\_group) | ./github_app_runner_group | n/a |
+| <a name="module_github_global_lock"></a> [github\_global\_lock](#module\_github\_global\_lock) | ./github_global_lock | n/a |
+| <a name="module_github_webhook_relay"></a> [github\_webhook\_relay](#module\_github\_webhook\_relay) | ./github_webhook_relay | n/a |
 
 ## Resources
 
 | Name | Type |
 |------|------|
-| [aws_cloudwatch_event_rule.clean_global_lock_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_rule) | resource |
-| [aws_cloudwatch_event_rule.register_github_app_runner_group_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_rule) | resource |
-| [aws_cloudwatch_event_target.clean_global_lock_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_target) | resource |
-| [aws_cloudwatch_event_target.register_github_app_runner_group_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_target) | resource |
-| [aws_cloudwatch_log_group.clean_global_lock_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
-| [aws_cloudwatch_log_group.register_github_app_runner_group_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
-| [aws_dynamodb_table.lock_table](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/dynamodb_table) | resource |
-| [aws_iam_policy.dynamodb_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
 | [aws_iam_policy.ecr_access_for_ec2_instances](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
 | [aws_iam_policy.role_assumption_for_forge_runners](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
-| [aws_iam_role.secret_reader](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
-| [aws_iam_role_policy.secret_reader_inline](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy) | resource |
-| [aws_kms_alias.github_webhook_relay](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_alias) | resource |
-| [aws_kms_key.github_webhook_relay](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_key) | resource |
-| [aws_lambda_permission.clean_global_lock_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission) | resource |
-| [aws_lambda_permission.register_github_app_runner_group_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission) | resource |
 | [aws_secretsmanager_secret.cicd_secrets](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret) | resource |
-| [aws_secretsmanager_secret.github_webhook_relay](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret) | resource |
 | [aws_secretsmanager_secret_version.cicd_secrets](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret_version) | resource |
-| [aws_secretsmanager_secret_version.github_webhook_relay](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret_version) | resource |
 | [aws_servicecatalogappregistry_application.forge](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/servicecatalogappregistry_application) | resource |
 | [null_resource.update_github_app_webhook](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
-| [random_id.github_webhook_relay_source_secret](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
 | [random_id.random](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
 | [time_sleep.wait_60_seconds](https://registry.terraform.io/providers/hashicorp/time/latest/docs/resources/sleep) | resource |
-| [aws_iam_policy_document.clean_global_lock_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.dynamodb_policy_document](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.ecr_access_for_ec2_instances](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.register_github_app_runner_group_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.role_assumption_for_forge_runners](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.secret_reader_permissions](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.secret_reader_trust](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_secretsmanager_random_password.secret_seeds](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/secretsmanager_random_password) | data source |
 | [aws_secretsmanager_secret.data_cicd_secrets](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/secretsmanager_secret) | data source |
 | [aws_secretsmanager_secret_version.data_cicd_secrets](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/secretsmanager_secret_version) | data source |
@@ -103,19 +81,9 @@
 
 | Name | Description |
 |------|-------------|
-| <a name="output_arc_runners_arn_map"></a> [arc\_runners\_arn\_map](#output\_arc\_runners\_arn\_map) | n/a |
-| <a name="output_arc_subnet_cidr_blocks"></a> [arc\_subnet\_cidr\_blocks](#output\_arc\_subnet\_cidr\_blocks) | n/a |
-| <a name="output_ec2_runners_ami_name_map"></a> [ec2\_runners\_ami\_name\_map](#output\_ec2\_runners\_ami\_name\_map) | n/a |
-| <a name="output_ec2_runners_arn_map"></a> [ec2\_runners\_arn\_map](#output\_ec2\_runners\_arn\_map) | n/a |
-| <a name="output_ec2_subnet_cidr_blocks"></a> [ec2\_subnet\_cidr\_blocks](#output\_ec2\_subnet\_cidr\_blocks) | n/a |
-| <a name="output_github_actions_job_logs"></a> [github\_actions\_job\_logs](#output\_github\_actions\_job\_logs) | Map containing GitHub Actions job logs resources (bucket\_arn, internal\_reader\_role\_arn). |
-| <a name="output_github_app_installation"></a> [github\_app\_installation](#output\_github\_app\_installation) | n/a |
-| <a name="output_github_webhook_relay_source_secret"></a> [github\_webhook\_relay\_source\_secret](#output\_github\_webhook\_relay\_source\_secret) | n/a |
-| <a name="output_github_webhook_relay_source_secret_arn"></a> [github\_webhook\_relay\_source\_secret\_arn](#output\_github\_webhook\_relay\_source\_secret\_arn) | n/a |
-| <a name="output_github_webhook_relay_source_secret_role_arn"></a> [github\_webhook\_relay\_source\_secret\_role\_arn](#output\_github\_webhook\_relay\_source\_secret\_role\_arn) | n/a |
-| <a name="output_github_webhook_relay_source_webhook_endpoint"></a> [github\_webhook\_relay\_source\_webhook\_endpoint](#output\_github\_webhook\_relay\_source\_webhook\_endpoint) | The webhook endpoint for GitHub webhook relay. |
-| <a name="output_runner_group_name"></a> [runner\_group\_name](#output\_runner\_group\_name) | n/a |
-| <a name="output_tenant"></a> [tenant](#output\_tenant) | n/a |
-| <a name="output_webhook_endpoint"></a> [webhook\_endpoint](#output\_webhook\_endpoint) | Needed for the GitHub App to issue callbacks. |
-| <a name="output_webhook_secret"></a> [webhook\_secret](#output\_webhook\_secret) | n/a |
+| <a name="output_forge_core"></a> [forge\_core](#output\_forge\_core) | Core tenant-level metadata (non-sensitive). |
+| <a name="output_forge_github_actions_job_logs"></a> [forge\_github\_actions\_job\_logs](#output\_forge\_github\_actions\_job\_logs) | GitHub Actions job log archival resources. |
+| <a name="output_forge_github_app"></a> [forge\_github\_app](#output\_forge\_github\_app) | GitHub App related outputs. |
+| <a name="output_forge_runners"></a> [forge\_runners](#output\_forge\_runners) | Combined runners output (EC2 + ARC) |
+| <a name="output_forge_webhook_relay"></a> [forge\_webhook\_relay](#output\_forge\_webhook\_relay) | Webhook relay integration outputs. |
 <!-- END_TF_DOCS -->
