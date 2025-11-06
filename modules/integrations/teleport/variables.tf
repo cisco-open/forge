@@ -18,11 +18,6 @@ variable "tags" {
   description = "A map of tags to apply to resources."
 }
 
-variable "tenant_prefix" {
-  description = "Name of the EKS cluster"
-  type        = string
-}
-
 variable "tenants" {
   type        = list(string)
   description = "List of tenants to create roles for."

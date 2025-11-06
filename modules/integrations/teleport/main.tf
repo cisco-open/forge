@@ -2,11 +2,7 @@ module "tenant" {
   for_each = { for tenant in var.tenants : tenant => tenant }
   source   = "./tenant"
 
-  namespace       = each.value
-  release_name    = "${each.value}-${var.tenant_prefix}"
-  teleport_config = var.teleport_config
-
-  tags = var.tags
+  namespace = each.value
 }
 
 resource "kubernetes_config_map" "aws_auth_teleport" {
@@ -21,10 +17,13 @@ resource "kubernetes_config_map" "aws_auth_teleport" {
       for tenant in var.tenants : <<EOT
 - groups:
     - teleport-${tenant}
-  rolearn: ${module.tenant[tenant].iam_role_arn}
+  rolearn: ${aws_iam_role.teleport_role.arn}
   username: teleport-${tenant}
 EOT
     ])
   }
-  depends_on = [module.tenant]
+  depends_on = [
+    module.tenant,
+    aws_iam_role.teleport_role
+  ]
 }
