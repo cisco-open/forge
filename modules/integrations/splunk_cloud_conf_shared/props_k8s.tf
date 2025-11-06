@@ -58,6 +58,11 @@ resource "splunk_configs_conf" "forgecicd_kube_container_runner" {
       variables["unarchive_cmd_start_mode"],
     ]
   }
+  depends_on = [
+    splunk_configs_conf.forgecicd_kube_container_runner_tenant_fields,
+    splunk_configs_conf.forgecicd_kube_container_runner_ci_result,
+    splunk_configs_conf.forgecicd_kube_container_runner_gh_runner_version
+  ]
 }
 
 resource "splunk_configs_conf" "forgecicd_kube_container_init_docker_creds" {
@@ -118,6 +123,9 @@ resource "splunk_configs_conf" "forgecicd_kube_container_init_docker_creds" {
       variables["unarchive_cmd_start_mode"],
     ]
   }
+  depends_on = [
+    splunk_configs_conf.forgecicd_kube_container_runner_tenant_fields
+  ]
 }
 
 resource "splunk_configs_conf" "forgecicd_kube_container_init_dind_rootless" {
@@ -178,6 +186,9 @@ resource "splunk_configs_conf" "forgecicd_kube_container_init_dind_rootless" {
       variables["unarchive_cmd_start_mode"],
     ]
   }
+  depends_on = [
+    splunk_configs_conf.forgecicd_kube_container_runner_tenant_fields
+  ]
 }
 
 resource "splunk_configs_conf" "forgecicd_kube_container_init_work" {
@@ -238,6 +249,9 @@ resource "splunk_configs_conf" "forgecicd_kube_container_init_work" {
       variables["unarchive_cmd_start_mode"],
     ]
   }
+  depends_on = [
+    splunk_configs_conf.forgecicd_kube_container_runner_tenant_fields
+  ]
 }
 
 resource "splunk_configs_conf" "forgecicd_kube_container_init_dind_externals" {
@@ -298,6 +312,9 @@ resource "splunk_configs_conf" "forgecicd_kube_container_init_dind_externals" {
       variables["unarchive_cmd_start_mode"],
     ]
   }
+  depends_on = [
+    splunk_configs_conf.forgecicd_kube_container_runner_tenant_fields
+  ]
 }
 
 resource "splunk_configs_conf" "forgecicd_kube_container_dind" {
@@ -358,6 +375,9 @@ resource "splunk_configs_conf" "forgecicd_kube_container_dind" {
       variables["unarchive_cmd_start_mode"],
     ]
   }
+  depends_on = [
+    splunk_configs_conf.forgecicd_kube_container_runner_tenant_fields
+  ]
 }
 
 resource "splunk_configs_conf" "forgecicd_kube_container_listener" {
@@ -418,6 +438,9 @@ resource "splunk_configs_conf" "forgecicd_kube_container_listener" {
       variables["unarchive_cmd_start_mode"],
     ]
   }
+  depends_on = [
+    splunk_configs_conf.forgecicd_kube_container_listener_tenant_fields
+  ]
 }
 
 resource "splunk_configs_conf" "forgecicd_kube_container_manager" {
@@ -478,6 +501,9 @@ resource "splunk_configs_conf" "forgecicd_kube_container_manager" {
       variables["unarchive_cmd_start_mode"],
     ]
   }
+  depends_on = [
+    splunk_configs_conf.forgecicd_kube_container_manager_tenant_fields
+  ]
 }
 resource "splunk_configs_conf" "forgecicd_kube_container_log_worker" {
   name = "props/kube:container:worker"
@@ -537,6 +563,9 @@ resource "splunk_configs_conf" "forgecicd_kube_container_log_worker" {
       variables["unarchive_cmd_start_mode"],
     ]
   }
+  depends_on = [
+    splunk_configs_conf.forgecicd_kube_container_runner_tenant_fields
+  ]
 }
 resource "splunk_configs_conf" "forgecicd_kube_container_log_hook" {
   name = "props/kube:container:hook"
@@ -596,4 +625,7 @@ resource "splunk_configs_conf" "forgecicd_kube_container_log_hook" {
       variables["unarchive_cmd_start_mode"],
     ]
   }
+  depends_on = [
+    splunk_configs_conf.forgecicd_kube_container_runner_tenant_fields
+  ]
 }

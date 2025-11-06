@@ -60,6 +60,13 @@ resource "splunk_configs_conf" "forgecicd_cloudwatchlogs_forgecicd" {
       variables["unarchive_cmd_start_mode"],
     ]
   }
+  depends_on = [
+    splunk_configs_conf.forgecicd_cloudwatchlogs_runner_tenant_fields,
+    splunk_configs_conf.forgecicd_cloudwatchlogs_extract_log_time_message,
+    splunk_configs_conf.forgecicd_cloudwatchlogs_runner_pages_github_repo_name,
+    splunk_configs_conf.forgecicd_cloudwatchlogs_runner_ci_result,
+    splunk_configs_conf.forgecicd_cloudwatchlogs_runner_gh_runner_version
+  ]
 }
 
 resource "splunk_configs_conf" "forgecicd_metadata" {
@@ -118,4 +125,10 @@ resource "splunk_configs_conf" "forgecicd_metadata" {
       variables["unarchive_cmd_start_mode"],
     ]
   }
+  depends_on = [
+    splunk_configs_conf.forgecicd_metadata_tenant_fields,
+    splunk_configs_conf.forgecicd_metadata_instance_id,
+    splunk_configs_conf.forgecicd_metadata_image_id,
+    splunk_configs_conf.forgecicd_metadata_instance_type
+  ]
 }

@@ -51,4 +51,8 @@ resource "splunk_configs_conf" "forgecicd_aws_billing_cur" {
       variables["unarchive_cmd_start_mode"],
     ]
   }
+  depends_on = [
+    splunk_configs_conf.forgecicd_billing_cur_instance_id,
+    splunk_configs_conf.forgecicd_billing_cur_volume_id
+  ]
 }

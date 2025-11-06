@@ -53,4 +53,9 @@ resource "splunk_configs_conf" "forgecicd_cloudwatchlogs" {
       variables["unarchive_cmd_start_mode"],
     ]
   }
+  depends_on = [
+    splunk_configs_conf.forgecicd_cloudwatchlogs_lambda_tenant_fields,
+    splunk_configs_conf.forgecicd_cloudwatchlogs_global_lambda_tenant_fields,
+    splunk_configs_conf.forgecicd_extra_lambda_tenant_fields
+  ]
 }
