@@ -131,26 +131,27 @@ def stream_s3_object_lines(bucket: str, key: str) -> Iterable[str]:
 
 def extract_ts(line: str, last_ts: str | float | None) -> float:
     """
-    Extract timestamp from log line if present, else use last_ts or current time.
-    Handles ISO8601 timestamps with more than 6 fractional digits.
-    Returns epoch seconds (float) for Splunk `_time`.
+    Extract timestamp from a log line.
+    - If the line has an ISO8601 timestamp, parse and return it.
+    - Else, reuse `last_ts` from the previous line.
+    - If no previous timestamp exists, use current system time.
     """
     def parse_iso8601(ts_str: str) -> float:
-        # truncate fractional seconds to microseconds
         if '.' in ts_str:
             base, frac = ts_str.rstrip('Z').split('.')
-            frac = (frac + '000000')[:6]  # pad/truncate to 6 digits
+            frac = (frac + '000000')[:6]
             ts_str = f"{base}.{frac}Z"
         dt = datetime.strptime(ts_str, '%Y-%m-%dT%H:%M:%S.%fZ')
-        dt = dt.replace(tzinfo=timezone.utc)
-        return round(dt.timestamp(), 3)
+        return dt.replace(tzinfo=timezone.utc).timestamp()
 
     m = TIMESTAMP_RE.match(line)
     if m:
         try:
-            return parse_iso8601(m.group(1))
+            return round(parse_iso8601(m.group(1)), 3)
         except Exception:
-            return round(time.time(), 3)
+            pass
+    if last_ts is not None:
+        return last_ts
     return round(time.time(), 3)
 
 
