@@ -6,15 +6,10 @@ resource "splunk_configs_conf" "forgecicd_runner_logs_json" {
     "REPORT-forgecicd_runner_ec2"                      = "forgecicd_runner_ec2"
     "REPORT-forgecicd_runner_arc"                      = "forgecicd_runner_arc"
   }
-  acl {
-    app     = var.splunk_conf.acl.app
-    owner   = var.splunk_conf.acl.owner
-    sharing = var.splunk_conf.acl.sharing
-    read    = var.splunk_conf.acl.read
-    write   = var.splunk_conf.acl.write
-  }
+
   lifecycle {
     ignore_changes = [
+      acl,
       variables["ADD_EXTRA_TIME_FIELDS"],
       variables["ANNOTATE_PUNCT"],
       variables["AUTO_KV_JSON"],
@@ -72,15 +67,10 @@ resource "splunk_configs_conf" "forgecicd_runner_logs_logs" {
     "REPORT-forgecicd_runner_ec2"                     = "forgecicd_runner_ec2"
     "REPORT-forgecicd_runner_arc"                     = "forgecicd_runner_arc"
   }
-  acl {
-    app     = var.splunk_conf.acl.app
-    owner   = var.splunk_conf.acl.owner
-    sharing = var.splunk_conf.acl.sharing
-    read    = var.splunk_conf.acl.read
-    write   = var.splunk_conf.acl.write
-  }
+
   lifecycle {
     ignore_changes = [
+      acl,
       variables["ADD_EXTRA_TIME_FIELDS"],
       variables["ANNOTATE_PUNCT"],
       variables["AUTO_KV_JSON"],
