@@ -1,6 +1,6 @@
 module "splunk_dm_metadata_ec2inst_pattern_tags_lambda" {
   source  = "terraform-aws-modules/lambda/aws"
-  version = "8.1.0"
+  version = "8.1.2"
 
   role_name = "SplunkDMMetadataEC2InstPatternTags-${var.region}"
 

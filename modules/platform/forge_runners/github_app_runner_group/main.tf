@@ -1,6 +1,6 @@
 module "register_github_app_runner_group_lambda" {
   source  = "terraform-aws-modules/lambda/aws"
-  version = "8.1.0"
+  version = "8.1.2"
 
   function_name = "${var.prefix}-register-github-app-runner-group"
   handler       = "github_app_runner_group.lambda_handler"

@@ -4,7 +4,7 @@ locals {
 
 module "cur_per_resource" {
   source  = "terraform-aws-modules/lambda/aws"
-  version = "8.1.0"
+  version = "8.1.2"
 
   function_name = local.cur_per_resource_lambda_name
   description   = "Processes AWS Billing CUR reports per resource and sends data to Splunk"

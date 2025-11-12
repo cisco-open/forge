@@ -13,7 +13,7 @@ locals {
 
 module "update_runner_ami_lambda" {
   source  = "terraform-aws-modules/lambda/aws"
-  version = "8.1.0"
+  version = "8.1.2"
 
   function_name = "${var.runner_configs.prefix}-update-runner-ami"
   handler       = "update_ssm_ami_id.lambda_handler"

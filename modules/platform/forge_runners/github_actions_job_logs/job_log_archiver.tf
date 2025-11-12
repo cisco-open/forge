@@ -5,7 +5,7 @@ locals {
 
 module "job_log_archiver" {
   source  = "terraform-aws-modules/lambda/aws"
-  version = "8.1.0"
+  version = "8.1.2"
 
   function_name = local.resource_name_archiver
   handler       = "job_log_archiver.lambda_handler"
