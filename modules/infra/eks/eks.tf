@@ -1,6 +1,6 @@
 module "ebs_csi_irsa_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts"
-  version = "6.1.0"
+  version = "6.2.3"
 
   name                  = "${var.cluster_name}-${var.aws_region}-ebs-csi"
   use_name_prefix       = false
