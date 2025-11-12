@@ -56,7 +56,7 @@ data "external" "download_lambdas" {
 }
 
 module "runners" {
-  source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=v6.7.8"
+  source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=v6.8.5"
 
   aws_region = var.aws_region
 
