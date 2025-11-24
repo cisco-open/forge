@@ -5,7 +5,7 @@
 
   "packageRules": [
     {
-      "matchDatasources": ["git-tags"],
+      "matchDatasources": ["github-tags"],
       "matchPackageNames": ["github-aws-runners/terraform-aws-github-runner"],
       "groupName": "terraform-aws-github-runner version",
       "separateMajorMinor": false,
@@ -19,7 +19,7 @@
       "matchStrings": [
         "download_lambdas\\.sh\"\\s*,\\s*\"[^\"]+\"\\s*,\\s*\"v(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
       ],
-      "datasourceTemplate": "git-tags",
+      "datasourceTemplate": "github-tags",
       "depNameTemplate": "github-aws-runners/terraform-aws-github-runner",
       "versioningTemplate": "semver"
     }
