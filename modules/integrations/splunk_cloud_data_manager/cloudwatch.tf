@@ -9,7 +9,7 @@ locals {
     try(local.ds_cloudwatch.cwl-eks.enabled, false) ? { "cwl-eks" = {} } : {},
     try(local.ds_cloudwatch.cwl-lambda.enabled, false) ? { "cwl-lambda" = {} } : {},
     try(local.ds_cloudwatch.cwl-rds.enabled, false) ? { "cwl-rds" = {} } : {},
-    try(local.ds_cloudwatch.cwl-vpc-flow-logs.enabled, false) ? { "cwl-vpc-flow-logs" = {} } : {},
+    try(local.ds_cloudwatch.cwl-vpc-flow-logs.enabled, false) ? { "cwl-vpc-flow-logs" = { vpcIds = local.ds_cloudwatch.cwl-vpc-flow-logs.vpcIds } } : {},
   )
 
   details_cloudwatch = merge(

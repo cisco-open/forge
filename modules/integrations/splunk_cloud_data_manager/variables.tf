@@ -81,7 +81,7 @@ variable "cloudwatch_log_groups_config" {
       cwl-vpc-flow-logs = optional(object({
         enabled = bool
         index   = string
-        vpcIds  = map(list(string))
+        vpcIds  = any
       }))
     })
     regions = list(string)
