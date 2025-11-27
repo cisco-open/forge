@@ -59,7 +59,13 @@ signature=$(
     openssl dgst -sha256 -sign <(echo -n "${PRIVATE_KEY}") \
         <(echo -n "${header_payload}") | b64enc
 )
-log "Signature (b64 len)=${#signature}"
+
+if [[ -z "$signature" ]]; then
+    log "WARN: Signature generation failed (invalid PRIVATE_KEY or header_payload?)"
+    exit 0
+else
+    log "Signature (b64 len)=${#signature}"
+fi
 
 # Create JWT
 JWT="${header_payload}"."${signature}"
@@ -68,7 +74,7 @@ log "JWT constructed (len)=${#JWT}"
 # Optional local validation (exp > now)
 if ((exp <= now)); then
     log "ERROR: exp is not in the future"
-    exit 1
+    exit 0
 fi
 
 LOG_FILE="/tmp/${PREFIX}-github_api_response.log"
@@ -110,5 +116,5 @@ if [[ "${http_code}" -ge 200 && "${http_code}" -lt 300 ]]; then
     log "Success"
 else
     log "Failure (non-2xx). See ${LOG_FILE}"
-    exit 1
+    exit 0
 fi
