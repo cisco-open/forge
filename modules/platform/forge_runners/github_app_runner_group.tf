@@ -14,4 +14,6 @@ module "github_app_runner_group" {
   ghes_org                  = var.ghes_org
   runner_group_name         = var.runner_group_name
   repository_selection      = var.repository_selection
+
+  depends_on = [data.aws_secretsmanager_secret_version.data_cicd_secrets]
 }

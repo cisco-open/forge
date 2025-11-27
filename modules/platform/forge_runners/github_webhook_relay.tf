@@ -13,4 +13,6 @@ module "github_webhook_relay" {
   tags                      = local.all_security_tags
 
   github_webhook_relay = var.github_webhook_relay
+
+  depends_on = [data.aws_secretsmanager_secret_version.data_cicd_secrets]
 }

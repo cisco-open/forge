@@ -10,4 +10,6 @@ module "github_global_lock" {
   logging_retention_in_days = var.logging_retention_in_days
   log_level                 = var.log_level
   tags                      = local.all_security_tags
+
+  depends_on = [data.aws_secretsmanager_secret_version.data_cicd_secrets]
 }

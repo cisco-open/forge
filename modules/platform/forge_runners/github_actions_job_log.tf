@@ -14,4 +14,6 @@ module "github_actions_job_logs" {
   tags                      = local.all_security_tags
   event_bus_name            = module.ec2_runners[0].event_bus_name
   ghes_url                  = var.ghes_url
+
+  depends_on = [data.aws_secretsmanager_secret_version.data_cicd_secrets]
 }
