@@ -98,7 +98,7 @@ resource "signalfx_time_chart" "k8s_memory_usage_bytes" {
 }
 
 
-resource "signalfx_dashboard" "k8s_runner" {
+resource "signalfx_dashboard" "runner_k8s" {
   name            = "K8S Runners"
   description     = ""
   dashboard_group = signalfx_dashboard_group.forgecicd.id
