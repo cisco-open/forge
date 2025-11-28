@@ -23,11 +23,15 @@ variable "splunk_organization_id" {
   type        = string
 }
 
+variable "team" {
+  description = "Team ID"
+  type        = string
+}
+
 variable "dashboard_variables" {
   type = object({
     runner_k8s = object({
       tenant_names = list(string)
-      clusters     = list(string)
       dynamic_variables = list(object({
         property         = string
         alias            = string
@@ -63,4 +67,5 @@ variable "dashboard_variables" {
       ))
     })
   })
+  description = "Variables for Dashboards"
 }

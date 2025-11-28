@@ -6,7 +6,40 @@ A = data('^aws.ec2.disk.ops.write.total', extrapolation='last_value', maxExtrapo
 B = data('^aws.ec2.disk.ops.read.total', extrapolation='last_value', maxExtrapolations=5).sum().publish(label='B')
 EOF
 
-  plot_type = "ColumnChart"
+  plot_type                 = "ColumnChart"
+  on_chart_legend_dimension = "plot_label"
+  time_range                = 3600
+
+  axes_precision = 0
+
+  axis_left {
+    min_value = 0
+  }
+  axis_right {
+    min_value = 0
+  }
+
+  histogram_options {
+    color_theme = "gold"
+  }
+
+  legend_options_fields {
+    enabled  = true
+    property = "sf_metric"
+  }
+
+  viz_options {
+    axis         = "left"
+    color        = "blue"
+    display_name = "Write ops"
+    label        = "A"
+  }
+  viz_options {
+    axis         = "right"
+    color        = "orange"
+    display_name = "Read ops"
+    label        = "B"
+  }
 }
 
 resource "signalfx_time_chart" "chart_total_memory_overview_bytes" {
@@ -23,6 +56,69 @@ E = data('system.memory.usage', filter=filter('state', 'slab_unreclaimable') and
 EOF
 
   plot_type = "AreaChart"
+
+  axes_precision            = 4
+  on_chart_legend_dimension = "plot_label"
+  stacked                   = true
+  unit_prefix               = "Binary"
+
+  time_range = 3600
+
+  histogram_options {
+    color_theme = "gold"
+  }
+
+  legend_options_fields {
+    enabled  = true
+    property = "sf_originatingMetric"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "sf_metric"
+  }
+
+  viz_options {
+    axis         = "left"
+    color        = "azure"
+    display_name = "Cached"
+    label        = "B"
+    value_unit   = "Byte"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "emerald"
+    display_name = "Free"
+    label        = "C"
+    value_unit   = "Byte"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "pink"
+    display_name = "Unreclaimable"
+    label        = "E"
+    value_unit   = "Byte"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "red"
+    display_name = "Used"
+    label        = "F"
+    value_unit   = "Byte"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "violet"
+    display_name = "Reclaimable"
+    label        = "D"
+    value_unit   = "Byte"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "yellow"
+    display_name = "Buffered"
+    label        = "A"
+    value_unit   = "Byte"
+  }
 }
 
 resource "signalfx_time_chart" "chart_network_out_bytes_vs_24h_change" {
@@ -35,6 +131,41 @@ C = (A/B-1).scale(100).publish(label='C')
 EOF
 
   plot_type = "ColumnChart"
+
+  axes_precision            = 0
+  unit_prefix               = "Binary"
+  on_chart_legend_dimension = "plot_label"
+
+  time_range = 3600
+
+  histogram_options {
+    color_theme = "gold"
+  }
+
+  legend_options_fields {
+    enabled  = true
+    property = "sf_metric"
+  }
+
+  viz_options {
+    axis         = "left"
+    display_name = "A - timeshift 1d"
+    label        = "B"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "blue"
+    display_name = "Network out"
+    label        = "A"
+    value_unit   = "Byte"
+  }
+  viz_options {
+    axis         = "right"
+    color        = "orange"
+    display_name = "24h change (%)"
+    label        = "C"
+    plot_type    = "LineChart"
+  }
 }
 
 resource "signalfx_time_chart" "chart_network_out_bytes" {
@@ -51,6 +182,68 @@ F = (A).max().publish(label='F')
 EOF
 
   plot_type = "AreaChart"
+
+  axes_precision            = 0
+  unit_prefix               = "Binary"
+  on_chart_legend_dimension = "plot_label"
+
+  time_range = 3600
+
+  axis_left {
+    min_value = 0
+    label     = "Bytes"
+  }
+
+  histogram_options {
+    color_theme = "gold"
+  }
+
+  legend_options_fields {
+    enabled  = true
+    property = "sf_metric"
+  }
+
+  viz_options {
+    axis         = "left"
+    display_name = "Network bytes out"
+    label        = "A"
+    value_unit   = "Byte"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "azure"
+    display_name = "Median"
+    label        = "D"
+    value_unit   = "Byte"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "chartreuse"
+    display_name = "Min"
+    label        = "B"
+    value_unit   = "Byte"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "pink"
+    display_name = "P90"
+    label        = "E"
+    value_unit   = "Byte"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "red"
+    display_name = "Max"
+    label        = "F"
+    value_unit   = "Byte"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "yellowgreen"
+    display_name = "P10"
+    label        = "C"
+    value_unit   = "Byte"
+  }
 }
 
 resource "signalfx_list_chart" "chart_top_instances_by_cpu_utilization" {
@@ -60,6 +253,40 @@ resource "signalfx_list_chart" "chart_top_instances_by_cpu_utilization" {
   program_text = "A = data('^aws.ec2.cpu.utilization', extrapolation='last_value', maxExtrapolations=5).mean(by=['AWSUniqueId']).top(count=5).publish(label='A')"
 
   sort_by = "-value"
+
+  color_by                = "Scale"
+  refresh_interval        = 60
+  max_precision           = 4
+  time_range              = 900
+  secondary_visualization = "None"
+
+  color_scale {
+    color = "blue"
+    gt    = 0
+  }
+  color_scale {
+    color = "red"
+    lte   = 0
+  }
+
+  legend_options_fields {
+    enabled  = true
+    property = "AWSUniqueId"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "aws_instance_id"
+  }
+
+  viz_options {
+    display_name = "Top instances by CPU utilization"
+    label        = "A"
+    value_suffix = "%"
+  }
 }
 
 resource "signalfx_time_chart" "chart_disk_utilization" {
@@ -79,6 +306,182 @@ A = alerts(autodetect_id='F6cykK5AYAA', filter=filter('aws_tag_ProductFamilyName
 EOF
 
   plot_type = "AreaChart"
+
+  axes_precision = 0
+
+  on_chart_legend_dimension = "plot_label"
+  time_range                = 3600
+
+  event_options {
+    display_name = "Autodetect alerts"
+    label        = "A"
+  }
+
+  histogram_options {
+    color_theme = "gold"
+  }
+
+  legend_options_fields {
+    enabled  = true
+    property = "sf_originatingMetric"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "sf_metric"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_instance_id"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "k8s.cluster.name"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "host.image.id"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "os.type"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "type"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "AWSUniqueId"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "host.type"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "cloud.availability_zone"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "mountpoint"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "mode"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "host.name"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "cloud.platform"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "host.id"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "cloud.region"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "cloud.provider"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "k8s.node.name"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "cloud.account.id"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "device"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "deployment.environment"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "state"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "azure.resourcegroup.name"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "azure.vm.name"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "azure.vm.size"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "azure_resource_id"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "azure.vm.scaleset.name"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "gcp_id"
+  }
+
+  viz_options {
+    axis         = "left"
+    display_name = "Disk utilization"
+    label        = "D"
+    value_suffix = "%"
+  }
+  viz_options {
+    axis         = "left"
+    display_name = "Free disk"
+    label        = "C"
+    value_suffix = "%"
+  }
+  viz_options {
+    axis         = "left"
+    display_name = "Used disk"
+    label        = "B"
+    value_suffix = "%"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "azure"
+    display_name = "P50"
+    label        = "G"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "chartreuse"
+    display_name = "Min"
+    label        = "E"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "pink"
+    display_name = "P90"
+    label        = "H"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "red"
+    display_name = "Max"
+    label        = "I"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "yellowgreen"
+    display_name = "P10"
+    label        = "F"
+  }
 }
 
 resource "signalfx_list_chart" "chart_disk_metrics_24h_change" {
@@ -101,6 +504,84 @@ L = (J/K-1).scale(100).publish(label='L')
 EOF
 
   sort_by = "-value"
+
+  color_by                = "Scale"
+  unit_prefix             = "Binary"
+  max_precision           = 4
+  secondary_visualization = "Sparkline"
+  time_range              = 900
+  refresh_interval        = 60
+
+  color_scale {
+    color = "blue"
+    gt    = 0
+  }
+  color_scale {
+    color = "red"
+    lte   = 0
+  }
+
+  legend_options_fields {
+    enabled  = true
+    property = "sf_metric"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "AWSUniqueId"
+  }
+
+  viz_options {
+    display_name = "A - timeshift 1d"
+    label        = "B"
+  }
+  viz_options {
+    display_name = "D - timeshift 1d"
+    label        = "E"
+  }
+  viz_options {
+    display_name = "Disk I/O read"
+    label        = "I"
+    value_suffix = "%"
+  }
+  viz_options {
+    display_name = "Disk I/O write"
+    label        = "L"
+    value_suffix = "%"
+  }
+  viz_options {
+    display_name = "Disk ops read"
+    label        = "C"
+    value_suffix = "%"
+  }
+  viz_options {
+    display_name = "Disk ops write"
+    label        = "F"
+    value_suffix = "%"
+  }
+  viz_options {
+    display_name = "G - timeshift 1d"
+    label        = "H"
+  }
+  viz_options {
+    display_name = "J - timeshift 1d"
+    label        = "K"
+  }
+  viz_options {
+    display_name = "^aws.ec2.disk.io.read.total - sum - mean(1h) - scale:60"
+    label        = "G"
+  }
+  viz_options {
+    display_name = "^aws.ec2.disk.io.write.total - sum - mean(1h) - scale:60"
+    label        = "J"
+  }
+  viz_options {
+    display_name = "^aws.ec2.disk.ops.read.total - sum - mean(1h) - scale:60"
+    label        = "A"
+  }
+  viz_options {
+    display_name = "^aws.ec2.disk.ops.write.total - sum - mean(1h) - scale:60"
+    label        = "D"
+  }
 }
 
 resource "signalfx_list_chart" "chart_top_images_by_mean_cpu_utilization" {
@@ -114,6 +595,45 @@ C = union(A,B).top(count=5).publish("C")
 EOF
 
   sort_by = "-value"
+
+  color_by                = "Scale"
+  time_range              = 900
+  refresh_interval        = 60
+  max_precision           = 4
+  secondary_visualization = "None"
+
+  color_scale {
+    color = "blue"
+    gt    = 0
+  }
+  color_scale {
+    color = "red"
+    lte   = 0
+  }
+
+  legend_options_fields {
+    enabled  = true
+    property = "aws_image_id"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
+  }
+
+  viz_options {
+    display_name = "CPU utilization - OTel"
+    label        = "B"
+  }
+  viz_options {
+    display_name = "CPU utilization - cloudWatch"
+    label        = "A"
+    value_suffix = "%"
+  }
+  viz_options {
+    display_name = "Union"
+    label        = "C"
+    value_suffix = "%"
+  }
 }
 
 resource "signalfx_time_chart" "chart_network_in_bytes" {
@@ -130,6 +650,67 @@ F = (A).max().publish(label='F')
 EOF
 
   plot_type = "AreaChart"
+
+  axes_precision            = 0
+  unit_prefix               = "Binary"
+  on_chart_legend_dimension = "plot_label"
+
+  time_range = 3600
+
+  axis_left {
+    min_value = 0
+    label     = "Bytes"
+  }
+
+  histogram_options {
+    color_theme = "gold"
+  }
+
+  legend_options_fields {
+    enabled  = true
+    property = "sf_metric"
+  }
+
+  viz_options {
+    axis         = "left"
+    display_name = "Network bytes in"
+    label        = "A"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "azure"
+    display_name = "Median"
+    label        = "D"
+    value_unit   = "Byte"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "chartreuse"
+    display_name = "Min"
+    label        = "B"
+    value_unit   = "Byte"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "pink"
+    display_name = "P90"
+    label        = "E"
+    value_unit   = "Byte"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "red"
+    display_name = "Max"
+    label        = "F"
+    value_unit   = "Byte"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "yellowgreen"
+    display_name = "P10"
+    label        = "C"
+    value_unit   = "Byte"
+  }
 }
 
 resource "signalfx_time_chart" "chart_memory_utilization" {
@@ -149,6 +730,185 @@ A = alerts(autodetect_id='F7vC_VlAYAI', filter=filter('aws_tag_ProductFamilyName
 EOF
 
   plot_type = "AreaChart"
+
+  axes_precision = 0
+
+  on_chart_legend_dimension = "plot_label"
+  time_range                = 3600
+
+  axis_left {
+    max_value = 120
+    min_value = 0
+  }
+
+  event_options {
+    display_name = "Autodetect alerts"
+    label        = "A"
+  }
+
+  histogram_options {
+    color_theme = "gold"
+  }
+
+  legend_options_fields {
+    enabled  = true
+    property = "sf_originatingMetric"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "sf_metric"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "cloud.region"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "host.image.id"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "os.type"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "AWSUniqueId"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "host.type"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "cloud.availability_zone"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "cloud.provider"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "cloud.account.id"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "host.name"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "state"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "cloud.platform"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "host.id"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "k8s.cluster.name"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "deployment.environment"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "k8s.node.name"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "azure.resourcegroup.name"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "azure.vm.name"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "azure.vm.size"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "azure_resource_id"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "azure.vm.scaleset.name"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "gcp_id"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "telemetry.sdk.name"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "telemetry.sdk.language"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "telemetry.sdk.version"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "service.name"
+  }
+
+  viz_options {
+    axis         = "left"
+    display_name = "Memory total"
+    label        = "I"
+  }
+  viz_options {
+    axis         = "left"
+    display_name = "Memory usage"
+    label        = "H"
+  }
+  viz_options {
+    axis         = "left"
+    display_name = "Memory utilization"
+    label        = "J"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "azure"
+    display_name = "Median"
+    label        = "E"
+    value_suffix = "%"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "chartreuse"
+    display_name = "Min"
+    label        = "C"
+    value_suffix = "%"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "pink"
+    display_name = "P90"
+    label        = "F"
+    value_suffix = "%"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "red"
+    display_name = "Max"
+    label        = "G"
+    value_suffix = "%"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "yellowgreen"
+    display_name = "P10"
+    label        = "D"
+    value_suffix = "%"
+  }
 }
 
 resource "signalfx_time_chart" "chart_disk_io_bytes" {
@@ -160,6 +920,42 @@ B = data('^aws.ec2.disk.io.read.total', extrapolation='last_value', maxExtrapola
 EOF
 
   plot_type = "ColumnChart"
+
+  axes_precision            = 0
+  unit_prefix               = "Binary"
+  on_chart_legend_dimension = "plot_label"
+  time_range                = 3600
+
+  axis_left {
+    min_value = 0
+  }
+  axis_right {
+    min_value = 0
+  }
+
+  histogram_options {
+    color_theme = "gold"
+  }
+
+  legend_options_fields {
+    enabled  = true
+    property = "sf_metric"
+  }
+
+  viz_options {
+    axis         = "left"
+    color        = "blue"
+    display_name = "Bytes written"
+    label        = "A"
+    value_unit   = "Byte"
+  }
+  viz_options {
+    axis         = "right"
+    color        = "orange"
+    display_name = "Bytes read"
+    label        = "B"
+    value_unit   = "Byte"
+  }
 }
 
 resource "signalfx_time_chart" "chart_network_in_bytes_vs_24h_change" {
@@ -173,6 +969,49 @@ D = (B/C-1).scale(100).publish(label='D')
 EOF
 
   plot_type = "ColumnChart"
+
+  axes_precision = 0
+  unit_prefix    = "Binary"
+
+  on_chart_legend_dimension = "plot_label"
+
+  time_range = 3600
+
+  histogram_options {
+    color_theme = "gold"
+  }
+
+  legend_options_fields {
+    enabled  = true
+    property = "sf_metric"
+  }
+
+  viz_options {
+    axis         = "left"
+    display_name = "A - mean(1h)"
+    label        = "B"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "blue"
+    display_name = "Network in"
+    label        = "A"
+    value_unit   = "Byte"
+  }
+  viz_options {
+    axis         = "right"
+    color        = "orange"
+    display_name = "24h change (%)"
+    label        = "D"
+    plot_type    = "LineChart"
+  }
+  viz_options {
+    axis         = "right"
+    color        = "yellow"
+    display_name = "C"
+    label        = "C"
+    plot_type    = "LineChart"
+  }
 }
 
 resource "signalfx_list_chart" "chart_total_network_errors" {
@@ -184,6 +1023,31 @@ B = data('system.network.errors', filter=filter('direction', 'transmit') and fil
 EOF
 
   sort_by = "-value"
+
+  color_by         = "Metric"
+  max_precision    = 4
+  refresh_interval = 60
+  time_range       = 900
+
+  legend_options_fields {
+    enabled  = false
+    property = "sf_originatingMetric"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "sf_metric"
+  }
+
+  viz_options {
+    color        = "blue"
+    display_name = "Errors with bytes in"
+    label        = "A"
+  }
+  viz_options {
+    color        = "orange"
+    display_name = "Errors with bytes out"
+    label        = "B"
+  }
 }
 
 resource "signalfx_list_chart" "chart_top_memory_page_swaps_sec" {
@@ -196,6 +1060,42 @@ B = data('vmpage_io.swap.out', filter=filter('cloud.platform', 'aws_ec2', 'aws_e
 EOF
 
   sort_by = "-value"
+
+  color_by         = "Scale"
+  max_precision    = 4
+  time_range       = 900
+  refresh_interval = 60
+
+  color_scale {
+    color = "blue"
+    gt    = 0
+  }
+  color_scale {
+    color = "red"
+    lte   = 0
+  }
+
+  legend_options_fields {
+    enabled  = true
+    property = "host.name"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_originatingMetric"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
+  }
+
+  viz_options {
+    display_name = "Pages swapped in"
+    label        = "A"
+  }
+  viz_options {
+    display_name = "Pages swapped out"
+    label        = "B"
+  }
 }
 
 resource "signalfx_list_chart" "chart_active_hosts_per_instance_type" {
@@ -208,6 +1108,38 @@ A.publish("C")
 EOF
 
   sort_by = "-value"
+
+  color_by                = "Scale"
+  max_precision           = 0
+  secondary_visualization = "Sparkline"
+  time_range              = 900
+
+  color_scale {
+    color = "blue"
+    gt    = 0
+  }
+  color_scale {
+    color = "red"
+    lte   = 0
+  }
+
+  legend_options_fields {
+    enabled  = true
+    property = "aws_instance_type"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
+  }
+
+  viz_options {
+    display_name = "CPU utilization - cloudWatch"
+    label        = "A"
+  }
+  viz_options {
+    display_name = "Union"
+    label        = "C"
+  }
 }
 
 resource "signalfx_time_chart" "chart_cpu_utilization" {
@@ -225,6 +1157,64 @@ F = (A).max().publish(label='F')
 EOF
 
   plot_type = "AreaChart"
+
+  axes_precision            = 0
+  on_chart_legend_dimension = "plot_label"
+  time_range                = 3600
+
+  axis_left {
+    max_value = 110
+  }
+
+  event_options {
+    display_name = "Autodetect alerts"
+    label        = "Autodetect alerts"
+  }
+
+  histogram_options {
+    color_theme = "gold"
+  }
+
+  legend_options_fields {
+    enabled  = true
+    property = "sf_metric"
+  }
+
+  viz_options {
+    axis         = "left"
+    display_name = "CPU utilization"
+    label        = "A"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "azure"
+    display_name = "Median"
+    label        = "D"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "chartreuse"
+    display_name = "Min"
+    label        = "B"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "pink"
+    display_name = "P90"
+    label        = "E"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "red"
+    display_name = "Max"
+    label        = "F"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "yellowgreen"
+    display_name = "P10"
+    label        = "C"
+  }
 }
 
 resource "signalfx_list_chart" "chart_active_hosts_by_availability_zone" {
@@ -238,6 +1228,41 @@ C = union(A,B).publish("C")
 EOF
 
   sort_by = "-value"
+
+  color_by                = "Scale"
+  time_range              = 900
+  secondary_visualization = "None"
+
+  color_scale {
+    color = "blue"
+    gt    = 0
+  }
+  color_scale {
+    color = "red"
+    lte   = 0
+  }
+
+  legend_options_fields {
+    enabled  = true
+    property = "aws_availability_zone"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
+  }
+
+  viz_options {
+    display_name = "CPU utilization - OTel"
+    label        = "B"
+  }
+  viz_options {
+    display_name = "CPU utilization - cloudWatch"
+    label        = "A"
+  }
+  viz_options {
+    display_name = "Union"
+    label        = "C"
+  }
 }
 
 resource "signalfx_list_chart" "chart_disk_summary_utilization" {
@@ -251,6 +1276,115 @@ C = ((A/(A+B))*100).mean(by=['host.name', 'AWSUniqueId']).publish(label='C')
 EOF
 
   sort_by = "-value"
+
+  max_precision = 4
+  time_range    = 3600
+
+
+  legend_options_fields {
+    enabled  = false
+    property = "sf_originatingMetric"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_instance_id"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "host.name"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "AWSUniqueId"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "host.image.id"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "os.type"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "type"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "host.type"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "cloud.availability_zone"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "mountpoint"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "mode"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "state"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "cloud.platform"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "host.id"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "cloud.region"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "cloud.provider"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "cloud.account.id"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "device"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "k8s.cluster.name"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "k8s.node.name"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "deployment.environment"
+  }
+
+  viz_options {
+    display_name = "Disk free"
+    label        = "B"
+    value_suffix = "%"
+  }
+  viz_options {
+    display_name = "Disk summary urilzation"
+    label        = "C"
+    value_suffix = "%"
+  }
+  viz_options {
+    display_name = "Disk used"
+    label        = "A"
+    value_suffix = "%"
+  }
 }
 
 resource "signalfx_single_value_chart" "chart_hosts_with_agent_installed" {
@@ -258,6 +1392,15 @@ resource "signalfx_single_value_chart" "chart_hosts_with_agent_installed" {
   description = "Splunk OTel connector installed"
 
   program_text = "A = data('system.memory.usage', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks'), rollup='average').sum(by=['AWSUniqueId']).count().publish(label='A')"
+
+  color_by         = "Dimension"
+  max_precision    = 4
+  refresh_interval = 60
+
+  viz_options {
+    display_name = "Hosts with agent installed"
+    label        = "A"
+  }
 }
 
 resource "signalfx_list_chart" "chart_top_5_network_out_bytes" {
@@ -267,12 +1410,56 @@ resource "signalfx_list_chart" "chart_top_5_network_out_bytes" {
   program_text = "A = data('^aws.ec2.network.io.transmit.total', extrapolation='last_value', maxExtrapolations=5).mean(by=['AWSUniqueId']).top(count=5).publish(label='A')"
 
   sort_by = "-value"
+
+  color_by                = "Scale"
+  unit_prefix             = "Binary"
+  time_range              = 900
+  max_precision           = 4
+  refresh_interval        = 60
+  secondary_visualization = "None"
+
+  color_scale {
+    color = "blue"
+    gt    = 0
+  }
+  color_scale {
+    color = "red"
+    lte   = 0
+  }
+
+  legend_options_fields {
+    enabled  = true
+    property = "AWSUniqueId"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "aws_instance_id"
+  }
+
+  viz_options {
+    display_name = "Network out"
+    label        = "A"
+    value_unit   = "Byte"
+  }
 }
 
 resource "signalfx_single_value_chart" "chart_active_hosts" {
   name = "# Active hosts"
 
   program_text = "A = data('^aws.ec2.cpu.utilization', extrapolation='last_value', maxExtrapolations=2).sum(by=['AWSUniqueId']).count().publish(label='A')"
+
+  color_by         = "Dimension"
+  max_precision    = 4
+  refresh_interval = 60
+
+  viz_options {
+    display_name = "# Hosts"
+    label        = "A"
+  }
 }
 
 resource "signalfx_list_chart" "chart_top_5_network_in_bytes" {
@@ -282,6 +1469,41 @@ resource "signalfx_list_chart" "chart_top_5_network_in_bytes" {
   program_text = "A = data('^aws.ec2.network.io.receive.total', extrapolation='last_value', maxExtrapolations=5).mean(by=['AWSUniqueId']).top(count=5).publish(label='A')"
 
   sort_by = "-value"
+
+  color_by                = "Scale"
+  unit_prefix             = "Binary"
+  max_precision           = 4
+  refresh_interval        = 60
+  time_range              = 900
+  secondary_visualization = "None"
+
+  color_scale {
+    color = "blue"
+    gt    = 0
+  }
+  color_scale {
+    color = "red"
+    lte   = 0
+  }
+
+  legend_options_fields {
+    enabled  = true
+    property = "AWSUniqueId"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "aws_instance_id"
+  }
+
+  viz_options {
+    display_name = "Network in"
+    label        = "A"
+    value_unit   = "Byte"
+  }
 }
 
 
@@ -314,16 +1536,17 @@ resource "signalfx_dashboard" "runner_ec2" {
 
   dynamic "variable" {
     for_each = var.dashboard_variables.runner_ec2.dynamic_variables
+    iterator = var_def
+
     content {
-      property         = each.value.property
-      alias            = each.value.alias
-      description      = each.value.description
-      values           = each.value.values
-      value_required   = each.value.value_required
-      values_suggested = each.value.values_suggested
+      property         = var_def.value.property
+      alias            = var_def.value.alias
+      description      = var_def.value.description
+      values           = var_def.value.values
+      value_required   = var_def.value.value_required
+      values_suggested = var_def.value.values_suggested
     }
   }
-
   chart {
     chart_id = signalfx_single_value_chart.chart_active_hosts.id
     row      = 0

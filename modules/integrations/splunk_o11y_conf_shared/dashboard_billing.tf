@@ -12,6 +12,21 @@ C.publish(label='current')
 EOF
 
   plot_type = "AreaChart"
+
+  axes_precision            = 0
+  on_chart_legend_dimension = "service"
+  time_range                = 3600
+
+  histogram_options {
+    color_theme = "gold"
+  }
+
+  viz_options {
+    axis         = "left"
+    color        = "blue"
+    display_name = "current"
+    label        = "current"
+  }
 }
 
 resource "signalfx_time_chart" "net_cost_per_service" {
@@ -28,6 +43,20 @@ C.publish(label='current')
 EOF
 
   plot_type = "AreaChart"
+
+  axes_precision = 0
+  time_range     = 3600
+
+  histogram_options {
+    color_theme = "gold"
+  }
+
+  viz_options {
+    axis         = "left"
+    color        = "blue"
+    display_name = "current"
+    label        = "current"
+  }
 }
 
 resource "signalfx_time_chart" "net_cost_per_tenant" {
@@ -46,6 +75,20 @@ C.publish(label='current')
 EOF
 
   plot_type = "AreaChart"
+
+  axes_precision = 0
+  time_range     = 3600
+
+  histogram_options {
+    color_theme = "gold"
+  }
+
+  viz_options {
+    axis         = "left"
+    color        = "blue"
+    display_name = "current"
+    label        = "current"
+  }
 }
 
 resource "signalfx_time_chart" "cost_per_tenant" {
@@ -64,6 +107,21 @@ C.publish(label='current')
 EOF
 
   plot_type = "AreaChart"
+
+  axes_precision            = 0
+  on_chart_legend_dimension = "service"
+  time_range                = 3600
+
+  histogram_options {
+    color_theme = "gold"
+  }
+
+  viz_options {
+    axis         = "left"
+    color        = "blue"
+    display_name = "current"
+    label        = "current"
+  }
 }
 
 resource "signalfx_time_chart" "total_cost" {
@@ -87,7 +145,28 @@ C.publish(label='current')
 D.publish(label='baseline')
 EOF
 
-  plot_type = "AreaChart"
+  plot_type                 = "AreaChart"
+  axes_precision            = 0
+  on_chart_legend_dimension = "service"
+
+
+  time_range = 3600
+  histogram_options {
+    color_theme = "gold"
+  }
+
+  viz_options {
+    axis         = "left"
+    color        = "blue"
+    display_name = "current"
+    label        = "current"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "red"
+    display_name = "baseline"
+    label        = "baseline"
+  }
 }
 
 resource "signalfx_time_chart" "total_net_cost" {
@@ -111,7 +190,21 @@ C.publish(label='current')
 # D.publish(label='baseline')
 EOF
 
-  plot_type = "AreaChart"
+  plot_type      = "AreaChart"
+  axes_precision = 0
+
+  time_range = 3600
+
+  histogram_options {
+    color_theme = "gold"
+  }
+
+  viz_options {
+    axis         = "left"
+    color        = "blue"
+    display_name = "current"
+    label        = "current"
+  }
 }
 
 resource "signalfx_dashboard" "billing" {
@@ -132,13 +225,15 @@ resource "signalfx_dashboard" "billing" {
 
   dynamic "variable" {
     for_each = var.dashboard_variables.billing.dynamic_variables
+    iterator = var_def
+
     content {
-      property         = each.value.property
-      alias            = each.value.alias
-      description      = each.value.description
-      values           = each.value.values
-      value_required   = each.value.value_required
-      values_suggested = each.value.values_suggested
+      property         = var_def.value.property
+      alias            = var_def.value.alias
+      description      = var_def.value.description
+      values           = var_def.value.values
+      value_required   = var_def.value.value_required
+      values_suggested = var_def.value.values_suggested
     }
   }
 
