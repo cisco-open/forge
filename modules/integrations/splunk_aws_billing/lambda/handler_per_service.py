@@ -10,7 +10,7 @@ import boto3
 import common
 import pandas as pd
 
-LOG = logging.getLOG()
+LOG = logging.getLogger()
 level_str = os.environ.get('LOG_LEVEL', 'INFO').upper()
 LOG.setLevel(getattr(logging, level_str, logging.INFO))
 
