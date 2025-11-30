@@ -17,7 +17,7 @@ module "ebs_csi_irsa_role" {
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "21.10.0"
+  version = "21.10.1"
 
   name               = var.cluster_name
   kubernetes_version = var.cluster_version
