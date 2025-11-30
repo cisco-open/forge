@@ -215,12 +215,13 @@ resource "signalfx_dashboard" "billing" {
   time_range = "-31d"
 
   variable {
-    property         = "forgecicd_tenant"
-    alias            = "ForgeCICD Tenant Name"
-    description      = ""
-    values           = []
-    value_required   = false
-    values_suggested = var.dashboard_variables.runner_k8s.tenant_names
+    property               = "forgecicd_tenant"
+    alias                  = "ForgeCICD Tenant Name"
+    description            = ""
+    values                 = []
+    value_required         = false
+    values_suggested       = var.dashboard_variables.runner_k8s.tenant_names
+    restricted_suggestions = true
   }
 
   dynamic "variable" {
@@ -228,12 +229,13 @@ resource "signalfx_dashboard" "billing" {
     iterator = var_def
 
     content {
-      property         = var_def.value.property
-      alias            = var_def.value.alias
-      description      = var_def.value.description
-      values           = var_def.value.values
-      value_required   = var_def.value.value_required
-      values_suggested = var_def.value.values_suggested
+      property               = var_def.value.property
+      alias                  = var_def.value.alias
+      description            = var_def.value.description
+      values                 = var_def.value.values
+      value_required         = var_def.value.value_required
+      values_suggested       = var_def.value.values_suggested
+      restricted_suggestions = var_def.value.restricted_suggestions
     }
   }
 

@@ -1517,21 +1517,23 @@ resource "signalfx_dashboard" "runner_ec2" {
   dashboard_group = signalfx_dashboard_group.forgecicd.id
 
   variable {
-    property         = "aws_tag_TenantName"
-    alias            = "ForgeCICD Tenant Name"
-    description      = ""
-    values           = []
-    value_required   = false
-    values_suggested = var.dashboard_variables.runner_ec2.tenant_names
+    property               = "aws_tag_TenantName"
+    alias                  = "ForgeCICD Tenant Name"
+    description            = ""
+    values                 = []
+    value_required         = false
+    values_suggested       = var.dashboard_variables.runner_ec2.tenant_names
+    restricted_suggestions = true
   }
 
   variable {
-    property         = "aws_instance_id"
-    alias            = "ForgeCICD Instance ID"
-    description      = ""
-    values           = []
-    value_required   = false
-    values_suggested = []
+    property               = "aws_instance_id"
+    alias                  = "ForgeCICD Instance ID"
+    description            = ""
+    values                 = []
+    value_required         = false
+    values_suggested       = []
+    restricted_suggestions = false
   }
 
   dynamic "variable" {
@@ -1539,12 +1541,13 @@ resource "signalfx_dashboard" "runner_ec2" {
     iterator = var_def
 
     content {
-      property         = var_def.value.property
-      alias            = var_def.value.alias
-      description      = var_def.value.description
-      values           = var_def.value.values
-      value_required   = var_def.value.value_required
-      values_suggested = var_def.value.values_suggested
+      property               = var_def.value.property
+      alias                  = var_def.value.alias
+      description            = var_def.value.description
+      values                 = var_def.value.values
+      value_required         = var_def.value.value_required
+      values_suggested       = var_def.value.values_suggested
+      restricted_suggestions = var_def.value.restricted_suggestions
     }
   }
   chart {

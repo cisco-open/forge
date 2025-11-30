@@ -441,21 +441,23 @@ resource "signalfx_dashboard" "runner_k8s" {
   dashboard_group = signalfx_dashboard_group.forgecicd.id
 
   variable {
-    property         = "k8s.namespace.name"
-    alias            = "ForgeCICD Tenant Name"
-    description      = ""
-    values           = []
-    value_required   = false
-    values_suggested = var.dashboard_variables.runner_k8s.tenant_names
+    property               = "k8s.namespace.name"
+    alias                  = "ForgeCICD Tenant Name"
+    description            = ""
+    values                 = []
+    value_required         = false
+    values_suggested       = var.dashboard_variables.runner_k8s.tenant_names
+    restricted_suggestions = true
   }
 
   variable {
-    property         = "k8s.pod.name"
-    alias            = "ForgeCICD Instance Id"
-    description      = ""
-    values           = []
-    value_required   = false
-    values_suggested = []
+    property               = "k8s.pod.name"
+    alias                  = "ForgeCICD Instance Id"
+    description            = ""
+    values                 = []
+    value_required         = false
+    values_suggested       = []
+    restricted_suggestions = false
   }
 
   dynamic "variable" {
@@ -463,12 +465,13 @@ resource "signalfx_dashboard" "runner_k8s" {
     iterator = var_def
 
     content {
-      property         = var_def.value.property
-      alias            = var_def.value.alias
-      description      = var_def.value.description
-      values           = var_def.value.values
-      value_required   = var_def.value.value_required
-      values_suggested = var_def.value.values_suggested
+      property               = var_def.value.property
+      alias                  = var_def.value.alias
+      description            = var_def.value.description
+      values                 = var_def.value.values
+      value_required         = var_def.value.value_required
+      values_suggested       = var_def.value.values_suggested
+      restricted_suggestions = var_def.value.restricted_suggestions
     }
   }
   chart {
