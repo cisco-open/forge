@@ -157,7 +157,6 @@ def validate_forge_role_against_tenants(
                         ]
                     )
 
-                    # Optional: verify the tenant creds actually work
                     tenant_creds = tenant_resp['Credentials']
                     sts_as_tenant = boto3.client(
                         'sts',
@@ -239,8 +238,7 @@ def lambda_handler(event, context):
         )
         all_results.append(res)
 
-    LOG.info('Validation complete')
-    print(json.dumps(all_results, indent=2))
+    LOG.info('Validation complete: %s', json.dumps(all_results))
 
     return {
         'statusCode': 200,

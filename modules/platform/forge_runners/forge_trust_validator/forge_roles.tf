@@ -2,6 +2,8 @@ data "aws_iam_role" "forge" {
   for_each = toset(var.forge_iam_roles)
 
   name = replace(each.value, "/^.*//", "")
+
+  depends_on = [module.forge_trust_validator_lambda]
 }
 
 locals {
@@ -41,7 +43,7 @@ locals {
 
   # concatenated_trust_object[arn] = full updated policy for each role
   concatenated_trust_object = {
-    for arn, trust in local.original_trust :
+    for arn, trust in local.updated_statements :
     arn => {
       Version   = try(trust.Version, "2012-10-17")
       Statement = local.updated_statements[arn]
@@ -53,14 +55,20 @@ locals {
     for arn, obj in local.concatenated_trust_object :
     arn => jsonencode(obj)
   }
+
+  original_statements_trust_json = {
+    for arn, obj in local.original_statements :
+    arn => jsonencode(obj)
+  }
 }
 
 resource "null_resource" "update_forge_role_trust" {
   for_each = data.aws_iam_role.forge
 
   triggers = {
-    role_name  = each.value.name
-    future_sha = sha1(local.concatenated_trust_json[each.key])
+    role_name    = each.value.name
+    original_sha = sha1(local.original_statements_trust_json[each.key])
+    future_sha   = sha1(local.concatenated_trust_json[each.key])
   }
 
   provisioner "local-exec" {
