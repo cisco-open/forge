@@ -6,6 +6,7 @@ resource "splunk_configs_conf" "forgecicd_cloudwatchlogs" {
     "REPORT-forgecicd_cloudwatchlogs_lambda_tenant_fields"        = "forgecicd_cloudwatchlogs_lambda_tenant_fields"
     "REPORT-forgecicd_cloudwatchlogs_global_lambda_tenant_fields" = "forgecicd_cloudwatchlogs_global_lambda_tenant_fields"
     "REPORT-forgecicd_extra_lambda_tenant_fields"                 = "forgecicd_extra_lambda_tenant_fields"
+    "REPORT-forgecicd_trust_validation"                           = "forgecicd_trust_validation"
   }
   lifecycle {
     ignore_changes = [
