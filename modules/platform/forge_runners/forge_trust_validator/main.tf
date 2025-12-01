@@ -18,10 +18,9 @@ module "forge_trust_validator_lambda" {
   trigger_on_package_timestamp = false
 
   environment_variables = {
-    FORGE_IAM_ROLES           = jsonencode(var.forge_iam_roles)
-    TENANT_IAM_ROLES          = jsonencode(var.tenant_iam_roles)
-    LAMBDA_EXECUTION_ROLE_ARN = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.prefix}-forge-trust-validator"
-    LOG_LEVEL                 = var.log_level
+    FORGE_IAM_ROLES  = join(",", var.forge_iam_roles)
+    TENANT_IAM_ROLES = join(",", var.tenant_iam_roles)
+    LOG_LEVEL        = var.log_level
   }
 
   attach_policy_json = true

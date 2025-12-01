@@ -1,3 +1,8 @@
+variable "aws_profile" {
+  type        = string
+  description = "AWS profile (i.e. generated via 'sl aws session generate') to use."
+}
+
 variable "prefix" {
   description = "Prefix for all resources"
   type        = string

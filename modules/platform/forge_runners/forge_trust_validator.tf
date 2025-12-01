@@ -6,6 +6,7 @@ module "forge_trust_validator" {
     aws = aws
   }
 
+  aws_profile               = var.aws_profile
   prefix                    = var.deployment_config.prefix
   logging_retention_in_days = var.logging_retention_in_days
   log_level                 = var.log_level
