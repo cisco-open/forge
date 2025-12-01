@@ -2,7 +2,7 @@ resource "splunk_configs_conf" "forgecicd_extra_lambda_tenant_fields" {
   name = "transforms/forgecicd_extra_lambda_tenant_fields"
 
   variables = {
-    "REGEX"      = "(?<aws_region>[^:]+):\\/aws\\/lambda\\/(?<forgecicd_tenant>[a-z0-9]+)-(?<forgecicd_region_alias>[a-z0-9]+)-(?<forgecicd_vpc_alias>[a-z0-9]+)-(?<forgecicd_log_type>github-app-runner-group|github-clean-global-lock)"
+    "REGEX"      = "(?<aws_region>[^:]+):\\/aws\\/lambda\\/(?<forgecicd_tenant>[a-z0-9]+)-(?<forgecicd_region_alias>[a-z0-9]+)-(?<forgecicd_vpc_alias>[a-z0-9]+)-(?<forgecicd_log_type>register-github-app-runner-group|github-webhook-relay|clean-global-lock|job-log-archiver|job-log-dispatcher|forge-trust-validator)"
     "FORMAT"     = "aws_region::$1 forgecicd_tenant::$2 forgecicd_region_alias::$3 forgecicd_vpc_alias::$4 forgecicd_log_type::$5"
     "SOURCE_KEY" = "source"
     "CLEAN_KEYS" = "0"
