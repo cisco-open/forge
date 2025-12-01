@@ -27,16 +27,24 @@ locals {
     arn => try(trust.Statement, [])
   }
 
+  # updated_statements[arn]: ensure exactly one statement with this Sid
+  updated_statements = {
+    for arn, stmts in local.original_statements :
+    arn => concat(
+      [
+        for s in stmts :
+        s if !(can(s.Sid) && s.Sid == local.lambda_trust_statement.Sid)
+      ],
+      [local.lambda_trust_statement]
+    )
+  }
+
   # concatenated_trust_object[arn] = full updated policy for each role
-  # = original (Version + Statements) + our lambda_trust_statement
   concatenated_trust_object = {
     for arn, trust in local.original_trust :
     arn => {
-      Version = try(trust.Version, "2012-10-17")
-      Statement = concat(
-        local.original_statements[arn],
-        [local.lambda_trust_statement]
-      )
+      Version   = try(trust.Version, "2012-10-17")
+      Statement = local.updated_statements[arn]
     }
   }
 
