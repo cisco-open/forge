@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import time
 from typing import Any, Dict, List
@@ -8,16 +9,24 @@ from botocore.exceptions import ClientError
 
 sts = boto3.client('sts')
 
+LOG = logging.getLogger()
+level_str = os.environ.get('LOG_LEVEL', 'INFO').upper()
+LOG.setLevel(getattr(logging, level_str, logging.INFO))
+
 
 def parse_env_list(name: str) -> List[str]:
     """
     Parse an environment variable Comma-separated string: 'a,b'
     """
+    LOG.info(f"Parsing environment variable: {name}")
     value = os.environ.get(name, '')
     if not value:
+        LOG.warning(f"Environment variable {name} is empty or missing")
         return []
 
-    return [v.strip() for v in value.split(',') if v.strip()]
+    items = [v.strip() for v in value.split(',') if v.strip()]
+    LOG.info(f"Parsed {len(items)} items from {name}")
+    return items
 
 
 def build_session_policy_for_tenants(tenant_role_arns: List[str]) -> str:
@@ -47,6 +56,8 @@ def assume_role(
     """
     Wrapper around sts.assume_role that optionally applies a restrictive session policy.
     """
+    LOG.info(
+        f"Attempting to assume role: {role_arn} (Session: {session_name})")
     kwargs: Dict[str, Any] = {
         'RoleArn': role_arn,
         'RoleSessionName': session_name,
@@ -83,6 +94,7 @@ def validate_forge_role_against_tenants(
       - Lambda execution role already has sts:AssumeRole on forge_role_arn
       - Forge role trust already allows the Lambda execution role
     """
+    LOG.info(f"Starting validation for Forge role: {forge_role_arn}")
     result: Dict[str, Any] = {
         'forge_role_arn': forge_role_arn,
         'tenant_results': [],
@@ -97,12 +109,15 @@ def validate_forge_role_against_tenants(
             session_name=f"ForgeValidation-{int(time.time())}",
             session_policy=session_policy,
         )
+        LOG.info(f"Successfully assumed Forge role: {forge_role_arn}")
 
         forge_creds = forge_assume_resp['Credentials']
         sts_as_forge = build_sts_client_from_creds(forge_creds)
 
         # 2) From the forge session, attempt to assume each tenant role
         for tenant_arn in tenant_role_arns:
+            LOG.info(
+                f"Attempting to assume Tenant role: {tenant_arn} from Forge role: {forge_role_arn}")
             tenant_entry = {
                 'tenant_role_arn': tenant_arn,
                 'success': False,
@@ -122,21 +137,29 @@ def validate_forge_role_against_tenants(
                     aws_secret_access_key=tenant_creds['SecretAccessKey'],
                     aws_session_token=tenant_creds['SessionToken'],
                 )
-                sts_as_tenant.get_caller_identity()
+                identity = sts_as_tenant.get_caller_identity()
+                LOG.info(
+                    f"Successfully assumed Tenant role: {tenant_arn}. Identity: {identity['Arn']}")
 
                 tenant_entry['success'] = True
             except ClientError as e:
+                LOG.error(
+                    f"ClientError assuming Tenant role {tenant_arn}: {e}")
                 tenant_entry['error'] = str(e)
             except Exception as e:
+                LOG.error(
+                    f"Unexpected error assuming Tenant role {tenant_arn}: {e}")
                 tenant_entry['error'] = f"Unexpected error assuming tenant role: {e}"
 
             result['tenant_results'].append(tenant_entry)
 
     except ClientError as e:
+        LOG.error(f"IAM/STS error for Forge role {forge_role_arn}: {e}")
         result['errors'].append(
             f"IAM/STS error for forge role {forge_role_arn}: {e}"
         )
     except Exception as e:
+        LOG.error(f"Unexpected error for Forge role {forge_role_arn}: {e}")
         result['errors'].append(
             f"Unexpected error for forge role {forge_role_arn}: {e}"
         )
@@ -156,10 +179,13 @@ def lambda_handler(event, context):
       FORGE_IAM_ROLES='["arn:aws:iam::123:role/forge-1","arn:aws:iam::123:role/forge-2"]'
       TENANT_IAM_ROLES="arn:aws:iam::456:role/tenant-1,arn:aws:iam::789:role/tenant-2"
     """
+    LOG.info('Lambda handler started')
     forge_iam_roles = parse_env_list('FORGE_IAM_ROLES')
     tenant_iam_roles = parse_env_list('TENANT_IAM_ROLES')
 
     if not forge_iam_roles or not tenant_iam_roles:
+        LOG.error(
+            'Missing required environment variables: FORGE_IAM_ROLES or TENANT_IAM_ROLES')
         return {
             'statusCode': 400,
             'body': json.dumps(
@@ -172,6 +198,8 @@ def lambda_handler(event, context):
             ),
         }
 
+    LOG.info(
+        f"Loaded configuration: {len(forge_iam_roles)} Forge roles, {len(tenant_iam_roles)} Tenant roles")
     all_results: List[Dict[str, Any]] = []
 
     for forge_arn in forge_iam_roles:
@@ -181,6 +209,7 @@ def lambda_handler(event, context):
         )
         all_results.append(res)
 
+    LOG.info('Validation complete')
     print(json.dumps(all_results, indent=2))
 
     return {
