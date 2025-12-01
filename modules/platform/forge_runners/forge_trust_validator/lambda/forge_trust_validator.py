@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import time
 from typing import Any, Dict, List
 
 import boto3
@@ -109,7 +108,7 @@ def validate_forge_role_against_tenants(
         session_policy = build_session_policy_for_tenants(tenant_role_arns)
         forge_assume_resp = assume_role(
             role_arn=forge_role_arn,
-            session_name=f"ForgeValidation-{int(time.time())}",
+            session_name='ForgeValidation',
             session_policy=session_policy,
         )
         LOG.info(f"Successfully assumed Forge role: {forge_role_arn}")
@@ -133,7 +132,7 @@ def validate_forge_role_against_tenants(
             try:
                 sts_as_forge.assume_role(
                     RoleArn=tenant_arn,
-                    RoleSessionName=f"TenantValidation-Basic-{int(time.time())}",
+                    RoleSessionName='TenantValidation-Basic',
                 )
                 LOG.info(f"Basic AssumeRole successful for {tenant_arn}")
                 tenant_entry['assume_role_success'] = True
@@ -150,7 +149,7 @@ def validate_forge_role_against_tenants(
                 try:
                     tenant_resp = sts_as_forge.assume_role(
                         RoleArn=tenant_arn,
-                        RoleSessionName=f"TenantValidation-Tags-{int(time.time())}",
+                        RoleSessionName='TenantValidation-Tags',
                         Tags=[
                             {'Key': 'CreatedBy', 'Value': 'ForgeTrustValidator'},
                             {'Key': 'Validation', 'Value': 'True'}
