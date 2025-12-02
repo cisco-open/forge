@@ -8,16 +8,14 @@ resource "splunk_configs_conf" "forgecicd_cloudwatchlogs_forgecicd" {
     "REPORT-forgecicd_cloudwatchlogs_runner_ci_result"              = "forgecicd_cloudwatchlogs_runner_ci_result"
     "REPORT-forgecicd_cloudwatchlogs_runner_gh_runner_version"      = "forgecicd_cloudwatchlogs_runner_gh_runner_version"
   }
+
   acl {
-    app     = var.splunk_conf.acl.app
-    owner   = var.splunk_conf.acl.owner
-    sharing = var.splunk_conf.acl.sharing
-    read    = var.splunk_conf.acl.read
-    write   = var.splunk_conf.acl.write
+    read  = var.splunk_conf.acl.read
+    write = var.splunk_conf.acl.write
   }
+
   lifecycle {
     ignore_changes = [
-      acl,
       variables["ADD_EXTRA_TIME_FIELDS"],
       variables["ANNOTATE_PUNCT"],
       variables["AUTO_KV_JSON"],

@@ -5,9 +5,14 @@ resource "splunk_configs_conf" "forgecicd_aws_billing_cur" {
     "REPORT-forgecicd_billing_cur_instance_id" = "forgecicd_billing_cur_instance_id"
     "REPORT-forgecicd_billing_cur_volume_id"   = "forgecicd_billing_cur_volume_id"
   }
+
+  acl {
+    read  = var.splunk_conf.acl.read
+    write = var.splunk_conf.acl.write
+  }
+
   lifecycle {
     ignore_changes = [
-      acl,
       variables["ADD_EXTRA_TIME_FIELDS"],
       variables["ANNOTATE_PUNCT"],
       variables["AUTO_KV_JSON"],

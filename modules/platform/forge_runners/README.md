@@ -16,7 +16,7 @@
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.19.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.23.0 |
 | <a name="provider_null"></a> [null](#provider\_null) | 3.2.4 |
 | <a name="provider_random"></a> [random](#provider\_random) | 3.7.2 |
 | <a name="provider_time"></a> [time](#provider\_time) | 0.13.1 |
@@ -27,6 +27,7 @@
 |------|--------|---------|
 | <a name="module_arc_runners"></a> [arc\_runners](#module\_arc\_runners) | ../arc_deployment | n/a |
 | <a name="module_ec2_runners"></a> [ec2\_runners](#module\_ec2\_runners) | ../ec2_deployment | n/a |
+| <a name="module_forge_trust_validator"></a> [forge\_trust\_validator](#module\_forge\_trust\_validator) | ./forge_trust_validator | n/a |
 | <a name="module_github_actions_job_logs"></a> [github\_actions\_job\_logs](#module\_github\_actions\_job\_logs) | ./github_actions_job_logs | n/a |
 | <a name="module_github_app_runner_group"></a> [github\_app\_runner\_group](#module\_github\_app\_runner\_group) | ./github_app_runner_group | n/a |
 | <a name="module_github_global_lock"></a> [github\_global\_lock](#module\_github\_global\_lock) | ./github_global_lock | n/a |

@@ -7,10 +7,16 @@ resource "splunk_configs_conf" "forgecicd_cloudwatchlogs" {
     "REPORT-forgecicd_cloudwatchlogs_global_lambda_tenant_fields" = "forgecicd_cloudwatchlogs_global_lambda_tenant_fields"
     "REPORT-forgecicd_extra_lambda_tenant_fields"                 = "forgecicd_extra_lambda_tenant_fields"
     "REPORT-forgecicd_trust_validation"                           = "forgecicd_trust_validation"
+    "REPORT-forgecicd_extra_lambda_ec2_tenant_fields"             = "forgecicd_extra_lambda_ec2_tenant_fields"
   }
+
+  acl {
+    read  = var.splunk_conf.acl.read
+    write = var.splunk_conf.acl.write
+  }
+
   lifecycle {
     ignore_changes = [
-      acl,
       variables["ADD_EXTRA_TIME_FIELDS"],
       variables["ANNOTATE_PUNCT"],
       variables["AUTO_KV_JSON"],

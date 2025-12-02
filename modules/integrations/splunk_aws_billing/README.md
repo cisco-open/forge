@@ -14,15 +14,15 @@
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.19.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.23.0 |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_cur_per_resource"></a> [cur\_per\_resource](#module\_cur\_per\_resource) | terraform-aws-modules/lambda/aws | 8.1.0 |
-| <a name="module_cur_per_resource_process"></a> [cur\_per\_resource\_process](#module\_cur\_per\_resource\_process) | terraform-aws-modules/lambda/aws | 8.1.0 |
-| <a name="module_cur_per_service"></a> [cur\_per\_service](#module\_cur\_per\_service) | terraform-aws-modules/lambda/aws | 8.1.0 |
+| <a name="module_cur_per_resource"></a> [cur\_per\_resource](#module\_cur\_per\_resource) | terraform-aws-modules/lambda/aws | 8.1.2 |
+| <a name="module_cur_per_resource_process"></a> [cur\_per\_resource\_process](#module\_cur\_per\_resource\_process) | terraform-aws-modules/lambda/aws | 8.1.2 |
+| <a name="module_cur_per_service"></a> [cur\_per\_service](#module\_cur\_per\_service) | terraform-aws-modules/lambda/aws | 8.1.2 |
 
 ## Resources
 

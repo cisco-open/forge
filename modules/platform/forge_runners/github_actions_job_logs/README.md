@@ -130,14 +130,14 @@ See parent repository license.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.19.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.23.0 |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_job_log_archiver"></a> [job\_log\_archiver](#module\_job\_log\_archiver) | terraform-aws-modules/lambda/aws | 8.1.0 |
-| <a name="module_job_log_dispatcher"></a> [job\_log\_dispatcher](#module\_job\_log\_dispatcher) | terraform-aws-modules/lambda/aws | 8.1.0 |
+| <a name="module_job_log_archiver"></a> [job\_log\_archiver](#module\_job\_log\_archiver) | terraform-aws-modules/lambda/aws | 8.1.2 |
+| <a name="module_job_log_dispatcher"></a> [job\_log\_dispatcher](#module\_job\_log\_dispatcher) | terraform-aws-modules/lambda/aws | 8.1.2 |
 
 ## Resources
 

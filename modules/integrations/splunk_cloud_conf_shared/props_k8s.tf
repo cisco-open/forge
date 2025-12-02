@@ -7,9 +7,13 @@ resource "splunk_configs_conf" "forgecicd_kube_container_runner" {
     "REPORT-forgecicd_kube_container_runner_gh_runner_version" = "forgecicd_kube_container_runner_gh_runner_version"
   }
 
+  acl {
+    read  = var.splunk_conf.acl.read
+    write = var.splunk_conf.acl.write
+  }
+
   lifecycle {
     ignore_changes = [
-      acl,
       variables["ADD_EXTRA_TIME_FIELDS"],
       variables["ANNOTATE_PUNCT"],
       variables["AUTO_KV_JSON"],
@@ -67,9 +71,13 @@ resource "splunk_configs_conf" "forgecicd_kube_container_init_docker_creds" {
     "REPORT-forgecicd_kube_container_runner_tenant_fields" = "forgecicd_kube_container_runner_tenant_fields"
   }
 
+  acl {
+    read  = var.splunk_conf.acl.read
+    write = var.splunk_conf.acl.write
+  }
+
   lifecycle {
     ignore_changes = [
-      acl,
       variables["ADD_EXTRA_TIME_FIELDS"],
       variables["ANNOTATE_PUNCT"],
       variables["AUTO_KV_JSON"],
@@ -125,9 +133,13 @@ resource "splunk_configs_conf" "forgecicd_kube_container_init_dind_rootless" {
     "REPORT-forgecicd_kube_container_runner_tenant_fields" = "forgecicd_kube_container_runner_tenant_fields"
   }
 
+  acl {
+    read  = var.splunk_conf.acl.read
+    write = var.splunk_conf.acl.write
+  }
+
   lifecycle {
     ignore_changes = [
-      acl,
       variables["ADD_EXTRA_TIME_FIELDS"],
       variables["ANNOTATE_PUNCT"],
       variables["AUTO_KV_JSON"],
@@ -183,9 +195,13 @@ resource "splunk_configs_conf" "forgecicd_kube_container_init_work" {
     "REPORT-forgecicd_kube_container_runner_tenant_fields" = "forgecicd_kube_container_runner_tenant_fields"
   }
 
+  acl {
+    read  = var.splunk_conf.acl.read
+    write = var.splunk_conf.acl.write
+  }
+
   lifecycle {
     ignore_changes = [
-      acl,
       variables["ADD_EXTRA_TIME_FIELDS"],
       variables["ANNOTATE_PUNCT"],
       variables["AUTO_KV_JSON"],
@@ -241,9 +257,13 @@ resource "splunk_configs_conf" "forgecicd_kube_container_init_dind_externals" {
     "REPORT-forgecicd_kube_container_runner_tenant_fields" = "forgecicd_kube_container_runner_tenant_fields"
   }
 
+  acl {
+    read  = var.splunk_conf.acl.read
+    write = var.splunk_conf.acl.write
+  }
+
   lifecycle {
     ignore_changes = [
-      acl,
       variables["ADD_EXTRA_TIME_FIELDS"],
       variables["ANNOTATE_PUNCT"],
       variables["AUTO_KV_JSON"],
@@ -299,9 +319,13 @@ resource "splunk_configs_conf" "forgecicd_kube_container_dind" {
     "REPORT-forgecicd_kube_container_runner_tenant_fields" = "forgecicd_kube_container_runner_tenant_fields"
   }
 
+  acl {
+    read  = var.splunk_conf.acl.read
+    write = var.splunk_conf.acl.write
+  }
+
   lifecycle {
     ignore_changes = [
-      acl,
       variables["ADD_EXTRA_TIME_FIELDS"],
       variables["ANNOTATE_PUNCT"],
       variables["AUTO_KV_JSON"],
@@ -357,9 +381,13 @@ resource "splunk_configs_conf" "forgecicd_kube_container_listener" {
     "REPORT-forgecicd_kube_container_listener_tenant_fields" = "forgecicd_kube_container_listener_tenant_fields"
   }
 
+  acl {
+    read  = var.splunk_conf.acl.read
+    write = var.splunk_conf.acl.write
+  }
+
   lifecycle {
     ignore_changes = [
-      acl,
       variables["ADD_EXTRA_TIME_FIELDS"],
       variables["ANNOTATE_PUNCT"],
       variables["AUTO_KV_JSON"],
@@ -415,9 +443,13 @@ resource "splunk_configs_conf" "forgecicd_kube_container_manager" {
     "REPORT-forgecicd_kube_container_manager_tenant_fields" = "forgecicd_kube_container_manager_tenant_fields"
   }
 
+  acl {
+    read  = var.splunk_conf.acl.read
+    write = var.splunk_conf.acl.write
+  }
+
   lifecycle {
     ignore_changes = [
-      acl,
       variables["ADD_EXTRA_TIME_FIELDS"],
       variables["ANNOTATE_PUNCT"],
       variables["AUTO_KV_JSON"],
@@ -472,9 +504,13 @@ resource "splunk_configs_conf" "forgecicd_kube_container_log_worker" {
     "REPORT-forgecicd_kube_container_runner_tenant_fields" = "forgecicd_kube_container_runner_tenant_fields"
   }
 
+  acl {
+    read  = var.splunk_conf.acl.read
+    write = var.splunk_conf.acl.write
+  }
+
   lifecycle {
     ignore_changes = [
-      acl,
       variables["ADD_EXTRA_TIME_FIELDS"],
       variables["ANNOTATE_PUNCT"],
       variables["AUTO_KV_JSON"],
@@ -529,9 +565,13 @@ resource "splunk_configs_conf" "forgecicd_kube_container_log_hook" {
     "REPORT-forgecicd_kube_container_runner_tenant_fields" = "forgecicd_kube_container_runner_tenant_fields"
   }
 
+  acl {
+    read  = var.splunk_conf.acl.read
+    write = var.splunk_conf.acl.write
+  }
+
   lifecycle {
     ignore_changes = [
-      acl,
       variables["ADD_EXTRA_TIME_FIELDS"],
       variables["ANNOTATE_PUNCT"],
       variables["AUTO_KV_JSON"],
