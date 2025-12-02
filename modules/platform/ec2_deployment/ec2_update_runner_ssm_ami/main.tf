@@ -44,7 +44,7 @@ data "aws_iam_policy_document" "ec2_update_runner_ssm_ami_lambda" {
     ]
 
     resources = [
-      for key, cfg in keys(var.runner_ami_map) :
+      for key, cfg in var.runner_ami_map :
       cfg.resource_ssm_id
     ]
   }
