@@ -13,8 +13,8 @@ module "ec2_redrive_deadletter" {
   sqs_map = {
     for key in keys(var.runner_configs.runner_specs) :
     key => {
-      dlq  = "${var.runner_configs.prefix}-${each.key}-queued-builds_dead_letter"
-      main = "${var.runner_configs.prefix}-${each.key}-queued-builds"
+      dlq  = "${var.runner_configs.prefix}-${key}-queued-builds_dead_letter"
+      main = "${var.runner_configs.prefix}-${key}-queued-builds"
     }
   }
 }
