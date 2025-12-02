@@ -13,6 +13,10 @@ module "ec2_runners" {
 
   aws_region = var.aws_region
 
+  providers = {
+    aws = aws
+  }
+
   network_configs = {
     vpc_id            = var.vpc_id
     subnet_ids        = var.subnet_ids
