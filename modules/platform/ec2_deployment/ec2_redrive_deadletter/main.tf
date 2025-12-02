@@ -3,7 +3,7 @@ module "ec2_redrive_deadletter_lambda" {
   version = "8.1.2"
 
   function_name = "${var.prefix}-ec2-redrive-deadletter"
-  handler       = "redrive_deadletter.lambda_handler"
+  handler       = "ec2_redrive_deadletter.lambda_handler"
   runtime       = "python3.12"
   timeout       = 900
   architectures = ["x86_64"]
