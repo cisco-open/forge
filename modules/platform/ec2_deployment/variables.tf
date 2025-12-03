@@ -32,6 +32,9 @@ variable "runner_configs" {
       max_instances       = number
       min_run_time        = number
       instance_types      = list(string)
+      placement = optional(object({
+        host_id = optional(string, null)
+      }), null)
       pool_config = list(object({
         size                         = number
         schedule_expression          = string

@@ -9,14 +9,6 @@ locals {
   runner_hook_job_started   = file(local.runner_template_hook_job_started)
   runner_hook_job_completed = file(local.runner_template_hook_job_completed)
 
-  userdata_post_install = templatefile(
-    local.userdata_template_post_install,
-    {
-      runner_user    = "ubuntu"
-      ecr_registries = var.tenant_configs.ecr_registries
-    }
-  )
-
 }
 
 # Enable AWS-managed encryption key.
@@ -47,7 +39,7 @@ data "external" "download_lambdas" {
 }
 
 module "runners" {
-  source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=v6.10.1"
+  source = "git::https://github.com/edersonbrilhante/terraform-aws-github-runner.git//modules/multi-runner?ref=feat-placement"
 
   aws_region = var.aws_region
 
@@ -114,27 +106,34 @@ module "runners" {
           "http_tokens" : "optional",
           "instance_metadata_tags" : "enabled"
         }
-        delay_webhook_event               = 0
-        runner_ec2_tags                   = var.tenant_configs.tags
-        runner_os                         = val["runner_os"]
-        runner_architecture               = val["runner_architecture"]
-        runner_extra_labels               = val["extra_labels"]
-        enable_ssm_on_runners             = true
-        instance_types                    = val["instance_types"]
-        runners_maximum_count             = val["max_instances"]
-        scale_down_schedule_expression    = "cron(*/5 * * * ? *)"
-        minimum_running_time_in_minutes   = val["min_run_time"]
-        runner_group_name                 = var.runner_configs.runner_group_name
-        enable_runner_binaries_syncer     = false
-        enable_userdata                   = val["enable_userdata"]
-        userdata_template                 = local.user_data_template_runner
-        userdata_pre_install              = "# No pre-install steps."
-        userdata_post_install             = local.userdata_post_install
+        delay_webhook_event                  = 0
+        runner_ec2_tags                      = var.tenant_configs.tags
+        runner_os                            = val["runner_os"]
+        runner_architecture                  = val["runner_architecture"]
+        runner_extra_labels                  = val["extra_labels"]
+        enable_ssm_on_runners                = true
+        instance_types                       = val["instance_types"]
+        runners_maximum_count                = val["max_instances"]
+        scale_down_schedule_expression       = "cron(*/5 * * * ? *)"
+        minimum_running_time_in_minutes      = val["min_run_time"]
+        runner_group_name                    = var.runner_configs.runner_group_name
+        enable_runner_binaries_syncer        = false
+        enable_userdata                      = val["enable_userdata"]
+        userdata_template                    = local.user_data_template_runner
+        userdata_pre_install                 = "# No pre-install steps."
+        userdata_post_install = templatefile(
+          local.userdata_template_post_install,
+          {
+            runner_user    = val["runner_user"]
+            ecr_registries = var.tenant_configs.ecr_registries
+          }
+        )
         runner_hook_job_started           = local.runner_hook_job_started
         runner_hook_job_completed         = local.runner_hook_job_completed
         enable_runner_detailed_monitoring = true
         runner_run_as                     = val["runner_user"]
         block_device_mappings             = val["block_device_mappings"]
+        placement                         = val["placement"]
         runner_log_files = [
           {
             "log_group_name" : "forge-logs",
@@ -157,7 +156,7 @@ module "runners" {
           {
             "log_group_name" : "forge-logs",
             "prefix_log_group" : true,
-            "file_path" : "/home/ubuntu/hook.log",
+            "file_path" : "/home/${val["runner_user"]}/hook.log",
             "log_stream_name" : "{instance_id}/hook"
           },
         ]
