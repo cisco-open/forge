@@ -77,6 +77,39 @@ resource "null_resource" "update_forge_role_trust" {
     command = <<-EOT
       set -euo pipefail
 
+      retry_with_backoff() {
+        local max_attempts=10
+        local attempt=1
+        local delay=2
+
+        while true; do
+          # Capture stderr so we can inspect it
+          if output=$(aws iam update-assume-role-policy \
+            --role-name "$${ROLE_NAME}" \
+            --policy-document "file://$${TMP_FILE}" \
+            --profile "${var.aws_profile}" 2>&1); then
+            echo "$output"
+            return 0
+          fi
+
+          # If it's not a throttling / rate exceeded error, fail fast
+          if ! echo "$output" | grep -q "Rate exceeded"; then
+            echo "$output" >&2
+            return 1
+          fi
+
+          # Throttling: if we've hit max attempts, print and fail
+          if [ "$attempt" -ge "$max_attempts" ]; then
+            echo "$output" >&2
+            return 1
+          fi
+
+          sleep "$delay"
+          attempt=$((attempt + 1))
+          delay=$((delay * 2))
+        done
+      }
+
       ROLE_NAME="${each.value.name}"
       TMP_FILE="/tmp/${each.value.name}-trust.json"
 
@@ -84,10 +117,7 @@ resource "null_resource" "update_forge_role_trust" {
 ${local.concatenated_trust_json[each.key]}
 JSON
 
-      aws iam update-assume-role-policy \
-        --role-name "$${ROLE_NAME}" \
-        --policy-document "file://$${TMP_FILE}" \
-        --profile "${var.aws_profile}"
+      retry_with_backoff
     EOT
   }
 }
