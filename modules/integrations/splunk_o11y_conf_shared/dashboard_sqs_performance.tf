@@ -2,9 +2,7 @@ resource "signalfx_single_value_chart" "queues" {
   name        = "# Queues"
   description = "Shows how many SQS queues are being monitored"
 
-  program_text = <<-EOF
-A = data('ApproximateAgeOfOldestMessage', rollup='latest').count(by=['QueueName']).count().publish(label='A')
-EOF
+  program_text = "A = data('ApproximateAgeOfOldestMessage', rollup='latest').count(by=['QueueName']).count().publish(label='A')"
 
   max_precision   = 4
   unit_prefix     = "Metric"
@@ -20,11 +18,8 @@ resource "signalfx_list_chart" "top_queues_by_message_sent" {
   name        = "Top  queues by message sent"
   description = "Ranks queues by number of sent messages"
 
-  program_text = <<-EOF
-A = data('NumberOfMessagesSent', rollup='latest').sum(by=['QueueName']).top(count=5).publish(label='A')
-EOF
-
-  sort_by = "-value"
+  program_text = "A = data('NumberOfMessagesSent', rollup='latest').sum(by=['QueueName']).top(count=5).publish(label='A')"
+  sort_by      = "-value"
 
   disable_sampling        = false
   hide_missing_values     = true
@@ -67,11 +62,14 @@ EOF
   time_range       = 900
   unit_prefix      = "Metric"
 
+  axes_precision = 0
+
   axis_left {
     label = "Bytes"
   }
 
-  axis_right {
+  histogram_options {
+    color_theme = "gold"
   }
 
   legend_options_fields {
@@ -122,30 +120,35 @@ EOF
   stacked          = true
   time_range       = 900
   unit_prefix      = "Metric"
+  axes_precision   = 0
 
-  on_chart_legend_dimension = "sf_metric"
+  on_chart_legend_dimension = "plot_label"
 
   axis_left {
     label = "#Messages"
   }
 
-  # axis_right block present in JSON but empty – keep as a stub if you like
-  axis_right {
+  histogram_options {
+    color_theme = "gold"
   }
 
   viz_options {
+    axis         = "left"
+    color        = "blue"
     display_name = "Delayed messages"
     label        = "A"
     value_suffix = "No of messages"
   }
-
   viz_options {
+    axis         = "left"
+    color        = "emerald"
     display_name = "Visible messages"
     label        = "B"
     value_suffix = "No of messages"
   }
-
   viz_options {
+    axis         = "left"
+    color        = "pink"
     display_name = "In-flight messages"
     label        = "C"
     value_suffix = "No of messages"
@@ -207,14 +210,17 @@ resource "signalfx_time_chart" "empty_receives" {
   time_range       = 900
   unit_prefix      = "Metric"
 
+  histogram_options {
+    color_theme = "gold"
+  }
+
   axis_left {
     label = "# Calls"
   }
 
-  axis_right {
-  }
-
   viz_options {
+    axis         = "left"
+    color        = "brown"
     display_name = "Number of empty receives"
     label        = "A"
     value_suffix = "No of receives"
@@ -268,38 +274,46 @@ EOF
   plot_type        = "AreaChart"
   disable_sampling = false
   show_event_lines = false
-  stacked          = true
   time_range       = 900
   unit_prefix      = "Metric"
 
-  on_chart_legend_dimension = "sf_metric"
+  on_chart_legend_dimension = "plot_label"
 
   axis_left {
     label = "Count"
   }
 
-  axis_right {
+  histogram_options {
+    color_theme = "gold"
   }
 
-  viz_options {
-    display_name = "Messages sent"
-    label        = "A"
-  }
 
   viz_options {
+    axis         = "left"
+    color        = "azure"
     display_name = "Messages received"
     label        = "B"
+    value_suffix = "No of messages"
   }
-
   viz_options {
+    axis         = "left"
+    color        = "blue"
+    display_name = "Messages sent"
+    label        = "A"
+    value_suffix = "No of messages"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "orange"
     display_name = "Messages deleted"
     label        = "C"
+    value_suffix = "No of messages"
   }
 }
 
 resource "signalfx_time_chart" "messages_deleted" {
   name        = "# Messages deleted"
-  description = "Tracks the number of messages deleted over time."
+  description = "Displays messages successfully deleted from queues"
 
   program_text = "A = data('NumberOfMessagesDeleted', rollup='latest').sum().publish(label='A')"
 
@@ -314,12 +328,15 @@ resource "signalfx_time_chart" "messages_deleted" {
     label = "# Messages"
   }
 
-  axis_right {
+  histogram_options {
+    color_theme = "gold"
   }
-
   viz_options {
+    axis         = "left"
+    color        = "emerald"
     display_name = "Number of messages deleted"
     label        = "A"
+    value_suffix = "No of messages"
   }
 }
 
@@ -340,7 +357,7 @@ resource "signalfx_dashboard" "sqs_performance" {
   }
 
   dynamic "variable" {
-    for_each = var.dashboard_variables.runner_k8s.dynamic_variables
+    for_each = var.dashboard_variables.sqs_performance.dynamic_variables
     iterator = var_def
 
     content {
