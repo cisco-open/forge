@@ -16,18 +16,18 @@
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_ec2_redrive_deadletter_lambda"></a> [ec2\_redrive\_deadletter\_lambda](#module\_ec2\_redrive\_deadletter\_lambda) | terraform-aws-modules/lambda/aws | 8.1.2 |
+| <a name="module_redrive_deadletter_lambda"></a> [ec2\_redrive\_deadletter\_lambda](#module\_ec2\_redrive\_deadletter\_lambda) | terraform-aws-modules/lambda/aws | 8.1.2 |
 
 ## Resources
 
 | Name | Type |
 |------|------|
-| [aws_cloudwatch_event_rule.ec2_redrive_deadletter_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_rule) | resource |
-| [aws_cloudwatch_event_target.ec2_redrive_deadletter_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_target) | resource |
-| [aws_cloudwatch_log_group.ec2_redrive_deadletter_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
-| [aws_lambda_permission.ec2_redrive_deadletter_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission) | resource |
+| [aws_cloudwatch_event_rule.redrive_deadletter_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_rule) | resource |
+| [aws_cloudwatch_event_target.redrive_deadletter_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_target) | resource |
+| [aws_cloudwatch_log_group.redrive_deadletter_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
+| [aws_lambda_permission.redrive_deadletter_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
-| [aws_iam_policy_document.ec2_redrive_deadletter_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.redrive_deadletter_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 
 ## Inputs
