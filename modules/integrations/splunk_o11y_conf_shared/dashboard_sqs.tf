@@ -347,9 +347,9 @@ resource "signalfx_time_chart" "messages_deleted" {
   }
 }
 
-resource "signalfx_dashboard" "sqs_performance" {
-  name        = "SQS performance"
-  description = "SQS performance dashboard for AWS SQS queues"
+resource "signalfx_dashboard" "sqs" {
+  name        = "SQS"
+  description = "SQS dashboard for AWS SQS queues"
 
   dashboard_group = signalfx_dashboard_group.forgecicd.id
 
@@ -364,7 +364,7 @@ resource "signalfx_dashboard" "sqs_performance" {
   }
 
   dynamic "variable" {
-    for_each = var.dashboard_variables.sqs_performance.dynamic_variables
+    for_each = var.dashboard_variables.sqs.dynamic_variables
     iterator = var_def
 
     content {

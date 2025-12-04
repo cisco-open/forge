@@ -69,7 +69,46 @@ variable "dashboard_variables" {
         }
       ))
     })
-    sqs_performance = object({
+    sqs = object({
+      tenant_names = list(string)
+      dynamic_variables = list(object({
+        property               = string
+        alias                  = string
+        description            = string
+        values                 = list(string)
+        value_required         = bool
+        values_suggested       = list(string)
+        restricted_suggestions = bool
+        }
+      ))
+    })
+    ebs = object({
+      tenant_names = list(string)
+      dynamic_variables = list(object({
+        property               = string
+        alias                  = string
+        description            = string
+        values                 = list(string)
+        value_required         = bool
+        values_suggested       = list(string)
+        restricted_suggestions = bool
+        }
+      ))
+    })
+    lambda = object({
+      tenant_names = list(string)
+      dynamic_variables = list(object({
+        property               = string
+        alias                  = string
+        description            = string
+        values                 = list(string)
+        value_required         = bool
+        values_suggested       = list(string)
+        restricted_suggestions = bool
+        }
+      ))
+    })
+    dynamodb = object({
       tenant_names = list(string)
       dynamic_variables = list(object({
         property               = string
