@@ -39,8 +39,8 @@ data "aws_iam_policy_document" "redrive_deadletter_lambda" {
     effect = "Allow"
 
     actions = [
+      "sqs:StartMessageMoveTask",
       "sqs:ReceiveMessage",
-      "sqs:GetQueueUrl",
       "sqs:GetQueueAttributes",
       "sqs:DeleteMessage",
     ]
@@ -57,8 +57,6 @@ data "aws_iam_policy_document" "redrive_deadletter_lambda" {
 
     actions = [
       "sqs:SendMessage",
-      "sqs:GetQueueUrl",
-      "sqs:GetQueueAttributes",
     ]
 
     resources = [
