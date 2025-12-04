@@ -6,6 +6,7 @@ resource "signalfx_single_value_chart" "queues" {
 
   max_precision   = 4
   unit_prefix     = "Metric"
+  color_by        = "Dimension"
   show_spark_line = false
 
   viz_options {
@@ -166,6 +167,9 @@ resource "signalfx_list_chart" "oldest_message_age" {
   time_range          = 900
   unit_prefix         = "Metric"
 
+  secondary_visualization = "None"
+  sort_by                 = "-value"
+
   legend_options_fields {
     enabled  = false
     property = "sf_originatingMetric"
@@ -209,6 +213,7 @@ resource "signalfx_time_chart" "empty_receives" {
   stacked          = false
   time_range       = 900
   unit_prefix      = "Metric"
+  axes_precision   = 0
 
   histogram_options {
     color_theme = "gold"
@@ -276,6 +281,7 @@ EOF
   show_event_lines = false
   time_range       = 900
   unit_prefix      = "Metric"
+  axes_precision   = 0
 
   on_chart_legend_dimension = "plot_label"
 
@@ -323,6 +329,7 @@ resource "signalfx_time_chart" "messages_deleted" {
   stacked          = false
   time_range       = 900
   unit_prefix      = "Metric"
+  axes_precision   = 0
 
   axis_left {
     label = "# Messages"
