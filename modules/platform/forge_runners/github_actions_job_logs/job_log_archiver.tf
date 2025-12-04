@@ -10,6 +10,7 @@ module "job_log_archiver" {
   function_name = local.resource_name_archiver
   handler       = "job_log_archiver.lambda_handler"
   runtime       = "python3.12"
+  memory_size   = 1024
   timeout       = 900
   architectures = ["x86_64"]
 
