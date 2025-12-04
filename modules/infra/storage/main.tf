@@ -3,7 +3,7 @@
 # for stability and auditing purposes).
 resource "aws_s3_bucket" "s3_long_term" {
   bucket = "${var.aws_account_id}-long-term-storage"
-  tags   = {}
+  tags   = local.all_security_tags
 }
 
 # Ownership controls.
@@ -40,6 +40,8 @@ resource "aws_s3_bucket_public_access_block" "s3_long_term" {
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
+
+  skip_destroy = true
 }
 
 # Short-term storage (i.e. temporary/feature-branch builds, core dumps, and
@@ -96,4 +98,6 @@ resource "aws_s3_bucket_public_access_block" "s3_short_term" {
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
+
+  skip_destroy = true
 }

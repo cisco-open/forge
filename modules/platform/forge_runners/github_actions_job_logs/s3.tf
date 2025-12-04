@@ -1,7 +1,6 @@
 resource "aws_s3_bucket" "gh_logs" {
-  bucket   = "${var.prefix}-forge-gh-logs-${data.aws_caller_identity.current.account_id}"
-  tags     = var.tags
-  tags_all = var.tags
+  bucket = "${var.prefix}-forge-gh-logs-${data.aws_caller_identity.current.account_id}"
+  tags   = var.tags
 }
 
 resource "aws_s3_bucket_ownership_controls" "gh_logs" {
@@ -80,6 +79,8 @@ resource "aws_s3_bucket_public_access_block" "gh_logs" {
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
+
+  skip_destroy = true
 }
 
 

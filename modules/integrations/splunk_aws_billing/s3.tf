@@ -48,6 +48,8 @@ resource "aws_s3_bucket_public_access_block" "aws_billing_report" {
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
+
+  skip_destroy = true
 }
 
 data "aws_iam_policy_document" "cur_bucket_policy" {
