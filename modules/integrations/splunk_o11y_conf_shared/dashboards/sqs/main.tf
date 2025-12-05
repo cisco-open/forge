@@ -349,9 +349,9 @@ resource "signalfx_time_chart" "messages_deleted" {
 
 resource "signalfx_dashboard" "sqs" {
   name        = "SQS"
-  description = "SQS dashboard for AWS SQS queues"
+  description = "SQS queue counts, message states, sizes, and processing trends."
 
-  dashboard_group = signalfx_dashboard_group.forgecicd.id
+  dashboard_group = var.dashboard_group
 
   variable {
     property               = "aws_tag_TenantName"
@@ -359,12 +359,12 @@ resource "signalfx_dashboard" "sqs" {
     description            = ""
     values                 = []
     value_required         = false
-    values_suggested       = var.dashboard_variables.runner_ec2.tenant_names
+    values_suggested       = var.tenant_names
     restricted_suggestions = true
   }
 
   dynamic "variable" {
-    for_each = var.dashboard_variables.sqs.dynamic_variables
+    for_each = var.dynamic_variables
     iterator = var_def
 
     content {

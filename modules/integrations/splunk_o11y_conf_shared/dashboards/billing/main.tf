@@ -209,8 +209,8 @@ EOF
 
 resource "signalfx_dashboard" "billing" {
   name            = "Billing"
-  description     = ""
-  dashboard_group = signalfx_dashboard_group.forgecicd.id
+  description     = "Forge CICD cost and net cost by service and tenant."
+  dashboard_group = var.dashboard_group
 
   time_range = "-31d"
 
@@ -220,12 +220,12 @@ resource "signalfx_dashboard" "billing" {
     description            = ""
     values                 = []
     value_required         = false
-    values_suggested       = var.dashboard_variables.runner_k8s.tenant_names
+    values_suggested       = var.tenant_names
     restricted_suggestions = true
   }
 
   dynamic "variable" {
-    for_each = var.dashboard_variables.billing.dynamic_variables
+    for_each = var.dynamic_variables
     iterator = var_def
 
     content {

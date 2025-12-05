@@ -4,7 +4,6 @@ resource "signalfx_single_value_chart" "k8s_available_pods_by_deployments" {
 
   program_text = "A = data('k8s.deployment.available', rollup='latest').sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.deployment.name']).sum().publish(label='A')"
 
-  # optional: time_range = "-15m"
   color_by         = "Dimension"
   refresh_interval = 5
 
@@ -437,8 +436,8 @@ resource "signalfx_time_chart" "k8s_memory_usage_bytes" {
 
 resource "signalfx_dashboard" "runner_k8s" {
   name            = "K8S Runners"
-  description     = ""
-  dashboard_group = signalfx_dashboard_group.forgecicd.id
+  description     = "Kubernetes-based runners: pod states, CPU, memory, and network health."
+  dashboard_group = var.dashboard_group
 
   variable {
     property               = "k8s.namespace.name"
@@ -446,7 +445,7 @@ resource "signalfx_dashboard" "runner_k8s" {
     description            = ""
     values                 = []
     value_required         = false
-    values_suggested       = var.dashboard_variables.runner_k8s.tenant_names
+    values_suggested       = var.tenant_names
     restricted_suggestions = true
   }
 
@@ -461,7 +460,7 @@ resource "signalfx_dashboard" "runner_k8s" {
   }
 
   dynamic "variable" {
-    for_each = var.dashboard_variables.runner_k8s.dynamic_variables
+    for_each = var.dynamic_variables
     iterator = var_def
 
     content {

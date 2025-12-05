@@ -1506,15 +1506,10 @@ resource "signalfx_list_chart" "chart_top_5_network_in_bytes" {
   }
 }
 
-
-########################
-# DASHBOARD
-########################
-
 resource "signalfx_dashboard" "runner_ec2" {
   name            = "EC2 Runners"
-  description     = ""
-  dashboard_group = signalfx_dashboard_group.forgecicd.id
+  description     = "EC2-based GitHub Actions runners: CPU, memory, disk, and network."
+  dashboard_group = var.dashboard_group
 
   variable {
     property               = "aws_tag_TenantName"
@@ -1522,7 +1517,7 @@ resource "signalfx_dashboard" "runner_ec2" {
     description            = ""
     values                 = []
     value_required         = false
-    values_suggested       = var.dashboard_variables.runner_ec2.tenant_names
+    values_suggested       = var.tenant_names
     restricted_suggestions = true
   }
 
@@ -1537,7 +1532,7 @@ resource "signalfx_dashboard" "runner_ec2" {
   }
 
   dynamic "variable" {
-    for_each = var.dashboard_variables.runner_ec2.dynamic_variables
+    for_each = var.dynamic_variables
     iterator = var_def
 
     content {

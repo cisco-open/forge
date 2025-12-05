@@ -496,9 +496,9 @@ EOF
 
 resource "signalfx_dashboard" "dynamodb" {
   name        = "DynamoDBs"
-  description = "DynamoDBs dashboard for AWS DynamoDB"
+  description = "Forge CICD DynamoDB table performance, capacity, and throttling."
 
-  dashboard_group = signalfx_dashboard_group.forgecicd.id
+  dashboard_group = var.dashboard_group
 
   variable {
     property               = "aws_tag_TenantName"
@@ -506,12 +506,12 @@ resource "signalfx_dashboard" "dynamodb" {
     description            = ""
     values                 = []
     value_required         = false
-    values_suggested       = var.dashboard_variables.dynamodb.tenant_names
+    values_suggested       = var.tenant_names
     restricted_suggestions = true
   }
 
   dynamic "variable" {
-    for_each = var.dashboard_variables.dynamodb.dynamic_variables
+    for_each = var.dynamic_variables
     iterator = var_def
 
     content {

@@ -526,8 +526,8 @@ EOF
 }
 resource "signalfx_dashboard" "ebs" {
   name            = "EBS"
-  description     = "EBS Volume Performance Metrics"
-  dashboard_group = signalfx_dashboard_group.forgecicd.id
+  description     = "EC2/EBS volume throughput, IOPS, and latency for Forge runners."
+  dashboard_group = var.dashboard_group
 
   variable {
     property               = "aws_tag_TenantName"
@@ -535,12 +535,12 @@ resource "signalfx_dashboard" "ebs" {
     description            = ""
     values                 = []
     value_required         = false
-    values_suggested       = var.dashboard_variables.lambda.tenant_names
+    values_suggested       = var.tenant_names
     restricted_suggestions = true
   }
 
   dynamic "variable" {
-    for_each = var.dashboard_variables.lambda.dynamic_variables
+    for_each = var.dynamic_variables
     iterator = var_def
 
     content {
