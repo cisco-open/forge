@@ -9,6 +9,23 @@ EOF
   unit_prefix = "Metric"
   color_by    = "Dimension"
   stacked     = true
+
+  axes_precision = 0
+
+  show_data_markers = true
+
+  time_range = 900
+
+  histogram_options {
+    color_theme = "gold"
+  }
+
+  viz_options {
+    axis         = "left"
+    color        = "orange"
+    display_name = "Writethrottleevents"
+    label        = "A"
+  }
 }
 
 resource "signalfx_time_chart" "system_errors_ts" {
@@ -22,6 +39,20 @@ EOF
   unit_prefix = "Metric"
   color_by    = "Dimension"
   stacked     = true
+
+  axes_precision = 0
+
+  time_range = 900
+
+  histogram_options {
+    color_theme = "gold"
+  }
+
+  viz_options {
+    axis         = "left"
+    display_name = "Systemerrors"
+    label        = "A"
+  }
 }
 
 resource "signalfx_time_chart" "read_capacity_percentage" {
@@ -37,6 +68,56 @@ EOF
   unit_prefix = "Metric"
   color_by    = "Dimension"
   stacked     = false
+
+  axes_precision            = 0
+  on_chart_legend_dimension = "TableName"
+  show_data_markers         = true
+  time_range                = 3600
+
+  histogram_options {
+    color_theme = "gold"
+  }
+
+  legend_options_fields {
+    enabled  = false
+    property = "AWSUniqueId"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_originatingMetric"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "namespace"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "stat"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "TableName"
+  }
+
+  viz_options {
+    axis         = "left"
+    display_name = "Consumedreadcapacityunits"
+    label        = "B"
+  }
+  viz_options {
+    axis         = "left"
+    display_name = "Percentage of read capacity consumed"
+    label        = "C"
+  }
+  viz_options {
+    axis         = "left"
+    display_name = "Provisionedreadcapacityunits"
+    label        = "A"
+  }
 }
 
 resource "signalfx_time_chart" "returned_item_count" {
@@ -50,6 +131,52 @@ EOF
   unit_prefix = "Metric"
   color_by    = "Dimension"
   stacked     = false
+
+  axes_precision = 0
+
+  on_chart_legend_dimension = "Operation"
+
+  show_data_markers = true
+  time_range        = 3600
+
+  histogram_options {
+    color_theme = "gold"
+  }
+
+  legend_options_fields {
+    enabled  = false
+    property = "AWSUniqueId"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_originatingMetric"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "namespace"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "Operation"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "stat"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "TableName"
+  }
+
+  viz_options {
+    axis         = "left"
+    display_name = "Returneditemcount"
+    label        = "A"
+  }
 }
 
 resource "signalfx_single_value_chart" "avg_request_latency_single" {
@@ -58,9 +185,16 @@ resource "signalfx_single_value_chart" "avg_request_latency_single" {
   unit_prefix = "Metric"
   color_by    = "Dimension"
 
+  max_precision = 3
+
   program_text = <<-EOF
 A = data('SuccessfulRequestLatency', filter=filter('namespace', 'AWS/DynamoDB') and filter('stat', 'mean')).mean().publish(label='A')
 EOF
+
+  viz_options {
+    display_name = "Successfulrequestlatency - mean"
+    label        = "A"
+  }
 }
 
 resource "signalfx_time_chart" "avg_request_latency_ts" {
@@ -70,10 +204,56 @@ resource "signalfx_time_chart" "avg_request_latency_ts" {
 A = data('SuccessfulRequestLatency', filter=filter('namespace', 'AWS/DynamoDB') and filter('stat', 'mean')).publish(label='A')
 EOF
 
+  axes_precision = 0
+
+  on_chart_legend_dimension = "Operation"
+
   plot_type   = "LineChart"
   unit_prefix = "Metric"
   color_by    = "Dimension"
   stacked     = false
+
+  show_data_markers = true
+  time_range        = 3600
+
+  histogram_options {
+    color_theme = "gold"
+  }
+
+  legend_options_fields {
+    enabled  = false
+    property = "AWSUniqueId"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_originatingMetric"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "namespace"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "Operation"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "stat"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "TableName"
+  }
+
+  viz_options {
+    axis         = "left"
+    display_name = "Successfulrequestlatency"
+    label        = "A"
+  }
 }
 
 resource "signalfx_single_value_chart" "throttled_requests_single" {
@@ -85,6 +265,11 @@ resource "signalfx_single_value_chart" "throttled_requests_single" {
   program_text = <<-EOF
 A = data('ThrottledRequests', filter=filter('namespace', 'AWS/DynamoDB') and filter('stat', 'sum'), rollup='sum').sum().publish(label='A')
 EOF
+  viz_options {
+    color        = "yellow"
+    display_name = "Throttledrequests - sum"
+    label        = "A"
+  }
 }
 
 resource "signalfx_single_value_chart" "system_errors_single" {
@@ -96,6 +281,12 @@ resource "signalfx_single_value_chart" "system_errors_single" {
   program_text = <<-EOF
 A = data('SystemErrors', filter=filter('namespace', 'AWS/DynamoDB') and filter('stat', 'sum') and filter('TableName', '*') and filter('Operation', '*'), rollup='sum').publish(label='A')
 EOF
+
+  viz_options {
+    color        = "brown"
+    display_name = "Systemerrors"
+    label        = "A"
+  }
 }
 
 resource "signalfx_time_chart" "user_errors_ts" {
@@ -109,6 +300,23 @@ EOF
   unit_prefix = "Metric"
   color_by    = "Dimension"
   stacked     = false
+
+  axes_precision = 0
+
+  show_data_markers = true
+
+  time_range = 3600
+
+  histogram_options {
+    color_theme = "gold"
+  }
+
+  viz_options {
+    axis         = "left"
+    color        = "brown"
+    display_name = "Usererrors"
+    label        = "A"
+  }
 }
 
 resource "signalfx_time_chart" "read_throttle_events" {
@@ -122,6 +330,21 @@ EOF
   unit_prefix = "Metric"
   color_by    = "Dimension"
   stacked     = true
+
+  axes_precision            = 0
+  on_chart_legend_dimension = "TableName"
+  show_data_markers         = true
+  time_range                = 3600
+  histogram_options {
+    color_theme = "gold"
+  }
+
+  viz_options {
+    axis         = "left"
+    color        = "purple"
+    display_name = "Readthrottleevents"
+    label        = "A"
+  }
 }
 
 resource "signalfx_time_chart" "throttled_requests_ts" {
@@ -135,6 +358,53 @@ EOF
   unit_prefix = "Metric"
   color_by    = "Dimension"
   stacked     = true
+
+  axes_precision = 0
+
+  on_chart_legend_dimension = "Operation"
+
+  show_data_markers = true
+
+  time_range = 3600
+
+  histogram_options {
+    color_theme = "gold"
+  }
+
+  legend_options_fields {
+    enabled  = false
+    property = "AWSUniqueId"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_originatingMetric"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "namespace"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "Operation"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "stat"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "TableName"
+  }
+
+  viz_options {
+    axis         = "left"
+    display_name = "Throttledrequests"
+    label        = "A"
+  }
 }
 
 resource "signalfx_time_chart" "write_capacity_percentage" {
@@ -150,6 +420,60 @@ EOF
   unit_prefix = "Metric"
   color_by    = "Dimension"
   stacked     = false
+
+  axes_precision = 0
+
+  on_chart_legend_dimension = "TableName"
+
+  show_data_markers = true
+
+  time_range = 3600
+
+  histogram_options {
+    color_theme = "gold"
+  }
+
+  legend_options_fields {
+    enabled  = false
+    property = "AWSUniqueId"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_originatingMetric"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "namespace"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "stat"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "TableName"
+  }
+
+  viz_options {
+    axis         = "left"
+    display_name = "Consumedwritecapacityunits"
+    label        = "B"
+  }
+  viz_options {
+    axis         = "left"
+    display_name = "Percentage of write capacity consumed"
+    label        = "C"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "chartreuse"
+    display_name = "Provisionedwritecapacityunits"
+    label        = "A"
+  }
 }
 
 resource "signalfx_single_value_chart" "user_errors_single" {
@@ -161,6 +485,12 @@ resource "signalfx_single_value_chart" "user_errors_single" {
   program_text = <<-EOF
 A = data('UserErrors', filter=filter('namespace', 'AWS/DynamoDB') and filter('sf_metric', 'UserErrors') and filter('stat', 'sum'), rollup='sum').publish(label='A')
 EOF
+
+  viz_options {
+    color        = "brown"
+    display_name = "Usererrors"
+    label        = "A"
+  }
 }
 
 
