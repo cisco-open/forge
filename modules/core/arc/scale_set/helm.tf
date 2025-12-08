@@ -1,4 +1,4 @@
-resource "kubernetes_config_map" "hook_extension" {
+resource "kubernetes_config_map_v1" "hook_extension" {
   count = var.migrate_arc_cluster == false ? 1 : 0
   metadata {
     name      = "hook-extension-${var.scale_set_name}"
@@ -23,7 +23,7 @@ resource "kubernetes_config_map" "hook_extension" {
   }
 }
 
-resource "kubernetes_config_map" "hook_pre_post_job" {
+resource "kubernetes_config_map_v1" "hook_pre_post_job" {
   count = var.migrate_arc_cluster == false ? 1 : 0
   metadata {
     name      = "hook-pre-post-job-${var.scale_set_name}"
