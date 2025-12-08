@@ -68,8 +68,8 @@ resource "null_resource" "update_forge_role_trust" {
 
   triggers = {
     role_name       = data.aws_iam_role.forge[count.index].id
-    original_policy = jsonencode(local.original_statements_trust_json[count.index])
-    future_policy   = jsonencode(local.concatenated_trust_json[count.index])
+    original_policy = jsonencode(local.original_statements_trust_json[var.forge_iam_roles[count.index]])
+    future_policy   = jsonencode(local.concatenated_trust_json[var.forge_iam_roles[count.index]])
   }
 
   provisioner "local-exec" {
