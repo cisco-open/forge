@@ -3,7 +3,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 5.90"
+      version = ">= 6.25"
     }
     helm = {
       source  = "hashicorp/helm"
@@ -15,7 +15,7 @@ terraform {
     }
     null = {
       source  = "hashicorp/null"
-      version = ">= 3.2.3"
+      version = ">= 3.2"
     }
     kubectl = {
       source  = "gavinbunney/kubectl"
@@ -32,5 +32,5 @@ terraform {
   }
 
   # OpenTofu version.
-  required_version = ">= 1.9.1"
+  required_version = ">= 1.10"
 }

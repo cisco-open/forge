@@ -3,11 +3,11 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 5.90"
+      version = ">= 6.25"
     }
     random = {
       source  = "hashicorp/random"
-      version = ">= 3.7.1"
+      version = ">= 3.6"
     }
     external = {
       source  = "hashicorp/external"
@@ -19,7 +19,7 @@ terraform {
     }
     local = {
       source  = "hashicorp/local"
-      version = ">= 2.5.2"
+      version = ">= 2.5"
     }
     time = {
       source  = "hashicorp/time"
@@ -28,5 +28,5 @@ terraform {
   }
 
   # OpenTofu version.
-  required_version = ">= 1.9.1"
+  required_version = ">= 1.10"
 }
