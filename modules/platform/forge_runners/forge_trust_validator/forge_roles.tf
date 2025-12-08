@@ -115,7 +115,7 @@ resource "null_resource" "update_forge_role_trust" {
       TMP_FILE="/tmp/${data.aws_iam_role.forge[count.index].name}-trust.json"
 
       cat > "$${TMP_FILE}" << 'JSON'
-${local.concatenated_trust_json[count.index]}
+${local.concatenated_trust_json[var.forge_iam_roles[count.index]]}
 JSON
 
       retry_with_backoff
