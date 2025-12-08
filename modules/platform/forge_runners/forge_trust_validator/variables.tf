@@ -27,13 +27,17 @@ variable "log_level" {
 }
 
 variable "forge_iam_roles" {
-  type        = list(string)
+  type        = map(string)
   description = "List of IAM role ARNs for Forge runners."
+}
+
+variable "number_forge_iram_roles" {
+  type        = number
+  description = "Number of Iam roles ARNs for Forge runners"
 }
 
 variable "tenant_iam_roles" {
   type        = list(string)
   description = "List of IAM role ARNs that the runners will assume to test trust relationships."
   default     = []
-
 }

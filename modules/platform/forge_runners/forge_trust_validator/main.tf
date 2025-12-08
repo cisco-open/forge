@@ -18,7 +18,7 @@ module "forge_trust_validator_lambda" {
   trigger_on_package_timestamp = false
 
   environment_variables = {
-    FORGE_IAM_ROLES  = join(",", var.forge_iam_roles)
+    FORGE_IAM_ROLES  = join(",", [for key, arn in var.forge_iam_roles : arn])
     TENANT_IAM_ROLES = join(",", var.tenant_iam_roles)
     LOG_LEVEL        = var.log_level
   }
@@ -42,7 +42,7 @@ data "aws_iam_policy_document" "forge_trust_validator_lambda" {
       "sts:AssumeRole",
     ]
     effect    = "Allow"
-    resources = var.forge_iam_roles
+    resources = [for key, arn in var.forge_iam_roles : arn]
   }
 }
 
