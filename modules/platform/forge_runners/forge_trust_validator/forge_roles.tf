@@ -3,7 +3,7 @@ data "aws_iam_role" "forge" {
 
   name = regex("([^/]+)$", var.forge_iam_roles[count.index])[0]
 
-  depends_on = [ module.forge_trust_validator_lambda ]
+  depends_on = [module.forge_trust_validator_lambda]
 }
 
 locals {
@@ -64,15 +64,12 @@ locals {
 }
 
 resource "null_resource" "update_forge_role_trust" {
-  for_each = {
-    for idx, role in data.aws_iam_role.forge :
-    var.forge_iam_roles[idx] => role
-  }
+  count = var.number_forge_iram_roles
 
   triggers = {
-    role_name    = each.value.id
-    original_policy = jsonencode(local.original_statements_trust_json[each.key])
-    future_policy   = jsonencode(local.concatenated_trust_json[each.key])
+    role_name       = data.aws_iam_role.forge[count.index].id
+    original_policy = jsonencode(local.original_statements_trust_json[count.index])
+    future_policy   = jsonencode(local.concatenated_trust_json[count.index])
   }
 
   provisioner "local-exec" {
@@ -114,11 +111,11 @@ resource "null_resource" "update_forge_role_trust" {
         done
       }
 
-      ROLE_NAME="${each.value.name}"
-      TMP_FILE="/tmp/${each.value.name}-trust.json"
+      ROLE_NAME="${data.aws_iam_role.forge[count.index].name}"
+      TMP_FILE="/tmp/${data.aws_iam_role.forge[count.index].name}-trust.json"
 
       cat > "$${TMP_FILE}" << 'JSON'
-${local.concatenated_trust_json[each.key]}
+${local.concatenated_trust_json[count.index]}
 JSON
 
       retry_with_backoff
