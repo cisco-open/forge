@@ -48,7 +48,7 @@ resource "kubernetes_cluster_role_binding" "impersonate" {
   }
 }
 
-resource "kubernetes_role_binding" "pods" {
+resource "kubernetes_role_binding_v1" "pods" {
   metadata {
     name      = "teleport-${var.namespace}-pods-binding"
     namespace = var.namespace
