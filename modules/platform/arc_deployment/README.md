@@ -3,7 +3,7 @@
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9.1 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10 |
 
 ## Providers
 
@@ -32,6 +32,7 @@ No resources.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_arc_runners_arn_map"></a> [arc\_runners\_arn\_map](#output\_arc\_runners\_arn\_map) | n/a |
-| <a name="output_subnet_cidr_blocks"></a> [subnet\_cidr\_blocks](#output\_subnet\_cidr\_blocks) | n/a |
+| <a name="output_arc_cluster_name"></a> [arc\_cluster\_name](#output\_arc\_cluster\_name) | Name of the Kubernetes cluster used for ARC runners. |
+| <a name="output_arc_runners_arn_map"></a> [arc\_runners\_arn\_map](#output\_arc\_runners\_arn\_map) | Map of ARC runner keys to their IAM role ARNs. |
+| <a name="output_subnet_cidr_blocks"></a> [subnet\_cidr\_blocks](#output\_subnet\_cidr\_blocks) | Map of ARC runner subnet IDs to their CIDR blocks. |
 <!-- END_TF_DOCS -->

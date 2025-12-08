@@ -3,20 +3,20 @@
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9.1 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.27 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.25 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.23.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.25.0 |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_redrive_deadletter_lambda"></a> [ec2\_redrive\_deadletter\_lambda](#module\_ec2\_redrive\_deadletter\_lambda) | terraform-aws-modules/lambda/aws | 8.1.2 |
+| <a name="module_redrive_deadletter_lambda"></a> [redrive\_deadletter\_lambda](#module\_redrive\_deadletter\_lambda) | terraform-aws-modules/lambda/aws | 8.1.2 |
 
 ## Resources
 
@@ -26,9 +26,7 @@
 | [aws_cloudwatch_event_target.redrive_deadletter_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_target) | resource |
 | [aws_cloudwatch_log_group.redrive_deadletter_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
 | [aws_lambda_permission.redrive_deadletter_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission) | resource |
-| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_iam_policy_document.redrive_deadletter_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
-| [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 
 ## Inputs
 

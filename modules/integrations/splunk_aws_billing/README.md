@@ -3,9 +3,9 @@
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9.1 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10 |
 | <a name="requirement_archive"></a> [archive](#requirement\_archive) | >= 2.7.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.27 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.25 |
 | <a name="requirement_external"></a> [external](#requirement\_external) | >= 2.3 |
 | <a name="requirement_null"></a> [null](#requirement\_null) | >= 3.2 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | >= 3.6 |
@@ -14,7 +14,7 @@
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.23.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.25.0 |
 
 ## Modules
 

@@ -3,9 +3,9 @@
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9.1 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10 |
 | <a name="requirement_archive"></a> [archive](#requirement\_archive) | >= 2.7.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.27 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.25 |
 | <a name="requirement_external"></a> [external](#requirement\_external) | >= 2.3 |
 | <a name="requirement_local"></a> [local](#requirement\_local) | >= 2.5 |
 | <a name="requirement_null"></a> [null](#requirement\_null) | >= 3.2 |
@@ -16,7 +16,7 @@
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.23.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.25.0 |
 | <a name="provider_null"></a> [null](#provider\_null) | 3.2.4 |
 | <a name="provider_random"></a> [random](#provider\_random) | 3.7.2 |
 | <a name="provider_time"></a> [time](#provider\_time) | 0.13.1 |
@@ -32,6 +32,7 @@
 | <a name="module_github_app_runner_group"></a> [github\_app\_runner\_group](#module\_github\_app\_runner\_group) | ./github_app_runner_group | n/a |
 | <a name="module_github_global_lock"></a> [github\_global\_lock](#module\_github\_global\_lock) | ./github_global_lock | n/a |
 | <a name="module_github_webhook_relay"></a> [github\_webhook\_relay](#module\_github\_webhook\_relay) | ./github_webhook_relay | n/a |
+| <a name="module_redrive_deadletter"></a> [redrive\_deadletter](#module\_redrive\_deadletter) | ./redrive_deadletter | n/a |
 
 ## Resources
 
@@ -45,8 +46,10 @@
 | [null_resource.update_github_app_webhook](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [random_id.random](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
 | [time_sleep.wait_60_seconds](https://registry.terraform.io/providers/hashicorp/time/latest/docs/resources/sleep) | resource |
+| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_iam_policy_document.ecr_access_for_ec2_instances](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.role_assumption_for_forge_runners](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 | [aws_secretsmanager_random_password.secret_seeds](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/secretsmanager_random_password) | data source |
 | [aws_secretsmanager_secret.data_cicd_secrets](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/secretsmanager_secret) | data source |
 | [aws_secretsmanager_secret_version.data_cicd_secrets](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/secretsmanager_secret_version) | data source |

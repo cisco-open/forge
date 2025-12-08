@@ -3,8 +3,8 @@
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9.1 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.90 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.25 |
 | <a name="requirement_signalfx"></a> [signalfx](#requirement\_signalfx) | < 10.0.0 |
 | <a name="requirement_time"></a> [time](#requirement\_time) | >= 0.13 |
 
@@ -12,8 +12,8 @@
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.23.0 |
-| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.22.3 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.25.0 |
+| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.23.0 |
 | <a name="provider_time"></a> [time](#provider\_time) | 0.13.1 |
 
 ## Modules

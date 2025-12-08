@@ -3,15 +3,15 @@
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9.1 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.27 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.25 |
 | <a name="requirement_null"></a> [null](#requirement\_null) | >= 3.2 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.23.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.25.0 |
 | <a name="provider_null"></a> [null](#provider\_null) | 3.2.4 |
 
 ## Modules
@@ -38,9 +38,10 @@
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_aws_profile"></a> [aws\_profile](#input\_aws\_profile) | AWS profile (i.e. generated via 'sl aws session generate') to use. | `string` | n/a | yes |
-| <a name="input_forge_iam_roles"></a> [forge\_iam\_roles](#input\_forge\_iam\_roles) | List of IAM role ARNs for Forge runners. | `list(string)` | n/a | yes |
+| <a name="input_forge_iam_roles"></a> [forge\_iam\_roles](#input\_forge\_iam\_roles) | List of IAM role ARNs for Forge runners. | `map(string)` | n/a | yes |
 | <a name="input_log_level"></a> [log\_level](#input\_log\_level) | Log level for application logging (e.g., INFO, DEBUG, WARN, ERROR) | `string` | `"INFO"` | no |
 | <a name="input_logging_retention_in_days"></a> [logging\_retention\_in\_days](#input\_logging\_retention\_in\_days) | Retention in days for CloudWatch Log Group for the Lambdas. | `number` | `30` | no |
+| <a name="input_number_forge_iram_roles"></a> [number\_forge\_iram\_roles](#input\_number\_forge\_iram\_roles) | Number of Iam roles ARNs for Forge runners | `number` | n/a | yes |
 | <a name="input_prefix"></a> [prefix](#input\_prefix) | Prefix for all resources | `string` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to created resources. | `map(string)` | `{}` | no |
 | <a name="input_tenant_iam_roles"></a> [tenant\_iam\_roles](#input\_tenant\_iam\_roles) | List of IAM role ARNs that the runners will assume to test trust relationships. | `list(string)` | `[]` | no |
