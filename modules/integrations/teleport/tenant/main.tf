@@ -1,4 +1,4 @@
-resource "kubernetes_cluster_role" "impersonate" {
+resource "kubernetes_cluster_role_v1" "impersonate" {
   metadata {
     name = "teleport-${var.namespace}-impersonate"
   }
@@ -16,7 +16,7 @@ resource "kubernetes_cluster_role" "impersonate" {
   }
 
 }
-resource "kubernetes_cluster_role" "pods" {
+resource "kubernetes_cluster_role_v1" "pods" {
   metadata {
     name = "teleport-${var.namespace}-pods"
   }
@@ -29,7 +29,7 @@ resource "kubernetes_cluster_role" "pods" {
 
 }
 
-resource "kubernetes_cluster_role_binding" "impersonate" {
+resource "kubernetes_cluster_role_binding_v1" "impersonate" {
   metadata {
     name = "teleport-${var.namespace}-impersonate-binding"
   }

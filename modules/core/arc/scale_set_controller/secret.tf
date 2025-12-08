@@ -1,11 +1,11 @@
-resource "kubernetes_namespace" "controller_namespace" {
+resource "kubernetes_namespace_v1" "controller_namespace" {
   count = var.migrate_arc_cluster == false ? 1 : 0
   metadata {
     name = var.namespace
   }
 }
 
-resource "kubernetes_secret" "github_app" {
+resource "kubernetes_secret_v1" "github_app" {
   count = var.migrate_arc_cluster == false ? 1 : 0
 
   metadata {
@@ -23,5 +23,5 @@ resource "kubernetes_secret" "github_app" {
   lifecycle {
     create_before_destroy = true
   }
-  depends_on = [kubernetes_namespace.controller_namespace]
+  depends_on = [kubernetes_namespace_v1.controller_namespace]
 }

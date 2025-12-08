@@ -21,5 +21,5 @@ resource "helm_release" "gha_runner_scale_set_controller" {
   cleanup_on_fail = true
   timeout         = 1200
 
-  depends_on = [kubernetes_secret.github_app]
+  depends_on = [kubernetes_secret_v1.github_app]
 }
