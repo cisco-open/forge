@@ -30,7 +30,7 @@ RUN set -eux; \
     chmod 755 /usr/local/bin/hadolint
 
 # Download jq.
-# renovate: datasource=github-releases depName=jqlang/jq registryUrl=https://github.com/
+# renovate: datasource=github-releases depName=jqlang/jq registryUrl=https://github.com/ extractVersion=^jq-(?<version>.*)$
 ARG JQ_VERSION="1.7.1"
 ARG JQ_SRC="https://github.com/jqlang/jq/releases/download/jq-${JQ_VERSION}/jq-linux64"
 ARG JQ_ARTIFACT="jq"
@@ -96,7 +96,7 @@ RUN set -eux; \
     chmod 755 /usr/local/bin/tflint;
 
 # renovate: datasource=github-releases depName=opentofu/opentofu registryUrl=https://github.com/
-ARG TOFU_VERSION="1.10.7"
+ARG TOFU_VERSION="1.11.0"
 ARG TOFU_SRC="https://github.com/opentofu/opentofu/releases/download/v${TOFU_VERSION}/tofu_${TOFU_VERSION}_linux_amd64.zip"
 ARG TOFU_ARTIFACT="tofu.zip"
 RUN set -eux; \
