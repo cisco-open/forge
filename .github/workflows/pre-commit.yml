@@ -11,6 +11,7 @@ on:
       - reopened
     branches:
       - main
+      - renovatebot
   push:
     branches:
       - main

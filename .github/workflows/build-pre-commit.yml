@@ -19,6 +19,7 @@ on:
       - reopened
     branches:
       - main
+      - renovatebot
     paths:
       - .docker/pre-commit/**
       - .github/workflows/build-pre-commit.yml

@@ -19,6 +19,7 @@ on:
       - reopened
     branches:
       - main
+      - renovatebot
     paths:
       - .docker/forge-github-app-register/**
       - .github/workflows/build-forge-github-app-register.yml

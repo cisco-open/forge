@@ -1,133 +1,219 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended",
-    "config:base",
-    ":rebaseStalePrs",
-    ":semanticCommits",
-    ":semanticCommitScope(deps)"
-  ],
-
-  "pre-commit": {
-    "enabled": true
-  },
-
-  "vulnerabilityAlerts": {
-    "enabled": true,
-    "schedule": ["at any time"]
-  },
-  "osvVulnerabilityAlerts": true,
-  "automerge": false,
-  "platformAutomerge": true,
-  "stabilityDays": 0,
-  "separateMinorPatch": true,
-  "separateMajorMinor": true,
-
-  "customManagers": [
-    {
-      "customType": "regex",
-      "fileMatch": ["^*\\.tf$"],
-      "matchStrings": ["required_version\\s=\\s\">= (?<currentValue>.*?)\""],
-      "depNameTemplate": "opentofu/opentofu",
-      "datasourceTemplate": "github-releases"
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "extends": [
+        "config:recommended",
+        "config:base",
+        ":rebaseStalePrs",
+        ":semanticCommits",
+        ":semanticCommitScope(deps)"
+    ],
+    "pre-commit": {
+        "enabled": true
     },
-    {
-      "customType": "regex",
-      "fileMatch": ["^.*\\.tf$"],
-      "matchStrings": [
-        "download_lambdas\\.sh\"\\s*,\\s*\"[^\"]+\"\\s*,\\s*\"(?<currentValue>v\\d+\\.\\d+\\.\\d+)\""
+    "vulnerabilityAlerts": {
+        "enabled": true,
+        "schedule": [
+            "at any time"
+        ]
+    },
+    "osvVulnerabilityAlerts": true,
+    "automerge": false,
+    "platformAutomerge": true,
+    "stabilityDays": 0,
+    "separateMinorPatch": true,
+    "separateMajorMinor": true,
+    "customManagers": [
+        {
+            "customType": "regex",
+            "fileMatch": [
+                "^*\\.tf$"
+            ],
+            "matchStrings": [
+                "required_version\\s=\\s\">= (?<currentValue>.*?)\""
+            ],
+            "datasourceTemplate": "github-releases",
+            "depNameTemplate": "opentofu/opentofu",
+            "extractVersionTemplate": "^v?(?<version>.*)$"
+        },
+        {
+            "customType": "regex",
+            "fileMatch": [
+                "^.*\\.tf$"
+            ],
+            "matchStrings": [
+                "download_lambdas\\.sh\"\\s*,\\s*\"[^\"]+\"\\s*,\\s*\"(?<currentValue>v\\d+\\.\\d+\\.\\d+)\""
+            ],
+            "depNameTemplate": "github-aws-runners/terraform-aws-github-runner",
+            "datasourceTemplate": "github-tags",
+            "versioningTemplate": "semver-coerced"
+        },
+        {
+          "fileMatch": ["Dockerfile$"],
+          "matchStrings": ["# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+) registryUrl=(?<registryUrl>\\S+)( extractVersion=(?<extractVersion>.+?))?( versioning=(?<versioning>.*?))?\\n.*?VERSION=\"(?<currentValue>.*)?\"\\s"],
+          "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+        }
       ],
-      "depNameTemplate": "github-aws-runners/terraform-aws-github-runner",
-      "datasourceTemplate": "github-tags",
-      "versioningTemplate": "semver-coerced"
-    }
-  ],
-
-  "packageRules": [
-    {
-      "matchDatasources": ["github-tags"],
-      "matchPackageNames": ["github-aws-runners/terraform-aws-github-runner"],
-      "groupName": "terraform-aws-github-runner version",
-      "separateMajorMinor": false,
-      "separateMinorPatch": false
-    },
-    {
-      "description": "Security updates - immediate processing (override stability days)",
-      "matchPackagePatterns": ["*"],
-      "matchUpdateTypes": ["patch", "minor"],
-      "vulnerabilityAlerts": {"enabled": true},
-      "stabilityDays": 0,
-      "prPriority": 10,
-      "prCreation": "immediate",
-      "addLabels": ["security", "critical"]
-    },
-    {
-      "matchUpdateTypes": ["patch","pin","digest"],
-      "addLabels": ["simple-review"],
-      "automerge": true
-    },
-    {
-      "matchUpdateTypes": ["minor"],
-      "addLabels": ["simple-review"]
-    },
-    {
-      "matchPackagePatterns": ["aws","terraform-aws-modules"],
-      "groupName": "AWS providers and modules",
-      "addLabels": ["aws-updates"]
-    },
-    {
-      "description": "GitHub Actions - pin to commit SHA for security",
-      "matchManagers": ["github-actions"],
-      "pinDigests": true,
-      "groupName": "GitHub Actions",
-      "addLabels": ["github-actions", "ci-cd"]
-    },
-    {
-      "matchManagers": ["pre-commit"],
-      "groupName": "Pre-commit hooks",
-      "addLabels": ["pre-commit"]
-    },
-    {
-      "matchPackagePatterns": ["python","pip"],
-      "groupName": "Python dependencies",
-      "addLabels": ["python"]
-    },
-    {
-      "description": "Development dependencies - reduced stability days",
-      "matchDepTypes": ["devDependencies"],
-      "matchUpdateTypes": ["patch", "minor"],
-      "stabilityDays": 1,
-      "automerge": true,
-      "addLabels": ["dev-dependencies"]
-    },
-    {
-      "description": "Docker images - grouped with digest pinning",
-      "matchManagers": ["docker-compose", "dockerfile"],
-      "groupName": "Docker images",
-      "pinDigests": true,
-      "addLabels": ["docker", "containers"]
-    },
-    {
-      "description": "Terraform providers from public registry",
-      "matchDatasources": ["terraform-provider"],
-      "matchPackagePatterns": ["^hashicorp/.*"],
-      "registryUrls": ["https://registry.opentofu.org"]
-    },
-    {
-      "description": "Major version updates - extended stability period",
-      "matchUpdateTypes": ["major"],
-      "stabilityDays": 7,
-      "prPriority": 1,
-      "addLabels": ["major-update", "breaking-change"]
-    },
-    {
-      "description": "Critical security patches - auto-merge enabled",
-      "matchPackagePatterns": ["*"],
-      "matchUpdateTypes": ["patch"],
-      "vulnerabilityAlerts": {"enabled": true},
-      "automerge": true,
-      "automergeType": "pr",
-      "addLabels": ["security", "auto-merge"]
-    }
-  ]
+    "packageRules": [
+        {
+            "matchDatasources": [
+                "github-tags"
+            ],
+            "matchPackageNames": [
+                "github-aws-runners/terraform-aws-github-runner"
+            ],
+            "groupName": "terraform-aws-github-runner version",
+            "separateMajorMinor": false,
+            "separateMinorPatch": false
+        },
+        {
+            "description": "Security updates - immediate processing (override stability days)",
+            "matchPackagePatterns": [
+                "*"
+            ],
+            "matchUpdateTypes": [
+                "patch",
+                "minor"
+            ],
+            "vulnerabilityAlerts": {
+                "enabled": true
+            },
+            "stabilityDays": 0,
+            "prPriority": 10,
+            "prCreation": "immediate",
+            "addLabels": [
+                "security",
+                "critical"
+            ]
+        },
+        {
+            "matchUpdateTypes": [
+                "patch",
+                "pin",
+                "digest"
+            ],
+            "addLabels": [
+                "simple-review"
+            ],
+            "automerge": true
+        },
+        {
+            "matchUpdateTypes": [
+                "minor"
+            ],
+            "addLabels": [
+                "simple-review"
+            ]
+        },
+        {
+            "matchPackagePatterns": [
+                "aws",
+                "terraform-aws-modules"
+            ],
+            "groupName": "AWS providers and modules",
+            "addLabels": [
+                "aws-updates"
+            ]
+        },
+        {
+            "description": "GitHub Actions - pin to commit SHA for security",
+            "matchManagers": [
+                "github-actions"
+            ],
+            "pinDigests": true,
+            "groupName": "GitHub Actions",
+            "addLabels": [
+                "github-actions",
+                "ci-cd"
+            ]
+        },
+        {
+            "matchManagers": [
+                "pre-commit"
+            ],
+            "groupName": "Pre-commit hooks",
+            "addLabels": [
+                "pre-commit"
+            ]
+        },
+        {
+            "matchPackagePatterns": [
+                "python",
+                "pip"
+            ],
+            "groupName": "Python dependencies",
+            "addLabels": [
+                "python"
+            ]
+        },
+        {
+            "description": "Development dependencies - reduced stability days",
+            "matchDepTypes": [
+                "devDependencies"
+            ],
+            "matchUpdateTypes": [
+                "patch",
+                "minor"
+            ],
+            "stabilityDays": 1,
+            "automerge": true,
+            "addLabels": [
+                "dev-dependencies"
+            ]
+        },
+        {
+            "description": "Docker images - grouped with digest pinning",
+            "matchManagers": [
+                "docker-compose",
+                "dockerfile"
+            ],
+            "groupName": "Docker images",
+            "pinDigests": true,
+            "addLabels": [
+                "docker",
+                "containers"
+            ]
+        },
+        {
+            "description": "Terraform providers from public registry",
+            "matchDatasources": [
+                "terraform-provider"
+            ],
+            "matchPackagePatterns": [
+                "^hashicorp/.*"
+            ],
+            "registryUrls": [
+                "https://registry.opentofu.org"
+            ]
+        },
+        {
+            "description": "Major version updates - extended stability period",
+            "matchUpdateTypes": [
+                "major"
+            ],
+            "stabilityDays": 7,
+            "prPriority": 1,
+            "addLabels": [
+                "major-update",
+                "breaking-change"
+            ]
+        },
+        {
+            "description": "Critical security patches - auto-merge enabled",
+            "matchPackagePatterns": [
+                "*"
+            ],
+            "matchUpdateTypes": [
+                "patch"
+            ],
+            "vulnerabilityAlerts": {
+                "enabled": true
+            },
+            "automerge": true,
+            "automergeType": "pr",
+            "addLabels": [
+                "security",
+                "auto-merge"
+            ]
+        }
+    ]
 }
