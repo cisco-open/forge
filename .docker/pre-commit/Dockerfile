@@ -92,10 +92,10 @@ RUN set -eux; \
     chmod 755 /usr/local/bin/terraform-docs
 
 # renovate: datasource=github-releases depName=gruntwork-io/terragrunt registryUrl=https://github.com/
-ARG TERRAGRUNT_VERSION="0.77.22"
+ARG TERRAGRUNT_VERSION="0.93.11"
 ARG TERRAGRUNT_SRC="https://github.com/gruntwork-io/terragrunt/releases/download/v${TERRAGRUNT_VERSION}/terragrunt_linux_amd64"
 ARG TERRAGRUNT_ARTIFACT="terragrunt"
-ARG TERRAGRUNT_CHECKSUM="42036586250f5db53dd2460427c5df43420fa22b935998f1530181474f525386"
+ARG TERRAGRUNT_CHECKSUM="9bf7a5620c8626cef8ebfae91ec4ff0db994993e2888d3e185e51bf155627c38"
 RUN set -eux; \
     wget --progress=dot:giga -O ${TERRAGRUNT_ARTIFACT} ${TERRAGRUNT_SRC}; \
     echo "${TERRAGRUNT_CHECKSUM} ${TERRAGRUNT_ARTIFACT}" | sha256sum -c -; \
@@ -103,21 +103,21 @@ RUN set -eux; \
     chmod 755 /usr/local/bin/terragrunt
 
 # renovate: datasource=github-releases depName=terraform-linters/tflint registryUrl=https://github.com/
-ARG TFLINT_VERSION="0.56.0"
+ARG TFLINT_VERSION="0.60.0"
 ARG TFLINT_SRC="https://github.com/terraform-linters/tflint/releases/download/v${TFLINT_VERSION}/tflint_linux_amd64.zip"
 ARG TFLINT_ARTIFACT="tflint.zip"
-ARG TFLINT_CHECKSUM="e0d74c557815ee51c6ecfe826ed62fd411ee6c10e1eab5532a0b0cc684c5db8a"
+ARG TFLINT_CHECKSUM="3476ceedcf0c4f9f2bed35e92988e1411bec2caa543c9387bffaa720df9efaf7"
 RUN set -eux; \
     wget --progress=dot:giga -O ${TFLINT_ARTIFACT} ${TFLINT_SRC}; \
     echo "${TFLINT_CHECKSUM} ${TFLINT_ARTIFACT}" | sha256sum -c -; \
     unzip -o ${TFLINT_ARTIFACT} -d /usr/local/bin/; \
-    chmod 755 /usr/local/bin/tflint
+    chmod 755 /usr/local/bin/tflint;
 
 # renovate: datasource=github-releases depName=opentofu/opentofu registryUrl=https://github.com/
-ARG TOFU_VERSION="1.9.1"
+ARG TOFU_VERSION="1.10.7"
 ARG TOFU_SRC="https://github.com/opentofu/opentofu/releases/download/v${TOFU_VERSION}/tofu_${TOFU_VERSION}_linux_amd64.zip"
 ARG TOFU_ARTIFACT="tofu.zip"
-ARG TOFU_CHECKSUM="19eda43eaa45bef3e21d87c58f31a6df73e8534ea30e78619a463bdfdb889cd2"
+ARG TOFU_CHECKSUM="c79bb458e7d7fa08c44be98b373ab3434647598808fc2a75dc9338aef7432ae6"
 RUN set -eux; \
     wget --progress=dot:giga -O ${TOFU_ARTIFACT} ${TOFU_SRC}; \
     echo "${TOFU_CHECKSUM} ${TOFU_ARTIFACT}" | sha256sum -c -; \
