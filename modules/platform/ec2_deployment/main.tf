@@ -39,7 +39,7 @@ data "external" "download_lambdas" {
 }
 
 module "runners" {
-  source = "git::https://github.com/edersonbrilhante/terraform-aws-github-runner.git//modules/multi-runner?ref=feat-placement"
+  source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=next"
 
   aws_region = var.aws_region
 
@@ -160,9 +160,11 @@ module "runners" {
             "log_stream_name" : "{instance_id}/hook"
           },
         ]
-        ami_owners                    = val["ami_owners"]
-        ami_filter                    = val["ami_filter"]
-        ami_kms_key_arn               = val["ami_kms_key_arn"]
+        ami = {
+          owners      = val["ami_owners"]
+          filter      = val["ami_filter"]
+          kms_key_arn = val["ami_kms_key_arn"]
+        }
         instance_target_capacity_type = val["instance_target_capacity_type"]
         enable_job_queued_check       = false
         runner_iam_role_managed_policy_arns = concat(
