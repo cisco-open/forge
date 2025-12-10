@@ -1,17 +1,17 @@
 locals {
-  job_definition = templatefile(
-    "${path.module}/template_files/ci_jobs.json.tftpl",
+  ec2_scale_up_errors_definition = templatefile(
+    "${path.module}/template_files/ec2_scale_up_errors.json.tftpl",
     {
       splunk_index = var.splunk_conf.index,
       tenants      = var.splunk_conf.tenant_names
     }
   )
-  job_eai_data = <<EOF
+  ec2_scale_up_errors_eai_data = <<EOF
 <dashboard version="2" theme="light">
-    <label>CI Job Result</label>
+    <label>EC2 Scale up Errors</label>
     <description></description>
     <definition>
-        <![CDATA[${local.job_definition}]]>
+        <![CDATA[${local.ec2_scale_up_errors_definition}]]>
     </definition>
     <meta type="hiddenElements">
         <![CDATA[
@@ -26,9 +26,9 @@ locals {
 EOF
 }
 
-resource "splunk_data_ui_views" "ci_jobs" {
-  name     = "ci_jobs"
-  eai_data = local.job_eai_data
+resource "splunk_data_ui_views" "ec2_scale_up_errors" {
+  name     = "ec2_scale_up_errors"
+  eai_data = local.ec2_scale_up_errors_eai_data
 
   acl {
     app     = var.splunk_conf.acl.app

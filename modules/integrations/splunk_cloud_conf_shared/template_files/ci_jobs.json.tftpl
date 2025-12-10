@@ -1,6 +1,6 @@
 {
     "title": "CI Job Result",
-    "description": "",
+    "description": "Shows recent Forge GitHub Actions job executions per tenant, including status and timing details.",
     "inputs": {
         "input_4A2iEpn6": {
             "options": {
@@ -27,12 +27,12 @@
                         "value": "*"
                     },
                     {
-                        "label": "Succeeded",
-                        "value": "Succeeded"
+                        "label": "Success",
+                        "value": "success"
                     },
                     {
-                        "label": "Failed",
-                        "value": "Failed"
+                        "label": "Failure",
+                        "value": "failure"
                     },
                     {
                         "label": "Cancelled",
@@ -45,29 +45,15 @@
             "type": "input.dropdown"
         },
         "input_uFiEIG6X": {
-            "context": {
-                "formattedConfig": {
-                    "number": {
-                        "prefix": ""
-                    }
-                },
-                "formattedStatics": ">statics | formatByType(formattedConfig)",
-                "label": ">primary | seriesByName(\"forgecicd_tenant\") | renameSeries(\"label\") | formatByType(formattedConfig)",
-                "statics": [
-                    [
-                        "Select Tenant"
-                    ],
-                    [
-                        "-"
-                    ]
-                ],
-                "value": ">primary | seriesByName(\"forgecicd_tenant\") | renameSeries(\"value\") | formatByType(formattedConfig)"
-            },
-            "dataSources": {
-                "primary": "ds_x8AMw4ri"
-            },
+            "context": {},
+            "dataSources": {},
             "options": {
-                "items": ">frame(label, value) | prepend(formattedStatics) | objects()",
+                "items": ${jsonencode(
+                    concat(
+                        [{ label = "Select Tenant", value = "-" }],
+                        [for tenant in tenants : { label = tenant, value = tenant }]
+                    )
+                )},
                 "selectFirstSearchResult": true,
                 "token": "dd_8enHUmpH"
             },
@@ -124,40 +110,11 @@
         }
     },
     "dataSources": {
-        "ds_5a4R8xaz": {
-            "name": "log type list",
-            "options": {
-                "query": "index=\"${splunk_index}\" | stats count by forgecicd_log_type | table forgecicd_log_type",
-                "queryParameters": {
-                    "earliest": "$global_time.earliest$",
-                    "latest": "$global_time.latest$"
-                }
-            },
-            "type": "ds.search"
-        },
-        "ds_iONxCEsT": {
-            "name": "logs",
-            "options": {
-                "query": "index=\"${splunk_index}\" forgecicd_tenant=\"$dd_8enHUmpH$\" forgecicd_log_type\n=\"$dd_ZlvrLiNG$\" forgecicd_instance_id=\"$text_9yxn14bn$\"\n|  sort _time asc"
-            },
-            "type": "ds.search"
-        },
-        "ds_x8AMw4ri": {
-            "name": "tenant list",
-            "options": {
-                "query": "index=\"${splunk_index}\" | stats count by forgecicd_tenant | table forgecicd_tenant",
-                "queryParameters": {
-                    "earliest": "$global_time.earliest$",
-                    "latest": "$global_time.latest$"
-                }
-            },
-            "type": "ds.search"
-        },
         "ds_yDvZOb30": {
             "name": "GH Job Details search",
             "options": {
                 "enableSmartSources": true,
-                "query": "index=\"${splunk_index}\" forgecicd_log_type=hook type=\"completed\" forgecicd_tenant=\"$dd_8enHUmpH$\" forgecicd_instance_id=\"$text_9yxn14bn$\"\n| eval repo_url = GITHUB_SERVER_URL . \"/\" . GITHUB_REPOSITORY\n| eval run_url = repo_url . \"/actions/runs/\" . GITHUB_RUN_ID . \"/attempts/\" . GITHUB_RUN_ATTEMPT\n| fields \n    GITHUB_SHA,\n    run_url,\n    repo_url,\n    GITHUB_RUN_ID,\n    GITHUB_RUN_ATTEMPT,\n    GITHUB_ACTOR,\n    GITHUB_TRIGGERING_ACTOR,\n    GITHUB_WORKFLOW,\n    GITHUB_HEAD_REF,\n    GITHUB_BASE_REF,\n    GITHUB_EVENT_NAME,\n    forgecicd_instance_id\n| join forgecicd_instance_id type=left [\n    search index=\"${splunk_index}\" forgecicd_log_type=runner forgecicd_tenant=\"$dd_8enHUmpH$\" forgecicd_instance_id=\"$text_9yxn14bn$\" ci_result=*\n    | fields forgecicd_instance_id, ci_result, job_name\n]\n| join forgecicd_instance_id type=left [\n    search index=\"${splunk_index}\" forgecicd_log_type=hook (type=\"started\" OR type=\"completed\") forgecicd_tenant=\"$dd_8enHUmpH$\" forgecicd_instance_id=\"$text_9yxn14bn$\"\n    | stats earliest(_time) as start latest(_time) as end by forgecicd_instance_id\n    | eval duration_minutes = round((end - start) / 60, 2)\n    | fields forgecicd_instance_id, duration_minutes\n]\n| search ci_result=\"$dd_sHd7IGav$\"\n| table \n    GITHUB_SHA,\n    duration_minutes,\n    run_url,\n    repo_url,\n    GITHUB_RUN_ID,\n    GITHUB_RUN_ATTEMPT,\n    GITHUB_ACTOR,\n    GITHUB_TRIGGERING_ACTOR,\n    GITHUB_WORKFLOW,\n    GITHUB_HEAD_REF,\n    GITHUB_BASE_REF,\n    GITHUB_EVENT_NAME,\n    forgecicd_instance_id,\n    job_name,\n    ci_result\n",
+                "query": "index=\"${splunk_index}\" forgecicd_log_type=\"runner-job-event\" \nconclusion=\"$dd_sHd7IGav$\"\nforgecicd_instance_id=\"$text_9yxn14bn$\"\nforgecicd_tenant=\"$dd_8enHUmpH$\"\n| table \n    workflow_job.html_url \n    workflow_job.conclusion\n    workflow_job.name \n    workflow_job.run_id \n    workflow_job.run_attempt \n    workflow_job.id \n    workflow_job.created_at \n    workflow_job.started_at\n    workflow_job.completed_at \n    workflow_job.runner_name \n    forgecicd_instance_id\n| rename \n    workflow_job.html_url      as run_url\n    workflow_job.conclusion    as ci_result\n    workflow_job.name          as workflow_name\n    workflow_job.run_id        as workflow_run_id\n    workflow_job.run_attempt   as workflow_run_attempt\n    workflow_job.id            as workflow_job_id\n    workflow_job.created_at    as created_at\n    workflow_job.started_at    as started_at\n    workflow_job.completed_at  as completed_at\n    workflow_job.runner_name   as runner_name\n| eval created_epoch  = strptime(created_at,  \"%Y-%m-%dT%H:%M:%SZ\")\n| eval started_epoch  = strptime(started_at,  \"%Y-%m-%dT%H:%M:%SZ\")\n| eval completed_epoch = strptime(completed_at, \"%Y-%m-%dT%H:%M:%SZ\")\n| eval duration_created_to_started   = tostring(started_epoch  - created_epoch,  \"duration\")\n| eval duration_started_to_completed = tostring(completed_epoch - started_epoch, \"duration\")\n| eval duration_total                = tostring(completed_epoch - created_epoch, \"duration\")\n| table \n    run_url \n    ci_result \n    workflow_name \n    workflow_run_id \n    workflow_run_attempt \n    workflow_job_id \n    created_at \n    started_at \n    completed_at \n    duration_created_to_started \n    duration_started_to_completed \n    duration_total \n    runner_name \n    forgecicd_instance_id",
                 "queryParameters": {
                     "earliest": "$global_time.earliest$",
                     "latest": "$global_time.latest$"

@@ -23,6 +23,7 @@ variable "splunk_conf" {
       read    = list(string)
       write   = list(string)
     })
-    index = string
+    index        = string
+    tenant_names = list(string)
   })
 }

@@ -1,35 +1,10 @@
 {
-    "title": "Tenant Logs",
-    "description": "Displays Forge runner logs for a selected tenant, log type, and time range.",
+    "title": "EC2 Scale up Errors",
+    "description": "Lists failed EC2 runner scale-up attempts with related workflow, tenant, and environment context.",
     "inputs": {
-        "input_4A2iEpn6": {
-            "options": {
-                "defaultValue": "*",
-                "token": "text_9yxn14bn"
-            },
-            "title": "Forge Instance ID",
-            "type": "input.text"
-        },
-        "input_ch5zNZ2X": {
-            "dataSources": {
-                "primary": "ds_5a4R8xaz"
-            },
-            "options": {
-                "defaultValue": "",
-                "items": [
-                    {
-                        "label": "All",
-                        "value": "*"
-                    }
-                ],
-                "token": "dd_ZlvrLiNG"
-            },
-            "title": "Forge Log Type",
-            "type": "input.dropdown"
-        },
         "input_global_trp": {
             "options": {
-                "defaultValue": "-60m@m,now",
+                "defaultValue": "-7d@h,now",
                 "token": "global_time"
             },
             "title": "Global Time Range",
@@ -41,7 +16,7 @@
             "options": {
                 "items": ${jsonencode(
                     concat(
-                        [{ label = "Select Tenant", value = "-" }],
+                        [{ label = "Select Tenant", value = "()" }],
                         [for tenant in tenants : { label = tenant, value = tenant }]
                     )
                 )},
@@ -73,41 +48,27 @@
         }
     },
     "visualizations": {
-        "viz_KuqTQOYc": {
+        "viz_YqZBTBIB": {
             "containerOptions": {},
-            "context": {},
             "dataSources": {
-                "primary": "ds_iONxCEsT"
+                "primary": "ds_yDvZOb30"
             },
-            "options": {},
+            "eventHandlers": [],
+            "options": {
+                "count": 20
+            },
             "showLastUpdated": false,
             "showProgressBar": false,
-            "type": "splunk.events"
+            "title": "",
+            "type": "splunk.table"
         }
     },
     "dataSources": {
-        "ds_5a4R8xaz": {
-            "name": "log type list",
+        "ds_yDvZOb30": {
+            "name": "Ec2 scale up errors",
             "options": {
-                "query": "index=\"${splunk_index}\" | stats count by forgecicd_log_type | table forgecicd_log_type",
-                "queryParameters": {
-                    "earliest": "$global_time.earliest$",
-                    "latest": "$global_time.latest$"
-                }
-            },
-            "type": "ds.search"
-        },
-        "ds_iONxCEsT": {
-            "name": "logs",
-            "options": {
-                "query": "index=\"${splunk_index}\" forgecicd_tenant=\"$dd_8enHUmpH$\" forgecicd_log_type=\"$dd_ZlvrLiNG$\"\n| where \"$text_9yxn14bn$\"=\"*\" OR forgecicd_instance_id=\"$text_9yxn14bn$\"\n| sort _time asc"
-            },
-            "type": "ds.search"
-        },
-        "ds_x8AMw4ri": {
-            "name": "tenant list",
-            "options": {
-                "query": "index=\"${splunk_index}\" | stats count by forgecicd_tenant | table forgecicd_tenant",
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" forgecicd_log_type=\"scale-up\" \"Ignoring error\" \n| where \"$dd_8enHUmpH$\"=\"*\" OR forgecicd_tenant=\"$dd_8enHUmpH$\"\n| rename aws-request-id as aws_request_id\n| dedup aws_request_id\n| fields aws_request_id message\n| join aws_request_id type=inner\n    [\n        search index=\"${splunk_index}\" message=\"Received event\"\n        | rename aws-request-id as aws_request_id\n        | stats \n            values(github.workflow_job_id) as workflow_job_id\n            values(forgecicd_tenant) as tenant\n            values(forgecicd_vpc_alias) as vpc_alias\n            values(forgecicd_region_alias) as region_alias\n            values(timestamp) as event_timestamp\n            by aws_request_id\n        | mvexpand workflow_job_id\n    ]\n| table aws_request_id workflow_job_id tenant vpc_alias region_alias message event_timestamp\n",
                 "queryParameters": {
                     "earliest": "$global_time.earliest$",
                     "latest": "$global_time.latest$"
@@ -119,22 +80,19 @@
     "layout": {
         "globalInputs": [
             "input_global_trp",
-            "input_uFiEIG6X",
-            "input_ch5zNZ2X",
-            "input_4A2iEpn6"
+            "input_uFiEIG6X"
         ],
         "layoutDefinitions": {
-            "layout_1": {
+            "layout_6CHuojec": {
                 "options": {
-                    "height": 960,
-                    "width": 1440
+                    "gutterSize": 9
                 },
                 "structure": [
                     {
-                        "item": "viz_KuqTQOYc",
+                        "item": "viz_YqZBTBIB",
                         "position": {
-                            "h": 626,
-                            "w": 1440,
+                            "h": 974,
+                            "w": 1200,
                             "x": 0,
                             "y": 0
                         },
@@ -148,8 +106,8 @@
         "tabs": {
             "items": [
                 {
-                    "label": "Runner Logs",
-                    "layoutId": "layout_1"
+                    "label": "EC2 Runner scale up errors",
+                    "layoutId": "layout_6CHuojec"
                 }
             ]
         }

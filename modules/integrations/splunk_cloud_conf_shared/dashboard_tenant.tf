@@ -2,7 +2,8 @@ locals {
   tenant_definition = templatefile(
     "${path.module}/template_files/tenant.json.tftpl",
     {
-      splunk_index = var.splunk_conf.index
+      splunk_index = var.splunk_conf.index,
+      tenants      = var.splunk_conf.tenant_names
     }
   )
   tenant_eai_data = <<EOF

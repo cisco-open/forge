@@ -64,6 +64,7 @@ No modules.
 | [splunk_configs_conf.forgecicd_runner_logs_tenant_fields_logs](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_trust_validation](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_data_ui_views.ci_jobs](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
+| [splunk_data_ui_views.ec2_scale_up_errors](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
 | [splunk_data_ui_views.tenant](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
 | [aws_secretsmanager_secret.secrets](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/secretsmanager_secret) | data source |
 | [aws_secretsmanager_secret_version.secrets](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/secretsmanager_secret_version) | data source |
@@ -75,7 +76,7 @@ No modules.
 | <a name="input_aws_profile"></a> [aws\_profile](#input\_aws\_profile) | AWS profile (i.e. generated via 'sl aws session generate') to use. | `string` | n/a | yes |
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | Assuming single region for now. | `string` | n/a | yes |
 | <a name="input_default_tags"></a> [default\_tags](#input\_default\_tags) | A map of tags to apply to resources. | `map(string)` | n/a | yes |
-| <a name="input_splunk_conf"></a> [splunk\_conf](#input\_splunk\_conf) | n/a | <pre>object({<br/>    splunk_cloud = string<br/>    acl = object({<br/>      app     = string<br/>      owner   = string<br/>      sharing = string<br/>      read    = list(string)<br/>      write   = list(string)<br/>    })<br/>    index = string<br/>  })</pre> | n/a | yes |
+| <a name="input_splunk_conf"></a> [splunk\_conf](#input\_splunk\_conf) | n/a | <pre>object({<br/>    splunk_cloud = string<br/>    acl = object({<br/>      app     = string<br/>      owner   = string<br/>      sharing = string<br/>      read    = list(string)<br/>      write   = list(string)<br/>    })<br/>    index   = string<br/>    tenant_names = list(string)<br/>  })</pre> | n/a | yes |
 
 ## Outputs
 
