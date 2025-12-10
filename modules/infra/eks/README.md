@@ -3,12 +3,12 @@
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.11.0 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.25 |
 | <a name="requirement_external"></a> [external](#requirement\_external) | >= 2.3 |
 | <a name="requirement_helm"></a> [helm](#requirement\_helm) | >= 3.0.0 |
 | <a name="requirement_kubectl"></a> [kubectl](#requirement\_kubectl) | >= 1.19.0 |
-| <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | >= 2.36.0 |
+| <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | >= 3.0 |
 | <a name="requirement_null"></a> [null](#requirement\_null) | >= 3.2 |
 | <a name="requirement_time"></a> [time](#requirement\_time) | >= 0.13.1 |
 
