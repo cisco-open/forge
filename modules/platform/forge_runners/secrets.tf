@@ -4,27 +4,27 @@ locals {
   secrets = [
     # CI/CD runners: secrets used in build/deploy pipelines.
     {
-      name          = "${local.cicd_secrets_prefix}github_app_key"
+      name          = "${local.cicd_secrets_prefix}github_actions_runners_app_key"
       description   = "Base64 encoded GitHub App private key for GHA ephemeral runners for Tenant ${var.deployment_config.tenant.name}(${var.deployment_config.secret_suffix})."
       recovery_days = 7
     },
     {
-      name          = "${local.cicd_secrets_prefix}github_app_id"
+      name          = "${local.cicd_secrets_prefix}github_actions_runners_app_id"
       description   = "GitHub App ID for GHA ephemeral runners for Tenant ${var.deployment_config.tenant.name}(${var.deployment_config.secret_suffix})."
       recovery_days = 7
     },
     {
-      name          = "${local.cicd_secrets_prefix}github_app_client_id"
+      name          = "${local.cicd_secrets_prefix}github_actions_runners_app_client_id"
       description   = "GitHub App Client ID for GHA ephemeral runners for Tenant ${var.deployment_config.tenant.name}(${var.deployment_config.secret_suffix})."
       recovery_days = 7
     },
     {
-      name          = "${local.cicd_secrets_prefix}github_app_installation_id"
+      name          = "${local.cicd_secrets_prefix}github_actions_runners_app_installation_id"
       description   = "GitHub App Installation ID for GHA ephemeral runners for Tenant ${var.deployment_config.tenant.name}(${var.deployment_config.secret_suffix})."
       recovery_days = 7
     },
     {
-      name          = "${local.cicd_secrets_prefix}github_app_name"
+      name          = "${local.cicd_secrets_prefix}github_actions_runners_app_name"
       description   = "GitHub App Name for GHA ephemeral runners for Tenant ${var.deployment_config.tenant.name}(${var.deployment_config.secret_suffix})."
       recovery_days = 7
     }
