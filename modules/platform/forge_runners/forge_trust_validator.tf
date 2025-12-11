@@ -1,5 +1,5 @@
 module "forge_trust_validator" {
-  count  = length(var.tenant.iam_roles_to_assume) > 0 ? 1 : 0
+  count  = length(var.deployment_config.tenant.iam_roles_to_assume) > 0 ? 1 : 0
   source = "./forge_trust_validator"
 
   providers = {
@@ -7,7 +7,7 @@ module "forge_trust_validator" {
   }
 
   aws_profile               = var.aws_profile
-  prefix                    = var.deployment_config.prefix
+  prefix                    = var.deployment_config.deployment_prefix
   logging_retention_in_days = var.logging_retention_in_days
   log_level                 = var.log_level
   tags                      = local.all_security_tags
@@ -20,9 +20,9 @@ module "forge_trust_validator" {
     idx => arn
   }
   number_forge_iram_roles = (
-    length(var.ec2_runner_specs) +
-    length(var.arc_runner_specs)
+    length(var.ec2_deployment_specs.runner_specs) +
+    length(var.arc_deployment_specs.runner_specs)
   )
 
-  tenant_iam_roles = var.tenant.iam_roles_to_assume
+  tenant_iam_roles = var.deployment_config.tenant.iam_roles_to_assume
 }

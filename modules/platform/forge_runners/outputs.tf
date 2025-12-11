@@ -1,8 +1,8 @@
 output "forge_core" {
   description = "Core tenant-level metadata (non-sensitive)."
   value = {
-    tenant            = var.tenant
-    runner_group_name = var.runner_group_name
+    tenant            = var.deployment_config.tenant
+    runner_group_name = var.deployment_config.github.runner_group_name
   }
 }
 

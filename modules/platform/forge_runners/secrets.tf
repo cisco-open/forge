@@ -1,31 +1,31 @@
 locals {
-  cicd_secrets_prefix = "/cicd/common/${var.tenant.name}/${var.deployment_config.secret_suffix}/"
+  cicd_secrets_prefix = "/cicd/common/${var.deployment_config.tenant.name}/${var.deployment_config.secret_suffix}/"
 
   secrets = [
     # CI/CD runners: secrets used in build/deploy pipelines.
     {
       name          = "${local.cicd_secrets_prefix}github_actions_runners_app_key"
-      description   = "Base64 encoded GitHub App private key for GHA ephemeral runners for Tenant ${var.tenant.name}(${var.deployment_config.secret_suffix})."
+      description   = "Base64 encoded GitHub App private key for GHA ephemeral runners for Tenant ${var.deployment_config.tenant.name}(${var.deployment_config.secret_suffix})."
       recovery_days = 7
     },
     {
       name          = "${local.cicd_secrets_prefix}github_actions_runners_app_id"
-      description   = "GitHub App ID for GHA ephemeral runners for Tenant ${var.tenant.name}(${var.deployment_config.secret_suffix})."
+      description   = "GitHub App ID for GHA ephemeral runners for Tenant ${var.deployment_config.tenant.name}(${var.deployment_config.secret_suffix})."
       recovery_days = 7
     },
     {
       name          = "${local.cicd_secrets_prefix}github_actions_runners_app_client_id"
-      description   = "GitHub App Client ID for GHA ephemeral runners for Tenant ${var.tenant.name}(${var.deployment_config.secret_suffix})."
+      description   = "GitHub App Client ID for GHA ephemeral runners for Tenant ${var.deployment_config.tenant.name}(${var.deployment_config.secret_suffix})."
       recovery_days = 7
     },
     {
       name          = "${local.cicd_secrets_prefix}github_actions_runners_app_installation_id"
-      description   = "GitHub App Installation ID for GHA ephemeral runners for Tenant ${var.tenant.name}(${var.deployment_config.secret_suffix})."
+      description   = "GitHub App Installation ID for GHA ephemeral runners for Tenant ${var.deployment_config.tenant.name}(${var.deployment_config.secret_suffix})."
       recovery_days = 7
     },
     {
       name          = "${local.cicd_secrets_prefix}github_actions_runners_app_name"
-      description   = "GitHub App Name for GHA ephemeral runners for Tenant ${var.tenant.name}(${var.deployment_config.secret_suffix})."
+      description   = "GitHub App Name for GHA ephemeral runners for Tenant ${var.deployment_config.tenant.name}(${var.deployment_config.secret_suffix})."
       recovery_days = 7
     }
   ]
@@ -93,7 +93,7 @@ data "aws_secretsmanager_secret" "data_cicd_secrets" {
   depends_on = [
     aws_secretsmanager_secret.cicd_secrets,
   ]
-  arn = "arn:aws:secretsmanager:${var.aws_region}:${var.aws_account_id}:secret:${each.key}"
+  arn = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:${each.key}"
 }
 
 # Need both these objects to be able to extract the secrets' respective

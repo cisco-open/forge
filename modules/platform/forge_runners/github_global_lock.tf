@@ -5,7 +5,7 @@ module "github_global_lock" {
     aws = aws
   }
 
-  prefix                    = var.deployment_config.prefix
+  prefix                    = var.deployment_config.deployment_prefix
   secrets_prefix            = local.cicd_secrets_prefix
   logging_retention_in_days = var.logging_retention_in_days
   log_level                 = var.log_level

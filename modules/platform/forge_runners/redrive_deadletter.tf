@@ -9,23 +9,23 @@ module "redrive_deadletter" {
     aws = aws
   }
 
-  prefix                    = var.deployment_config.prefix
+  prefix                    = var.deployment_config.deployment_prefix
   logging_retention_in_days = var.logging_retention_in_days
   log_level                 = var.log_level
   tags                      = local.all_security_tags
 
   sqs_map = merge(
     {
-      for key in keys(var.ec2_runner_specs) :
+      for key in keys(var.ec2_deployment_specs.runner_specs) :
       key => {
-        dlq  = "${local.sqs_prefix_arn}:${var.deployment_config.prefix}-${key}-queued-builds_dead_letter"
-        main = "${local.sqs_prefix_arn}:${var.deployment_config.prefix}-${key}-queued-builds"
+        dlq  = "${local.sqs_prefix_arn}:${var.deployment_config.deployment_prefix}-${key}-queued-builds_dead_letter"
+        main = "${local.sqs_prefix_arn}:${var.deployment_config.deployment_prefix}-${key}-queued-builds"
       }
     },
     {
       "gha-job-logs" = {
-        dlq  = "${local.sqs_prefix_arn}:${var.deployment_config.prefix}-gha-job-logs-dead-letter"
-        main = "${local.sqs_prefix_arn}:${var.deployment_config.prefix}-gha-job-logs"
+        dlq  = "${local.sqs_prefix_arn}:${var.deployment_config.deployment_prefix}-gha-job-logs-dead-letter"
+        main = "${local.sqs_prefix_arn}:${var.deployment_config.deployment_prefix}-gha-job-logs"
       }
     },
   )
