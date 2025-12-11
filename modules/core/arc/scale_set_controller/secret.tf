@@ -15,13 +15,25 @@ resource "kubernetes_secret_v1" "github_app" {
 
   type = "generic"
 
-  data = {
-    github_app_id              = var.github_app.id
-    github_app_installation_id = var.github_app.installation_id
-    github_app_private_key     = base64decode(var.github_app.key_base64)
+  data_wo = {
+    github_app_id              = ephemeral.aws_ssm_parameter.id_ssm.value
+    github_app_installation_id = ephemeral.aws_ssm_parameter.installation_id_ssm.value
+    github_app_private_key     = base64decode(ephemeral.aws_ssm_parameter.key_base64_ssm.value)
   }
   lifecycle {
     create_before_destroy = true
   }
   depends_on = [kubernetes_namespace_v1.controller_namespace]
+}
+
+ephemeral "aws_ssm_parameter" "id_ssm" {
+  arn = var.github_app.id_ssm.arn
+}
+
+ephemeral "aws_ssm_parameter" "installation_id_ssm" {
+  arn = var.github_app.installation_id_ssm.arn
+}
+
+ephemeral "aws_ssm_parameter" "key_base64_ssm" {
+  arn = var.github_app.key_base64_ssm.arn
 }

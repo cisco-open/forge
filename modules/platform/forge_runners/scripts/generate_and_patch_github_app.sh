@@ -15,6 +15,29 @@ b64enc() {
     openssl base64 | tr -d '=' | tr '/+' '_-' | tr -d '\n'
 }
 
+load_secrets_from_ssm() {
+    # Optionally load PRIVATE_KEY and SECRET from SSM Parameter Store
+    # when their corresponding ARNs/names are provided.
+
+    if [[ -n "${PRIVATE_KEY_ARN:-}" ]]; then
+        log "Fetching PRIVATE_KEY from SSM parameter: ${PRIVATE_KEY_ARN}"
+        PRIVATE_KEY=$(aws ssm get-parameter \
+            --with-decryption \
+            --name "${PRIVATE_KEY_ARN}" \
+            --query 'Parameter.Value' \
+            --output text)
+    fi
+
+    if [[ -n "${SECRET_ARN:-}" ]]; then
+        log "Fetching SECRET from SSM parameter: ${SECRET_ARN}"
+        SECRET=$(aws ssm get-parameter \
+            --with-decryption \
+            --name "${SECRET_ARN}" \
+            --query 'Parameter.Value' \
+            --output text)
+    fi
+}
+
 validate_environment() {
     if [[ "${DEBUG}" == "true" ]]; then
         log "Debug enabled"
@@ -138,6 +161,7 @@ EOF
 }
 
 main() {
+    load_secrets_from_ssm
     validate_environment
     generate_jwt
     patch_github_webhook

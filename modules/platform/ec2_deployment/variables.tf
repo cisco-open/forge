@@ -12,9 +12,18 @@ variable "runner_configs" {
     log_level                 = string
     logging_retention_in_days = string
     github_app = object({
-      key_base64     = string
-      id             = string
-      webhook_secret = string
+      key_base64_ssm = object({
+        arn  = string
+        name = string
+      })
+      id_ssm = object({
+        arn  = string
+        name = string
+      })
+      webhook_secret_ssm = object({
+        arn  = string
+        name = string
+      })
     })
     runner_iam_role_managed_policy_arns = list(string)
     runner_group_name                   = string

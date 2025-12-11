@@ -29,7 +29,7 @@ get_secret_name() {
     local type="$2"
     tenant_name=$(get_terragrunt_var "var.tenant.name" "$terragrunt_dir")
     secret_suffix=$(get_terragrunt_var "var.deployment_config.secret_suffix" "$terragrunt_dir")
-    echo "/cicd/common/${tenant_name}/${secret_suffix}/github_actions_runners_app_${type}"
+    echo "/cicd/common/${tenant_name}/${secret_suffix}/github_app_${type}"
 }
 
 get_terragrunt_var() {

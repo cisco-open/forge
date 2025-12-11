@@ -1,28 +1,24 @@
 resource "null_resource" "update_github_app_webhook" {
   triggers = {
-    ghes_org       = var.ghes_org
-    ghes_url       = var.ghes_url
+    ghes_org       = var.deployment_config.github.ghes_org
+    ghes_url       = var.deployment_config.github.ghes_url
     webhook_url    = try(module.ec2_runners[0].webhook_endpoint, "https://cisco-open.github.io/forge")
-    secret         = try(random_id.random[0].hex, null)
-    secret_version = data.aws_secretsmanager_secret_version.data_cicd_secrets["${local.cicd_secrets_prefix}github_actions_runners_app_key"].id
+    secret_version = aws_ssm_parameter.github_app_webhook_secret.version
+    key_version    = aws_ssm_parameter.github_app_key.version
   }
 
   provisioner "local-exec" {
     environment = {
-      CLIENT_ID = data.aws_secretsmanager_secret_version.data_cicd_secrets["${local.cicd_secrets_prefix}github_actions_runners_app_client_id"].secret_string
-      PRIVATE_KEY = base64decode(
-        data.aws_secretsmanager_secret_version.data_cicd_secrets["${local.cicd_secrets_prefix}github_actions_runners_app_key"].secret_string
-      )
-      WEBHOOK_URL = self.triggers.webhook_url
-      SECRET      = self.triggers.secret
-      GITHUB_API  = local.github_api
-      PREFIX      = "${var.env}-${var.deployment_config.prefix}"
+      CLIENT_ID       = var.deployment_config.github_app.client_id
+      AWS_REGION      = var.aws_region
+      AWS_PROFILE     = var.aws_profile
+      PRIVATE_KEY_ARN = aws_ssm_parameter.github_app_key.arn
+      WEBHOOK_URL     = self.triggers.webhook_url
+      SECRET_ARN      = aws_ssm_parameter.github_app_webhook_secret.arn
+      GITHUB_API      = local.github_api
+      PREFIX          = "${var.deployment_config.env}-${var.deployment_config.deployment_prefix}"
     }
 
     command = "${path.module}/scripts/generate_and_patch_github_app.sh"
   }
-
-  depends_on = [
-    data.aws_secretsmanager_secret_version.data_cicd_secrets,
-  ]
 }

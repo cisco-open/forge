@@ -44,7 +44,7 @@
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_aws_profile"></a> [aws\_profile](#input\_aws\_profile) | AWS profile (i.e. generated via 'sl aws session generate') to use. | `string` | n/a | yes |
+| <a name="input_aws_profile"></a> [aws\_profile](#input\_aws\_profile) | AWS profile to use. | `string` | n/a | yes |
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | Assuming single region for now. | `string` | n/a | yes |
 | <a name="input_controller_config"></a> [controller\_config](#input\_controller\_config) | controller\_config = {<br/>      release\_name: "Name of the Helm release."<br/>      namespace: "Namespace for chart installation."<br/>      chart\_name: "Chart name for the Helm chart."<br/>      chart\_version: "Chart version for the Helm chart."<br/>      name: "Name of the controller."<br/>    } | <pre>object({<br/>    release_name  = string<br/>    namespace     = string<br/>    chart_name    = string<br/>    chart_version = string<br/>    name          = string<br/>  })</pre> | n/a | yes |
 | <a name="input_eks_cluster_name"></a> [eks\_cluster\_name](#input\_eks\_cluster\_name) | Name of the EKS cluster | `string` | n/a | yes |

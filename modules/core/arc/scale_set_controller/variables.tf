@@ -27,9 +27,18 @@ variable "controller_config" {
 variable "github_app" {
   description = "GitHub App configuration"
   type = object({
-    key_base64      = string
-    id              = string
-    installation_id = string
+    key_base64_ssm = object({
+      arn  = string
+      name = string
+    })
+    id_ssm = object({
+      arn  = string
+      name = string
+    })
+    installation_id_ssm = object({
+      arn  = string
+      name = string
+    })
   })
 }
 

@@ -6,13 +6,11 @@ module "github_webhook_relay" {
     aws = aws
   }
 
-  prefix                    = var.deployment_config.prefix
-  secret_prefix             = "/cicd/common/${var.tenant.name}/${var.deployment_config.secret_suffix}"
+  prefix                    = var.deployment_config.deployment_prefix
+  secret_prefix             = "/cicd/common/${var.deployment_config.tenant.name}"
   logging_retention_in_days = var.logging_retention_in_days
   log_level                 = var.log_level
   tags                      = local.all_security_tags
 
   github_webhook_relay = var.github_webhook_relay
-
-  depends_on = [data.aws_secretsmanager_secret_version.data_cicd_secrets]
 }

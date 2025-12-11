@@ -1,6 +1,6 @@
 variable "aws_profile" {
   type        = string
-  description = "AWS profile (i.e. generated via 'sl aws session generate') to use."
+  description = "AWS profile to use."
 }
 
 variable "aws_region" {
@@ -15,9 +15,18 @@ variable "runner_configs" {
     ghes_url         = string
     ghes_org         = string
     github_app = object({
-      key_base64      = string
-      id              = string
-      installation_id = string
+      key_base64_ssm = object({
+        arn  = string
+        name = string
+      })
+      id_ssm = object({
+        arn  = string
+        name = string
+      })
+      installation_id_ssm = object({
+        arn  = string
+        name = string
+      })
     })
     migrate_arc_cluster                 = optional(bool, false)
     runner_iam_role_managed_policy_arns = list(string)
