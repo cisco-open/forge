@@ -168,6 +168,16 @@ def lambda_handler(event: Dict[str, Any], _context: Any) -> Dict[str, Any]:  # p
                 'Event action is not completed or workflow_job is missing, ignoring.')
             return {'status': 'ignored'}
 
+        conclusion = workflow_job.get('conclusion')
+
+        if conclusion in ('skipped', 'cancelled'):
+            LOG.info(
+                'Job conclusion is %s, skipping log archival. Workflow job: %s',
+                conclusion,
+                workflow_job,
+            )
+            return {'status': 'ignored'}
+
         repo_full_name = (detail.get('repository') or {}).get('full_name')
         if not repo_full_name:
             LOG.info(
