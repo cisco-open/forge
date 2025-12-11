@@ -149,81 +149,7 @@ ______________________________________________________________________
 
 ______________________________________________________________________
 
-## 3. Minimal Working `config.yaml` Example
-
-```yaml
-gh_config:
-  ghes_url: ''
-  ghes_org: cisco-sbg
-  github_webhook_relay:  
-    enabled: false
-    destination_account_id: ""
-    destination_event_bus_name: ""
-    destination_region: ""
-    destination_reader_role_arn: ""
-  github_app:
-    id: 1234567890
-    client_id: abcdefghijklmnopqrstuvwx
-    installation_id: 9876543210
-    name: forge-github-app
-
-tenant:
-  iam_roles_to_assume:
-    - arn:aws:iam::123456789012:role/role_for_forge_runners
-  ecr_registries:
-    - 123456789012.dkr.ecr.us-east-1.amazonaws.com
-  github_logs_reader_role_arns:
-    - arn:aws:iam::123456789012:role/github_logs_reader
-
-ec2_runner_specs:
-  small:
-    ami_name: forge-gh-runner-v*
-    ami_owner: '123456789012'
-    ami_kms_key_arn: ''
-    max_instances: 10
-    instance_types:
-      - t3.small
-      - t3.medium
-    pool_config:
-      - size: 2
-        schedule_expression: "cron(*/10 8 * * ? *)"
-        schedule_expression_timezone: "America/Los_Angeles"
-
-arc_runner_specs:
-  dependabot:
-    runner_size:
-      max_runners: 100
-      min_runners: 1
-    scale_set_name: dependabot
-    scale_set_type: dind
-    container_actions_runner: 123456789012.dkr.ecr.us-east-1.amazonaws.com/actions-runner:latest
-    container_requests_cpu: 500m
-    container_requests_memory: 1Gi
-    container_limits_cpu: '1'
-    container_limits_memory: 2Gi
-```
-
-______________________________________________________________________
-
-## 4. Deploy Secrets
-
-1. **Navigate to the tenant directory** matching your AWS account, region, VPC, and tenant:
-
-```bash
-cd examples/deployments/forge-tenant/terragrunt/environments/<aws_account_alias>/regions/<aws_region>/vpcs/<vpc_alias>/tenants/<tenant_name>
-```
-
-2. **Deploy only the secrets** to AWS Secrets Manager:
-
-```bash
-terragrunt apply --target aws_secretsmanager_secret_version.cicd_secrets
-```
-
-> **Pro tip:** Use `--target` carefully — only apply secrets here to avoid accidental resource changes in other modules.
-
-______________________________________________________________________
-
-## 5. Create GitHub App
+## 3. Create GitHub App
 
 1. **Pull the registration UI container (amd64):**
 
@@ -289,27 +215,100 @@ sec-plat-euw1-shared-sbg-cicd-forge
 
 ______________________________________________________________________
 
+## 4. Minimal Working `config.yaml` Example
+
+```yaml
+gh_config:
+  ghes_url: ''
+  ghes_org: cisco-sbg
+  github_webhook_relay:  
+    enabled: false
+    destination_account_id: ""
+    destination_event_bus_name: ""
+    destination_region: ""
+    destination_reader_role_arn: ""
+  github_app:
+    id: 1234567890
+    client_id: abcdefghijklmnopqrstuvwx
+    installation_id: 9876543210
+    name: forge-github-app
+
+tenant:
+  iam_roles_to_assume:
+    - arn:aws:iam::123456789012:role/role_for_forge_runners
+  ecr_registries:
+    - 123456789012.dkr.ecr.us-east-1.amazonaws.com
+  github_logs_reader_role_arns:
+    - arn:aws:iam::123456789012:role/github_logs_reader
+
+ec2_runner_specs:
+  small:
+    ami_name: forge-gh-runner-v*
+    ami_owner: '123456789012'
+    ami_kms_key_arn: ''
+    max_instances: 10
+    instance_types:
+      - t3.small
+      - t3.medium
+    pool_config:
+      - size: 2
+        schedule_expression: "cron(*/10 8 * * ? *)"
+        schedule_expression_timezone: "America/Los_Angeles"
+
+arc_runner_specs:
+  dependabot:
+    runner_size:
+      max_runners: 100
+      min_runners: 1
+    scale_set_name: dependabot
+    scale_set_type: dind
+    container_actions_runner: 123456789012.dkr.ecr.us-east-1.amazonaws.com/actions-runner:latest
+    container_requests_cpu: 500m
+    container_requests_memory: 1Gi
+    container_limits_cpu: '1'
+    container_limits_memory: 2Gi
+```
+
+______________________________________________________________________
+
+## 5. Deploy
+
+1. **Navigate to your tenant directory:**
+
+```bash
+cd examples/deployments/forge-tenant/terragrunt/environments/<aws_account_alias>/regions/<aws_region>/vpcs/<vpc_alias>/tenants/<tenant_name>
+```
+
+2. **Deploy everything in one go:**
+
+```bash
+terragrunt apply
+```
+
+3. **Verify success:**
+
+- No errors in Terraform apply output.
+- All expected AWS resources exist.
+
+______________________________________________________________________
+
 ## 6. Set GitHub App Secrets
 
 Run the `update-github-app-secrets.sh` script to inject critical GitHub App values into your secrets:
 
 ```bash
-./scripts/update-github-app-secrets.sh /full/path/to/tenant_dir client_id <GITHUB_APP_CLIENT_ID>
-./scripts/update-github-app-secrets.sh /full/path/to/tenant_dir name <GITHUB_APP_NAME>
-./scripts/update-github-app-secrets.sh /full/path/to/tenant_dir id <GITHUB_APP_ID>
-./scripts/update-github-app-secrets.sh /full/path/to/tenant_dir key /path/to/private-key.pem
-./scripts/update-github-app-secrets.sh /full/path/to/tenant_dir installation_id <GITHUB_APP_INSTALLATION_ID>
+./scripts/update-github-app-secrets.sh /full/path/to/tenant_dir /path/to/private-key.pem
 ```
 
 ### Notes:
 
 - Use **absolute paths** for tenant directories and private key files to avoid path resolution issues inside the script.
 - Confirm the private key file has **correct permissions** (`chmod 600`) to avoid permission errors.
-- The script will update AWS Secrets Manager values — verify with `terragrunt plan` or AWS Console if you want to double-check.
+- The script will update AWS SSM Parameter values — verify with `terragrunt plan` or AWS Console if you want to double-check.
 
 ______________________________________________________________________
 
-## 7. Deploy
+## 7. Redeploy with secrets updated
 
 1. **Navigate to your tenant directory:**
 
@@ -328,7 +327,5 @@ terragrunt apply
 - No errors in Terraform apply output.
 - All expected AWS resources exist.
 - GitHub runners appear registered and are actively picking up jobs.
-
-______________________________________________________________________
 
 > For more advanced scenarios or troubleshooting, see the [full documentation](../index.md).

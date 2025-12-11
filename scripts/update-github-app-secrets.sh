@@ -2,9 +2,9 @@
 set -euo pipefail
 
 usage() {
-    echo "Usage: $0 <terragrunt_dir> <type> <value>"
-    echo "  <type>: key | id | installation_id | name | client_id"
-    echo "  <value>: For 'key' type, path to PEM file to base64 encode. For others, string value."
+    echo "Usage: $0 <terragrunt_dir> <pem_file>"
+    echo "  <terragrunt_dir>: Path to the Terragrunt directory for the tenant/stack"
+    echo "  <pem_file>: Path to the GitHub App PEM file to base64 encode and store in SSM"
     exit 1
 }
 
@@ -24,12 +24,11 @@ validate_pem_file() {
     }
 }
 
-get_secret_name() {
+get_ssm_name() {
     local terragrunt_dir="$1"
-    local type="$2"
-    tenant_name=$(get_terragrunt_var "var.tenant.name" "$terragrunt_dir")
-    secret_suffix=$(get_terragrunt_var "var.deployment_config.secret_suffix" "$terragrunt_dir")
-    echo "/cicd/common/${tenant_name}/${secret_suffix}/github_actions_runners_app_${type}"
+    local deployment_prefix
+    deployment_prefix=$(get_terragrunt_var "var.deployment_config.deployment_prefix" "$terragrunt_dir")
+    echo "/forge/${deployment_prefix}/github_app_key"
 }
 
 get_terragrunt_var() {
@@ -54,43 +53,33 @@ encode_pem() {
     tr -d '\n' <"$pem_file" | base64
 }
 
-update_secret() {
-    local secret_name="$1"
-    local secret_value="$2"
-    aws secretsmanager put-secret-value --secret-id "$secret_name" --secret-string "$secret_value"
+update_ssm_param() {
+    local param_name="$1"
+    local param_value="$2"
+    aws ssm put-parameter \
+        --name "$param_name" \
+        --type "SecureString" \
+        --value "$param_value" \
+        --overwrite
 }
 
 main() {
-    if [[ $# -ne 3 ]]; then
+    if [[ $# -ne 2 ]]; then
         usage
     fi
 
     TERRAGRUNT_DIR="$1"
-    TYPE="$2"
-    VALUE="$3"
-
-    case "$TYPE" in
-    key | id | installation_id | name | client_id) ;;
-    *)
-        echo "Error: Invalid type '$TYPE'. Allowed: key, id, installation_id, name"
-        exit 1
-        ;;
-    esac
+    PEM_FILE="$2"
 
     validate_terragrunt_dir "$TERRAGRUNT_DIR"
+    validate_pem_file "$PEM_FILE"
 
-    if [[ "$TYPE" == "key" ]]; then
-        validate_pem_file "$VALUE"
-        SECRET_VALUE=$(encode_pem "$VALUE")
-    else
-        SECRET_VALUE="$VALUE"
-    fi
+    SSM_NAME=$(get_ssm_name "$TERRAGRUNT_DIR")
+    ENCODED_KEY=$(encode_pem "$PEM_FILE")
 
-    SECRET_NAME=$(get_secret_name "$TERRAGRUNT_DIR" "$TYPE")
+    update_ssm_param "$SSM_NAME" "$ENCODED_KEY"
 
-    update_secret "$SECRET_NAME" "$SECRET_VALUE"
-
-    echo "✅ Updated secret '$SECRET_NAME'"
+    echo "✅ Updated SSM parameter '$SSM_NAME' with base64-encoded GitHub App key"
 }
 
 main "$@"
