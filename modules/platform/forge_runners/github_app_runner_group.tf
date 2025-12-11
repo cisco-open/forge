@@ -25,5 +25,4 @@ module "github_app_runner_group" {
   runner_group_name         = var.deployment_config.github.runner_group_name
   repository_selection      = var.deployment_config.github.repository_selection
 
-  depends_on = [data.aws_secretsmanager_secret_version.data_cicd_secrets]
 }

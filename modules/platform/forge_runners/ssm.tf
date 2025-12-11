@@ -69,3 +69,8 @@ resource "random_password" "github_app_webhook_secret" {
     rotation = time_rotating.every_30_days.id
   }
 }
+
+data "aws_ssm_parameter" "github_app_key" {
+  name       = aws_ssm_parameter.github_app_key.name
+  depends_on = [aws_ssm_parameter.github_app_key]
+}

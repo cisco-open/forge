@@ -43,8 +43,8 @@ output "forge_github_app" {
   description = "GitHub App related outputs."
   value = {
     installation_url = local.github_app_installation
-    installation_id  = try(data.aws_secretsmanager_secret_version.data_cicd_secrets["${local.cicd_secrets_prefix}github_actions_runners_app_installation_id"].secret_string, null)
-    name             = try(data.aws_secretsmanager_secret_version.data_cicd_secrets["${local.cicd_secrets_prefix}github_actions_runners_app_name"].secret_string, null)
+    installation_id  = var.deployment_config.github_app.installation_id
+    name             = var.deployment_config.github_app.name
   }
   sensitive = true
 }

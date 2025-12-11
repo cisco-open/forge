@@ -83,29 +83,3 @@ resource "aws_secretsmanager_secret_version" "cicd_secrets" {
     ignore_changes = [secret_string, ]
   }
 }
-
-# Critical secrets needed for provisioning the CICD system.
-data "aws_secretsmanager_secret" "data_cicd_secrets" {
-  for_each = {
-    for key, val in local.secrets : val.name => val
-  }
-
-  depends_on = [
-    aws_secretsmanager_secret.cicd_secrets,
-  ]
-  arn = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:${each.key}"
-}
-
-# Need both these objects to be able to extract the secrets' respective
-# payloads.
-data "aws_secretsmanager_secret_version" "data_cicd_secrets" {
-  for_each = {
-    for key, val in local.secrets : val.name => val
-  }
-
-  depends_on = [
-    aws_secretsmanager_secret_version.cicd_secrets,
-    data.aws_secretsmanager_secret.data_cicd_secrets
-  ]
-  secret_id = data.aws_secretsmanager_secret.data_cicd_secrets[each.key].id
-}

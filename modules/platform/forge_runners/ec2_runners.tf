@@ -37,9 +37,9 @@ module "ec2_runners" {
     logging_retention_in_days           = var.logging_retention_in_days
     runner_iam_role_managed_policy_arns = local.runner_iam_role_managed_policy_arns
     github_app = {
-      key_base64     = data.aws_secretsmanager_secret_version.data_cicd_secrets["${local.cicd_secrets_prefix}github_actions_runners_app_key"].secret_string
-      id             = data.aws_secretsmanager_secret_version.data_cicd_secrets["${local.cicd_secrets_prefix}github_actions_runners_app_id"].secret_string
-      webhook_secret = random_id.random[0].hex
+      key_base64     = data.aws_ssm_parameter.github_app_key.value
+      id             = var.deployment_config.github_app.id
+      webhook_secret = aws_ssm_parameter.github_app_webhook_secret.value
     }
     runner_group_name = var.deployment_config.github.runner_group_name
     runner_specs      = var.ec2_deployment_specs.runner_specs

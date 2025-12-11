@@ -8,6 +8,6 @@ locals {
     ]
   )
 
-  github_app_installation = "${var.deployment_config.github.ghes_url == "" ? "https://github.com" : var.deployment_config.github.ghes_url}/apps/${data.aws_secretsmanager_secret_version.data_cicd_secrets["${local.cicd_secrets_prefix}github_actions_runners_app_name"].secret_string}/installations/${data.aws_secretsmanager_secret_version.data_cicd_secrets["${local.cicd_secrets_prefix}github_actions_runners_app_installation_id"].secret_string}"
+  github_app_installation = "${var.deployment_config.github.ghes_url == "" ? "https://github.com" : var.deployment_config.github.ghes_url}/apps/${var.deployment_config.github_app.name}}/installations/${var.deployment_config.github_app.installation_id}"
   github_api              = var.deployment_config.github.ghes_url == "" ? "https://api.github.com" : "https://api.${replace(var.deployment_config.github.ghes_url, "https://", "")}"
 }

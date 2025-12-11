@@ -25,5 +25,4 @@ module "github_actions_job_logs" {
   event_bus_name            = module.ec2_runners[0].event_bus_name
   ghes_url                  = var.deployment_config.github.ghes_url
 
-  depends_on = [data.aws_secretsmanager_secret_version.data_cicd_secrets]
 }
