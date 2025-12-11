@@ -50,34 +50,29 @@ locals {
 
 inputs = {
   # Core Environment
-  env            = local.env_name
-  aws_account_id = local.aws_account_id
-  aws_profile    = local.default_aws_profile
-  aws_region     = local.region
-
-  # Networking
-  vpc_id            = local.runner_settings_data.locals.vpc_id
-  subnet_ids        = local.runner_settings_data.locals.subnet_ids
-  lambda_subnet_ids = local.runner_settings_data.locals.lambda_subnet_ids
+  aws_profile = local.default_aws_profile
+  aws_region  = local.region
 
   # Runners (EC2/ARC)
-  ec2_runner_specs    = local.runner_settings_data.locals.ec2_runner_specs
-  arc_cluster_name    = local.runner_settings_data.locals.arc_cluster_name
-  arc_runner_specs    = local.runner_settings_data.locals.arc_runner_specs
-  migrate_arc_cluster = local.runner_settings_data.locals.migrate_arc_cluster
+  ec2_deployment_specs = {
+    lambda_subnet_ids = local.config.locals.lambda_subnet_ids
+    subnet_ids        = local.config.locals.subnet_ids
+    vpc_id            = local.config.locals.vpc_id
+    runner_specs      = local.config.locals.ec2_runner_specs
+  }
 
-  # GitHub Settings
-  ghes_url             = local.runner_settings_data.locals.ghes_url
-  ghes_org             = local.runner_settings_data.locals.ghes_org
-  repository_selection = local.runner_settings_data.locals.repository_selection
-  runner_group_name    = local.runner_settings_data.locals.runner_group_name
-  github_webhook_relay = local.runner_settings_data.locals.github_webhook_relay
+  arc_deployment_specs = {
+    cluster_name    = local.config.locals.arc_cluster_name
+    migrate_cluster = local.config.locals.migrate_arc_cluster
+    runner_specs    = local.config.locals.arc_runner_specs
+  }
+
+  # Deployment Settings
+  deployment_config = local.config.locals.deployment_config
 
   # Misc
-  deployment_config         = local.runner_settings_data.locals.deployment_config
-  log_level                 = local.runner_settings_data.locals.log_level
-  logging_retention_in_days = local.runner_settings_data.locals.logging_retention_in_days
-  tenant                    = local.tenant
+  log_level                 = local.config.locals.log_level
+  logging_retention_in_days = local.config.locals.logging_retention_in_days
   tags                      = local.tags
   default_tags              = local.default_tags
 }

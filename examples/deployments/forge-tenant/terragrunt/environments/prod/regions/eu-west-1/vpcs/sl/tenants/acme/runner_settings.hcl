@@ -30,33 +30,37 @@ locals {
   # Tenant
   tenant_name = basename(get_terragrunt_dir())
 
-  deployment_config = {
-    prefix        = "${local.tenant_name}-${local.region_alias}-${local.vpc_alias}"
-    secret_suffix = local.vpc_alias
-  }
-
   log_level = "info"
 
   logging_retention_in_days = 3
 
   # Load and parse runner specs YAML once
-  runner_specs_raw = yamldecode(file("config.yaml"))
+  config = yamldecode(file("config.yml"))
 
   # GitHub App settings
-  ghes_url             = local.runner_specs_raw.gh_config.ghes_url
-  ghes_org             = local.runner_specs_raw.gh_config.ghes_org
-  repository_selection = local.runner_specs_raw.gh_config.repository_selection
-  github_webhook_relay = local.runner_specs_raw.gh_config.github_webhook_relay
+  github_webhook_relay = local.config.gh_config.github_webhook_relay
 
-  tenant = {
-    name                         = local.tenant_name
-    iam_roles_to_assume          = local.runner_specs_raw.tenant.iam_roles_to_assume
-    ecr_registries               = local.runner_specs_raw.tenant.ecr_registries
-    github_logs_reader_role_arns = local.runner_specs_raw.tenant.github_logs_reader_role_arns
+  deployment_config = {
+    deployment_prefix = "${local.tenant_name}-${local.region_alias}-${local.vpc_alias}"
+    secret_suffix     = local.vpc_alias
+    env               = local.env_name
+    github_app        = local.config.gh_config.github_app
+    tenant = {
+      name                         = local.tenant_name
+      iam_roles_to_assume          = local.config.tenant.iam_roles_to_assume
+      ecr_registries               = local.config.tenant.ecr_registries
+      github_logs_reader_role_arns = local.config.tenant.github_logs_reader_role_arns
+    }
+    github = {
+      ghes_org             = local.config.gh_config.ghes_org
+      ghes_url             = local.config.gh_config.ghes_url
+      repository_selection = local.config.gh_config.repository_selection
+      runner_group_name    = local.runner_group_name
+    }
   }
 
   ec2_runner_specs = {
-    for size, spec in local.runner_specs_raw.ec2_runner_specs :
+    for size, spec in local.config.ec2_runner_specs :
     size => {
       ami_filter = {
         name  = [spec.ami_name],
@@ -97,11 +101,11 @@ locals {
       pool_config = spec.pool_config
     }
   }
-  arc_cluster_name    = local.runner_specs_raw.arc_cluster_name
-  migrate_arc_cluster = local.runner_specs_raw.migrate_arc_cluster
+  arc_cluster_name    = local.config.arc_cluster_name
+  migrate_arc_cluster = local.config.migrate_arc_cluster
 
   arc_runner_specs = {
-    for size, spec in local.runner_specs_raw.arc_runner_specs :
+    for size, spec in local.config.arc_runner_specs :
     size => {
       runner_size                  = spec.runner_size
       scale_set_name               = spec.scale_set_name

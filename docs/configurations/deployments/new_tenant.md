@@ -67,6 +67,11 @@ gh_config:
     destination_region: ""            # Destination AWS region for the forwarding rule
     destination_reader_role_arn: ""   # IAM role in destination allowed to read forwarded events (leave blank if not needed)
     # NOTE: Leave all destination_* fields blank when enabled=false; they are ignored.
+  github_app:
+    id: <GITHUB_APP_ID>                          # Numeric GitHub App ID from GitHub settings
+    client_id: <GITHUB_APP_CLIENT_ID>            # OAuth client ID shown on the GitHub App page
+    installation_id: <GITHUB_APP_INSTALLATION_ID> # Installation ID after installing the app in your org/account
+    name: <GITHUB_APP_NAME>                      # Exact GitHub App name (must match the created app)
 
 tenant:
   iam_roles_to_assume:                # List of full AWS IAM role ARNs runners may assume for workloads
@@ -156,6 +161,11 @@ gh_config:
     destination_event_bus_name: ""
     destination_region: ""
     destination_reader_role_arn: ""
+  github_app:
+    id: 1234567890
+    client_id: abcdefghijklmnopqrstuvwx
+    installation_id: 9876543210
+    name: forge-github-app
 
 tenant:
   iam_roles_to_assume:

@@ -5,6 +5,11 @@ gh_config:
   repository_selection: selected
   github_webhook_relay:
     enabled: false
+  github_app:
+    id: 1234567890
+    client_id: abcdefghijklmnopqrstuvwx
+    installation_id: 9876543210
+    name: forge-github-app
 tenant:
   iam_roles_to_assume:
     - arn:aws:iam::123456789012:role/role_for_forge_runners

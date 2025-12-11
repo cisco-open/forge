@@ -9,6 +9,11 @@ gh_config:
     destination_event_bus_name: <DESTINATION_EVENT_BUS_NAME>
     destination_region: <DESTINATION_REGION>
     destination_reader_role_arn: <DESTINATION_READER_ROLE_ARN>
+  github_app:
+    id: <GITHUB_APP_ID>
+    client_id: <GITHUB_APP_CLIENT_ID>
+    installation_id: <GITHUB_APP_INSTALLATION_ID>
+    name: <GITHUB_APP_NAME>
 tenant:
   iam_roles_to_assume:
     - arn:aws:iam::<ACCOUNT_ID>:role/<ROLE_NAME>
