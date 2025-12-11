@@ -17,15 +17,6 @@ locals {
     }
   )
 
-  # Security settings for the binaries (lambdas) stored in S3.
-  s3_security_settings = {
-    rule = {
-      apply_server_side_encryption_by_default = {
-        sse_algorithm = "AES256"
-      }
-    }
-  }
-
 }
 
 # Enable AWS-managed encryption key.
@@ -116,7 +107,6 @@ module "runners" {
         enabled         = true
         maxReceiveCount = 10
       }
-      delay_webhook_event = 0
       runner_config = {
         runner_metadata_options = {
           "http_endpoint" : "enabled",
@@ -124,27 +114,27 @@ module "runners" {
           "http_tokens" : "optional",
           "instance_metadata_tags" : "enabled"
         }
-        runner_ec2_tags                      = var.tenant_configs.tags
-        runner_binaries_s3_sse_configuration = local.s3_security_settings
-        runner_os                            = val["runner_os"]
-        runner_architecture                  = val["runner_architecture"]
-        runner_extra_labels                  = val["extra_labels"]
-        enable_ssm_on_runners                = true
-        instance_types                       = val["instance_types"]
-        runners_maximum_count                = val["max_instances"]
-        scale_down_schedule_expression       = "cron(*/5 * * * ? *)"
-        minimum_running_time_in_minutes      = val["min_run_time"]
-        runner_group_name                    = var.runner_configs.runner_group_name
-        enable_runner_binaries_syncer        = false
-        enable_userdata                      = val["enable_userdata"]
-        userdata_template                    = local.user_data_template_runner
-        userdata_pre_install                 = "# No pre-install steps."
-        userdata_post_install                = local.userdata_post_install
-        runner_hook_job_started              = local.runner_hook_job_started
-        runner_hook_job_completed            = local.runner_hook_job_completed
-        enable_runner_detailed_monitoring    = true
-        runner_run_as                        = val["runner_user"]
-        block_device_mappings                = val["block_device_mappings"]
+        delay_webhook_event               = 0
+        runner_ec2_tags                   = var.tenant_configs.tags
+        runner_os                         = val["runner_os"]
+        runner_architecture               = val["runner_architecture"]
+        runner_extra_labels               = val["extra_labels"]
+        enable_ssm_on_runners             = true
+        instance_types                    = val["instance_types"]
+        runners_maximum_count             = val["max_instances"]
+        scale_down_schedule_expression    = "cron(*/5 * * * ? *)"
+        minimum_running_time_in_minutes   = val["min_run_time"]
+        runner_group_name                 = var.runner_configs.runner_group_name
+        enable_runner_binaries_syncer     = false
+        enable_userdata                   = val["enable_userdata"]
+        userdata_template                 = local.user_data_template_runner
+        userdata_pre_install              = "# No pre-install steps."
+        userdata_post_install             = local.userdata_post_install
+        runner_hook_job_started           = local.runner_hook_job_started
+        runner_hook_job_completed         = local.runner_hook_job_completed
+        enable_runner_detailed_monitoring = true
+        runner_run_as                     = val["runner_user"]
+        block_device_mappings             = val["block_device_mappings"]
         runner_log_files = [
           {
             "log_group_name" : "forge-logs",
