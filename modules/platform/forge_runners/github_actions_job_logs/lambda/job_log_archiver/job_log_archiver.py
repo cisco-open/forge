@@ -170,6 +170,8 @@ def lambda_handler(event: Dict[str, Any], _context: Any) -> Dict[str, Any]:  # p
 
         repo_full_name = (detail.get('repository') or {}).get('full_name')
         if not repo_full_name:
+            LOG.info(
+                'Missing repository full_name in event detail. Detail event: %s', detail)
             raise ValueError('missing_repository')
 
         try:
@@ -185,6 +187,8 @@ def lambda_handler(event: Dict[str, Any], _context: Any) -> Dict[str, Any]:  # p
         workflow_name = workflow_job.get('workflow_name')
 
         if not all([runner_name, run_id, job_id]):
+            LOG.info('Missing required IDs: runner_name=%s run_id=%s job_id=%s. Workflow job: %s',
+                     runner_name, run_id, job_id, workflow_job)
             raise ValueError('missing_ids')
 
         try:
