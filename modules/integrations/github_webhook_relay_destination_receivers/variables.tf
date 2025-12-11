@@ -1,5 +1,5 @@
 variable "aws_profile" {
-  description = "AWS profile (i.e., generated via 'sl aws session generate') to use."
+  description = "AWS profile to use."
   type        = string
 }
 

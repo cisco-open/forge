@@ -46,7 +46,7 @@ locals {
           }
         }
       }
-      dataAccounts = [var.aws_account_id]
+      dataAccounts = [data.aws_caller_identity.current.account_id]
       resourceTags = local.resource_tags
     }
   }

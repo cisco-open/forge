@@ -1,8 +1,3 @@
-variable "aws_account_id" {
-  description = "AWS account ID associated with the infra/backend."
-  type        = string
-}
-
 variable "aws_profile" {
   type        = string
   description = "AWS profile to use."

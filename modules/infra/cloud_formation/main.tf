@@ -39,7 +39,7 @@ data "aws_iam_policy_document" "execution_assume_admin_role_policy" {
     actions = ["sts:AssumeRole"]
     principals {
       type        = "AWS"
-      identifiers = ["arn:aws:iam::${var.aws_account_id}:role/AWSCloudFormationStackSetAdministrationRole"]
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/AWSCloudFormationStackSetAdministrationRole"]
     }
   }
 }

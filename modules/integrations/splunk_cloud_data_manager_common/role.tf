@@ -11,15 +11,15 @@ data "aws_iam_policy_document" "splunk_dm_policy" {
       "iam:GetPolicyVersion"
     ]
     resources = [
-      "arn:aws:iam::${var.aws_account_id}:role/SplunkDM*",
-      "arn:aws:iam::${var.aws_account_id}:policy/*"
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/SplunkDM*",
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/*"
     ]
   }
 
   statement {
     effect    = "Allow"
     actions   = ["guardduty:GetMasterAccount"]
-    resources = ["arn:aws:guardduty:*:${var.aws_account_id}:detector/*"]
+    resources = ["arn:aws:guardduty:*:${data.aws_caller_identity.current.account_id}:detector/*"]
   }
 
   statement {
@@ -30,7 +30,7 @@ data "aws_iam_policy_document" "splunk_dm_policy" {
       "securityhub:ListMembers",
       "securityhub:ListInvitations"
     ]
-    resources = ["arn:aws:securityhub:*:${var.aws_account_id}:hub/default"]
+    resources = ["arn:aws:securityhub:*:${data.aws_caller_identity.current.account_id}:hub/default"]
   }
 
   statement {
@@ -39,7 +39,7 @@ data "aws_iam_policy_document" "splunk_dm_policy" {
       "cloudformation:DescribeStacks",
       "cloudformation:GetTemplate"
     ]
-    resources = ["arn:aws:cloudformation:*:${var.aws_account_id}:stack/SplunkDM*/*"]
+    resources = ["arn:aws:cloudformation:*:${data.aws_caller_identity.current.account_id}:stack/SplunkDM*/*"]
   }
 
   statement {
@@ -65,19 +65,19 @@ data "aws_iam_policy_document" "splunk_dm_policy" {
       "logs:DescribeLogGroups",
       "logs:DescribeSubscriptionFilters"
     ]
-    resources = ["arn:aws:logs:*:${var.aws_account_id}:log-group:*"]
+    resources = ["arn:aws:logs:*:${data.aws_caller_identity.current.account_id}:log-group:*"]
   }
 
   statement {
     effect    = "Allow"
     actions   = ["firehose:DescribeDeliveryStream"]
-    resources = ["arn:aws:firehose:*:${var.aws_account_id}:deliverystream/SplunkDM*"]
+    resources = ["arn:aws:firehose:*:${data.aws_caller_identity.current.account_id}:deliverystream/SplunkDM*"]
   }
 
   statement {
     effect    = "Allow"
     actions   = ["events:DescribeRule"]
-    resources = ["arn:aws:events:*:${var.aws_account_id}:rule/SplunkDM*"]
+    resources = ["arn:aws:events:*:${data.aws_caller_identity.current.account_id}:rule/SplunkDM*"]
   }
 
   statement {
@@ -92,7 +92,7 @@ data "aws_iam_policy_document" "splunk_dm_policy" {
   statement {
     effect    = "Allow"
     actions   = ["lambda:GetFunction"]
-    resources = ["arn:aws:lambda:*:${var.aws_account_id}:function:SplunkDM*"]
+    resources = ["arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:SplunkDM*"]
   }
 }
 

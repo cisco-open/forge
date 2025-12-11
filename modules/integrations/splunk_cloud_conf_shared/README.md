@@ -73,7 +73,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_aws_profile"></a> [aws\_profile](#input\_aws\_profile) | AWS profile (i.e. generated via 'sl aws session generate') to use. | `string` | n/a | yes |
+| <a name="input_aws_profile"></a> [aws\_profile](#input\_aws\_profile) | AWS profile to use. | `string` | n/a | yes |
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | Assuming single region for now. | `string` | n/a | yes |
 | <a name="input_default_tags"></a> [default\_tags](#input\_default\_tags) | A map of tags to apply to resources. | `map(string)` | n/a | yes |
 | <a name="input_splunk_conf"></a> [splunk\_conf](#input\_splunk\_conf) | n/a | <pre>object({<br/>    splunk_cloud = string<br/>    acl = object({<br/>      app     = string<br/>      owner   = string<br/>      sharing = string<br/>      read    = list(string)<br/>      write   = list(string)<br/>    })<br/>    index   = string<br/>    tenant_names = list(string)<br/>  })</pre> | n/a | yes |

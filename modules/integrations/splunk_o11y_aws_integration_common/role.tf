@@ -122,7 +122,7 @@ data "aws_iam_policy_document" "splunk_managed_policy" {
     effect  = "Allow"
     actions = ["iam:PassRole"]
     # Role to be created by Cloudformation stack
-    resources = ["arn:aws:iam::${var.aws_account_id}:role/splunk-metric-streams*"]
+    resources = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/splunk-metric-streams*"]
   }
 }
 

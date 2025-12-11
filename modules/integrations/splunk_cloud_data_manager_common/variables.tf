@@ -1,11 +1,8 @@
-variable "aws_account_id" {
-  description = "AWS account ID (not SL AWS account ID) associated with the infra/backend."
-  type        = string
-}
+
 
 variable "aws_profile" {
   type        = string
-  description = "AWS profile (i.e., generated via 'sl aws session generate') to use."
+  description = "AWS profile to use."
 }
 
 variable "aws_region" {
