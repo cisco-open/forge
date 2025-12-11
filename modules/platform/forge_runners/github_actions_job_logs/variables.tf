@@ -38,7 +38,17 @@ variable "prefix" {
   type        = string
 }
 
-variable "secrets_prefix" {
-  description = "Prefix for all secrets"
-  type        = string
+variable "github_app" {
+  description = "GitHub App configuration"
+  type = object({
+    key_base64_ssm = object({
+      arn = string
+    })
+    id_ssm = object({
+      arn = string
+    })
+    installation_id_ssm = object({
+      arn = string
+    })
+  })
 }

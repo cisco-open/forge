@@ -9,11 +9,6 @@ variable "tags" {
   default     = {}
 }
 
-variable "secrets_prefix" {
-  description = "Prefix for all secrets"
-  type        = string
-}
-
 variable "logging_retention_in_days" {
   description = "Retention in days for CloudWatch Log Group for the Lambdas."
   type        = number
@@ -49,4 +44,19 @@ variable "repository_selection" {
     condition     = contains(["all", "selected"], var.repository_selection)
     error_message = "repository_selection must be 'all' or 'selected'."
   }
+}
+
+variable "github_app" {
+  description = "GitHub App configuration"
+  type = object({
+    key_base64_ssm = object({
+      arn = string
+    })
+    id_ssm = object({
+      arn = string
+    })
+    installation_id_ssm = object({
+      arn = string
+    })
+  })
 }

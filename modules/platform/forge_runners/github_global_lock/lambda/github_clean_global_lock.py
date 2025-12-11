@@ -23,6 +23,7 @@ LOG.setLevel(getattr(logging, level_str, logging.INFO))
 
 DYNAMODB_TABLE = os.getenv('DYNAMODB_TABLE')
 
+SSM = boto3.client('ssm')
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table(DYNAMODB_TABLE)
 
@@ -49,11 +50,10 @@ def get_installation_access_token(jwt_token: str, installation_id: str) -> str:
     return response.json()['token']
 
 
-def get_secret(secret_name: str) -> Dict[str, Any]:
-    """Retrieve secrets from AWS Secrets Manager."""
-    client = boto3.client('secretsmanager')
-    response = client.get_secret_value(SecretId=secret_name)
-    return response['SecretString']
+def get_secret(secret_name: str) -> str:
+    """Retrieve secrets from AWS Systems Manager Parameter Store."""
+    response = SSM.get_parameter(Name=secret_name, WithDecryption=True)
+    return response['Parameter']['Value']
 
 
 def parse_github_url(workflow_run_url: str) -> Tuple[str, str, str]:

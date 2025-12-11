@@ -95,9 +95,9 @@ module "clean_global_lock_lambda" {
 
   environment_variables = {
     DYNAMODB_TABLE              = "${var.prefix}-gh-actions-lock"
-    SECRET_NAME_APP_ID          = local.secrets.github_actions_runners_app_id.name
-    SECRET_NAME_PRIVATE_KEY     = local.secrets.github_actions_runners_app_key.name
-    SECRET_NAME_INSTALLATION_ID = local.secrets.github_actions_runners_app_installation_id.name
+    SECRET_NAME_APP_ID          = var.github_app.id_ssm.arn
+    SECRET_NAME_PRIVATE_KEY     = var.github_app.key_base64_ssm.arn
+    SECRET_NAME_INSTALLATION_ID = var.github_app.installation_id_ssm.arn
     LOG_LEVEL                   = var.log_level
   }
 
@@ -114,15 +114,19 @@ module "clean_global_lock_lambda" {
 
 data "aws_iam_policy_document" "clean_global_lock_lambda" {
   statement {
-    actions = [
-      "secretsmanager:GetSecretValue",
-      "secretsmanager:DescribeSecret",
-    ]
     effect = "Allow"
+
+    actions = [
+      "ssm:GetParameter",
+      "ssm:GetParameters",
+      "ssm:GetParameterHistory",
+      "ssm:DescribeParameters",
+    ]
+
     resources = [
-      data.aws_secretsmanager_secret_version.secrets["github_actions_runners_app_key"].arn,
-      data.aws_secretsmanager_secret_version.secrets["github_actions_runners_app_id"].arn,
-      data.aws_secretsmanager_secret_version.secrets["github_actions_runners_app_installation_id"].arn,
+      var.github_app.id_ssm.arn,
+      var.github_app.key_base64_ssm.arn,
+      var.github_app.installation_id_ssm.arn,
     ]
   }
   statement {
