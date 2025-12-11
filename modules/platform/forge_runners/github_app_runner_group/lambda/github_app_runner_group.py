@@ -193,8 +193,6 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'message': 'Repositories added to runner group successfully.'})
         }
     except Exception as e:
-        LOG.error(f'Error: {str(e)}')
-        return {
-            'statusCode': 500,
-            'body': json.dumps({'message': 'An error occurred', 'error': str(e)})
-        }
+        LOG.exception(
+            f'Unhandled exception in github_app_runner_group lambda. Error: {str(e)}')
+        raise

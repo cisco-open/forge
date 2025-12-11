@@ -207,39 +207,44 @@ def lambda_handler(event, context):
       FORGE_IAM_ROLES='["arn:aws:iam::123:role/forge-1","arn:aws:iam::123:role/forge-2"]'
       TENANT_IAM_ROLES="arn:aws:iam::456:role/tenant-1,arn:aws:iam::789:role/tenant-2"
     """
-    LOG.info('Lambda handler started')
-    forge_iam_roles = parse_env_list('FORGE_IAM_ROLES')
-    tenant_iam_roles = parse_env_list('TENANT_IAM_ROLES')
+    try:
+        LOG.info('Lambda handler started')
+        forge_iam_roles = parse_env_list('FORGE_IAM_ROLES')
+        tenant_iam_roles = parse_env_list('TENANT_IAM_ROLES')
 
-    if not forge_iam_roles or not tenant_iam_roles:
-        LOG.error(
-            'Missing required environment variables: FORGE_IAM_ROLES or TENANT_IAM_ROLES')
+        if not forge_iam_roles or not tenant_iam_roles:
+            LOG.error(
+                'Missing required environment variables: FORGE_IAM_ROLES or TENANT_IAM_ROLES')
+            return {
+                'statusCode': 400,
+                'body': json.dumps(
+                    {
+                        'message': (
+                            'Missing forge_iam_roles or tenant_iam_roles '
+                            '(check env variables FORGE_IAM_ROLES and TENANT_IAM_ROLES).'
+                        )
+                    }
+                ),
+            }
+
+        LOG.info(
+            f"Loaded configuration: {len(forge_iam_roles)} Forge roles, {len(tenant_iam_roles)} Tenant roles")
+        all_results: List[Dict[str, Any]] = []
+
+        for forge_arn in forge_iam_roles:
+            res = validate_forge_role_against_tenants(
+                forge_role_arn=forge_arn,
+                tenant_iam_roles=tenant_iam_roles,
+            )
+            all_results.append(res)
+
+        LOG.info('Validation complete: %s', json.dumps(all_results))
+
         return {
-            'statusCode': 400,
-            'body': json.dumps(
-                {
-                    'message': (
-                        'Missing forge_iam_roles or tenant_iam_roles '
-                        '(check env variables FORGE_IAM_ROLES and TENANT_IAM_ROLES).'
-                    )
-                }
-            ),
+            'statusCode': 200,
+            'body': json.dumps(all_results),
         }
-
-    LOG.info(
-        f"Loaded configuration: {len(forge_iam_roles)} Forge roles, {len(tenant_iam_roles)} Tenant roles")
-    all_results: List[Dict[str, Any]] = []
-
-    for forge_arn in forge_iam_roles:
-        res = validate_forge_role_against_tenants(
-            forge_role_arn=forge_arn,
-            tenant_role_arns=tenant_iam_roles,
-        )
-        all_results.append(res)
-
-    LOG.info('Validation complete: %s', json.dumps(all_results))
-
-    return {
-        'statusCode': 200,
-        'body': json.dumps(all_results),
-    }
+    except Exception as e:
+        LOG.exception(
+            f'Unhandled exception in forge_trust_validator lambda. Error: {str(e)}')
+        raise

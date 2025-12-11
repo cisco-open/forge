@@ -106,40 +106,45 @@ def start_dlq_redrive_to_source(sqs_client, dlq_identifier: str) -> Dict[str, st
 
 
 def lambda_handler(event, context):
-    raw_sqs_map = os.getenv('SQS_MAP', '')
-    mappings = parse_sqs_map(raw_sqs_map)
+    try:
+        raw_sqs_map = os.getenv('SQS_MAP', '')
+        mappings = parse_sqs_map(raw_sqs_map)
 
-    if not mappings:
-        LOG.warning('SQS_MAP is empty; nothing to do.')
-        return {'status': 'noop', 'message': 'SQS_MAP is empty', 'results': []}
-
-    LOG.info(
-        'Starting DLQ redrive (StartMessageMoveTask) for %d mapping(s)',
-        len(mappings),
-    )
-
-    results = []
-    for entry in mappings:
-        key = entry['key']
-        dlq_identifier = entry['dlq']
-        main_identifier = entry['main']
+        if not mappings:
+            LOG.warning('SQS_MAP is empty; nothing to do.')
+            return {'status': 'noop', 'message': 'SQS_MAP is empty', 'results': []}
 
         LOG.info(
-            'Processing SQS mapping key=%s dlq=%s main=%s',
-            key,
-            dlq_identifier,
-            main_identifier,
+            'Starting DLQ redrive (StartMessageMoveTask) for %d mapping(s)',
+            len(mappings),
         )
 
-        redrive_result = start_dlq_redrive_to_source(sqs, dlq_identifier)
+        results = []
+        for entry in mappings:
+            key = entry['key']
+            dlq_identifier = entry['dlq']
+            main_identifier = entry['main']
 
-        results.append(
-            {
-                'key': key,
-                'dlq': dlq_identifier,
-                'main': main_identifier,
-                **redrive_result,
-            }
-        )
+            LOG.info(
+                'Processing SQS mapping key=%s dlq=%s main=%s',
+                key,
+                dlq_identifier,
+                main_identifier,
+            )
 
-    return {'status': 'ok', 'results': results}
+            redrive_result = start_dlq_redrive_to_source(sqs, dlq_identifier)
+
+            results.append(
+                {
+                    'key': key,
+                    'dlq': dlq_identifier,
+                    'main': main_identifier,
+                    **redrive_result,
+                }
+            )
+
+        return {'status': 'ok', 'results': results}
+    except Exception as e:
+        LOG.exception(
+            f'Unhandled exception in redrive_deadletter lambda. Error: {str(e)}')
+        raise
