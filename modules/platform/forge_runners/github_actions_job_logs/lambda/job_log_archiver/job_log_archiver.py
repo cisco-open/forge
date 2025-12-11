@@ -15,7 +15,7 @@ LOG = logging.getLogger()
 level_str = os.environ.get('LOG_LEVEL', 'INFO').upper()
 LOG.setLevel(getattr(logging, level_str, logging.INFO))
 
-SECRETS = boto3.client('secretsmanager')
+SSM = boto3.client('ssm')
 S3 = boto3.client('s3')
 
 MAX_S3_TAGS = 10
@@ -23,11 +23,9 @@ GITHUB_RETRY_ATTEMPTS = 3
 GITHUB_RETRY_DELAY = 2
 
 
-def _get_secret_value(secret_id: str) -> str:
-    resp = SECRETS.get_secret_value(SecretId=secret_id)
-    if 'SecretString' in resp:
-        return resp['SecretString']
-    return base64.b64decode(resp['SecretBinary']).decode()
+def _get_secret_value(parameter_name: str) -> str:
+    resp = SSM.get_parameter(Name=parameter_name, WithDecryption=True)
+    return resp['Parameter']['Value']
 
 
 def _generate_jwt(app_id: str, private_key_pem: str) -> str:
