@@ -1,5 +1,5 @@
 resource "aws_ssm_parameter" "github_app_key" {
-  name        = "${var.deployment_config.deployment_prefix}/github_app_key"
+  name        = "/${var.deployment_config.deployment_prefix}/github_app_key"
   description = "Base64 encoded GitHub App private key for GHA ephemeral runners for Tenant ${var.deployment_config.tenant.name}."
   type        = "SecureString"
   value       = "initial-placeholder-value"
@@ -13,7 +13,7 @@ resource "aws_ssm_parameter" "github_app_key" {
 }
 
 resource "aws_ssm_parameter" "github_app_id" {
-  name        = "${var.deployment_config.deployment_prefix}/github_app_id"
+  name        = "/${var.deployment_config.deployment_prefix}/github_app_id"
   description = "GitHub App ID for GHA ephemeral runners for Tenant ${var.deployment_config.tenant.name}."
   type        = "SecureString"
   value       = var.deployment_config.github_app.id
@@ -22,7 +22,7 @@ resource "aws_ssm_parameter" "github_app_id" {
 }
 
 resource "aws_ssm_parameter" "github_app_client_id" {
-  name        = "${var.deployment_config.deployment_prefix}/github_app_client_id"
+  name        = "/${var.deployment_config.deployment_prefix}/github_app_client_id"
   description = "GitHub App Client ID for GHA ephemeral runners for Tenant ${var.deployment_config.tenant.name}."
   type        = "SecureString"
   value       = var.deployment_config.github_app.client_id
@@ -31,7 +31,7 @@ resource "aws_ssm_parameter" "github_app_client_id" {
 }
 
 resource "aws_ssm_parameter" "github_app_installation_id" {
-  name        = "${var.deployment_config.deployment_prefix}/github_app_installation_id"
+  name        = "/${var.deployment_config.deployment_prefix}/github_app_installation_id"
   description = "GitHub App Installation ID for GHA ephemeral runners for Tenant ${var.deployment_config.tenant.name}."
   type        = "SecureString"
   value       = var.deployment_config.github_app.installation_id
@@ -40,7 +40,7 @@ resource "aws_ssm_parameter" "github_app_installation_id" {
 }
 
 resource "aws_ssm_parameter" "github_app_name" {
-  name        = "${var.deployment_config.deployment_prefix}/github_app_name"
+  name        = "/${var.deployment_config.deployment_prefix}/github_app_name"
   description = "GitHub App Name for GHA ephemeral runners for Tenant ${var.deployment_config.tenant.name}."
   type        = "SecureString"
   value       = var.deployment_config.github_app.name
@@ -49,7 +49,7 @@ resource "aws_ssm_parameter" "github_app_name" {
 }
 
 resource "aws_ssm_parameter" "github_app_webhook_secret" {
-  name        = "${var.deployment_config.deployment_prefix}/github_app_webhook_secret"
+  name        = "/${var.deployment_config.deployment_prefix}/github_app_webhook_secret"
   description = "GitHub App webhook secret for GHA ephemeral runners for Tenant ${var.deployment_config.tenant.name}."
   type        = "SecureString"
   value       = random_password.github_app_webhook_secret.result
