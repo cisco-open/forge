@@ -209,10 +209,10 @@ def lambda_handler(event, context):
     """
     try:
         LOG.info('Lambda handler started')
-        forge_iam_roles = parse_env_list('FORGE_IAM_ROLES')
-        tenant_iam_roles = parse_env_list('TENANT_IAM_ROLES')
+        forge_role_arns = parse_env_list('FORGE_IAM_ROLES')
+        tenant_role_arns = parse_env_list('TENANT_IAM_ROLES')
 
-        if not forge_iam_roles or not tenant_iam_roles:
+        if not forge_role_arns or not tenant_role_arns:
             LOG.error(
                 'Missing required environment variables: FORGE_IAM_ROLES or TENANT_IAM_ROLES')
             return {
@@ -220,7 +220,7 @@ def lambda_handler(event, context):
                 'body': json.dumps(
                     {
                         'message': (
-                            'Missing forge_iam_roles or tenant_iam_roles '
+                            'Missing forge_role_arns or tenant_role_arns '
                             '(check env variables FORGE_IAM_ROLES and TENANT_IAM_ROLES).'
                         )
                     }
@@ -228,13 +228,13 @@ def lambda_handler(event, context):
             }
 
         LOG.info(
-            f"Loaded configuration: {len(forge_iam_roles)} Forge roles, {len(tenant_iam_roles)} Tenant roles")
+            f"Loaded configuration: {len(forge_role_arns)} Forge roles, {len(tenant_role_arns)} Tenant roles")
         all_results: List[Dict[str, Any]] = []
 
-        for forge_arn in forge_iam_roles:
+        for forge_role_arn in forge_role_arns:
             res = validate_forge_role_against_tenants(
-                forge_role_arn=forge_arn,
-                tenant_iam_roles=tenant_iam_roles,
+                forge_role_arn=forge_role_arn,
+                tenant_role_arns=tenant_role_arns,
             )
             all_results.append(res)
 
