@@ -28,7 +28,8 @@ resource "null_resource" "karpenter" {
 
   # --- CREATE / UPDATE ---
   provisioner "local-exec" {
-    command = <<EOF
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<EOF
 set -euxo pipefail
 
 echo "PATH=$PATH"
@@ -63,8 +64,9 @@ EOF
 
   # --- DESTROY ---
   provisioner "local-exec" {
-    when    = destroy
-    command = <<EOF
+    when        = destroy
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<EOF
 set -euxo pipefail
 
 echo "PATH=$PATH"
