@@ -26,8 +26,8 @@ locals {
   # ─────────────────────────────────────────────────────────────────────────────
   # Tenant Settings
   # ─────────────────────────────────────────────────────────────────────────────
-  runner_settings_data = read_terragrunt_config("runner_settings.hcl")
-  tenant               = local.runner_settings_data.locals.tenant
+  config = read_terragrunt_config("runner_settings.hcl")
+  tenant = local.config.locals.tenant
 
   # ─────────────────────────────────────────────────────────────────────────────
   # Tags
@@ -35,11 +35,11 @@ locals {
   tags = {
     TenantName              = local.tenant.name
     ForgeCICDTenantName     = local.tenant.name
-    ForgeCICDTenantVpcAlias = local.runner_settings_data.locals.vpc_alias
+    ForgeCICDTenantVpcAlias = local.config.locals.vpc_alias
   }
 
   default_tags = {
-    ApplicationName   = "${local.project_name}-${local.tenant.name}-${local.runner_settings_data.locals.region_alias}-${local.runner_settings_data.locals.vpc_alias}"
+    ApplicationName   = "${local.project_name}-${local.tenant.name}-${local.config.locals.region_alias}-${local.runner_settings_data.locals.vpc_alias}"
     ResourceOwner     = local.team_name
     ProductFamilyName = local.product_name
     IntendedPublic    = "No"
