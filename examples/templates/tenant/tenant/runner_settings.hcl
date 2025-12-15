@@ -35,7 +35,7 @@ locals {
   logging_retention_in_days = 3
 
   # Load and parse runner specs YAML once
-  config = yamldecode(file("config.yml"))
+  config = yamldecode(file("config.yaml"))
 
   # GitHub App settings
   github_webhook_relay = local.config.gh_config.github_webhook_relay
