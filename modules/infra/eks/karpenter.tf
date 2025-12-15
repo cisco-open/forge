@@ -36,8 +36,12 @@ command -v helm || { echo "helm not found"; exit 1; }
 command -v kubectl || { echo "kubectl not found"; exit 1; }
 
 # Ensure namespace exists
-kubectl --context ${self.triggers.kube_context} get ns karpenter --ignore-not-found=true || \
-  kubectl --context ${self.triggers.kube_context} create namespace karpenter
+kubectl --context ${self.triggers.kube_context}  apply -f - <<EOF2
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: karpenter
+EOF2
 
 helm --kube-context ${self.triggers.kube_context} upgrade \
   --install karpenter oci://public.ecr.aws/karpenter/karpenter \
