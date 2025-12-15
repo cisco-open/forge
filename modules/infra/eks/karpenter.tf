@@ -23,20 +23,24 @@ resource "null_resource" "karpenter" {
     cluster_name       = module.eks.cluster_name
     cluster_endpoint   = module.eks.cluster_endpoint
     interruption_queue = module.karpenter.queue_name
+    kube_context       = "${var.cluster_name}-${var.aws_profile}-${var.aws_region}"
   }
 
   # --- CREATE / UPDATE ---
   provisioner "local-exec" {
     command = <<EOF
-set -e
+set -euxo pipefail
 
-# Ensure repo exists (OCI support)
-helm repo add karpenter oci://public.ecr.aws/karpenter >/dev/null 2>&1 || true
+echo "PATH=$PATH"
+command -v helm || { echo "helm not found"; exit 1; }
+command -v kubectl || { echo "kubectl not found"; exit 1; }
 
 # Ensure namespace exists
-kubectl get ns karpenter >/dev/null 2>&1 || kubectl create namespace karpenter
+kubectl --context ${self.triggers.kube_context} get ns karpenter --ignore-not-found=true || \
+  kubectl --context ${self.triggers.kube_context} create namespace karpenter
 
-helm upgrade --install karpenter karpenter/karpenter \
+helm --kube-context ${self.triggers.kube_context} upgrade \
+  --install karpenter oci://public.ecr.aws/karpenter/karpenter \
   --namespace karpenter \
   --version ${self.triggers.chart_version} \
   --set serviceAccount.name=${self.triggers.service_account} \
@@ -44,11 +48,11 @@ helm upgrade --install karpenter karpenter/karpenter \
   --set settings.clusterName=${self.triggers.cluster_name} \
   --set settings.clusterEndpoint=${self.triggers.cluster_endpoint} \
   --set settings.interruptionQueue=${self.triggers.interruption_queue} \
-  --set tolerations[0].key=CriticalAddonsOnly \
-  --set tolerations[0].operator=Exists \
-  --set tolerations[1].key=karpenter.sh/controller \
-  --set tolerations[1].operator=Exists \
-  --set tolerations[1].effect=NoSchedule \
+  --set 'tolerations[0].key'=CriticalAddonsOnly \
+  --set 'tolerations[0].operator'=Exists \
+  --set 'tolerations[1].key'=karpenter.sh/controller \
+  --set 'tolerations[1].operator'=Exists \
+  --set 'tolerations[1].effect'=NoSchedule \
   --set webhook.enabled=false
 EOF
   }
@@ -57,16 +61,19 @@ EOF
   provisioner "local-exec" {
     when    = destroy
     command = <<EOF
-set -e
+set -euxo pipefail
+
+echo "PATH=$PATH"
+command -v helm || { echo "helm not found"; exit 1; }
+command -v kubectl || { echo "kubectl not found"; exit 1; }
 
 echo "Uninstalling Karpenter..."
 
 # Try uninstall, but don't fail destroy if already gone
-helm uninstall karpenter -n karpenter || true
+helm --kube-context ${self.triggers.kube_context} uninstall karpenter -n karpenter || true
 
 # Optionally cleanup namespace (safe only if nothing else is inside)
-kubectl delete namespace karpenter --ignore-not-found=true || true
-
+kubectl --context ${self.triggers.kube_context} delete namespace karpenter --ignore-not-found=true
 EOF
   }
 }

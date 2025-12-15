@@ -101,7 +101,7 @@ ______________________________________________________________________
 
 - **Role:** Deploy and maintain ForgeMT infrastructure
 - **Responsibilities:** AWS account setup, tenant provisioning, platform updates
-- **Tools:** Terraform/OpenTofu, AWS CLI, kubectl
+- **Tools:** OpenTofu, AWS CLI, kubectl, helm
 - **Workflow:** Deploy control plane → Onboard tenants → Monitor platform
 
 ### 👩‍💻 **Development Team (Tenant)**
@@ -122,7 +122,7 @@ Deploy and manage the ForgeMT infrastructure:
 - **[Deploy Your First Tenant](./docs/configurations/deployments/forge_tenant.md)** — Minimal setup to bootstrap ForgeMT.
 - **[All Deployment Scenarios](./docs/configurations/deployments/index.md)** — Includes EKS, Splunk, BYO AMIs, and advanced patterns.
 
-**Prerequisites:** AWS CLI configured, Terraform 1.5+, kubectl
+**Prerequisites:** AWS CLI configured, OpenTofu 1.11+, kubectl, helm
 
 ### For Development Teams (Tenants)
 

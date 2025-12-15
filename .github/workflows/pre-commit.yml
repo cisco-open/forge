@@ -37,7 +37,7 @@ jobs:
           path: ~/.cache/pre-commit/
           key: pre-commit|${{ github.repository }}|${{ hashFiles('.pre-commit-config.yaml') }}
 
-      - name: Cache Terraform/OpenTofu providers
+      - name: Cache OpenTofu providers
         uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
         with:
           path: /github/home/.terraform.d/plugin
