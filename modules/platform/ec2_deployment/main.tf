@@ -38,8 +38,9 @@ data "external" "download_lambdas" {
   program = ["bash", "${path.module}/scripts/download_lambdas.sh", "/tmp/${var.runner_configs.prefix}/", "v7.3.0"]
 }
 
+
 module "runners" {
-  source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=v7.3.0"
+  source = "git::https://github.com/edersonbrilhante/terraform-aws-github-runner.git//modules/multi-runner?ref=feat-macos-support"
 
   aws_region = var.aws_region
 
