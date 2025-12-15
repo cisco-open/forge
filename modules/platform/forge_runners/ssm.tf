@@ -2,7 +2,7 @@ resource "aws_ssm_parameter" "github_app_key" {
   name        = "/forge/${var.deployment_config.deployment_prefix}/github_app_key"
   description = "Base64 encoded GitHub App private key for GHA ephemeral runners for Tenant ${var.deployment_config.tenant.name}."
   type        = "SecureString"
-  value       = "initial-placeholder-value"
+  value       = base64encode("initial-placeholder-value")
   tags        = local.all_security_tags
 
   lifecycle {
@@ -71,6 +71,7 @@ resource "random_password" "github_app_webhook_secret" {
 }
 
 data "aws_ssm_parameter" "github_app_key" {
-  name       = aws_ssm_parameter.github_app_key.name
-  depends_on = [aws_ssm_parameter.github_app_key]
+  name            = aws_ssm_parameter.github_app_key.name
+  with_decryption = true
+  depends_on      = [aws_ssm_parameter.github_app_key]
 }
