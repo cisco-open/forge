@@ -230,6 +230,9 @@ def lambda_handler(event, _context):
 
         return {'statusCode': 200, 'body': 'Alert sent'}
 
-    except Exception as exc:
-        LOG.exception('lambda_error error=%s', exc)
-        return {'statusCode': 500, 'body': f"Error: {exc}"}
+    except Exception as e:
+        LOG.exception(
+            'Unhandled exception in webex_webhook_relay lambda. Error: %s',
+            str(e),
+        )
+        raise

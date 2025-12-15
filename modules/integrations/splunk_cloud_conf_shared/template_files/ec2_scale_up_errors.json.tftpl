@@ -16,7 +16,7 @@
             "options": {
                 "items": ${jsonencode(
                     concat(
-                        [{ label = "Select Tenant", value = "()" }],
+                        [{ label = "Select Tenant", value = "*" }],
                         [for tenant in tenants : { label = tenant, value = tenant }]
                     )
                 )},

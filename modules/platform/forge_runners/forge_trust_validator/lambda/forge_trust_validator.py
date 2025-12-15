@@ -213,19 +213,14 @@ def lambda_handler(event, context):
         tenant_role_arns = parse_env_list('TENANT_IAM_ROLES')
 
         if not forge_role_arns or not tenant_role_arns:
+            msg = (
+                'Missing forge_role_arns or tenant_role_arns '
+                '(check env variables FORGE_IAM_ROLES and TENANT_IAM_ROLES).'
+            )
             LOG.error(
-                'Missing required environment variables: FORGE_IAM_ROLES or TENANT_IAM_ROLES')
-            return {
-                'statusCode': 400,
-                'body': json.dumps(
-                    {
-                        'message': (
-                            'Missing forge_role_arns or tenant_role_arns '
-                            '(check env variables FORGE_IAM_ROLES and TENANT_IAM_ROLES).'
-                        )
-                    }
-                ),
-            }
+                'Missing required environment variables: FORGE_IAM_ROLES or TENANT_IAM_ROLES',
+            )
+            raise RuntimeError(msg)
 
         LOG.info(
             f"Loaded configuration: {len(forge_role_arns)} Forge roles, {len(tenant_role_arns)} Tenant roles")
