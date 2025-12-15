@@ -18,7 +18,7 @@ variable "runner_configs" {
     })
     runner_iam_role_managed_policy_arns = list(string)
     runner_group_name                   = string
-    custom_scale_errors                 = list(string)
+    custom_scale_errors                 = optional(list(string), [])
     runner_specs = map(object({
       ami_filter = object({
         name  = list(string)
