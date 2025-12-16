@@ -62,6 +62,7 @@ variable "network_configs" {
   type = object({
     vpc_id            = string
     subnet_ids        = list(string)
+    lambda_vpc_id     = string
     lambda_subnet_ids = list(string)
   })
 }

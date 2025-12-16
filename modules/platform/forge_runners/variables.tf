@@ -12,6 +12,7 @@ variable "ec2_deployment_specs" {
   type = object({
     lambda_subnet_ids = list(string)
     subnet_ids        = list(string)
+    lambda_vpc_id     = string
     vpc_id            = string
     runner_specs = map(object({
       ami_filter = object({

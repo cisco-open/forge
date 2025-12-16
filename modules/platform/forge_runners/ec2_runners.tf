@@ -21,6 +21,7 @@ module "ec2_runners" {
     vpc_id            = var.ec2_deployment_specs.vpc_id
     subnet_ids        = var.ec2_deployment_specs.subnet_ids
     lambda_subnet_ids = var.ec2_deployment_specs.lambda_subnet_ids
+    lambda_vpc_id     = var.ec2_deployment_specs.lambda_vpc_id
   }
 
   tenant_configs = {
