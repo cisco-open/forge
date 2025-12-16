@@ -43,11 +43,8 @@ module "runners" {
 
   aws_region = var.aws_region
 
-  vpc_id     = var.network_configs.vpc_id
-  subnet_ids = var.network_configs.subnet_ids
-  runner_additional_security_group_ids = [
-    aws_security_group.gh_runner_egress.id,
-  ]
+  vpc_id                    = var.network_configs.vpc_id
+  subnet_ids                = var.network_configs.subnet_ids
   lambda_subnet_ids         = var.network_configs.lambda_subnet_ids
   lambda_security_group_ids = [aws_security_group.gh_runner_lambda_egress.id]
   kms_key_arn               = aws_kms_key.github.arn
