@@ -22,7 +22,7 @@ ${pre_install}
 # Set defaults for macOS EC2 instances.
 # Default user on EC2 macOS AMIs is typically "ec2-user".
 user_name=ec2-user
-user_home="/Users/${user_name}"
+user_home="/Users/$user_name"
 
 # Configure CloudWatch logging agent if installed and configured for macOS.
 if command -v amazon-cloudwatch-agent-ctl >/dev/null 2>&1; then
@@ -30,16 +30,16 @@ if command -v amazon-cloudwatch-agent-ctl >/dev/null 2>&1; then
 fi
 
 # Ensure user home bin is on PATH for interactive shells.
-mkdir -p "${user_home}/bin"
-if ! grep -q 'PATH=.*${user_home}/bin' "${user_home}/.zprofile" 2>/dev/null; then
-    echo "export PATH=\"${user_home}/bin:\$PATH\"" >>"${user_home}/.zprofile"
+mkdir -p "$user_home/bin"
+if ! grep -q 'PATH=.*$user_home/bin' "$user_home/.zprofile" 2>/dev/null; then
+    echo "export PATH=\"$user_home/bin:\$PATH\"" >>"$user_home/.zprofile"
 fi
 
-chown -R "${user_name}:${user_name}" "${user_home}/bin" 2>/dev/null || true
+chown -R "$user_name:$user_name" "$user_home/bin" 2>/dev/null || true
 
 # Configure runner environment (no rootless Docker on macOS by default).
 cd /opt/actions-runner/
-echo PATH="${user_home}/bin:$PATH" >>.env
+echo PATH="$user_home/bin:$PATH" >>.env
 
 ${post_install}
 
