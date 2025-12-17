@@ -59,6 +59,7 @@ data "aws_iam_policy_document" "packer_support_for_forge_runners" {
       "ec2:DeleteSnapshot",
       "ec2:DeleteVolume",
       "ec2:DeregisterImage",
+      "ec2:DescribeHosts",
       "ec2:DescribeImageAttribute",
       "ec2:DescribeImages",
       "ec2:DescribeInstanceStatus",
