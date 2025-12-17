@@ -34,7 +34,15 @@ variable "runner_configs" {
       min_run_time        = number
       instance_types      = list(string)
       placement = optional(object({
-        host_id = optional(string, null)
+        affinity                = optional(string)
+        availability_zone       = optional(string)
+        group_id                = optional(string)
+        group_name              = optional(string)
+        host_id                 = optional(string)
+        host_resource_group_arn = optional(number)
+        spread_domain           = optional(string)
+        tenancy                 = optional(string)
+        partition_number        = optional(number)
       }), null)
       pool_config = list(object({
         size                         = number

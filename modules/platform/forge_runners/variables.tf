@@ -10,10 +10,10 @@ variable "aws_region" {
 
 variable "ec2_deployment_specs" {
   type = object({
-    lambda_subnet_ids = list(string)
-    subnet_ids        = list(string)
-    lambda_vpc_id     = string
-    vpc_id            = string
+    lambda_subnet_ids   = list(string)
+    subnet_ids          = list(string)
+    lambda_vpc_id       = string
+    vpc_id              = string
     custom_scale_errors = optional(list(string), [])
     runner_specs = map(object({
       ami_filter = object({
@@ -30,7 +30,15 @@ variable "ec2_deployment_specs" {
       min_run_time        = number
       instance_types      = list(string)
       placement = optional(object({
-        host_id = optional(string, null)
+        affinity                = optional(string)
+        availability_zone       = optional(string)
+        group_id                = optional(string)
+        group_name              = optional(string)
+        host_id                 = optional(string)
+        host_resource_group_arn = optional(number)
+        spread_domain           = optional(string)
+        tenancy                 = optional(string)
+        partition_number        = optional(number)
       }), null)
       pool_config = list(object({
         size                         = number
