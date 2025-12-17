@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# Note: based off the default userdata script provided by Philips Labs:
+# <https://github.com/github-aws-runners/terraform-aws-github-runner/blob/main/examples/multi-runner/templates/user-data.sh>
+
+exec > >(tee /var/log/user-data.log | logger -t user-data -s 2>/dev/console) 2>&1
+
+# AWS suggest to create a log for debug purpose based on https://aws.amazon.com/premiumsupport/knowledge-center/ec2-linux-log-user-data/
+# As side effect all command, set +x disable debugging explicitly.
+#
+# An alternative for masking tokens could be: exec > >(sed 's/--token\ [^ ]* /--token\ *** /g' > /var/log/user-data.log) 2>&1
+exec > >(sed 's/--token\ [^ ]* /--token\ *** /g' >/var/log/user-data.log) 2>&1
+
+set +x
+%{ if enable_debug_logging }
+set -x
+%{ endif }
+
+# Just a dummy value (user-supplied string; does nothing).
+${pre_install}
+
+# Set defaults for macOS EC2 instances.
+# Default user on EC2 macOS AMIs is typically "ec2-user".
+user_name=ec2-user
+user_home="/Users/${user_name}"
+
+# Configure CloudWatch logging agent if installed and configured for macOS.
+if command -v amazon-cloudwatch-agent-ctl >/dev/null 2>&1; then
+    amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c ssm:${ssm_key_cloudwatch_agent_config} || true
+fi
+
+# Ensure user home bin is on PATH for interactive shells.
+mkdir -p "${user_home}/bin"
+if ! grep -q 'PATH=.*${user_home}/bin' "${user_home}/.zprofile" 2>/dev/null; then
+    echo "export PATH=\"${user_home}/bin:\$PATH\"" >>"${user_home}/.zprofile"
+fi
+
+chown -R "${user_name}:${user_name}" "${user_home}/bin" 2>/dev/null || true
+
+# Configure runner environment (no rootless Docker on macOS by default).
+cd /opt/actions-runner/
+echo PATH="${user_home}/bin:$PATH" >>.env
+
+${post_install}
+
+%{ if hook_job_started != "" }
+cat >/opt/actions-runner/hook_job_started.sh <<'EOF'
+${hook_job_started}
+EOF
+echo ACTIONS_RUNNER_HOOK_JOB_STARTED=/opt/actions-runner/hook_job_started.sh | tee -a /opt/actions-runner/.env
+%{ endif }
+
+%{ if hook_job_completed != "" }
+cat >/opt/actions-runner/hook_job_completed.sh <<'EOF'
+${hook_job_completed}
+EOF
+echo ACTIONS_RUNNER_HOOK_JOB_COMPLETED=/opt/actions-runner/hook_job_completed.sh | tee -a /opt/actions-runner/.env
+%{ endif }
+
+${start_runner}

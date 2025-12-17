@@ -2,7 +2,6 @@ locals {
   # Templatized userdata (cloud-init) file.
   user_data_prefix                   = "${path.module}/template_files"
   userdata_template_post_install     = "${local.user_data_prefix}/post_install.tftpl"
-  user_data_template_runner          = "${local.user_data_prefix}/user_data.tftpl"
   runner_template_hook_job_started   = "${local.user_data_prefix}/hook_job_started.tftpl"
   runner_template_hook_job_completed = "${local.user_data_prefix}/hook_job_completed.tftpl"
 
@@ -118,7 +117,7 @@ module "runners" {
         enable_runner_binaries_syncer   = false
         enable_userdata                 = val["enable_userdata"]
         custom_scale_errors             = var.runner_configs.custom_scale_errors
-        userdata_template               = local.user_data_template_runner
+        userdata_template               = "${local.user_data_prefix}/user_data_${val["runner_os"]}.tftpl"
         userdata_pre_install            = "# No pre-install steps."
         userdata_post_install = templatefile(
           local.userdata_template_post_install,
@@ -172,6 +171,8 @@ module "runners" {
             aws_iam_policy.ec2_tags.arn,
           ]
         )
+        vpc_id                          = val["vpc_id"]
+        subnet_ids                      = val["subnet_ids"]
         enable_ephemeral_runners        = true
         create_service_linked_role_spot = true
         enable_organization_runners     = true

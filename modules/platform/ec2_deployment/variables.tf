@@ -52,6 +52,8 @@ variable "runner_configs" {
       runner_user                   = string
       enable_userdata               = bool
       instance_target_capacity_type = string
+      vpc_id                        = optional(string, null)
+      subnet_ids                    = optional(list(string), null)
       block_device_mappings = list(object({
         delete_on_termination = bool
         device_name           = string
