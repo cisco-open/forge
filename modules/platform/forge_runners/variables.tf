@@ -29,9 +29,9 @@ variable "ec2_deployment_specs" {
       max_instances       = number
       min_run_time        = number
       instance_types      = list(string)
-      license_specification = optional(object({
+      license_specifications = optional(list(object({
         license_configuration_arn = string
-      }), null)
+      })), null)
       placement = optional(object({
         affinity                = optional(string)
         availability_zone       = optional(string)
