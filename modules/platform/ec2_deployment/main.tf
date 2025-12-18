@@ -131,6 +131,7 @@ module "runners" {
         enable_runner_detailed_monitoring = true
         runner_run_as                     = val["runner_user"]
         block_device_mappings             = val["block_device_mappings"]
+        license_specification             = val["license_specification"]
         placement                         = val["placement"]
         runner_log_files = [
           {
