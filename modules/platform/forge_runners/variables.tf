@@ -10,11 +10,11 @@ variable "aws_region" {
 
 variable "ec2_deployment_specs" {
   type = object({
-    lambda_subnet_ids   = list(string)
-    subnet_ids          = list(string)
-    lambda_vpc_id       = string
-    vpc_id              = string
-    custom_scale_errors = optional(list(string), [])
+    lambda_subnet_ids = list(string)
+    subnet_ids        = list(string)
+    lambda_vpc_id     = string
+    vpc_id            = string
+    scale_errors      = optional(list(string), [])
     runner_specs = map(object({
       ami_filter = object({
         name  = list(string)

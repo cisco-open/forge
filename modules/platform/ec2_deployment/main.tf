@@ -116,7 +116,7 @@ module "runners" {
         runner_group_name               = var.runner_configs.runner_group_name
         enable_runner_binaries_syncer   = false
         enable_userdata                 = val["enable_userdata"]
-        custom_scale_errors             = var.runner_configs.custom_scale_errors
+        scale_errors                    = var.runner_configs.scale_errors
         userdata_template               = "${local.user_data_prefix}/user_data_${val["runner_os"]}.tftpl"
         userdata_pre_install            = "# No pre-install steps."
         userdata_post_install = templatefile(
