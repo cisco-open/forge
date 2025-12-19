@@ -88,6 +88,8 @@ locals {
       min_run_time                  = 30
       max_instances                 = spec.max_instances
       instance_types                = spec.instance_types
+      placement                     = try(spec.placement, null)
+      license_specifications        = try(spec.license_specifications, null)
       block_device_mappings = [{
         delete_on_termination = true
         device_name           = spec.volume.device_name
