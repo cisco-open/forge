@@ -1,0 +1,20 @@
+<powershell>
+$ErrorActionPreference = "Continue"
+$VerbosePreference = "Continue"
+Start-Transcript -Path "C:\UserData.log" -Append
+
+${pre_install}
+
+refreshenv
+
+$cloudwatchParams = '/i', 'C:\amazon-cloudwatch-agent.msi', '/qn', '/L*v', 'C:\CloudwatchInstall.log'
+Start-Process "msiexec.exe" $cloudwatchParams -Wait -NoNewWindow
+
+refreshenv
+
+${install_runner}
+
+${start_runner}
+
+Stop-Transcript
+</powershell>

@@ -133,32 +133,38 @@ module "runners" {
         block_device_mappings             = val["block_device_mappings"]
         license_specifications            = val["license_specifications"]
         placement                         = val["placement"]
-        runner_log_files = [
-          {
-            "log_group_name" : "forge-logs",
-            "prefix_log_group" : true,
-            "file_path" : "/var/log/syslog",
-            "log_stream_name" : "{instance_id}/syslog"
-          },
-          {
-            "log_group_name" : "forge-logs",
-            "prefix_log_group" : true,
-            "file_path" : "/var/log/user-data.log",
-            "log_stream_name" : "{instance_id}/user-data"
-          },
-          {
-            "log_group_name" : "forge-logs",
-            "prefix_log_group" : true,
-            "file_path" : "/opt/actions-runner/_diag/Runner_**.log",
-            "log_stream_name" : "{instance_id}/runner"
-          },
-          {
-            "log_group_name" : "forge-logs",
-            "prefix_log_group" : true,
-            "file_path" : "/home/${val["runner_user"]}/hook.log",
-            "log_stream_name" : "{instance_id}/hook"
-          },
-        ]
+        runner_log_files = concat(
+          // Linux/macOS-only logs
+          val["runner_os"] == "windows" ? [] : [
+            {
+              "log_group_name" : "forge-logs",
+              "prefix_log_group" : true,
+              "file_path" : "/var/log/syslog",
+              "log_stream_name" : "{instance_id}/syslog"
+            },
+            {
+              "log_group_name" : "forge-logs",
+              "prefix_log_group" : true,
+              "file_path" : "/home/${val["runner_user"]}/hook.log",
+              "log_stream_name" : "{instance_id}/hook"
+            },
+          ],
+          // Logs that exist on all OSes, with OS-specific paths
+          [
+            {
+              "log_group_name" : "forge-logs",
+              "prefix_log_group" : true,
+              "file_path" : val["runner_os"] == "windows" ? "C:/UserData.log" : "/var/log/user-data.log",
+              "log_stream_name" : "{instance_id}/user-data"
+            },
+            {
+              "log_group_name" : "forge-logs",
+              "prefix_log_group" : true,
+              "file_path" : val["runner_os"] == "windows" ? "C:/actions-runner/_diag/Runner_*.log" : "/opt/actions-runner/_diag/Runner_**.log",
+              "log_stream_name" : "{instance_id}/runner"
+            },
+          ],
+        )
         ami = {
           owners      = val["ami_owners"]
           filter      = val["ami_filter"]
