@@ -1,13 +1,8 @@
 <powershell>
-$ErrorActionPreference = "Continue"
-$VerbosePreference = "Continue"
-Start-Transcript -Path "C:\UserData.log" -Append
 
 ${pre_install}
 
-${install_runner}
+Set-Location C:\actions-runner
 
 ${start_runner}
-
-Stop-Transcript
 </powershell>
