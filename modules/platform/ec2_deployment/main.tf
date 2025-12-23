@@ -148,6 +148,32 @@ module "runners" {
               "file_path" : "/home/${val["runner_user"]}/hook.log",
               "log_stream_name" : "{instance_id}/hook"
             },
+            {
+              "log_group_name" : "forge-logs",
+              "prefix_log_group" : true,
+              "file_path" : "/home/${val["runner_user"]}/hook.log",
+              "log_stream_name" : "{instance_id}/hook"
+            },
+          ],
+          val["runner_os"] != "windows" ? [] : [
+            {
+              "log_group_name" : "forge-logs",
+              "prefix_log_group" : true,
+              "file_path" : "C:\\ProgramData\\Amazon\\EC2-Windows\\Launch\\Log\\UserdataExecution.log",
+              "log_stream_name" : "{instance_id}/user-data-execution"
+            },
+            {
+              "log_group_name" : "forge-logs",
+              "prefix_log_group" : true,
+              "file_path" : "C:\\ProgramData\\Amazon\\EC2-Windows\\Launch\\Log\\Ec2Launch.log",
+              "log_stream_name" : "{instance_id}/ec2-launch"
+            },
+            {
+              "log_group_name" : "forge-logs",
+              "prefix_log_group" : true,
+              "file_path" : "C:\\ProgramData\\Amazon\\SSM\\Logs\\amazon-ssm-agent.log",
+              "log_stream_name" : "{instance_id}/amazon-ssm-agent"
+            },
           ],
           // Logs that exist on all OSes, with OS-specific paths
           [
