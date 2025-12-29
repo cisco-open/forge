@@ -1,8 +1,23 @@
 <powershell>
 
+$logPath = 'C:\UserData.log'
+
+Start-Transcript -Path $logPath -Append
+
+$ssm = Get-Service AmazonSSMAgent -ErrorAction SilentlyContinue
+if ($ssm) {
+    Set-Service AmazonSSMAgent -StartupType Automatic
+    if ($ssm.Status -ne 'Running') {
+        Start-Service AmazonSSMAgent
+    }
+}
+
 ${pre_install}
 
 Set-Location C:\actions-runner
 
 ${start_runner}
+
+Stop-Transcript
+
 </powershell>
