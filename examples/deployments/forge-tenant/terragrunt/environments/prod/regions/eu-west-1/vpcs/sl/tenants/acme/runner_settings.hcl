@@ -99,8 +99,8 @@ locals {
         volume_size           = spec.volume.size
         volume_type           = spec.volume.type
       }]
-      vpc_id = local.vpc_id
-
+      vpc_id      = local.vpc_id
+      pool_config = spec.pool_config
     }
   }
   arc_cluster_name    = local.config.arc_cluster_name
