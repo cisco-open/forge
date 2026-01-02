@@ -1,12 +1,34 @@
 data "aws_iam_policy_document" "eks_policy" {
   statement {
-    sid    = "EKSListPolicy"
+    sid    = "EKSDiscovery1"
     effect = "Allow"
     actions = [
-      "eks:DescribeCluster",
       "eks:ListClusters",
     ]
     resources = ["*"]
+  }
+
+  statement {
+    sid    = "EKSDiscovery2"
+    effect = "Allow"
+    actions = [
+      "eks:DescribeCluster",
+    ]
+    resources = [data.aws_eks_cluster.cluster.arn]
+  }
+
+  statement {
+    sid    = "EKSManageAccess"
+    effect = "Allow"
+    actions = [
+      "eks:AssociateAccessPolicy",
+      "eks:CreateAccessEntry",
+      "eks:DeleteAccessEntry",
+      "eks:DescribeAccessEntry",
+      "eks:TagResource",
+      "eks:UpdateAccessEntry"
+    ]
+    resources = [data.aws_eks_cluster.cluster.arn]
   }
 }
 
