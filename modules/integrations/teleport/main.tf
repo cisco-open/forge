@@ -27,3 +27,11 @@ EOT
     aws_iam_role.teleport_role
   ]
 }
+
+resource "aws_eks_access_entry" "teleport" {
+  cluster_name      = var.teleport_config.cluster_name
+  principal_arn     = aws_iam_role.teleport_role.arn
+  kubernetes_groups = ["teleport:kube-service:eks"]
+  type              = "STANDARD"
+  user_name         = "arn:aws:sts::${data.aws_caller_identity.current.account_id}:assumed-role/${var.teleport_config.cluster_name}-teleport/{{SessionName}}"
+}
