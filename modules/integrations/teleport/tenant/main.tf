@@ -44,7 +44,6 @@ resource "kubernetes_cluster_role_binding_v1" "impersonate" {
     kind      = "Group"
     name      = "teleport-${var.namespace}"
     api_group = "rbac.authorization.k8s.io"
-    namespace = var.namespace
   }
 }
 
@@ -64,6 +63,5 @@ resource "kubernetes_role_binding_v1" "pods" {
     kind      = "Group"
     name      = "teleport-${var.namespace}"
     api_group = "rbac.authorization.k8s.io"
-    namespace = var.namespace
   }
 }
