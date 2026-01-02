@@ -6,7 +6,6 @@ module "tenant" {
 }
 
 resource "kubernetes_config_map_v1" "aws_auth_teleport" {
-  count = length(var.tenants) > 0 ? 1 : 0
   metadata {
     name      = "aws-auth"
     namespace = "kube-system"
