@@ -3,7 +3,7 @@ resource "aws_s3_object" "cloudformation_template" {
   key    = "${var.cloudformation_s3_config.key}${random_uuid.splunk_input_uuid.result}/template.json"
   source = "/tmp/${random_uuid.splunk_input_uuid.result}_template.json"
 
-  source_hash = sha256(jsonencode(local.tags))
+  source_hash = data.external.splunk_dm_version.result.template_hash
 
   depends_on = [
     null_resource.create_integration,

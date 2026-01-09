@@ -118,5 +118,8 @@ curl "${splunk_cloud}/en-GB/splunkd/__raw/servicesNS/nobody/data_manager/cloudin
     -H "X-Splunk-Form-Key: $SPLUNKWEB_CSRF_TOKEN_8443" \
     -o /tmp/${splunk_input_uuid}_template.json >>/tmp/${splunk_input_uuid}_logs.txt 2>&1
 
-# Output the version
-cat /tmp/${splunk_input_uuid}_input.json | jq -c '{version: .details.version}'
+# Calculate the hash of the template
+TEMPLATE_HASH=$(shasum -a 256 /tmp/${splunk_input_uuid}_template.json | awk '{print $1}')
+
+# Output the version and template hash
+cat /tmp/${splunk_input_uuid}_input.json | jq -c --arg hash "$TEMPLATE_HASH" '{version: .details.version, template_hash: $hash}'
