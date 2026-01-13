@@ -34,11 +34,7 @@ data "aws_subnet" "runner_subnet" {
 }
 
 data "external" "download_lambdas" {
-<<<<<<< HEAD
   program = ["bash", "${path.module}/scripts/download_lambdas.sh", "/tmp/${var.runner_configs.prefix}/", "v7.3.0"]
-=======
-  program = ["bash", "${path.module}/scripts/download_lambdas.sh", "/tmp/${var.runner_configs.prefix}/", "v7.2.0"]
->>>>>>> cb02daa (feat: use new branch)
 }
 
 
