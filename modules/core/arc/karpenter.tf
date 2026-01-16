@@ -4,6 +4,12 @@ locals {
   })
 
   kubeconfig_path = "${path.cwd}/.kube/${var.eks_cluster_name}-${var.aws_profile}-${var.aws_region}-${var.controller_config.namespace}.kubeconfig"
+
+  merged_tags = merge(
+    var.tags,
+    {
+      Name = "${var.eks_cluster_name}-karpenter-${var.controller_config.namespace}-node"
+  })
 }
 
 data "external" "update_kubeconfig" {
@@ -51,7 +57,7 @@ data "external" "karpenter_ec2nodeclass" {
           )
         ' - \
       | yq eval -o=json - \
-      | jq --argjson newtags '${jsonencode(var.tags)}' --arg newname "karpenter-${var.controller_config.namespace}" '
+      | jq --argjson newtags '${jsonencode(local.merged_tags)}' --arg newname "karpenter-${var.controller_config.namespace}" '
           .spec.tags = (.spec.tags // {}) |
           .spec.tags *= $newtags |
           .metadata.name = $newname

@@ -29,3 +29,4 @@ spec:
 %{ for k, v in tags }
     ${k}: '${v}'
 %{ endfor }
+    Name: '${cluster_name}-karpenter-shared-node'
