@@ -32,13 +32,13 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Cache Pre-commit
-        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
+        uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
         with:
           path: ~/.cache/pre-commit/
           key: pre-commit|${{ github.repository }}|${{ hashFiles('.pre-commit-config.yaml') }}
 
       - name: Cache OpenTofu providers
-        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
+        uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
         with:
           path: /github/home/.terraform.d/plugin
           key: tf-providers-${{ github.run_id }}
