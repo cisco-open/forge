@@ -96,6 +96,7 @@ locals {
     disk_type                 = var.cluster_volume.type
     disk_iops                 = var.cluster_volume.iops
     disk_throughput           = var.cluster_volume.throughput
+    cluster_name              = var.cluster_name
   })
 
   node_pool_manifest = templatefile("${path.module}/templates/node_pool.yaml.tpl", {
