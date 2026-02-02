@@ -83,7 +83,7 @@ repos:
   # Commit Message Hooks
   # ---------------------
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: v4.10.1
+    rev: v4.13.0
     hooks:
       - id: commitizen
         name: Git · Validate commit message
@@ -104,7 +104,7 @@ repos:
         exclude: (build/ansible/)
 
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.37.1
+    rev: v1.38.0
     hooks:
       - id: yamllint
         name: YAML · Linter
@@ -144,7 +144,7 @@ repos:
   # Makefile Hooks
   # ---------------------
   - repo: https://github.com/mrtazz/checkmake.git
-    rev: 0.2.2
+    rev: v0.3.2
     hooks:
       - id: checkmake
         name: Makefile · Lint Makefile
@@ -230,7 +230,7 @@ repos:
         always_run: true
 
   - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: v1.104.1
+    rev: v1.105.0
     hooks:
       - id: terraform_fmt
         name: Terraform · Formatter
