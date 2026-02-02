@@ -1,6 +1,6 @@
 module "ec2_update_runner_ssm_ami_lambda" {
   source  = "terraform-aws-modules/lambda/aws"
-  version = "8.1.2"
+  version = "8.4.0"
 
   function_name = "${var.prefix}-ec2-update-runner-ssm-ami"
   handler       = "ec2_update_runner_ssm_ami.lambda_handler"

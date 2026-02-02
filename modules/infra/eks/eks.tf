@@ -1,6 +1,6 @@
 module "ebs_csi_irsa_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts"
-  version = "6.2.3"
+  version = "6.4.0"
 
   name                  = "${var.cluster_name}-${var.aws_region}-ebs-csi"
   use_name_prefix       = false
@@ -17,7 +17,7 @@ module "ebs_csi_irsa_role" {
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "21.10.1"
+  version = "21.15.1"
 
   name               = var.cluster_name
   kubernetes_version = var.cluster_version
