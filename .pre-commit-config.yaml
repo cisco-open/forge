@@ -159,7 +159,7 @@ repos:
         name: Python · autopep8
 
   - repo: https://github.com/PyCQA/isort
-    rev: 6.1.0
+    rev: 7.0.0
     hooks:
       - id: isort
         name: Python · Import sorter
@@ -266,7 +266,7 @@ repos:
   # Ansible Hooks
   # ---------------------
   - repo: https://github.com/ansible-community/ansible-lint.git
-    rev: v25.12.2
+    rev: v26.1.1
     hooks:
       - id: ansible-lint
         name: Ansible · Linter
@@ -277,7 +277,7 @@ repos:
   # Markdown Hooks
   # ---------------------
   - repo: https://github.com/hukkin/mdformat
-    rev: 0.7.22
+    rev: 1.0.0
     hooks:
       - id: mdformat
         name: Markdown · Format markdown
