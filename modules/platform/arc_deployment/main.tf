@@ -50,7 +50,7 @@ module "arc" {
     release_name  = var.runner_configs.prefix
     namespace     = var.tenant_configs.name
     chart_name    = "oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set-controller"
-    chart_version = "0.13.0"
+    chart_version = "0.13.1"
     name          = "${var.runner_configs.prefix}-gha-rs-controller"
   }
 
