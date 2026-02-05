@@ -2,7 +2,7 @@ resource "helm_release" "splunk_otel_collector" {
   name             = "splunk-otel-collector"
   repository       = "https://signalfx.github.io/splunk-otel-collector-chart"
   chart            = "splunk-otel-collector"
-  version          = "0.143.0"
+  version          = "0.141.0"
   namespace        = "splunk-otel-collector"
   create_namespace = true
 
