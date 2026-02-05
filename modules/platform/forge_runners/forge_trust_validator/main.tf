@@ -1,6 +1,6 @@
 module "forge_trust_validator_lambda" {
   source  = "terraform-aws-modules/lambda/aws"
-  version = "8.4.0"
+  version = "8.5.0"
 
   function_name = "${var.prefix}-forge-trust-validator"
   handler       = "forge_trust_validator.lambda_handler"

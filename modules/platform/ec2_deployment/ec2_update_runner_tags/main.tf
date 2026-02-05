@@ -1,6 +1,6 @@
 module "ec2_update_runner_tags_lambda" {
   source  = "terraform-aws-modules/lambda/aws"
-  version = "8.4.0"
+  version = "8.5.0"
 
   function_name = "${var.prefix}-ec2-update-runner-tags"
   handler       = "ec2_update_runner_tags.lambda_handler"

@@ -4,7 +4,7 @@ locals {
 
 module "splunk_s3_runner_logs_lambda" {
   source  = "terraform-aws-modules/lambda/aws"
-  version = "8.4.0"
+  version = "8.5.0"
 
   function_name = "${local.prefix_lambda}-lambda-${var.aws_region}"
   handler       = "splunk_s3_runner_logs.lambda_handler"
