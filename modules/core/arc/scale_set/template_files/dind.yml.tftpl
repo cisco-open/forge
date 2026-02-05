@@ -265,17 +265,6 @@ template:
         value: "${tenant}"
         effect: "NoSchedule"
 
-      # karpenter tolerations
-      #- key: "karpenter.sh/initialized"
-      #  operator: "Equal"
-      #  value: "true"
-      #  effect: "NoSchedule"
-      #- key: "karpenter.sh/registered"
-      #  operator: "Equal"
-      #  value: "true"
-      #  effect: "NoSchedule"
-
-
     affinity:
       nodeAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
@@ -290,18 +279,8 @@ template:
                   operator: In
                   values:
                     - ${tenant}
-
-                # karpenter affinity
-                #- key: "karpenter.sh/initialized"
-                #  operator: In
-                #  values:
-                #    - "true"
-                #- key: "karpenter.sh/registered"
-                #  operator: In
-                #  values:
-                #    - "true"
-                #- key: "karpenter.sh/disrupted"
-                #  operator: DoesNotExist
+                - key: "karpenter.sh/disrupted"
+                 operator: DoesNotExist
 
 controllerServiceAccount:
   namespace: ${controller_namespace}
