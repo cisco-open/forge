@@ -30,7 +30,7 @@ parse_args() {
     CONFIG_FILE="${TF_DIR}/config.yml"
 
     rendered=$(terragrunt render --format json --working-dir "$TF_DIR")
-    arc_cluster_name=$(echo "$rendered" | jq -r '.inputs.arc_cluster_name')
+    arc_cluster_name=$(echo "$rendered" | jq -r '.inputs.arc_deployment_specs.cluster_name')
     aws_profile=$(echo "$rendered" | jq -r '.inputs.aws_profile')
     aws_region=$(echo "$rendered" | jq -r '.inputs.aws_region')
 
@@ -40,7 +40,7 @@ parse_args() {
         --alias "${arc_cluster_name}-${aws_profile}-${aws_region}" \
         --profile "$aws_profile"
 
-    FROM_CTX="$arc_cluster_name"
+    FROM_CTX="${arc_cluster_name}-${aws_profile}-${aws_region}"
 }
 
 detect_clusters() {
