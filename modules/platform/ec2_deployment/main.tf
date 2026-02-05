@@ -58,8 +58,9 @@ module "runners" {
     enable = true
   }
 
-  lambda_tags = var.tenant_configs.tags
-  tags        = var.tenant_configs.tags
+  lambda_tags          = var.tenant_configs.tags
+  tags                 = var.tenant_configs.tags
+  parameter_store_tags = var.tenant_configs.tags
 
   # Verbose logging.
   log_level = var.runner_configs.log_level
