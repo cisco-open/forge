@@ -6,15 +6,10 @@ spec:
   template:
     spec:
       requirements:
-        - key: karpenter.k8s.aws/instance-family
+        - key: node.kubernetes.io/instance-type
           operator: In
           values:
-            - m6i
-            - m5
-            - c6i
-            - c5
-            - r6i
-            - r5
+            - ${instance_type}
         - key: kubernetes.io/arch
           operator: In
           values: ["amd64"]

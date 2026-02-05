@@ -36,8 +36,8 @@ jobs:
     runs-on:
       - self-hosted
       - x64
-      - type: large
-      - env: ops-prod
+      - type:large
+      - env:ops-prod
 
     steps:
       - name: Checkout Repository

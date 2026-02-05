@@ -56,7 +56,7 @@ jobs:
     runs-on:
       - self-hosted
       - x64
-      - type: standard
+      - type:standard
 ```
 
 For Kubernetes pods, use:

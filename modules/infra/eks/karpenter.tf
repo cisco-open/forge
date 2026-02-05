@@ -98,7 +98,9 @@ locals {
     disk_throughput           = var.cluster_volume.throughput
   })
 
-  node_pool_manifest = templatefile("${path.module}/templates/node_pool.yaml.tpl", {})
+  node_pool_manifest = templatefile("${path.module}/templates/node_pool.yaml.tpl", {
+    instance_type = var.cluster_size.instance_type
+  })
 }
 
 resource "null_resource" "apply_ec2_node_class" {

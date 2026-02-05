@@ -20,6 +20,9 @@ containerMode:
 
 # with containerMode.type=kubernetes, we will populate the template.spec with following pod spec
 template:
+  metadata:
+    annotations:
+      karpenter.sh/do-not-evict: "true"
   spec:
     securityContext:
       fsGroup: 123
