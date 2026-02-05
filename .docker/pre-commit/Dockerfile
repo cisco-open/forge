@@ -40,7 +40,7 @@ RUN set -eux; \
     chmod 755 /usr/local/bin/jq
 
 # renovate: datasource=github-releases depName=hashicorp/packer registryUrl=https://github.com/
-ARG PACKER_VERSION="1.14.3"
+ARG PACKER_VERSION="1.15.0"
 ARG PACKER_SRC="https://releases.hashicorp.com/packer/${PACKER_VERSION}/packer_${PACKER_VERSION}_linux_amd64.zip"
 ARG PACKER_ARTIFACT="packer.zip"
 RUN set -eux; \
