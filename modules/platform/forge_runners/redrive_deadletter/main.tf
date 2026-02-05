@@ -1,6 +1,6 @@
 module "redrive_deadletter_lambda" {
   source  = "terraform-aws-modules/lambda/aws"
-  version = "8.2.1"
+  version = "8.3.0"
 
   function_name = "${var.prefix}-redrive-deadletter"
   handler       = "redrive_deadletter.lambda_handler"
