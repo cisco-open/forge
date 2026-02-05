@@ -279,8 +279,10 @@ template:
                   operator: In
                   values:
                     - ${tenant}
+
+                # karpenter affinity
                 - key: "karpenter.sh/disrupted"
-                 operator: DoesNotExist
+                  operator: DoesNotExist
 
 controllerServiceAccount:
   namespace: ${controller_namespace}
