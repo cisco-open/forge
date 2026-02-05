@@ -70,7 +70,7 @@ resource "aws_iam_policy" "dynamodb_policy" {
 ## GitHub Clean Global Lock Lambda
 module "clean_global_lock_lambda" {
   source  = "terraform-aws-modules/lambda/aws"
-  version = "8.5.0"
+  version = "8.1.2"
 
   function_name = "${var.prefix}-clean-global-lock"
   handler       = "github_clean_global_lock.lambda_handler"

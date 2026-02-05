@@ -1,6 +1,6 @@
 module "validate_signature_lambda" {
   source  = "terraform-aws-modules/lambda/aws"
-  version = "8.5.0"
+  version = "8.1.2"
 
   function_name = "${var.name_prefix}-validate-signature"
   handler       = "validate_signature.lambda_handler"
