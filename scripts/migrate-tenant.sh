@@ -115,6 +115,7 @@ main() {
     echo "🚀 Enabling ARC for tenant on new cluster '$TO'"
     update_config false "$TO"
     terragrunt_apply 'module.arc_runners'
+    terragrunt_apply 'module.forge_trust_validator'
 
     echo "✅ Migration complete. Tenant '$TENANT' is now on '$TO'"
 }
