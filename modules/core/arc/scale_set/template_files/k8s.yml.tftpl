@@ -136,15 +136,6 @@ template:
         configMap:
           name: hook-pre-post-job-${scale_set_name}
 
-    affinity:
-      nodeAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-            - matchExpressions:
-                # karpenter affinity
-                - key: "karpenter.sh/disrupted"
-                  operator: DoesNotExist
-
 controllerServiceAccount:
   namespace: ${controller_namespace}
   name: ${controller_service_account}

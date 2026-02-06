@@ -280,10 +280,6 @@ template:
                   values:
                     - ${tenant}
 
-                # karpenter affinity
-                - key: "karpenter.sh/disrupted"
-                  operator: DoesNotExist
-
 controllerServiceAccount:
   namespace: ${controller_namespace}
   name: ${controller_service_account}
