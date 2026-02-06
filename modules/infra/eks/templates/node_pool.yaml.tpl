@@ -10,9 +10,6 @@ spec:
           operator: In
           values:
             - ${instance_type}
-        - key: kubernetes.io/arch
-          operator: In
-          values: ["amd64"]
         - key: kubernetes.io/os
           operator: In
           values: ["linux"]
