@@ -1,6 +1,6 @@
 {
-    "title": "EC2 Scale up Errors",
-    "description": "Lists failed EC2 runner scale-up attempts with related workflow, tenant, and environment context.",
+    "title": "Trust Relationship",
+    "description": "",
     "inputs": {
         "input_global_trp": {
             "options": {
@@ -16,7 +16,7 @@
             "options": {
                 "items": ${jsonencode(
                     concat(
-                        [{ label = "Select Tenant", value = "*" }],
+                        [{ label = "Select Tenant", value = "-" }],
                         [for tenant in tenants : { label = tenant, value = tenant }]
                     )
                 )},
@@ -65,10 +65,10 @@
     },
     "dataSources": {
         "ds_yDvZOb30": {
-            "name": "Ec2 scale up errors",
+            "name": "Trust relationship validation",
             "options": {
                 "enableSmartSources": true,
-                "query": "index=\"${splunk_index}\" forgecicd_log_type=\"scale-up\" \"Ignoring error\" \n| where \"$dd_8enHUmpH$\"=\"*\" OR forgecicd_tenant=\"$dd_8enHUmpH$\"\n| rename aws-request-id as aws_request_id\n| dedup aws_request_id\n| fields aws_request_id message\n| join aws_request_id type=inner\n    [\n        search index=\"${splunk_index}\" message=\"Received event\"\n        | rename aws-request-id as aws_request_id\n        | stats \n            values(github.workflow_job_id) as workflow_job_id\n            values(forgecicd_tenant) as tenant\n            values(forgecicd_vpc_alias) as vpc_alias\n            values(forgecicd_region_alias) as region_alias\n            values(timestamp) as event_timestamp\n            by aws_request_id\n        | mvexpand workflow_job_id\n    ]\n| table aws_request_id workflow_job_id tenant vpc_alias region_alias message event_timestamp\n",
+                "query": "index=\"${splunk_index}\" forgecicd_tenant=\"$dd_8enHUmpH$\" forgecicd_log_type=\"forge-trust-validator\" \"Validation complete\"\n| eventstats max(_time) as tenant_last_seen by forgecicd_tenant\n| where _time=tenant_last_seen\n\n| mvexpand forgecicd_trust_validation\n| eval trust_json=tostring(forgecicd_trust_validation)\n| spath input=trust_json path={} output=item\n| mvexpand item\n| spath input=item path=forge_role_arn output=forge_role\n| spath input=item path=tenant_results{} output=tenant_results\n| mvexpand tenant_results\n| spath input=tenant_results\n\n| eval assume_status=if(tostring(assume_role_success)==\"true\",\"assumed\",\"not assumed\")\n| eval tag_status=if(tostring(tag_session_success)==\"true\",\"session tagged\",\"session not tagged\")\n\n| table forgecicd_tenant forge_role tenant_role_arn assume_status assume_role_error tag_status tag_session_error\n| sort forge_role tenant_role_arn",
                 "queryParameters": {
                     "earliest": "$global_time.earliest$",
                     "latest": "$global_time.latest$"
@@ -106,13 +106,16 @@
         "tabs": {
             "items": [
                 {
-                    "label": "EC2 Runner scale up errors",
+                    "label": "Trust Relationship Validation",
                     "layoutId": "layout_6CHuojec"
                 }
             ]
         }
     },
     "applicationProperties": {
-        "collapseNavigation": true
+        "collapseNavigation": true,
+        "hideEdit": false,
+        "hideExport": false,
+        "hideOpenInSearch": false
     }
 }
