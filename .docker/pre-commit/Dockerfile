@@ -96,7 +96,7 @@ RUN set -eux; \
     chmod 755 /usr/local/bin/tflint;
 
 # renovate: datasource=github-releases depName=opentofu/opentofu registryUrl=https://github.com/
-ARG TOFU_VERSION="1.11.0"
+ARG TOFU_VERSION="1.11.5"
 ARG TOFU_SRC="https://github.com/opentofu/opentofu/releases/download/v${TOFU_VERSION}/tofu_${TOFU_VERSION}_linux_amd64.zip"
 ARG TOFU_ARTIFACT="tofu.zip"
 RUN set -eux; \
