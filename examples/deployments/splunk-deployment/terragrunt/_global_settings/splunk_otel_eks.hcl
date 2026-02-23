@@ -58,5 +58,6 @@ inputs = {
   splunk_otel_collector = local.eks_settings_data.locals.splunk_otel_collector
 
   # Misc
+  tags         = local.tags
   default_tags = local.default_tags
 }
