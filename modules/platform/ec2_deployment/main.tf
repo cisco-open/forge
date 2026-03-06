@@ -68,9 +68,9 @@ module "runners" {
   # Retention period for the logs in days.
   logging_retention_in_days = var.runner_configs.logging_retention_in_days
 
-  webhook_lambda_zip                = "/tmp/${var.runner_configs.prefix}/webhook.zip"
-  runner_binaries_syncer_lambda_zip = "/tmp/${var.runner_configs.prefix}/runner-binaries-syncer.zip"
-  runners_lambda_zip                = "/tmp/${var.runner_configs.prefix}/runners.zip"
+  webhook_lambda_zip                = "${data.external.download_lambdas.result.path}/webhook.zip"
+  runner_binaries_syncer_lambda_zip = "${data.external.download_lambdas.result.path}/runner-binaries-syncer.zip"
+  runners_lambda_zip                = "${data.external.download_lambdas.result.path}/runners.zip"
 
   # Configure the various types of runners we provide, along with on-demand
   # versus standby pools, etc.
