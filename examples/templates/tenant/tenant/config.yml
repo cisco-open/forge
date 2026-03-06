@@ -41,6 +41,9 @@ ec2_runner_specs:
     subnet_ids:
       - subnet-0abc1234def567890
     max_instances: <MAX_PARALLEL>
+    placement: <PLACEMENT>
+    license_specifications: <LICENSE_SPECIFICATIONS>
+    use_dedicated_host: <USE_DEDICATED_HOST>
     instance_types:
       - <AWS_INSTANCE_TYPE>
     pool_config:
