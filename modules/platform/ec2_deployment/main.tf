@@ -39,7 +39,7 @@ data "external" "download_lambdas" {
 
 
 module "runners" {
-  source = "git::https://github.com/edersonbrilhante/terraform-aws-github-runner.git//modules/multi-runner?ref=feat-ec2-dynamic-config"
+  source = "git::https://github.com/edersonbrilhante/terraform-aws-github-runner.git//modules/multi-runner?ref=feat-macos-support"
 
   aws_region = var.aws_region
 
