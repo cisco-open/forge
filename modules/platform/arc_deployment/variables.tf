@@ -29,6 +29,7 @@ variable "runner_configs" {
       })
       scale_set_name               = string
       scale_set_type               = string
+      scale_set_labels             = list(string)
       container_actions_runner     = string
       container_limits_cpu         = string
       container_limits_memory      = string

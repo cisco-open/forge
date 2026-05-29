@@ -180,6 +180,7 @@ variable "arc_deployment_specs" {
       })
       scale_set_name               = string
       scale_set_type               = string
+      scale_set_labels             = list(string)
       container_actions_runner     = string
       container_limits_cpu         = string
       container_limits_memory      = string
@@ -206,6 +207,8 @@ variable "arc_deployment_specs" {
     - scale_set_name         : Logical name for the scale set / pool.
     - scale_set_type         : Backing type for the scale set (for example,
       kubernetes or containerapp, depending on integration).
+    - scale_set_labels       : GitHub runner labels advertised by this ARC
+      scale set.
     - container_actions_runner    : Container image used for the ARC runner.
     - container_limits_cpu        : CPU limit for the runner container.
     - container_limits_memory     : Memory limit for the runner container.

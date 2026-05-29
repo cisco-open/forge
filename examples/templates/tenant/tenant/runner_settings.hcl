@@ -36,7 +36,7 @@ locals {
   logging_retention_in_days = 3
 
   # Load and parse runner specs YAML once
-  config = yamldecode(file("config.yaml"))
+  config = yamldecode(file("config.yml"))
 
   # GitHub App settings
   github_webhook_relay = local.config.gh_config.github_webhook_relay
@@ -78,18 +78,22 @@ locals {
         "env:ops-${include.env.locals.env}",
       ]
       extra_labels = [
+        "ec2",
         "rgn:${local.region_alias}",
         "vpc:${local.vpc_alias}",
         "tnt:${local.tenant_name}",
       ]
       enable_userdata               = true
-      runner_user                   = "ubuntu"
+      runner_user                   = spec.runner_user
       instance_target_capacity_type = "on-demand"
       min_run_time                  = 30
       max_instances                 = spec.max_instances
       instance_types                = spec.instance_types
       placement                     = try(spec.placement, null)
       license_specifications        = try(spec.license_specifications, null)
+      use_dedicated_host            = try(spec.use_dedicated_host, false)
+      vpc_id                        = try(spec.vpc_id, null)
+      subnet_ids                    = try(spec.subnet_ids, null)
       block_device_mappings = [{
         delete_on_termination = true
         device_name           = spec.volume.device_name
@@ -101,7 +105,6 @@ locals {
         volume_size           = spec.volume.size
         volume_type           = spec.volume.type
       }]
-      vpc_id      = local.vpc_id
       pool_config = spec.pool_config
     }
   }
@@ -111,9 +114,20 @@ locals {
   arc_runner_specs = {
     for size, spec in local.config.arc_runner_specs :
     size => {
-      runner_size                  = spec.runner_size
-      scale_set_name               = spec.scale_set_name
-      scale_set_type               = spec.scale_set_type
+      runner_size    = spec.runner_size
+      scale_set_name = spec.scale_set_name
+      scale_set_type = spec.scale_set_type
+      scale_set_labels = [
+        "${spec.scale_set_name}",
+        "type:${spec.scale_set_type}",
+        "self-hosted",
+        "x64",
+        "env:ops-${include.env.locals.env}",
+        "arc",
+        "rgn:${local.region_alias}",
+        "vpc:${local.vpc_alias}",
+        "tnt:${local.tenant_name}",
+      ]
       container_actions_runner     = spec.container_actions_runner
       container_requests_cpu       = spec.container_requests_cpu
       container_requests_memory    = spec.container_requests_memory

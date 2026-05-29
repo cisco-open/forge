@@ -29,6 +29,7 @@ module "arc" {
         prefix                              = "${var.runner_configs.prefix}-${key}"
         scale_set_name                      = val.scale_set_name
         scale_set_type                      = val.scale_set_type
+        scale_set_labels                    = val.scale_set_labels
         container_actions_runner            = val.container_actions_runner
         container_limits_cpu                = val.container_limits_cpu
         container_limits_memory             = val.container_limits_memory

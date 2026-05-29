@@ -29,6 +29,17 @@ ec2_runner_specs:
     ami_kms_key_arn: <KMS_ARN>
     runner_os: <OS>
     runner_architecture: <ARCH>
+    runner_user: ubuntu
+    placement:
+      host_resource_group_arn: arn:aws:resource-groups:eu-west-1:123456789012:group/acme-dedicated-hosts
+      tenancy: host
+      availability_zone: eu-west-1b
+    license_specifications:
+      - license_configuration_arn: arn:aws:license-manager:eu-west-1:123456789012:license-configuration:lic-0123456789abcdef0
+    use_dedicated_host: true
+    vpc_id: vpc-0abc1234def567890
+    subnet_ids:
+      - subnet-0abc1234def567890
     max_instances: <MAX_PARALLEL>
     instance_types:
       - <AWS_INSTANCE_TYPE>

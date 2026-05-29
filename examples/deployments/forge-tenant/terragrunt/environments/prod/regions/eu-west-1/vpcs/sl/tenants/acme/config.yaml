@@ -25,6 +25,7 @@ ec2_runner_specs:
     ami_kms_key_arn: ''
     runner_os: linux
     runner_architecture: x64
+    runner_user: ubuntu
     max_instances: 1
     instance_types:
       - t2.small
@@ -47,11 +48,41 @@ ec2_runner_specs:
     ami_kms_key_arn: ''
     runner_os: linux
     runner_architecture: arm64
+    runner_user: ubuntu
     max_instances: 1
     instance_types:
       - t4g.small
       - t4g.medium
       - t4g.large
+    pool_config: []
+    volume:
+      size: 200
+      device_name: /dev/sda1
+      iops: 3000
+      throughput: 125
+      type: gp3
+  mac:
+    type: small
+    ami_name: forge-gh-runner-macarm-v*
+    ami_owner: '123456789012'
+    ami_kms_key_arn: ''
+    runner_os: osx
+    runner_architecture: arm64
+    runner_user: ec2-user
+    placement:
+      host_resource_group_arn: arn:aws:resource-groups:eu-west-1:123456789012:group/acme-mac-dedicated-hosts
+      tenancy: host
+      availability_zone: eu-west-1b
+    license_specifications:
+      - license_configuration_arn: arn:aws:license-manager:eu-west-1:123456789012:license-configuration:lic-0123456789abcdef0
+    use_dedicated_host: true
+    vpc_id: vpc-0abc1234def567890
+    subnet_ids:
+      - subnet-0abc1234def567890
+      - subnet-0123456789abcdef0
+    max_instances: 1
+    instance_types:
+      - mac2.metal
     pool_config: []
     volume:
       size: 200

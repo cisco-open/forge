@@ -58,6 +58,7 @@ variable "multi_runner_config" {
       prefix                              = string
       scale_set_name                      = string
       scale_set_type                      = string
+      scale_set_labels                    = list(string)
       container_limits_cpu                = string
       container_limits_memory             = string
       container_requests_cpu              = string
@@ -86,6 +87,7 @@ variable "multi_runner_config" {
         }
         prefix: "Prefix for naming resources."
         scale_set_name: "Name of the scale set."
+        scale_set_labels: "GitHub runner labels advertised by the ARC scale set."
         runner_iam_role_managed_policy_arns: "Attach AWS or customer-managed IAM policies (by ARN) to the runner IAM role."
       }
       runner_set_configs: {

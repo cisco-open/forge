@@ -50,6 +50,7 @@ resource "helm_release" "gha_runner_scale_set" {
       "${path.module}/template_files/${var.scale_set_type}.yml.tftpl",
       {
         config_secret                = var.secret_name
+        scale_set_labels             = jsonencode(var.scale_set_labels)
         max_runners                  = var.runner_size.max_runners
         min_runners                  = var.runner_size.min_runners
         runner_group_name            = var.runner_group_name

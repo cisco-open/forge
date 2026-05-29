@@ -101,6 +101,8 @@ arc_runner_specs:
       min_runners: <MIN>            # Min pods/runners (warm pool)
     scale_set_name: <NAME>          # Used for ARC annotations and scale set identification
     scale_set_type: <dind|k8s>      # Must be exactly 'dind' or 'k8s', no other values allowed
+    scale_set_labels:               # GitHub runner labels advertised by this ARC scale set
+      - <LABEL>                     # e.g. dependabot, k8s, dind
     container_actions_runner: <ECR_IMAGE_URL>   # Full ECR container image URL for the runner container
     container_requests_cpu: <CPU>   # Kubernetes CPU requests, e.g. 500m (mandatory unit)
     container_requests_memory: <MEM> # Kubernetes memory requests, e.g. 1Gi (mandatory unit)
@@ -126,6 +128,7 @@ ______________________________________________________________________
 - **`instance_types`**: spot-compatible preferred for cost savings.
 - **`pool_config.schedule_expression`**: AWS cron syntax with 6 fields, **not** standard cron. Example: `cron(0 8 * * ? *)`. See [AWS docs](https://docs.aws.amazon.com/eventbridge/latest/userguide/scheduled-events.html#cron-expressions).
 - **`scale_set_type`**: only `dind` or `k8s`. Wrong values cause runtime errors.
+- **`scale_set_labels`**: labels used in workflow `runs-on` matching for ARC runners. Include at least the intended runner type label.
 - **Kubernetes CPU/memory fields**: units mandatory (e.g., `500m`, `1Gi`). Missing units break pods.
 
 #### `github_webhook_relay` Guidance
@@ -262,6 +265,9 @@ arc_runner_specs:
       min_runners: 1
     scale_set_name: dependabot
     scale_set_type: dind
+    scale_set_labels:
+      - dependabot
+      - dind
     container_actions_runner: 123456789012.dkr.ecr.us-east-1.amazonaws.com/actions-runner:latest
     container_requests_cpu: 500m
     container_requests_memory: 1Gi

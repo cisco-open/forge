@@ -59,6 +59,7 @@ No modules.
 | <a name="input_runner_group_name"></a> [runner\_group\_name](#input\_runner\_group\_name) | Name of the group applied to all runners. | `string` | n/a | yes |
 | <a name="input_runner_iam_role_managed_policy_arns"></a> [runner\_iam\_role\_managed\_policy\_arns](#input\_runner\_iam\_role\_managed\_policy\_arns) | Attach AWS or customer-managed IAM policies (by ARN) to the runner IAM role | `list(string)` | n/a | yes |
 | <a name="input_runner_size"></a> [runner\_size](#input\_runner\_size) | runner\_size = {<br/>      max\_runners: "Maximum number of runners."<br/>      min\_runners: "Minimum number of runners."<br/>    } | <pre>object({<br/>    max_runners = number<br/>    min_runners = number<br/>  })</pre> | n/a | yes |
+| <a name="input_scale_set_labels"></a> [scale\_set\_labels](#input\_scale\_set\_labels) | GitHub runner labels advertised by the ARC scale set. | `list(string)` | n/a | yes |
 | <a name="input_scale_set_name"></a> [scale\_set\_name](#input\_scale\_set\_name) | Name of the scale set. | `string` | n/a | yes |
 | <a name="input_scale_set_type"></a> [scale\_set\_type](#input\_scale\_set\_type) | Type of the scale set(k8s or dind). | `string` | n/a | yes |
 | <a name="input_secret_name"></a> [secret\_name](#input\_secret\_name) | Name of the Secret. | `string` | n/a | yes |

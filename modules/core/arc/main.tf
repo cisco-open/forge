@@ -49,6 +49,7 @@ module "scale_sets" {
   container_ecr_registries     = each.value.runner_config.container_ecr_registries
   scale_set_name               = each.value.runner_config.scale_set_name
   scale_set_type               = each.value.runner_config.scale_set_type
+  scale_set_labels             = each.value.runner_config.scale_set_labels
   service_account              = each.value.runner_config.prefix
   secret_name                  = var.controller_config.release_name
   runner_size                  = each.value.runner_config.runner_size

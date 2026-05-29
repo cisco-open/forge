@@ -88,6 +88,11 @@ variable "scale_set_type" {
   description = "Type of the scale set(k8s or dind)."
 }
 
+variable "scale_set_labels" {
+  type        = list(string)
+  description = "GitHub runner labels advertised by the ARC scale set."
+}
+
 variable "service_account" {
   type        = string
   description = "Name of the Service Account."
