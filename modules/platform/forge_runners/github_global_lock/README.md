@@ -16,7 +16,7 @@
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_clean_global_lock_lambda"></a> [clean\_global\_lock\_lambda](#module\_clean\_global\_lock\_lambda) | terraform-aws-modules/lambda/aws | 8.7.0 |
+| <a name="module_clean_global_lock_lambda"></a> [clean\_global\_lock\_lambda](#module\_clean\_global\_lock\_lambda) | terraform-aws-modules/lambda/aws | 8.8.0 |
 
 ## Resources
 

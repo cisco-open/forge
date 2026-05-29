@@ -7,7 +7,7 @@ resource "aws_cloudwatch_log_group" "webex" {
 
 module "webex" {
   source  = "terraform-aws-modules/lambda/aws"
-  version = "8.7.0"
+  version = "8.8.0"
 
   function_name = "webex-webhook-relay-destination-receiver"
   handler       = "handler.lambda_handler"

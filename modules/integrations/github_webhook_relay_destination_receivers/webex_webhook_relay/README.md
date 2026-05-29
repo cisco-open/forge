@@ -62,7 +62,7 @@ Both `token` and `room_id` keys are required. The function will prepend `Bearer 
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_webex"></a> [webex](#module\_webex) | terraform-aws-modules/lambda/aws | 8.7.0 |
+| <a name="module_webex"></a> [webex](#module\_webex) | terraform-aws-modules/lambda/aws | 8.8.0 |
 
 ## Resources
 

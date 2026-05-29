@@ -16,7 +16,7 @@
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_ec2_update_runner_ssm_ami_lambda"></a> [ec2\_update\_runner\_ssm\_ami\_lambda](#module\_ec2\_update\_runner\_ssm\_ami\_lambda) | terraform-aws-modules/lambda/aws | 8.7.0 |
+| <a name="module_ec2_update_runner_ssm_ami_lambda"></a> [ec2\_update\_runner\_ssm\_ami\_lambda](#module\_ec2\_update\_runner\_ssm\_ami\_lambda) | terraform-aws-modules/lambda/aws | 8.8.0 |
 
 ## Resources
 

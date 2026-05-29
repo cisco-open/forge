@@ -18,7 +18,7 @@
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_splunk_s3_runner_logs_lambda"></a> [splunk\_s3\_runner\_logs\_lambda](#module\_splunk\_s3\_runner\_logs\_lambda) | terraform-aws-modules/lambda/aws | 8.7.0 |
+| <a name="module_splunk_s3_runner_logs_lambda"></a> [splunk\_s3\_runner\_logs\_lambda](#module\_splunk\_s3\_runner\_logs\_lambda) | terraform-aws-modules/lambda/aws | 8.8.0 |
 
 ## Resources
 

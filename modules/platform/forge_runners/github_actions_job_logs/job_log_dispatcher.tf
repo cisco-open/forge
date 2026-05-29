@@ -4,7 +4,7 @@ locals {
 
 module "job_log_dispatcher" {
   source  = "terraform-aws-modules/lambda/aws"
-  version = "8.7.0"
+  version = "8.8.0"
 
   function_name = local.resource_name_dispatcher
   handler       = "job_log_dispatcher.lambda_handler"

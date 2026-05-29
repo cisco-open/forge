@@ -20,9 +20,9 @@
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_cur_per_resource"></a> [cur\_per\_resource](#module\_cur\_per\_resource) | terraform-aws-modules/lambda/aws | 8.7.0 |
-| <a name="module_cur_per_resource_process"></a> [cur\_per\_resource\_process](#module\_cur\_per\_resource\_process) | terraform-aws-modules/lambda/aws | 8.7.0 |
-| <a name="module_cur_per_service"></a> [cur\_per\_service](#module\_cur\_per\_service) | terraform-aws-modules/lambda/aws | 8.7.0 |
+| <a name="module_cur_per_resource"></a> [cur\_per\_resource](#module\_cur\_per\_resource) | terraform-aws-modules/lambda/aws | 8.8.0 |
+| <a name="module_cur_per_resource_process"></a> [cur\_per\_resource\_process](#module\_cur\_per\_resource\_process) | terraform-aws-modules/lambda/aws | 8.8.0 |
+| <a name="module_cur_per_service"></a> [cur\_per\_service](#module\_cur\_per\_service) | terraform-aws-modules/lambda/aws | 8.8.0 |
 
 ## Resources
 

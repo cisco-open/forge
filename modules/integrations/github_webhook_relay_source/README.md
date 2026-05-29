@@ -72,7 +72,7 @@ curl -X POST "$(terraform output -raw webhook_endpoint)/webhook" \
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_validate_signature_lambda"></a> [validate\_signature\_lambda](#module\_validate\_signature\_lambda) | terraform-aws-modules/lambda/aws | 8.7.0 |
+| <a name="module_validate_signature_lambda"></a> [validate\_signature\_lambda](#module\_validate\_signature\_lambda) | terraform-aws-modules/lambda/aws | 8.8.0 |
 
 ## Resources
 

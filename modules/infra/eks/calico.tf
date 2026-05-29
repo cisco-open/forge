@@ -3,8 +3,8 @@ resource "null_resource" "patch_calico_installation" {
   provisioner "local-exec" {
     command = <<EOF
       kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} delete daemonset -n kube-system aws-node || true
-      kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.31.0/manifests/operator-crds.yaml --server-side
-      kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.31.0/manifests/tigera-operator.yaml --server-side
+      kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.32.0/manifests/operator-crds.yaml --server-side
+      kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.32.0/manifests/tigera-operator.yaml --server-side
 
       kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} apply -f - <<EOT
 apiVersion: operator.tigera.io/v1

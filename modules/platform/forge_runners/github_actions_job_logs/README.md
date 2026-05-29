@@ -136,8 +136,8 @@ See parent repository license.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_job_log_archiver"></a> [job\_log\_archiver](#module\_job\_log\_archiver) | terraform-aws-modules/lambda/aws | 8.7.0 |
-| <a name="module_job_log_dispatcher"></a> [job\_log\_dispatcher](#module\_job\_log\_dispatcher) | terraform-aws-modules/lambda/aws | 8.7.0 |
+| <a name="module_job_log_archiver"></a> [job\_log\_archiver](#module\_job\_log\_archiver) | terraform-aws-modules/lambda/aws | 8.8.0 |
+| <a name="module_job_log_dispatcher"></a> [job\_log\_dispatcher](#module\_job\_log\_dispatcher) | terraform-aws-modules/lambda/aws | 8.8.0 |
 
 ## Resources
 

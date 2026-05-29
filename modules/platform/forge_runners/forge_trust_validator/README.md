@@ -18,7 +18,7 @@
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_forge_trust_validator_lambda"></a> [forge\_trust\_validator\_lambda](#module\_forge\_trust\_validator\_lambda) | terraform-aws-modules/lambda/aws | 8.7.0 |
+| <a name="module_forge_trust_validator_lambda"></a> [forge\_trust\_validator\_lambda](#module\_forge\_trust\_validator\_lambda) | terraform-aws-modules/lambda/aws | 8.8.0 |
 
 ## Resources
 

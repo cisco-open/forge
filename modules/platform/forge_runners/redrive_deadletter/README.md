@@ -16,7 +16,7 @@
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_redrive_deadletter_lambda"></a> [redrive\_deadletter\_lambda](#module\_redrive\_deadletter\_lambda) | terraform-aws-modules/lambda/aws | 8.7.0 |
+| <a name="module_redrive_deadletter_lambda"></a> [redrive\_deadletter\_lambda](#module\_redrive\_deadletter\_lambda) | terraform-aws-modules/lambda/aws | 8.8.0 |
 
 ## Resources
 
