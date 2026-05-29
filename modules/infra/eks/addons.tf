@@ -27,6 +27,10 @@ resource "aws_eks_addon" "aws_ebs_csi_driver" {
     delete = "60m"
   }
 
+  lifecycle {
+    ignore_changes = [addon_version]
+  }
+
   depends_on = [module.self_managed_node_group]
 }
 
@@ -48,6 +52,10 @@ resource "aws_eks_addon" "eks_pod_identity_agent" {
     }
   })
 
+  lifecycle {
+    ignore_changes = [addon_version]
+  }
+
   depends_on = [module.self_managed_node_group]
 }
 
@@ -59,6 +67,10 @@ resource "aws_eks_addon" "coredns" {
     create = "60m"
     update = "60m"
     delete = "60m"
+  }
+
+  lifecycle {
+    ignore_changes = [addon_version]
   }
 
   depends_on = [module.self_managed_node_group]
