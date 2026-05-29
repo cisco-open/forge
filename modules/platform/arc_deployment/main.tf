@@ -22,7 +22,7 @@ module "arc" {
         release_name  = "${var.runner_configs.prefix}-${key}"
         namespace     = var.tenant_configs.name
         chart_name    = "oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set"
-        chart_version = "0.13.1"
+        chart_version = "0.14.2"
       }
       runner_config = {
         runner_size                         = val.runner_size
@@ -51,7 +51,7 @@ module "arc" {
     release_name  = var.runner_configs.prefix
     namespace     = var.tenant_configs.name
     chart_name    = "oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set-controller"
-    chart_version = "0.13.1"
+    chart_version = "0.14.2"
     name          = "${var.runner_configs.prefix}-gha-rs-controller"
   }
 
