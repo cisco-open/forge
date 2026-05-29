@@ -16,13 +16,15 @@ variable "cluster_name" {
 variable "splunk_otel_collector" {
   description = "Configuration for the Splunk OpenTelemetry Collector"
   type = object({
-    splunk_observability_realm     = string
-    splunk_platform_endpoint       = string
-    splunk_platform_index          = string
-    gateway                        = bool
-    splunk_observability_profiling = bool
-    environment                    = string
-    discovery                      = bool
+    splunk_platform_endpoint        = string
+    splunk_platform_index           = string
+    gateway                         = bool
+    environment                     = string
+    discovery                       = bool
+    splunk_observability_realm      = string
+    splunk_observability_ingest_url = string
+    splunk_observability_api_url    = string
+    splunk_observability_profiling  = bool
   })
 }
 

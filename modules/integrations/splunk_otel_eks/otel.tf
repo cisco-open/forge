@@ -2,7 +2,7 @@ resource "helm_release" "splunk_otel_collector" {
   name             = "splunk-otel-collector"
   repository       = "https://signalfx.github.io/splunk-otel-collector-chart"
   chart            = "splunk-otel-collector"
-  version          = "0.145.1"
+  version          = "0.153.0"
   namespace        = "splunk-otel-collector"
   create_namespace = true
 
@@ -16,16 +16,28 @@ resource "helm_release" "splunk_otel_collector" {
       value = "eks"
     },
     {
-      name  = "splunkObservability.accessToken"
-      value = data.aws_secretsmanager_secret_version.secrets["splunk_o11y_ingest_token_eks"].secret_string
-    },
-    {
       name  = "clusterName"
       value = var.cluster_name
     },
     {
       name  = "splunkObservability.realm"
       value = var.splunk_otel_collector.splunk_observability_realm
+    },
+    {
+      name  = "splunkObservability.accessToken"
+      value = data.aws_secretsmanager_secret_version.secrets["splunk_o11y_ingest_token_eks"].secret_string
+    },
+    {
+      name  = "splunkObservability.ingestUrl"
+      value = var.splunk_otel_collector.splunk_observability_ingest_url
+    },
+    {
+      name  = "splunkObservability.apiUrl"
+      value = var.splunk_otel_collector.splunk_observability_api_url
+    },
+    {
+      name  = "splunkObservability.profilingEnabled"
+      value = var.splunk_otel_collector.splunk_observability_profiling
     },
     {
       name  = "splunkPlatform.endpoint"
@@ -42,10 +54,6 @@ resource "helm_release" "splunk_otel_collector" {
     {
       name  = "gateway.enabled"
       value = var.splunk_otel_collector.gateway
-    },
-    {
-      name  = "splunkObservability.profilingEnabled"
-      value = var.splunk_otel_collector.splunk_observability_profiling
     },
     {
       name  = "environment"
