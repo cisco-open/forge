@@ -1,11 +1,13 @@
 module "karpenter" {
   source  = "terraform-aws-modules/eks/aws//modules/karpenter"
-  version = "21.22.0"
+  version = "21.23.0"
 
   namespace    = "karpenter"
   cluster_name = var.cluster_name
 
   create_instance_profile = true
+
+  enable_inline_policy = true
 
   tags = merge(local.all_security_tags, { "calico_dependency" = local._wait_for_calico })
 
