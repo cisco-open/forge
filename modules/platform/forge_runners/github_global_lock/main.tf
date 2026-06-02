@@ -21,14 +21,22 @@ resource "aws_dynamodb_table" "lock_table" {
 
   global_secondary_index {
     name            = "workflow_run_id_index"
-    hash_key        = "workflow_run_id"
     projection_type = "ALL"
+
+    key_schema {
+      attribute_name = "workflow_run_id"
+      key_type       = "HASH"
+    }
   }
 
   global_secondary_index {
     name            = "workflow_run_attempt_index"
-    hash_key        = "workflow_run_attempt"
     projection_type = "ALL"
+
+    key_schema {
+      attribute_name = "workflow_run_attempt"
+      key_type       = "HASH"
+    }
   }
 
   ttl {
