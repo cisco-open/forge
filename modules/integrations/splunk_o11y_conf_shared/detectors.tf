@@ -10,6 +10,7 @@ module "detector_k8s" {
   }
 
   detector_notifications    = local.detector_notifications
+  detector_name_prefix      = var.detector_name_prefix
   dynamic_variables         = var.dashboard_variables.runner_k8s.dynamic_variables
   k8s_detector_config       = var.k8s_detector_config
   k8s_otel_collector_config = var.k8s_otel_collector_config

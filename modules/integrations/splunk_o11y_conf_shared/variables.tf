@@ -34,6 +34,12 @@ variable "detector_notifications" {
   default     = null
 }
 
+variable "detector_name_prefix" {
+  description = "Prefix to use for Splunk Observability detector names."
+  type        = string
+  default     = "ForgeCICD"
+}
+
 variable "k8s_detector_config" {
   description = "Thresholds and durations for Forge Kubernetes detectors."
   type = object({

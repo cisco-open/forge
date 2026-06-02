@@ -26,7 +26,7 @@ locals {
 }
 
 resource "signalfx_detector" "k8s_otel_no_data" {
-  name        = "ForgeCICD K8S OTel no data"
+  name        = "${var.detector_name_prefix} K8S OTel no data"
   description = "Detects when Kubernetes pod phase metrics stop arriving from a Forge cluster, which usually means the Splunk OpenTelemetry Collector is down or not sending data."
   max_delay   = 120
   tags        = local.detector_tags
@@ -47,7 +47,7 @@ EOF
 }
 
 resource "signalfx_detector" "k8s_otel_collector_health" {
-  name        = "ForgeCICD K8S Splunk OTel collector health"
+  name        = "${var.detector_name_prefix} K8S Splunk OTel collector health"
   description = "Detects missing, pending, failed, unknown, or restarting Splunk OpenTelemetry Collector pods. These issues can mean the collector is not installed, is unhealthy, or is unable to send Kubernetes metrics."
   max_delay   = 120
   tags        = local.detector_tags
@@ -95,7 +95,7 @@ EOF
 }
 
 resource "signalfx_detector" "k8s_other_namespace_pods_unhealthy" {
-  name        = "ForgeCICD K8S other namespace pods unhealthy"
+  name        = "${var.detector_name_prefix} K8S other namespace pods unhealthy"
   description = "Detects pending, failed, unknown, or restarting pods in namespaces outside the platform and Splunk OpenTelemetry Collector namespaces."
   max_delay   = 120
   tags        = local.detector_tags
@@ -134,7 +134,7 @@ EOF
 }
 
 resource "signalfx_detector" "k8s_tenant_pods_pending" {
-  name        = "ForgeCICD K8S tenant pods pending"
+  name        = "${var.detector_name_prefix} K8S tenant pods pending"
   description = "Detects tenant pods stuck in Pending, which is the main signal for pods that are not scheduling."
   max_delay   = 120
   tags        = local.detector_tags
@@ -155,7 +155,7 @@ EOF
 }
 
 resource "signalfx_detector" "k8s_tenant_pods_failed" {
-  name        = "ForgeCICD K8S tenant pods failed"
+  name        = "${var.detector_name_prefix} K8S tenant pods failed"
   description = "Detects tenant pods in Failed phase, grouped by cluster, namespace, and pod."
   max_delay   = 120
   tags        = local.detector_tags
@@ -176,7 +176,7 @@ EOF
 }
 
 resource "signalfx_detector" "k8s_tenant_container_restarts" {
-  name        = "ForgeCICD K8S tenant container restarts"
+  name        = "${var.detector_name_prefix} K8S tenant container restarts"
   description = "Detects restarted containers in tenant namespaces, grouped by cluster, namespace, pod, and container."
   max_delay   = 120
   tags        = local.detector_tags
@@ -197,7 +197,7 @@ EOF
 }
 
 resource "signalfx_detector" "k8s_platform_pods_unhealthy" {
-  name        = "ForgeCICD K8S platform pods unhealthy"
+  name        = "${var.detector_name_prefix} K8S platform pods unhealthy"
   description = "Detects unhealthy platform pods in kube-system, Karpenter, Calico, and Tigera namespaces."
   max_delay   = 120
   tags        = local.detector_tags

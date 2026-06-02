@@ -3,6 +3,11 @@ variable "detector_notifications" {
   type        = list(string)
 }
 
+variable "detector_name_prefix" {
+  description = "Prefix to use for Splunk Observability detector names."
+  type        = string
+}
+
 variable "dynamic_variables" {
   description = "Additional dynamic variable definitions used to derive detector scope."
   type = list(object({
