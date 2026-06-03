@@ -9,5 +9,5 @@ locals {
   )
 
   github_app_installation = "${var.deployment_config.github.ghes_url == "" ? "https://github.com" : var.deployment_config.github.ghes_url}/apps/${var.deployment_config.github_app.name}/installations/${var.deployment_config.github_app.installation_id}"
-  github_api              = var.deployment_config.github.ghes_url == "" ? "https://api.github.com" : "https://api.${replace(var.deployment_config.github.ghes_url, "https://", "")}"
+  github_api              = var.deployment_config.github.ghes_url == "" ? "https://api.github.com" : "${var.deployment_config.github.ghes_url}/api/v3"
 }

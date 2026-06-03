@@ -88,8 +88,9 @@ apply_with_deps() {
     echo ">>> Applying main module: $orig_dir"
     terragrunt apply -auto-approve --non-interactive
 
-    debug "Sleeping for 5 minutes to allow for resource stabilization before applying dependents"
-    sleep 300
+    debug "Sleeping for 10 minutes to allow for resource stabilization before applying dependents"
+    echo ">>> Sleeping for 10 minutes to allow for resource stabilization before applying dependents..."
+    sleep 600
 
     while IFS= read -r dep; do
         debug "Applying dependent module from: $dep"
