@@ -36,6 +36,7 @@ module "self_managed_node_group" {
 
   iam_role_additional_policies = {
     "AmazonSSMManagedInstanceCore" = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+    "ECRPublicReadOnly"            = "arn:aws:iam::aws:policy/AmazonElasticContainerRegistryPublicReadOnly"
   }
 
   // The following variables are necessary if you decide to use the module outside of the parent EKS module context.
