@@ -1,8 +1,3 @@
-variable "aws_profile" {
-  type        = string
-  description = "AWS profile (i.e. generated via 'sl aws session generate') to use."
-}
-
 variable "prefix" {
   description = "Prefix for all resources"
   type        = string
@@ -26,14 +21,23 @@ variable "log_level" {
   default     = "INFO"
 }
 
+variable "iam_propagation_delay_seconds" {
+  type        = number
+  description = "Delay between trust policy update and validation to allow IAM/STS propagation."
+  default     = 300
+
+  validation {
+    condition = (
+      var.iam_propagation_delay_seconds >= 0
+      && var.iam_propagation_delay_seconds <= 900
+    )
+    error_message = "iam_propagation_delay_seconds must be between 0 and 900."
+  }
+}
+
 variable "forge_iam_roles" {
   type        = map(string)
   description = "List of IAM role ARNs for Forge runners."
-}
-
-variable "number_forge_iram_roles" {
-  type        = number
-  description = "Number of Iam roles ARNs for Forge runners"
 }
 
 variable "tenant_iam_roles" {

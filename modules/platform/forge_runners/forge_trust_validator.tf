@@ -6,7 +6,6 @@ module "forge_trust_validator" {
     aws = aws
   }
 
-  aws_profile               = var.aws_profile
   prefix                    = var.deployment_config.deployment_prefix
   logging_retention_in_days = var.logging_retention_in_days
   log_level                 = var.log_level
@@ -19,10 +18,6 @@ module "forge_trust_validator" {
     )) :
     idx => arn
   }
-  number_forge_iram_roles = (
-    length(var.ec2_deployment_specs.runner_specs) +
-    length(var.arc_deployment_specs.runner_specs)
-  )
 
   tenant_iam_roles = var.deployment_config.tenant.iam_roles_to_assume
 }

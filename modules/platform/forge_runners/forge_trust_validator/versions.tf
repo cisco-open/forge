@@ -4,10 +4,6 @@ terraform {
       source  = "hashicorp/aws"
       version = ">= 6.47"
     }
-    null = {
-      source  = "hashicorp/null"
-      version = ">= 3.2"
-    }
   }
 
   # OpenTofu version.
