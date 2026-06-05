@@ -2,7 +2,7 @@ resource "splunk_configs_conf" "forgecicd_extra_lambda_tenant_fields" {
   name = "transforms/forgecicd_extra_lambda_tenant_fields"
 
   variables = {
-    "REGEX"      = "(?<aws_region>[^:]+):\\/aws\\/lambda\\/(?<forgecicd_tenant>[a-z0-9]+)-(?<forgecicd_region_alias>[a-z0-9]+)-(?<forgecicd_vpc_alias>[a-z0-9]+)-(?<forgecicd_log_type>register-github-app-runner-group|github-webhook-relay|clean-global-lock|job-log-archiver|job-log-dispatcher|forge-trust-validator|redrive-deadletter)"
+    "REGEX"      = "(?<aws_region>[^:]+):\\/aws\\/lambda\\/(?<forgecicd_tenant>[a-z0-9]+)-(?<forgecicd_region_alias>[a-z0-9]+)-(?<forgecicd_vpc_alias>[a-z0-9]+)-(?<forgecicd_log_type>register-github-app-runner-group|github-webhook-relay|clean-global-lock|job-log-archiver|job-log-dispatcher|forge-trust-validator(?:-prepare)?|redrive-deadletter)"
     "FORMAT"     = "aws_region::$1 forgecicd_tenant::$2 forgecicd_region_alias::$3 forgecicd_vpc_alias::$4 forgecicd_log_type::$5"
     "SOURCE_KEY" = "source"
     "CLEAN_KEYS" = "0"
@@ -66,7 +66,7 @@ resource "splunk_configs_conf" "forgecicd_trust_validation" {
   name = "transforms/forgecicd_trust_validation"
 
   variables = {
-    REGEX      = "Validation complete:\\s*(\\[[^\\r\\n]+])"
+    REGEX      = "Delayed validation run complete:\\s*(\\{[^\\r\\n]+})"
     FORMAT     = "forgecicd_trust_validation::$1"
     SOURCE_KEY = "_raw"
     CLEAN_KEYS = "0"

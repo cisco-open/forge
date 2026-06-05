@@ -63,6 +63,8 @@ resource "splunk_configs_conf" "forgecicd_cloudwatchlogs" {
   depends_on = [
     splunk_configs_conf.forgecicd_cloudwatchlogs_lambda_tenant_fields,
     splunk_configs_conf.forgecicd_cloudwatchlogs_global_lambda_tenant_fields,
-    splunk_configs_conf.forgecicd_extra_lambda_tenant_fields
+    splunk_configs_conf.forgecicd_extra_lambda_tenant_fields,
+    splunk_configs_conf.forgecicd_extra_lambda_ec2_tenant_fields,
+    splunk_configs_conf.forgecicd_trust_validation
   ]
 }
