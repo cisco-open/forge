@@ -28,7 +28,7 @@ locals {
   env         = include.env.locals.env
 
   release_version_env     = get_env("RELEASE_VERSION_PATH", "")
-  release_version_file    = length(trimspace(local.release_version_env)) > 0 ? local.release_version_env : "${get_repo_root()}/release_versions.yaml"
+  release_version_file    = length(trimspace(local.release_version_env)) > 0 ? local.release_version_env : "${get_repo_root()}/release_versions.yml"
   release_version_content = file(local.release_version_file)
   release_version         = yamldecode(local.release_version_content)
 

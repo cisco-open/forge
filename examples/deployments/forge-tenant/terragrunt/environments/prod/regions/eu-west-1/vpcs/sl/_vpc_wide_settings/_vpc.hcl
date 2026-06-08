@@ -1,5 +1,5 @@
 locals {
-  vpc = yamldecode(file("_vpc.yaml"))
+  vpc = yamldecode(file("_vpc.yml"))
 
   vpc_alias         = local.vpc.vpc_alias
   lambda_subnet_ids = local.vpc.lambda_subnet_ids

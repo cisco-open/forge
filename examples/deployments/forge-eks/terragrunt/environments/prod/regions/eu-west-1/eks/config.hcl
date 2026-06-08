@@ -1,6 +1,6 @@
 locals {
 
-  config = yamldecode(file("config.yaml"))
+  config = yamldecode(file("config.yml"))
 
   cluster_name                   = local.config.cluster_name
   cluster_version                = local.config.cluster_version

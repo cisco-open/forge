@@ -26,7 +26,7 @@ locals {
   module_name     = "splunk_cloud_conf"
   project         = include.global.locals.project_name
   env             = include.env.locals.env
-  release_version = yamldecode(file("${get_repo_root()}/examples/deployments/forge-integrations/release_versions.yaml"))
+  release_version = yamldecode(file("${get_repo_root()}/examples/deployments/forge-integrations/release_versions.yml"))
 
   use_local_repos = local.release_version["metadata"]["use_local_repos"]
   module_root     = local.release_version["spec"]["iac"]["modules"][local.module_name]
