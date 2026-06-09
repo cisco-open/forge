@@ -87,7 +87,7 @@ RUN set -eux; \
     chmod 755 /usr/local/bin/terragrunt
 
 # renovate: datasource=github-releases depName=terraform-linters/tflint registryUrl=https://github.com/
-ARG TFLINT_VERSION="0.63.0"
+ARG TFLINT_VERSION="0.63.1"
 ARG TFLINT_SRC="https://github.com/terraform-linters/tflint/releases/download/v${TFLINT_VERSION}/tflint_linux_amd64.zip"
 ARG TFLINT_ARTIFACT="tflint.zip"
 RUN set -eux; \
