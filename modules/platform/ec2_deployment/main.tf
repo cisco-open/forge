@@ -34,12 +34,12 @@ data "aws_subnet" "runner_subnet" {
 }
 
 data "external" "download_lambdas" {
-  program = ["bash", "${path.module}/scripts/download_lambdas.sh", "/tmp/${var.runner_configs.prefix}/", "v7.6.0"]
+  program = ["bash", "${path.module}/scripts/download_lambdas.sh", "/tmp/${var.runner_configs.prefix}/", "pre-7.7.0", "edersonbrilhante/terraform-aws-github-runner"]
 }
 
 
 module "runners" {
-  source = "git::https://github.com/edersonbrilhante/terraform-aws-github-runner.git//modules/multi-runner?ref=feat-macos-support"
+  source = "git::https://github.com/edersonbrilhante/terraform-aws-github-runner.git//modules/multi-runner?ref=pre-7.7.0"
 
   aws_region = var.aws_region
 

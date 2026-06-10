@@ -1,13 +1,14 @@
 #!/bin/bash
 set -x
 
-if [ "$#" -lt 2 ]; then
-    echo "Usage: $0 <download_path> <version>"
+if [ "$#" -lt 3 ]; then
+    echo "Usage: $0 <download_path> <version> <repo>"
     exit 1
 fi
 
 DOWNLOAD_PATH="$1"
 VERSION="$2"
+REPO="$3"
 
 if [ -n "$USE_CACHE" ] && [ -n "$CACHE_PATH" ] && [ -d "$CACHE_PATH" ]; then
     echo "USE_CACHE is set and $CACHE_PATH exists, skipping download." >&2
@@ -18,9 +19,9 @@ else
     mkdir -p "$DOWNLOAD_PATH"
 
     # Download files to the specified directory
-    wget --no-verbose -P "$DOWNLOAD_PATH" "https://github.com/github-aws-runners/terraform-aws-github-runner/releases/download/${VERSION}/runner-binaries-syncer.zip"
-    wget --no-verbose -P "$DOWNLOAD_PATH" "https://github.com/github-aws-runners/terraform-aws-github-runner/releases/download/${VERSION}/runners.zip"
-    wget --no-verbose -P "$DOWNLOAD_PATH" "https://github.com/github-aws-runners/terraform-aws-github-runner/releases/download/${VERSION}/webhook.zip"
+    wget --no-verbose -P "$DOWNLOAD_PATH" "https://github.com/${REPO}/releases/download/${VERSION}/runner-binaries-syncer.zip"
+    wget --no-verbose -P "$DOWNLOAD_PATH" "https://github.com/${REPO}/releases/download/${VERSION}/runners.zip"
+    wget --no-verbose -P "$DOWNLOAD_PATH" "https://github.com/${REPO}/releases/download/${VERSION}/webhook.zip"
 fi
 
-echo -n "{\"version\":\"${VERSION}\",\"path\":\"${DOWNLOAD_PATH}\"}"
+echo -n "{\"version\":\"${VERSION}\",\"path\":\"${DOWNLOAD_PATH}\",\"repo\":\"${REPO}\"}"
