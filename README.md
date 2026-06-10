@@ -143,11 +143,9 @@ on: [push, pull_request]
 
 jobs:
   test:
-    runs-on: forge-ec2-medium  # Your ForgeMT runner
-    permissions:
-      id-token: write  # Required for OIDC
+    runs-on: forge-ec2-medium  # Your ForgeMT runner  
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
