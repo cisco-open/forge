@@ -2,9 +2,9 @@
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~> 1.11 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.25 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.47 |
 | <a name="requirement_external"></a> [external](#requirement\_external) | >= 2.3 |
 | <a name="requirement_helm"></a> [helm](#requirement\_helm) | >= 3.0.0 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | >= 3.0 |
@@ -13,23 +13,23 @@
 ## Providers
 
 | Name | Version |
-|------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.35.1 |
-| <a name="provider_external"></a> [external](#provider\_external) | 2.3.5 |
-| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | 3.0.1 |
-| <a name="provider_null"></a> [null](#provider\_null) | 3.2.4 |
+| ---- | ------- |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.49.0 |
+| <a name="provider_external"></a> [external](#provider\_external) | 2.4.0 |
+| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | 3.2.0 |
+| <a name="provider_null"></a> [null](#provider\_null) | 3.3.0 |
 
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
+| ---- | ------ | ------- |
 | <a name="module_controller"></a> [controller](#module\_controller) | ./scale_set_controller | n/a |
 | <a name="module_scale_sets"></a> [scale\_sets](#module\_scale\_sets) | ./scale_set | n/a |
 
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [kubernetes_manifest.storage_class](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/manifest) | resource |
 | [null_resource.apply_ec2_node_class](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [null_resource.apply_node_pool](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
@@ -43,7 +43,7 @@
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_aws_profile"></a> [aws\_profile](#input\_aws\_profile) | AWS profile to use. | `string` | n/a | yes |
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | Assuming single region for now. | `string` | n/a | yes |
 | <a name="input_controller_config"></a> [controller\_config](#input\_controller\_config) | controller\_config = {<br/>      release\_name: "Name of the Helm release."<br/>      namespace: "Namespace for chart installation."<br/>      chart\_name: "Chart name for the Helm chart."<br/>      chart\_version: "Chart version for the Helm chart."<br/>      name: "Name of the controller."<br/>    } | <pre>object({<br/>    release_name  = string<br/>    namespace     = string<br/>    chart_name    = string<br/>    chart_version = string<br/>    name          = string<br/>  })</pre> | n/a | yes |
@@ -59,7 +59,7 @@
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_runners_map"></a> [runners\_map](#output\_runners\_map) | n/a |
 | <a name="output_subnet_cidr_blocks"></a> [subnet\_cidr\_blocks](#output\_subnet\_cidr\_blocks) | n/a |
 <!-- END_TF_DOCS -->

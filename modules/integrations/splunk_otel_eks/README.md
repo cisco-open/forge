@@ -2,18 +2,18 @@
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~> 1.11 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.25 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.47 |
 | <a name="requirement_helm"></a> [helm](#requirement\_helm) | >= 3.0.0 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | >= 3.0 |
 
 ## Providers
 
 | Name | Version |
-|------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.35.1 |
-| <a name="provider_helm"></a> [helm](#provider\_helm) | 3.1.1 |
+| ---- | ------- |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.49.0 |
+| <a name="provider_helm"></a> [helm](#provider\_helm) | 3.2.0 |
 
 ## Modules
 
@@ -22,7 +22,7 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [aws_eks_pod_identity_association.eks_pod_identity](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_pod_identity_association) | resource |
 | [aws_iam_policy.ec2_describe_instances](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
 | [aws_iam_role.splunk_otel_ec2_describe](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
@@ -39,12 +39,12 @@ No modules.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_aws_profile"></a> [aws\_profile](#input\_aws\_profile) | AWS profile to use. | `string` | n/a | yes |
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | Default AWS region. | `string` | n/a | yes |
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | The name of the EKS cluster | `string` | n/a | yes |
 | <a name="input_default_tags"></a> [default\_tags](#input\_default\_tags) | A map of tags to apply to resources. | `map(string)` | n/a | yes |
-| <a name="input_splunk_otel_collector"></a> [splunk\_otel\_collector](#input\_splunk\_otel\_collector) | Configuration for the Splunk OpenTelemetry Collector | <pre>object({<br/>    splunk_observability_realm     = string<br/>    splunk_platform_endpoint       = string<br/>    splunk_platform_index          = string<br/>    gateway                        = bool<br/>    splunk_observability_profiling = bool<br/>    environment                    = string<br/>    discovery                      = bool<br/>  })</pre> | n/a | yes |
+| <a name="input_splunk_otel_collector"></a> [splunk\_otel\_collector](#input\_splunk\_otel\_collector) | Configuration for the Splunk OpenTelemetry Collector | <pre>object({<br/>    splunk_platform_endpoint        = string<br/>    splunk_platform_index           = string<br/>    gateway                         = bool<br/>    environment                     = string<br/>    discovery                       = bool<br/>    splunk_observability_realm      = string<br/>    splunk_observability_ingest_url = string<br/>    splunk_observability_api_url    = string<br/>    splunk_observability_profiling  = bool<br/>  })</pre> | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to apply to resources. | `map(string)` | n/a | yes |
 
 ## Outputs

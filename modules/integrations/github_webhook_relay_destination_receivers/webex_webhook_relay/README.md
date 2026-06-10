@@ -46,28 +46,28 @@ Both `token` and `room_id` keys are required. The function will prepend `Bearer 
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~> 1.11 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.25 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.47 |
 | <a name="requirement_time"></a> [time](#requirement\_time) | >= 0.13.1 |
 
 ## Providers
 
 | Name | Version |
-|------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.35.1 |
-| <a name="provider_time"></a> [time](#provider\_time) | 0.13.1 |
+| ---- | ------- |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.49.0 |
+| <a name="provider_time"></a> [time](#provider\_time) | 0.14.0 |
 
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
+| ---- | ------ | ------- |
 | <a name="module_webex"></a> [webex](#module\_webex) | terraform-aws-modules/lambda/aws | 8.8.0 |
 
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [aws_cloudwatch_log_group.webex](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
 | [aws_kms_alias.webex_alias](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_alias) | resource |
 | [aws_kms_key.webex](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_key) | resource |
@@ -80,7 +80,7 @@ Both `token` and `room_id` keys are required. The function will prepend `Bearer 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | Default AWS region. | `string` | n/a | yes |
 | <a name="input_default_tags"></a> [default\_tags](#input\_default\_tags) | A map of tags to apply to resources. | `map(string)` | n/a | yes |
 | <a name="input_log_level"></a> [log\_level](#input\_log\_level) | Log level for application logging (e.g., INFO, DEBUG, WARN, ERROR) | `string` | `"INFO"` | no |
@@ -90,6 +90,6 @@ Both `token` and `room_id` keys are required. The function will prepend `Bearer 
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_lambda_function_arn"></a> [lambda\_function\_arn](#output\_lambda\_function\_arn) | n/a |
 <!-- END_TF_DOCS -->

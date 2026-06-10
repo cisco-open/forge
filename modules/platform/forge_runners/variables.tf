@@ -10,11 +10,12 @@ variable "aws_region" {
 
 variable "ec2_deployment_specs" {
   type = object({
-    lambda_subnet_ids = list(string)
-    subnet_ids        = list(string)
-    lambda_vpc_id     = string
-    vpc_id            = string
-    scale_errors      = optional(list(string), [])
+    lambda_subnet_ids     = list(string)
+    subnet_ids            = list(string)
+    lambda_vpc_id         = string
+    vpc_id                = string
+    scale_errors          = optional(list(string), [])
+    enable_dynamic_labels = optional(bool, false)
     runner_specs = map(object({
       ami_filter = object({
         name  = list(string)
@@ -43,6 +44,7 @@ variable "ec2_deployment_specs" {
         tenancy                 = optional(string)
         partition_number        = optional(number)
       }), null)
+      use_dedicated_host = optional(bool, false)
       pool_config = list(object({
         size                         = number
         schedule_expression          = string
@@ -75,6 +77,7 @@ variable "ec2_deployment_specs" {
       These can be more permissive than the runner subnets.
     - subnet_ids       : Subnets where the EC2 runners are launched.
     - vpc_id           : VPC that contains both runner and lambda subnets.
+    - enable_dynamic_labels: Enables dynamic `ghr-` labels for EC2 runners.
     - runner_specs     : Map of runner pool keys to their EC2 sizing and
                          scheduling configuration.
 
@@ -91,6 +94,11 @@ variable "ec2_deployment_specs" {
     - min_run_time    : Minimum job run time (in minutes) before a runner
                         is eligible for scale-down.
     - instance_types  : Allowed EC2 instance types for runners in this pool.
+    - placement       : Optional EC2 placement configuration for the runner
+                        launch template.
+    - license_specifications: Optional EC2 License Manager configuration ARNs.
+    - use_dedicated_host: Whether this runner pool should use EC2 dedicated
+                        hosts.
     - pool_config     : List of pool size schedules (size + cron expression
                         and optional time zone) controlling baseline capacity.
     - runner_user     : OS user under which the GitHub runner process runs.

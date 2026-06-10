@@ -122,27 +122,27 @@ See parent repository license.
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~> 1.11 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.25 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.47 |
 
 ## Providers
 
 | Name | Version |
-|------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.35.1 |
+| ---- | ------- |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.49.0 |
 
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
+| ---- | ------ | ------- |
 | <a name="module_job_log_archiver"></a> [job\_log\_archiver](#module\_job\_log\_archiver) | terraform-aws-modules/lambda/aws | 8.8.0 |
 | <a name="module_job_log_dispatcher"></a> [job\_log\_dispatcher](#module\_job\_log\_dispatcher) | terraform-aws-modules/lambda/aws | 8.8.0 |
 
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [aws_cloudwatch_event_rule.job_log_dispatcher](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_rule) | resource |
 | [aws_cloudwatch_event_target.job_log_dispatcher](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_target) | resource |
 | [aws_cloudwatch_log_group.job_log_archiver](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
@@ -174,7 +174,7 @@ See parent repository license.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_event_bus_name"></a> [event\_bus\_name](#input\_event\_bus\_name) | Name of the EventBridge event bus to listen for workflow job events. | `string` | n/a | yes |
 | <a name="input_ghes_url"></a> [ghes\_url](#input\_ghes\_url) | GitHub Enterprise Server URL. | `string` | `""` | no |
 | <a name="input_github_app"></a> [github\_app](#input\_github\_app) | GitHub App configuration | <pre>object({<br/>    key_base64_ssm = object({<br/>      arn = string<br/>    })<br/>    id_ssm = object({<br/>      arn = string<br/>    })<br/>    installation_id_ssm = object({<br/>      arn = string<br/>    })<br/>  })</pre> | n/a | yes |
@@ -187,7 +187,7 @@ See parent repository license.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_internal_s3_reader_role_arn"></a> [internal\_s3\_reader\_role\_arn](#output\_internal\_s3\_reader\_role\_arn) | The ARN of the IAM role used for reading from the S3 bucket. |
 | <a name="output_s3_bucket_arn"></a> [s3\_bucket\_arn](#output\_s3\_bucket\_arn) | The ARN of the S3 bucket where GitHub Actions job logs are stored. |
 <!-- END_TF_DOCS -->

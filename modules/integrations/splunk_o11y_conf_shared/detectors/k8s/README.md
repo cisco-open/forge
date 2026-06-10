@@ -10,7 +10,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | < 10.0.0 |
+| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.1 |
 
 ## Modules
 

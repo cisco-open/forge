@@ -34,12 +34,12 @@ data "aws_subnet" "runner_subnet" {
 }
 
 data "external" "download_lambdas" {
-  program = ["bash", "${path.module}/scripts/download_lambdas.sh", "/tmp/${var.runner_configs.prefix}/", "pre-7.7.0", "edersonbrilhante/terraform-aws-github-runner"]
+  program = ["bash", "${path.module}/scripts/download_lambdas.sh", "/tmp/${var.runner_configs.prefix}/", "v7.7.0", "github-aws-runners/terraform-aws-github-runner"]
 }
 
 
 module "runners" {
-  source = "git::https://github.com/edersonbrilhante/terraform-aws-github-runner.git//modules/multi-runner?ref=pre-7.7.0"
+  source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=v7.7.0"
 
   aws_region = var.aws_region
 
@@ -61,6 +61,8 @@ module "runners" {
   lambda_tags          = var.tenant_configs.tags
   tags                 = var.tenant_configs.tags
   parameter_store_tags = var.tenant_configs.tags
+
+  enable_dynamic_labels = var.runner_configs.enable_dynamic_labels
 
   # Verbose logging.
   log_level = var.runner_configs.log_level
@@ -134,6 +136,7 @@ module "runners" {
         block_device_mappings             = val["block_device_mappings"]
         license_specifications            = val["license_specifications"]
         placement                         = val["placement"]
+        use_dedicated_host                = val["use_dedicated_host"]
         runner_log_files = concat(
           // Linux/macOS-only logs
           val["runner_os"] == "windows" ? [] : [

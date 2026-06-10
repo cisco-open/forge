@@ -58,26 +58,26 @@ curl -X POST "$(terraform output -raw webhook_endpoint)/webhook" \
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~> 1.11 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.25 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.47 |
 
 ## Providers
 
 | Name | Version |
-|------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.35.1 |
+| ---- | ------- |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.49.0 |
 
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
+| ---- | ------ | ------- |
 | <a name="module_validate_signature_lambda"></a> [validate\_signature\_lambda](#module\_validate\_signature\_lambda) | terraform-aws-modules/lambda/aws | 8.8.0 |
 
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [aws_apigatewayv2_api.webhook](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_api) | resource |
 | [aws_apigatewayv2_integration.lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_integration) | resource |
 | [aws_apigatewayv2_route.post_hook](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_route) | resource |
@@ -105,7 +105,7 @@ curl -X POST "$(terraform output -raw webhook_endpoint)/webhook" \
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_destination_account_id"></a> [destination\_account\_id](#input\_destination\_account\_id) | Destination (receiver) AWS account ID | `string` | n/a | yes |
 | <a name="input_destination_event_bus_name"></a> [destination\_event\_bus\_name](#input\_destination\_event\_bus\_name) | Destination bus name in destination account | `string` | n/a | yes |
 | <a name="input_destination_region"></a> [destination\_region](#input\_destination\_region) | Destination region (omit for same as source) | `string` | `null` | no |
@@ -120,7 +120,7 @@ curl -X POST "$(terraform output -raw webhook_endpoint)/webhook" \
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_event_source"></a> [event\_source](#output\_event\_source) | EventBridge source field value |
 | <a name="output_source_event_bus_arn"></a> [source\_event\_bus\_arn](#output\_source\_event\_bus\_arn) | Source bus ARN |
 | <a name="output_source_event_bus_name"></a> [source\_event\_bus\_name](#output\_source\_event\_bus\_name) | Source bus name |

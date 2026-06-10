@@ -19,6 +19,7 @@ variable "runner_configs" {
     runner_iam_role_managed_policy_arns = list(string)
     runner_group_name                   = string
     scale_errors                        = optional(list(string), [])
+    enable_dynamic_labels               = optional(bool, false)
     runner_specs = map(object({
       ami_filter = object({
         name  = list(string)
@@ -47,6 +48,7 @@ variable "runner_configs" {
         tenancy                 = optional(string)
         partition_number        = optional(number)
       }), null)
+      use_dedicated_host = optional(bool, false)
       pool_config = list(object({
         size                         = number
         schedule_expression          = string
