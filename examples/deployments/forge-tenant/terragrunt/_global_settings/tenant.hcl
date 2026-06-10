@@ -58,6 +58,7 @@ inputs = {
     lambda_vpc_id     = local.config.locals.lambda_vpc_id
     subnet_ids        = local.config.locals.subnet_ids
     vpc_id            = local.config.locals.vpc_id
+    ec2_config        = local.config.ec2_config.enable_dynamic_labels
     runner_specs      = local.config.locals.ec2_runner_specs
   }
 

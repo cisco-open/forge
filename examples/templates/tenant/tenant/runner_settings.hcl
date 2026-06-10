@@ -60,6 +60,8 @@ locals {
     }
   }
 
+  ec2_config = local.config.ec2_config
+
   ec2_runner_specs = {
     for size, spec in local.config.ec2_runner_specs :
     size => {

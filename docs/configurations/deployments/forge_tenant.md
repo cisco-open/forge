@@ -23,35 +23,35 @@ Copy these templates and place them at the correct paths:
 
 ### Templates to Copy
 
-- `examples/templates/tenant/_global_settings/_global.yaml`
-- `examples/templates/tenant/_environment_wide_settings/_environment.yaml`
-- `examples/templates/tenant/_vpc_wide_settings/_vpc.yaml`
+- `examples/templates/tenant/_global_settings/_global.yml`
+- `examples/templates/tenant/_environment_wide_settings/_environment.yml`
+- `examples/templates/tenant/_vpc_wide_settings/_vpc.yml`
 
 ### Destination Paths
 
 ```
-examples/deployments/forge-tenant/terragrunt/_global_settings/_global.yaml
+examples/deployments/forge-tenant/terragrunt/_global_settings/_global.yml
 
-examples/deployments/forge-tenant/terragrunt/environments/<aws_account>/_environment_wide_settings/_environment.yaml
+examples/deployments/forge-tenant/terragrunt/environments/<aws_account>/_environment_wide_settings/_environment.yml
 
-examples/deployments/forge-tenant/terragrunt/environments/<aws_account>/regions/<aws_region>/vpcs/<vpc_alias>/_vpc_wide_settings/_vpc.yaml
+examples/deployments/forge-tenant/terragrunt/environments/<aws_account>/regions/<aws_region>/vpcs/<vpc_alias>/_vpc_wide_settings/_vpc.yml
 ```
 
 ### Edit the Config Files
 
-Before editing your tenant's `config.yaml`, review and update these supporting configuration files:
+Before editing your tenant's `config.yml`, review and update these supporting configuration files:
 
-- **\_global.yaml**\
+- **\_global.yml**\
   Set global values such as team name, product name, AWS account prefix, GitHub organization, and contact email.\
-  *(Path: `_global_settings/_global.yaml`)*
+  *(Path: `_global_settings/_global.yml`)*
 
-- **\_environment.yaml**\
+- **\_environment.yml**\
   Define environment-wide settings like environment name, AWS region, and account ID.\
-  *(Path: `environments/<aws_account>/_environment_wide_settings/_environment.yaml`)*
+  *(Path: `environments/<aws_account>/_environment_wide_settings/_environment.yml`)*
 
-- **\_vpc.yaml**\
+- **\_vpc.yml**\
   Specify VPC-wide settings including VPC alias, VPC ID, subnet IDs, and cluster name.\
-  *(Path: `environments/<aws_account>/regions/<aws_region>/vpcs/<vpc_alias>/_vpc_wide_settings/_vpc.yaml`)*
+  *(Path: `environments/<aws_account>/regions/<aws_region>/vpcs/<vpc_alias>/_vpc_wide_settings/_vpc.yml`)*
 
 These files provide the foundational settings used by your tenant and runner modules.\
 **Be sure to replace all placeholder values (`<...>`) with your actual environment details.**

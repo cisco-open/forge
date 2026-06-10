@@ -21,6 +21,8 @@ tenant:
     - <ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com
   github_logs_reader_role_arns:
     - arn:aws:iam::<ACCOUNT_ID>:role/<ROLE_NAME>
+ec2_config:
+  enable_dynamic_labels: <ENABLE_DYNAMIC_LABELS>
 ec2_runner_specs:
   <runner_type-alias>:
     type: <runner_type>
