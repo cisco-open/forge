@@ -21,7 +21,7 @@
 | ---- | ------ | ------- |
 | <a name="module_ec2_update_runner_ssm_ami"></a> [ec2\_update\_runner\_ssm\_ami](#module\_ec2\_update\_runner\_ssm\_ami) | ./ec2_update_runner_ssm_ami | n/a |
 | <a name="module_ec2_update_runner_tags"></a> [ec2\_update\_runner\_tags](#module\_ec2\_update\_runner\_tags) | ./ec2_update_runner_tags | n/a |
-| <a name="module_runners"></a> [runners](#module\_runners) | git::https://github.com/edersonbrilhante/terraform-aws-github-runner.git//modules/multi-runner | pre-7.7.0 |
+| <a name="module_runners"></a> [runners](#module\_runners) | git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner | v7.7.0 |
 
 ## Resources
 
