@@ -1,18 +1,5 @@
 # Role assumed by Forge Runners
 data "aws_iam_policy_document" "assume_role_for_forge_runners" {
-  # Allows us to access S3, SecretsManager immediately when we SSH into a runner VM.
-  statement {
-    actions = [
-      "sts:AssumeRole",
-    ]
-    principals {
-      type = "Service"
-      identifiers = [
-        "ec2.amazonaws.com",
-        "s3.amazonaws.com",
-      ]
-    }
-  }
 
   # Allow GH runners to assume dedicated role.
   statement {
