@@ -5,7 +5,7 @@ output "webhook_endpoint" {
 
 output "ec2_runners_arn_map" {
   value = {
-    for runner_key, runner in module.runners.runners_map : runner_key => runner.role_runner.arn
+    for runner_key, runner in module.runners.runners_map : runner_key => runner.role_runner[0].arn
   }
   description = "Map of EC2 runner keys to their IAM role ARNs."
 }
