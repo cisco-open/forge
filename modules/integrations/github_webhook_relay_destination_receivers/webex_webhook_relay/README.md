@@ -55,7 +55,7 @@ Both `token` and `room_id` keys are required. The function will prepend `Bearer 
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.49.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
 | <a name="provider_time"></a> [time](#provider\_time) | 0.14.0 |
 
 ## Modules
