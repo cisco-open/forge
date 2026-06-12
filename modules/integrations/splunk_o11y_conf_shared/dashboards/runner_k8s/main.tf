@@ -585,6 +585,39 @@ resource "signalfx_list_chart" "k8s_runner_hours_by_tenant" {
   }
 }
 
+resource "signalfx_list_chart" "k8s_runner_totals_by_runtime" {
+  name        = "Runner totals by runtime"
+  description = "Shows total active EC2 runner instances and running K8S runner pods."
+
+  program_text = <<-EOF
+A = data('CPUUtilization', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=2).max(by=['aws_instance_id']).count().publish(label='EC2 runners')
+B = data('k8s.pod.phase', filter=filter('k8s.pod.name', '*-runner-*'), rollup='latest').between(1.5, 2.5, low_inclusive=True, high_inclusive=True).count().publish(label='K8S runner pods')
+EOF
+
+  sort_by = "-value"
+
+  color_by                = "Scale"
+  hide_missing_values     = true
+  max_precision           = 0
+  secondary_visualization = "Sparkline"
+  time_range              = 900
+  unit_prefix             = "Metric"
+
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
+  }
+
+  viz_options {
+    display_name = "EC2 runners"
+    label        = "EC2 runners"
+  }
+  viz_options {
+    display_name = "K8S runner pods"
+    label        = "K8S runner pods"
+  }
+}
+
 
 resource "signalfx_dashboard" "runner_k8s" {
   name            = "K8S Runners"
@@ -742,6 +775,14 @@ resource "signalfx_dashboard" "runner_k8s" {
     row      = 4
     column   = 3
     width    = 3
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_list_chart.k8s_runner_totals_by_runtime.id
+    row      = 4
+    column   = 6
+    width    = 6
     height   = 1
   }
 }

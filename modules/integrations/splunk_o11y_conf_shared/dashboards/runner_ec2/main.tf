@@ -1662,6 +1662,39 @@ resource "signalfx_list_chart" "chart_ec2_runner_hours_by_tenant_and_instance_ty
   }
 }
 
+resource "signalfx_list_chart" "chart_runner_totals_by_runtime" {
+  name        = "Runner totals by runtime"
+  description = "Shows total active EC2 runner instances and running K8S runner pods."
+
+  program_text = <<-EOF
+A = data('CPUUtilization', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=2).max(by=['aws_instance_id']).count().publish(label='EC2 runners')
+B = data('k8s.pod.phase', filter=filter('k8s.pod.name', '*-runner-*'), rollup='latest').between(1.5, 2.5, low_inclusive=True, high_inclusive=True).count().publish(label='K8S runner pods')
+EOF
+
+  sort_by = "-value"
+
+  color_by                = "Scale"
+  hide_missing_values     = true
+  max_precision           = 0
+  secondary_visualization = "Sparkline"
+  time_range              = 900
+  unit_prefix             = "Metric"
+
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
+  }
+
+  viz_options {
+    display_name = "EC2 runners"
+    label        = "EC2 runners"
+  }
+  viz_options {
+    display_name = "K8S runner pods"
+    label        = "K8S runner pods"
+  }
+}
+
 resource "signalfx_time_chart" "chart_status_check_failures" {
   name        = "EC2 status check failures"
   description = "Shows EC2 instance and system status check failures for runner hosts."
@@ -1936,6 +1969,14 @@ resource "signalfx_dashboard" "runner_ec2" {
     chart_id = signalfx_list_chart.chart_ec2_runner_hours_by_tenant_and_instance_type.id
     row      = 9
     column   = 6
+    width    = 6
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_list_chart.chart_runner_totals_by_runtime.id
+    row      = 10
+    column   = 0
     width    = 6
     height   = 1
   }
