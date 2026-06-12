@@ -27,8 +27,8 @@ locals {
 EOF
 }
 
-resource "splunk_data_ui_views" "forge_webhook_joblog_pipeline" {
-  name     = "forge_webhook_joblog_pipeline"
+resource "splunk_data_ui_views" "forge_webhook_job_log_pipeline" {
+  name     = "forge_webhook_job_log_pipeline"
   eai_data = local.forge_webhook_job_log_pipeline_eai_data
 
   acl {

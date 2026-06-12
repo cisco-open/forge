@@ -27,8 +27,8 @@ locals {
 EOF
 }
 
-resource "splunk_data_ui_views" "forge_arc_k8s_runner_health" {
-  name     = "forge_arc_k8s_runner_health"
+resource "splunk_data_ui_views" "forge_arc_k8s_runner_lifecycle" {
+  name     = "forge_arc_k8s_runner_lifecycle"
   eai_data = local.forge_arc_k8s_runner_lifecycle_eai_data
 
   acl {

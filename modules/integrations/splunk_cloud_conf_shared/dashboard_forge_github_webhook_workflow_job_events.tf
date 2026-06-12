@@ -151,10 +151,11 @@ locals {
         options = {
           enableSmartSources = true
           query              = <<-EOT
-            index="${var.splunk_conf.index}" forgecicd_tenant="-" ((forgecicd_log_type=webhook github.status=*) OR ("Successfully dispatched job for"))
+            index="${var.splunk_conf.index}" ((forgecicd_log_type=webhook github.status=*) OR ("Successfully dispatched job for"))
             | rex field=message "to the queue (?<queued_url>https?://\S+)\s-\sJob ID:\s(?<dispatch_workflowJobId>\d+)"
             | eval workflowJobId=coalesce('github.workflowJobId', dispatch_workflowJobId)
             | where isnotnull(workflowJobId)
+            | where "$tenant$"="*" OR forgecicd_tenant="$tenant$"
             | where "$repository$"="*" OR like('github.repository', "%$repository$%") OR like(queued_url, "%$repository$%")
             | eval is_webhook=if(forgecicd_log_type="webhook", 1, 0)
             | eval is_queued=if(forgecicd_log_type="webhook" AND 'github.status'="queued", 1, 0)
@@ -192,10 +193,11 @@ locals {
         options = {
           enableSmartSources = true
           query              = <<-EOT
-            index="${var.splunk_conf.index}" forgecicd_tenant="-" ((forgecicd_log_type=webhook github.status=*) OR ("Received event contains runner labels" "Job ID:"))
+            index="${var.splunk_conf.index}" ((forgecicd_log_type=webhook github.status=*) OR ("Received event contains runner labels" "Job ID:"))
             | rex field=message "Received event contains runner labels '(?<runner_labels>[^']+)' from '(?<warning_repo>[^']+)'.*Job ID:\s(?<warning_workflowJobId>\d+)"
             | eval workflowJobId=coalesce('github.workflowJobId', warning_workflowJobId)
             | where isnotnull(workflowJobId)
+            | where "$tenant$"="*" OR forgecicd_tenant="$tenant$"
             | eval repository=coalesce('github.repository', warning_repo)
             | where "$repository$"="*" OR like(repository, "%$repository$%")
             | eval is_webhook=if(forgecicd_log_type="webhook", 1, 0)
@@ -443,8 +445,8 @@ locals {
 EOF
 }
 
-resource "splunk_data_ui_views" "github_webhook_workflow_jobs" {
-  name     = "github_webhook_workflow_jobs"
+resource "splunk_data_ui_views" "forge_github_webhook_workflow_job_events" {
+  name     = "forge_github_webhook_workflow_job_events"
   eai_data = local.forge_github_webhook_workflow_job_events_eai_data
 
   acl {

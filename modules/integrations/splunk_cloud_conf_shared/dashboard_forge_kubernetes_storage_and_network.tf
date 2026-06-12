@@ -27,8 +27,8 @@ locals {
 EOF
 }
 
-resource "splunk_data_ui_views" "forge_k8s_storage_network" {
-  name     = "forge_k8s_storage_network"
+resource "splunk_data_ui_views" "forge_kubernetes_storage_and_network" {
+  name     = "forge_kubernetes_storage_and_network"
   eai_data = local.forge_kubernetes_storage_and_network_eai_data
 
   acl {

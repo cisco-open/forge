@@ -26,8 +26,8 @@ locals {
 EOF
 }
 
-resource "splunk_data_ui_views" "tenant" {
-  name     = "tenant"
+resource "splunk_data_ui_views" "forge_tenant_logs" {
+  name     = "forge_tenant_logs"
   eai_data = local.forge_tenant_logs_eai_data
 
   acl {
