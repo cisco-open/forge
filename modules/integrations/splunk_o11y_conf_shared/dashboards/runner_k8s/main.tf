@@ -539,6 +539,15 @@ resource "signalfx_list_chart" "k8s_runners_by_tenant" {
   time_range              = 900
   unit_prefix             = "Metric"
 
+  color_scale {
+    color = "blue"
+    gt    = 0
+  }
+  color_scale {
+    color = "red"
+    lte   = 0
+  }
+
   legend_options_fields {
     enabled  = true
     property = "k8s.namespace.name"
@@ -568,6 +577,15 @@ resource "signalfx_list_chart" "k8s_runner_hours_by_tenant" {
   secondary_visualization = "Sparkline"
   time_range              = 86400
   unit_prefix             = "Metric"
+
+  color_scale {
+    color = "blue"
+    gt    = 0
+  }
+  color_scale {
+    color = "red"
+    lte   = 0
+  }
 
   legend_options_fields {
     enabled  = true
@@ -602,6 +620,15 @@ EOF
   secondary_visualization = "Sparkline"
   time_range              = 900
   unit_prefix             = "Metric"
+
+  color_scale {
+    color = "blue"
+    gt    = 0
+  }
+  color_scale {
+    color = "red"
+    lte   = 0
+  }
 
   legend_options_fields {
     enabled  = false

@@ -1547,6 +1547,15 @@ resource "signalfx_list_chart" "chart_active_ec2_runners_by_tenant" {
   time_range              = 900
   unit_prefix             = "Metric"
 
+  color_scale {
+    color = "blue"
+    gt    = 0
+  }
+  color_scale {
+    color = "red"
+    lte   = 0
+  }
+
   legend_options_fields {
     enabled  = true
     property = "aws_tag_TenantName"
@@ -1576,6 +1585,15 @@ resource "signalfx_list_chart" "chart_active_ec2_runners_by_tenant_and_instance_
   secondary_visualization = "Sparkline"
   time_range              = 900
   unit_prefix             = "Metric"
+
+  color_scale {
+    color = "blue"
+    gt    = 0
+  }
+  color_scale {
+    color = "red"
+    lte   = 0
+  }
 
   legend_options_fields {
     enabled  = true
@@ -1611,6 +1629,15 @@ resource "signalfx_list_chart" "chart_ec2_runner_hours_by_tenant" {
   time_range              = 86400
   unit_prefix             = "Metric"
 
+  color_scale {
+    color = "blue"
+    gt    = 0
+  }
+  color_scale {
+    color = "red"
+    lte   = 0
+  }
+
   legend_options_fields {
     enabled  = true
     property = "aws_tag_TenantName"
@@ -1641,6 +1668,15 @@ resource "signalfx_list_chart" "chart_ec2_runner_hours_by_tenant_and_instance_ty
   secondary_visualization = "Sparkline"
   time_range              = 86400
   unit_prefix             = "Metric"
+
+  color_scale {
+    color = "blue"
+    gt    = 0
+  }
+  color_scale {
+    color = "red"
+    lte   = 0
+  }
 
   legend_options_fields {
     enabled  = true
@@ -1679,6 +1715,15 @@ EOF
   secondary_visualization = "Sparkline"
   time_range              = 900
   unit_prefix             = "Metric"
+
+  color_scale {
+    color = "blue"
+    gt    = 0
+  }
+  color_scale {
+    color = "red"
+    lte   = 0
+  }
 
   legend_options_fields {
     enabled  = false
