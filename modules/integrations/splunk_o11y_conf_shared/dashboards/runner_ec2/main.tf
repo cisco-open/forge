@@ -1499,7 +1499,7 @@ resource "signalfx_time_chart" "chart_active_hosts_by_tenant" {
   description = "Tracks active EC2 runner host count over time by tenant and instance type."
 
   program_text = <<-EOF
-A = data('CPUUtilization', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=5).max(over='5m').count(by=['aws_tag_TenantName', 'aws_instance_type']).publish(label='A')
+A = data('CPUUtilization', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=2).max(by=['aws_instance_id', 'aws_tag_TenantName', 'aws_instance_type']).count(by=['aws_tag_TenantName', 'aws_instance_type']).publish(label='A')
 EOF
 
   plot_type        = "LineChart"
