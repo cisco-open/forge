@@ -7,7 +7,7 @@
     },
     "dataSources": {
         "k8s_hook_categories_search": {
-            "name": "ARC Kubernetes hook categories",
+            "name": "ARC K8S hook sidecar signals",
             "options": {
                 "enableSmartSources": true,
                 "query": "index=\"${splunk_index}\" sourcetype=\"kube:container:hook\" source=\"*_k8s-*/*\"\n| rex field=source \"/var/log/pods/(?<namespace>[^_]+)_(?<pod>[^_]+)_[^/]+/(?<container>[^/]+)/\"\n| eval tenant=coalesce(forgecicd_tenant, namespace)\n| eval scale_set=coalesce(forgecicd_arc_type, replace(pod, \"-runner-[^-]+$\", \"\"))\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$scale_set$\"=\"*\" OR like(scale_set, \"%$scale_set$%\")\n| eval raw_l=lower(_raw)\n| eval category=case(\n    match(raw_l,\"permission denied|forbidden|unauthorized\"), \"rbac_or_permission\",\n    match(raw_l,\"timeout|context deadline\"), \"timeout_or_deadline\",\n    match(raw_l,\"prepare_job|cleanup_job|create_container|container hook|k8s/index.js\"), \"container_hook\",\n    match(raw_l,\"podspec|pod-template|pod-templates\"), \"pod_template\",\n    match(raw_l,\"error|failed|failure\"), \"error_failed\",\n    match(raw_l,\"waiting|tail -f|hook.log\"), \"tailing_hook_log\",\n    true(), \"other\")\n| stats count as events dc(pod) as pods latest(_time) as last_time by tenant scale_set category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n| head 100\n",
@@ -19,7 +19,7 @@
             "type": "ds.search"
         },
         "k8s_hook_trend_search": {
-            "name": "ARC Kubernetes hook trend",
+            "name": "ARC K8S hook sidecar trend",
             "options": {
                 "enableSmartSources": true,
                 "query": "index=\"${splunk_index}\" sourcetype=\"kube:container:hook\" source=\"*_k8s-*/*\"\n| rex field=source \"/var/log/pods/(?<namespace>[^_]+)_(?<pod>[^_]+)_[^/]+/(?<container>[^/]+)/\"\n| eval tenant=coalesce(forgecicd_tenant, namespace)\n| eval scale_set=coalesce(forgecicd_arc_type, replace(pod, \"-runner-[^-]+$\", \"\"))\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$scale_set$\"=\"*\" OR like(scale_set, \"%$scale_set$%\")\n| eval raw_l=lower(_raw)\n| eval category=case(\n    match(raw_l,\"permission denied|forbidden|unauthorized\"), \"rbac_or_permission\",\n    match(raw_l,\"timeout|context deadline\"), \"timeout_or_deadline\",\n    match(raw_l,\"prepare_job|cleanup_job|create_container|container hook|k8s/index.js\"), \"container_hook\",\n    match(raw_l,\"podspec|pod-template|pod-templates\"), \"pod_template\",\n    match(raw_l,\"error|failed|failure\"), \"error_failed\",\n    match(raw_l,\"waiting|tail -f|hook.log\"), \"tailing_hook_log\",\n    true(), \"other\")\n| timechart span=15m count by category limit=12\n",
@@ -66,11 +66,11 @@
             },
             "type": "ds.search"
         },
-        "k8s_pod_events_trend_search": {
-            "name": "ARC Kubernetes pod event trend",
+        "k8s_pod_scale_set_events_search": {
+            "name": "ARC K8S pod and PVC events by scale set",
             "options": {
                 "enableSmartSources": true,
-                "query": "index=\"${splunk_index}\" sourcetype=\"kube:events\" (\"k8s-\" OR \"runner\") (\"FailedMount\" OR \"FailedScheduling\" OR \"Back-off\" OR \"FailedCreatePodSandBox\" OR \"NetworkPluginNotReady\" OR \"persistentvolumeclaim\" OR \"unbound immediate PersistentVolumeClaims\" OR \"forbidden\" OR \"timeout\")\n| eval raw_l=lower(_raw)\n| eval category=case(\n    match(raw_l,\"failedscheduling|insufficient|node affinity|didn.t match pod\"), \"scheduling\",\n    match(raw_l,\"failedmount|persistentvolumeclaim|unbound immediate persistentvolumeclaims|waiting for a volume\"), \"workspace_pvc\",\n    match(raw_l,\"failedcreatepodsandbox|networkpluginnotready|cni\"), \"cni_pod_sandbox\",\n    match(raw_l,\"back-off|imagepullbackoff|errimagepull\"), \"image_or_backoff\",\n    match(raw_l,\"forbidden|unauthorized|permission denied\"), \"rbac_or_permission\",\n    match(raw_l,\"timeout|context deadline\"), \"timeout_or_deadline\",\n    true(), \"other\")\n| timechart span=15m count by category limit=12\n",
+                "query": "index=\"${splunk_index}\" sourcetype=\"kube:events\" (\"k8s-\" OR \"runner\") (\"FailedMount\" OR \"FailedScheduling\" OR \"Back-off\" OR \"FailedCreatePodSandBox\" OR \"NetworkPluginNotReady\" OR \"persistentvolumeclaim\" OR \"unbound immediate PersistentVolumeClaims\" OR \"forbidden\" OR \"timeout\")\n| eval raw_l=lower(_raw)\n| rex field=_raw \"(?<runner_pod>k8s-[a-z0-9-]+)\"\n| rex field=_raw \"(?<pvc>pvc-[0-9a-f-]+)\"\n| rex field=_raw \"node (?<node>[^ ]+)\"\n| eval scale_set=coalesce(replace(runner_pod,\"-runner-.*$\",\"\"), \"unknown\")\n| where \"$scale_set$\"=\"*\" OR like(scale_set, \"%$scale_set$%\")\n| eval category=case(\n    match(raw_l,\"failedscheduling|insufficient|node affinity|didn.t match pod\"), \"scheduling\",\n    match(raw_l,\"failedmount|persistentvolumeclaim|unbound immediate persistentvolumeclaims|waiting for a volume\"), \"workspace_pvc\",\n    match(raw_l,\"failedcreatepodsandbox|networkpluginnotready|cni\"), \"cni_pod_sandbox\",\n    match(raw_l,\"back-off|imagepullbackoff|errimagepull\"), \"image_or_backoff\",\n    match(raw_l,\"forbidden|unauthorized|permission denied\"), \"rbac_or_permission\",\n    match(raw_l,\"timeout|context deadline\"), \"timeout_or_deadline\",\n    true(), \"other\")\n| stats count as events dc(runner_pod) as runner_pods dc(pvc) as pvcs dc(node) as nodes dc(host) as hosts latest(runner_pod) as sample_runner_pod latest(pvc) as sample_pvc latest(node) as sample_node latest(_time) as last_time by scale_set category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| table scale_set category events runner_pods pvcs nodes hosts sample_runner_pod sample_pvc sample_node last_seen\n| sort - events\n| head 100\n",
                 "queryParameters": {
                     "earliest": "$global_time.earliest$",
                     "latest": "$global_time.latest$"
@@ -91,7 +91,7 @@
             }
         }
     },
-    "description": "ARC Kubernetes-mode runner, hook sidecar, runner version, and job-pod PVC or scheduling health.",
+    "description": "ARC K8S-mode runner, hook sidecar, runner version, log-volume, and job-pod PVC or scheduling lifecycle signals.",
     "inputs": {
         "input_global_time": {
             "options": {
@@ -187,7 +187,7 @@
                         "type": "block"
                     },
                     {
-                        "item": "k8s_pod_events_trend_chart",
+                        "item": "k8s_pod_scale_set_events_table",
                         "position": {
                             "h": 380,
                             "w": 600,
@@ -204,13 +204,13 @@
         "tabs": {
             "items": [
                 {
-                    "label": "ARC Kubernetes Runner Health",
+                    "label": "ARC K8S Runner Lifecycle",
                     "layoutId": "layout"
                 }
             ]
         }
     },
-    "title": "Forge ARC Kubernetes Runner Health",
+    "title": "Forge ARC K8S Runner Lifecycle",
     "visualizations": {
         "k8s_hook_categories_table": {
             "dataSources": {
@@ -221,7 +221,7 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "K8s Hook Categories",
+            "title": "Hook Sidecar Signals",
             "type": "splunk.table"
         },
         "k8s_hook_trend_chart": {
@@ -231,7 +231,7 @@
             "options": {},
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "K8s Hook Trend",
+            "title": "Hook Sidecar Trend",
             "type": "splunk.line"
         },
         "k8s_pod_events_table": {
@@ -246,15 +246,17 @@
             "title": "K8s Pod and PVC Events",
             "type": "splunk.table"
         },
-        "k8s_pod_events_trend_chart": {
+        "k8s_pod_scale_set_events_table": {
             "dataSources": {
-                "primary": "k8s_pod_events_trend_search"
+                "primary": "k8s_pod_scale_set_events_search"
             },
-            "options": {},
+            "options": {
+                "count": 50
+            },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "K8s Pod and PVC Event Trend",
-            "type": "splunk.line"
+            "title": "K8s Pod and PVC Events by Scale Set",
+            "type": "splunk.table"
         },
         "k8s_runner_version_table": {
             "dataSources": {

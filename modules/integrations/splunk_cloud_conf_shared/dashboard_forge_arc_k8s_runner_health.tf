@@ -9,7 +9,7 @@ locals {
 
   forge_arc_k8s_runner_health_eai_data = <<EOF
 <dashboard version="2" theme="light">
-    <label>Forge ARC Kubernetes Runner Health</label>
+    <label>Forge ARC K8S Runner Lifecycle</label>
     <description></description>
     <definition>
         <![CDATA[${local.forge_arc_k8s_runner_health_definition}]]>

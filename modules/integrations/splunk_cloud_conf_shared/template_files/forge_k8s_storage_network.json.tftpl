@@ -55,10 +55,10 @@
             "type": "ds.search"
         },
         "kube_event_categories_search": {
-            "name": "Kubernetes event categories",
+            "name": "Storage, scheduler, and CNI signals",
             "options": {
                 "enableSmartSources": true,
-                "query": "index=\"${splunk_index}\" sourcetype=\"kube:events\"\n(\"still attached\" OR \"Waiting for a volume\" OR \"NetworkPluginNotReady\" OR \"insufficient cpu\" OR \"Insufficient\" OR \"Failed\" OR \"failed\" OR \"Back-off\" OR \"ImagePullBackOff\" OR \"ErrImagePull\" OR \"OOMKilled\")\n| eval signature=lower(_raw)\n| eval category=case(\n    match(signature,\"still attached\"), \"pvc_still_attached\",\n    match(signature,\"waiting for a volume\"), \"ebs_volume_provision_wait\",\n    match(signature,\"networkpluginnotready|cni plugin not initialized\"), \"cni_not_ready\",\n    match(signature,\"insufficient cpu\"), \"insufficient_cpu\",\n    match(signature,\"imagepullbackoff|errimagepull\"), \"image_pull\",\n    match(signature,\"back-off\"), \"backoff\",\n    match(signature,\"oomkilled\"), \"oomkilled\",\n    match(signature,\"fail\"), \"failed\",\n    true(), \"other\")\n| where \"$category$\"=\"*\" OR like(category, \"%$category$%\")\n| rex field=_raw \"(?<pvc>pvc-[0-9a-f-]+)\"\n| rex field=_raw \"node (?<node>[^ ]+)\"\n| stats count as events dc(host) as hosts dc(pvc) as pvcs dc(node) as nodes latest(_time) as last_time values(node) as sample_nodes by category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n",
+                "query": "index=\"${splunk_index}\" sourcetype=\"kube:events\"\n(\"still attached\" OR \"Waiting for a volume\" OR \"NetworkPluginNotReady\" OR \"cni\" OR \"insufficient cpu\" OR \"Insufficient\" OR \"FailedScheduling\" OR \"didn't match Pod\" OR \"node affinity\" OR \"Failed\" OR \"failed\" OR \"Back-off\" OR \"ImagePullBackOff\" OR \"ErrImagePull\" OR \"OOMKilled\")\n| eval signature=lower(_raw)\n| eval category=case(\n    match(signature,\"still attached\"), \"pvc_still_attached\",\n    match(signature,\"waiting for a volume\"), \"ebs_volume_provision_wait\",\n    match(signature,\"networkpluginnotready|cni plugin not initialized|cni\"), \"cni_not_ready\",\n    match(signature,\"failedscheduling|insufficient|didn.t match pod|node affinity\"), \"scheduler_capacity_affinity\",\n    match(signature,\"imagepullbackoff|errimagepull\"), \"image_pull\",\n    match(signature,\"back-off\"), \"backoff\",\n    match(signature,\"oomkilled\"), \"oomkilled\",\n    match(signature,\"fail\"), \"failed\",\n    true(), \"other\")\n| where \"$category$\"=\"*\" OR like(category, \"%$category$%\")\n| rex field=_raw \"(?<pvc>pvc-[0-9a-f-]+)\"\n| rex field=_raw \"node (?<node>[^ ]+)\"\n| stats count as events dc(host) as hosts dc(pvc) as pvcs dc(node) as nodes latest(_time) as last_time values(node) as sample_nodes by category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n",
                 "queryParameters": {
                     "earliest": "$global_time.earliest$",
                     "latest": "$global_time.latest$"
@@ -70,7 +70,7 @@
             "name": "Kubernetes event trend",
             "options": {
                 "enableSmartSources": true,
-                "query": "index=\"${splunk_index}\" sourcetype=\"kube:events\"\n(\"still attached\" OR \"Waiting for a volume\" OR \"NetworkPluginNotReady\" OR \"insufficient cpu\" OR \"Insufficient\" OR \"Failed\" OR \"failed\" OR \"Back-off\" OR \"ImagePullBackOff\" OR \"ErrImagePull\" OR \"OOMKilled\")\n| eval signature=lower(_raw)\n| eval category=case(\n    match(signature,\"still attached\"), \"pvc_still_attached\",\n    match(signature,\"waiting for a volume\"), \"ebs_volume_provision_wait\",\n    match(signature,\"networkpluginnotready|cni plugin not initialized\"), \"cni_not_ready\",\n    match(signature,\"insufficient cpu\"), \"insufficient_cpu\",\n    match(signature,\"imagepullbackoff|errimagepull\"), \"image_pull\",\n    match(signature,\"back-off\"), \"backoff\",\n    match(signature,\"oomkilled\"), \"oomkilled\",\n    match(signature,\"fail\"), \"failed\",\n    true(), \"other\")\n| where \"$category$\"=\"*\" OR like(category, \"%$category$%\")\n| timechart span=15m count by category\n",
+                "query": "index=\"${splunk_index}\" sourcetype=\"kube:events\"\n(\"still attached\" OR \"Waiting for a volume\" OR \"NetworkPluginNotReady\" OR \"cni\" OR \"insufficient cpu\" OR \"Insufficient\" OR \"FailedScheduling\" OR \"didn't match Pod\" OR \"node affinity\" OR \"Failed\" OR \"failed\" OR \"Back-off\" OR \"ImagePullBackOff\" OR \"ErrImagePull\" OR \"OOMKilled\")\n| eval signature=lower(_raw)\n| eval category=case(\n    match(signature,\"still attached\"), \"pvc_still_attached\",\n    match(signature,\"waiting for a volume\"), \"ebs_volume_provision_wait\",\n    match(signature,\"networkpluginnotready|cni plugin not initialized|cni\"), \"cni_not_ready\",\n    match(signature,\"failedscheduling|insufficient|didn.t match pod|node affinity\"), \"scheduler_capacity_affinity\",\n    match(signature,\"imagepullbackoff|errimagepull\"), \"image_pull\",\n    match(signature,\"back-off\"), \"backoff\",\n    match(signature,\"oomkilled\"), \"oomkilled\",\n    match(signature,\"fail\"), \"failed\",\n    true(), \"other\")\n| where \"$category$\"=\"*\" OR like(category, \"%$category$%\")\n| timechart span=15m count by category\n",
                 "queryParameters": {
                     "earliest": "$global_time.earliest$",
                     "latest": "$global_time.latest$"
@@ -276,7 +276,7 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Kubernetes Event Categories",
+            "title": "Storage, Scheduler, and CNI Signals",
             "type": "splunk.table"
         },
         "kube_event_trend_chart": {
@@ -286,7 +286,7 @@
             "options": {},
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Kubernetes Event Trend",
+            "title": "Storage, Scheduler, and CNI Trend",
             "type": "splunk.line"
         },
         "pvc_stuck_table": {

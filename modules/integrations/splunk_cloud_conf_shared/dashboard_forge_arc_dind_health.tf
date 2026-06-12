@@ -9,7 +9,7 @@ locals {
 
   forge_arc_dind_health_eai_data = <<EOF
 <dashboard version="2" theme="light">
-    <label>Forge ARC DIND Health</label>
+    <label>Forge ARC DIND Runner Lifecycle</label>
     <description></description>
     <definition>
         <![CDATA[${local.forge_arc_dind_health_definition}]]>
