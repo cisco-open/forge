@@ -78,7 +78,7 @@ locals {
         }
         showLastUpdated = true
         showProgressBar = false
-        title           = "K8S Queued Jobs > 5 Minutes"
+        title           = "Non EC2 Queued Jobs > 5 Minutes"
         type            = "splunk.table"
       }
       failed_jobs_table = {
@@ -189,7 +189,7 @@ locals {
         type = "ds.search"
       }
       k8s_queued_jobs_search = {
-        name = "K8S queued workflow_job events"
+        name = "Non EC2 queued workflow_job events"
         options = {
           enableSmartSources = true
           query              = <<-EOT
