@@ -1,0 +1,243 @@
+{
+    "applicationProperties": {
+        "collapseNavigation": true,
+        "hideEdit": false,
+        "hideExport": false,
+        "hideOpenInSearch": false
+    },
+    "dataSources": {
+        "ingestion_quality_search": {
+            "name": "Runner log ingestion quality",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs\" source=\"*:/aws/lambda/splunk-s3-runner-logs-lambda-*\"\n(invalid_json_body_skip OR json_object_failed OR unsupported_object_skip OR tag_fetch_failed OR kinesis_put_retry OR kinesis_put_failed_after_retries OR line_too_large_skip OR object_complete)\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| eval category=case(\n    searchmatch(\"kinesis_put_failed_after_retries\"), \"kinesis_put_failed_after_retries\",\n    searchmatch(\"kinesis_put_retry\"), \"kinesis_put_retry\",\n    searchmatch(\"invalid_json_body_skip\"), \"invalid_json_body_skip\",\n    searchmatch(\"json_object_failed\"), \"json_object_failed\",\n    searchmatch(\"unsupported_object_skip\"), \"unsupported_object_skip\",\n    searchmatch(\"tag_fetch_failed\"), \"tag_fetch_failed\",\n    searchmatch(\"line_too_large_skip\"), \"line_too_large_skip\",\n    searchmatch(\"object_complete\"), \"object_complete\",\n    true(), \"other\")\n| stats count as events dc(source) as streams latest(_time) as last_time by lambda_name category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "missing_fields_search": {
+            "name": "Missing structured fields",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype IN (\"forgecicd:runner-logs:json\",\"forgecicd:runner-logs:logs\",\"kube:container:runner\",\"kube:container:runner-logs\",\"aws:cloudwatchlogs\",\"aws:cloudwatchlogs:forgecicd\")\n| eval missing_tenant=if(isnull(forgecicd_tenant),1,0)\n| eval missing_type=if(sourcetype IN (\"forgecicd:runner-logs:json\",\"forgecicd:runner-logs:logs\",\"kube:container:runner\",\"kube:container:runner-logs\") AND isnull(forgecicd_type),1,0)\n| eval missing_log_type=if(isnull(forgecicd_log_type),1,0)\n| stats count as events\n        sum(missing_tenant) as missing_tenant\n        sum(missing_type) as missing_type\n        sum(missing_log_type) as missing_log_type\n        dc(source) as sources\n        by sourcetype\n| eval missing_tenant_pct=round(100*missing_tenant/events,2),\n       missing_type_pct=round(100*missing_type/events,2),\n       missing_log_type_pct=round(100*missing_log_type/events,2)\n| sort - missing_tenant_pct - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "source_inventory_search": {
+            "name": "Top sources",
+            "options": {
+                "enableSmartSources": true,
+                "query": "| tstats count where index=\"${splunk_index}\" by sourcetype source host\n| sort - count\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "sourcetype_inventory_search": {
+            "name": "Sourcetype inventory",
+            "options": {
+                "enableSmartSources": true,
+                "query": "| tstats count where index=\"${splunk_index}\" by sourcetype\n| sort - count\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "volume_anomaly_search": {
+            "name": "High-volume sourcetype trend",
+            "options": {
+                "enableSmartSources": true,
+                "query": "| tstats count where index=\"${splunk_index}\" by _time sourcetype span=15m\n| timechart span=15m sum(count) as events by sourcetype limit=10\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        }
+    },
+    "defaults": {
+        "dataSources": {
+            "ds.search": {
+                "options": {
+                    "queryParameters": {
+                        "earliest": "$global_time.earliest$",
+                        "latest": "$global_time.latest$"
+                    }
+                }
+            }
+        }
+    },
+    "description": "Splunk ingestion volume, malformed events, missing fields, and runner log ingestion quality.",
+    "inputs": {
+        "input_global_time": {
+            "options": {
+                "defaultValue": "-24h@h,now",
+                "token": "global_time"
+            },
+            "title": "Global Time Range",
+            "type": "input.timerange"
+        },
+        "input_tenant": {
+            "options": {
+                "defaultValue": "*",
+                "items": ${jsonencode(
+                    concat(
+                        [{ label = "All", value = "*" }],
+                        [for tenant in tenants : { label = tenant, value = tenant }]
+                    )
+                )},
+                "token": "tenant"
+            },
+            "title": "Forge Tenant",
+            "type": "input.dropdown"
+        }
+    },
+    "layout": {
+        "globalInputs": [
+            "input_global_time",
+            "input_tenant"
+        ],
+        "layoutDefinitions": {
+            "layout": {
+                "options": {
+                    "gutterSize": 9
+                },
+                "structure": [
+                    {
+                        "item": "sourcetype_inventory_table",
+                        "position": {
+                            "h": 360,
+                            "w": 460,
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "volume_anomaly_chart",
+                        "position": {
+                            "h": 360,
+                            "w": 740,
+                            "x": 460,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "source_inventory_table",
+                        "position": {
+                            "h": 420,
+                            "w": 600,
+                            "x": 0,
+                            "y": 360
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "ingestion_quality_table",
+                        "position": {
+                            "h": 420,
+                            "w": 600,
+                            "x": 600,
+                            "y": 360
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "missing_fields_table",
+                        "position": {
+                            "h": 380,
+                            "w": 1200,
+                            "x": 0,
+                            "y": 780
+                        },
+                        "type": "block"
+                    }
+                ],
+                "type": "grid"
+            }
+        },
+        "options": {},
+        "tabs": {
+            "items": [
+                {
+                    "label": "Ingestion Quality",
+                    "layoutId": "layout"
+                }
+            ]
+        }
+    },
+    "title": "Forge Ingestion Quality",
+    "visualizations": {
+        "ingestion_quality_table": {
+            "dataSources": {
+                "primary": "ingestion_quality_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Runner Log Ingestion Quality",
+            "type": "splunk.table"
+        },
+        "missing_fields_table": {
+            "dataSources": {
+                "primary": "missing_fields_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Missing Structured Fields",
+            "type": "splunk.table"
+        },
+        "source_inventory_table": {
+            "dataSources": {
+                "primary": "source_inventory_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Top Sources",
+            "type": "splunk.table"
+        },
+        "sourcetype_inventory_table": {
+            "dataSources": {
+                "primary": "sourcetype_inventory_search"
+            },
+            "options": {
+                "count": 40
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Sourcetype Inventory",
+            "type": "splunk.table"
+        },
+        "volume_anomaly_chart": {
+            "dataSources": {
+                "primary": "volume_anomaly_search"
+            },
+            "options": {},
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "High-Volume Sourcetype Trend",
+            "type": "splunk.line"
+        }
+    }
+}

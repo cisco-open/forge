@@ -1,0 +1,218 @@
+{
+    "applicationProperties": {
+        "collapseNavigation": true,
+        "hideEdit": false,
+        "hideExport": false,
+        "hideOpenInSearch": false
+    },
+    "dataSources": {
+        "arc_runner_state_search": {
+            "name": "ARC runner set state",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"kube:container:manager\" \"ephemeral runner counts\"\n| rex field=_raw \"\\\"ephemeralrunnerset\\\": \\{\\\"name\\\":\\\"(?<erset>[^\\\"]+)\\\",\\\"namespace\\\":\\\"(?<namespace>[^\\\"]+)\\\"\\}\"\n| rex field=_raw \"\\\"pending\\\": (?<pending>\\d+), \\\"running\\\": (?<running>\\d+), \\\"finished\\\": (?<finished>\\d+), \\\"failed\\\": (?<failed>\\d+), \\\"deleting\\\": (?<deleting>\\d+)\"\n| eval tenant=coalesce(forgecicd_tenant, namespace)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| eval pending=tonumber(pending), running=tonumber(running), finished=tonumber(finished), failed=tonumber(failed), deleting=tonumber(deleting)\n| stats latest(pending) as latest_pending\n        latest(running) as latest_running\n        latest(finished) as latest_finished\n        latest(failed) as latest_failed\n        latest(deleting) as latest_deleting\n        max(pending) as max_pending\n        max(running) as max_running\n        max(failed) as max_failed\n        count as samples\n        by namespace erset\n| sort - max_failed - max_pending - latest_pending\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "ec2_pool_symptoms_search": {
+            "name": "EC2 runner pool symptoms",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs:forgecicd\"\n(\"No space left\" OR \"Out of memory\" OR OOM OR \"no buffer space available\" OR \"unable to acquire credentials\" OR \"AccessDeniedException\" OR \"permission denied\" OR \"cannot open shared object file\" OR \"Establish connection with\" OR \"timed out\" OR \"fatal\")\n| rex field=source \"^[^:]+:/github-self-hosted-runners/(?<runner_pool>[^/]+)/forge-logs:(?<instance_id>i-[^/]+)/(?<log_file>[^/]+)$\"\n| rex field=runner_pool \"^(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| eval category=case(\n    match(_raw,\"(?i)no space left|disk full\"), \"disk_full\",\n    match(_raw,\"(?i)out of memory|oom\"), \"oom\",\n    match(_raw,\"(?i)no buffer space available\"), \"auditd_no_buffer_space\",\n    match(_raw,\"(?i)unable to acquire credentials|AccessDeniedException\"), \"ssm_credentials_access_denied\",\n    match(_raw,\"(?i)cannot open shared object file: permission denied|permission denied\"), \"permission_denied\",\n    match(_raw,\"(?i)establish connection with .* timeout|timed out|timeout\"), \"runner_connection_timeout\",\n    match(_raw,\"(?i)fatal\"), \"fatal\",\n    true(), \"other\")\n| stats count as events dc(instance_id) as instances latest(_time) as last_time by tenant runner_pool log_file category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "queue_pressure_search": {
+            "name": "Queue pressure by runner group",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"forgecicd:runner-logs:json\"\n| spath path=workflow_job.conclusion output=conclusion\n| spath path=workflow_job.created_at output=created_at\n| spath path=workflow_job.started_at output=started_at\n| spath path=workflow_job.completed_at output=completed_at\n| spath path=workflow_job.runner_group_name output=runner_group\n| spath path=workflow_job.runner_name output=runner_name\n| spath path=repository.full_name output=repo\n| rex field=source \"^(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-forge-gh-logs-\\d+:(?<source_repo>[^/]+/[^/]+)/(?<run_id>\\d+)/(?<attempt>\\d+)/(?<job_id>\\d+)\\.json$\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant), repo=coalesce(repo, source_repo)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$runner_group$\"=\"*\" OR like(runner_group, \"%$runner_group$%\")\n| eval queue_sec=strptime(started_at,\"%Y-%m-%dT%H:%M:%SZ\")-strptime(created_at,\"%Y-%m-%dT%H:%M:%SZ\")\n| eval duration_sec=strptime(completed_at,\"%Y-%m-%dT%H:%M:%SZ\")-strptime(started_at,\"%Y-%m-%dT%H:%M:%SZ\")\n| eval queue_ge_10m=if(queue_sec>=600,1,0), duration_ge_1h=if(duration_sec>=3600,1,0), failed=if(conclusion=\"failure\",1,0), negative_queue=if(queue_sec<0,1,0)\n| stats count as jobs\n        sum(failed) as failures\n        sum(queue_ge_10m) as queue_ge_10m\n        sum(duration_ge_1h) as duration_ge_1h\n        sum(negative_queue) as negative_queue_jobs\n        p50(eval(if(queue_sec>=0, queue_sec, null()))) as p50_queue_sec\n        p95(eval(if(queue_sec>=0, queue_sec, null()))) as p95_queue_sec\n        p99(eval(if(queue_sec>=0, queue_sec, null()))) as p99_queue_sec\n        p95(duration_sec) as p95_duration_sec\n        dc(repo) as repos\n        dc(runner_name) as runners\n        by tenant runner_group\n| eval failure_rate=round(100*failures/jobs,2),\n       p50_queue_sec=round(p50_queue_sec,1),\n       p95_queue_sec=round(p95_queue_sec,1),\n       p99_queue_sec=round(p99_queue_sec,1),\n       p95_duration_sec=round(p95_duration_sec,1)\n| sort - queue_ge_10m - p95_queue_sec - failures\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "queue_trend_search": {
+            "name": "Queue p95 trend",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"forgecicd:runner-logs:json\"\n| spath path=workflow_job.created_at output=created_at\n| spath path=workflow_job.started_at output=started_at\n| spath path=workflow_job.runner_group_name output=runner_group\n| rex field=source \"^(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-forge-gh-logs-\\d+:\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$runner_group$\"=\"*\" OR like(runner_group, \"%$runner_group$%\")\n| eval queue_sec=strptime(started_at,\"%Y-%m-%dT%H:%M:%SZ\")-strptime(created_at,\"%Y-%m-%dT%H:%M:%SZ\")\n| where queue_sec>=0\n| timechart span=15m p95(queue_sec) as p95_queue_sec by runner_group limit=10\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        }
+    },
+    "defaults": {
+        "dataSources": {
+            "ds.search": {
+                "options": {
+                    "queryParameters": {
+                        "earliest": "$global_time.earliest$",
+                        "latest": "$global_time.latest$"
+                    }
+                }
+            }
+        }
+    },
+    "description": "Runner queue pressure, ARC runner set state, and EC2 runner pool symptoms.",
+    "inputs": {
+        "input_global_time": {
+            "options": {
+                "defaultValue": "-24h@h,now",
+                "token": "global_time"
+            },
+            "title": "Global Time Range",
+            "type": "input.timerange"
+        },
+        "input_runner_group": {
+            "options": {
+                "defaultValue": "*",
+                "token": "runner_group"
+            },
+            "title": "Runner Group Contains",
+            "type": "input.text"
+        },
+        "input_tenant": {
+            "options": {
+                "defaultValue": "*",
+                "items": ${jsonencode(
+                    concat(
+                        [{ label = "All", value = "*" }],
+                        [for tenant in tenants : { label = tenant, value = tenant }]
+                    )
+                )},
+                "token": "tenant"
+            },
+            "title": "Forge Tenant",
+            "type": "input.dropdown"
+        }
+    },
+    "layout": {
+        "globalInputs": [
+            "input_global_time",
+            "input_tenant",
+            "input_runner_group"
+        ],
+        "layoutDefinitions": {
+            "layout": {
+                "options": {
+                    "gutterSize": 9
+                },
+                "structure": [
+                    {
+                        "item": "queue_pressure_table",
+                        "position": {
+                            "h": 420,
+                            "w": 720,
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "queue_trend_chart",
+                        "position": {
+                            "h": 420,
+                            "w": 480,
+                            "x": 720,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "arc_runner_state_table",
+                        "position": {
+                            "h": 460,
+                            "w": 600,
+                            "x": 0,
+                            "y": 420
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "ec2_pool_symptoms_table",
+                        "position": {
+                            "h": 460,
+                            "w": 600,
+                            "x": 600,
+                            "y": 420
+                        },
+                        "type": "block"
+                    }
+                ],
+                "type": "grid"
+            }
+        },
+        "options": {},
+        "tabs": {
+            "items": [
+                {
+                    "label": "Runner Capacity",
+                    "layoutId": "layout"
+                }
+            ]
+        }
+    },
+    "title": "Forge Runner Capacity",
+    "visualizations": {
+        "arc_runner_state_table": {
+            "dataSources": {
+                "primary": "arc_runner_state_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "ARC Runner Set State",
+            "type": "splunk.table"
+        },
+        "ec2_pool_symptoms_table": {
+            "dataSources": {
+                "primary": "ec2_pool_symptoms_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "EC2 Runner Pool Symptoms",
+            "type": "splunk.table"
+        },
+        "queue_pressure_table": {
+            "dataSources": {
+                "primary": "queue_pressure_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Queue Pressure by Runner Group",
+            "type": "splunk.table"
+        },
+        "queue_trend_chart": {
+            "dataSources": {
+                "primary": "queue_trend_search"
+            },
+            "options": {},
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Queue p95 Trend",
+            "type": "splunk.line"
+        }
+    }
+}

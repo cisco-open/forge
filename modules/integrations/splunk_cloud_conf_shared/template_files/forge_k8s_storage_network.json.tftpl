@@ -1,0 +1,237 @@
+{
+    "applicationProperties": {
+        "collapseNavigation": true,
+        "hideEdit": false,
+        "hideExport": false,
+        "hideOpenInSearch": false
+    },
+    "dataSources": {
+        "api_storage_errors_search": {
+            "name": "EKS API storage and controller errors",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs\" source=\"*:/aws/eks/*/cluster:kube-apiserver-audit-*\"\n| spath path=responseStatus.code output=status_code\n| spath path=verb output=verb\n| spath path=objectRef.resource output=resource\n| spath path=objectRef.namespace output=namespace\n| spath path=user.username output=username\n| where isnotnull(status_code) AND tonumber(status_code)>=400\n| search resource IN (\"persistentvolumes\",\"persistentvolumeclaims\",\"volumeattachments\",\"volumesnapshotcontents\",\"volumesnapshotclasses\",\"ephemeralrunners\",\"tiers\",\"ipamhandles\",\"leases\")\n| rex field=source \"^[^:]+:/aws/eks/(?<cluster>[^/]+)/cluster:\"\n| stats count as events dc(username) as users latest(_time) as last_time by cluster status_code verb resource namespace\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "ebs_wait_search": {
+            "name": "EBS provisioning waits",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"kube:events\" \"Waiting for a volume\"\n| eval sample=substr(_raw,1,260)\n| stats count as events dc(host) as hosts latest(_time) as last_time by sample\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "kube_event_categories_search": {
+            "name": "Kubernetes event categories",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"kube:events\"\n(\"still attached\" OR \"Waiting for a volume\" OR \"NetworkPluginNotReady\" OR \"insufficient cpu\" OR \"Insufficient\" OR \"Failed\" OR \"failed\" OR \"Back-off\" OR \"ImagePullBackOff\" OR \"ErrImagePull\" OR \"OOMKilled\")\n| eval signature=lower(_raw)\n| eval category=case(\n    match(signature,\"still attached\"), \"pvc_still_attached\",\n    match(signature,\"waiting for a volume\"), \"ebs_volume_provision_wait\",\n    match(signature,\"networkpluginnotready|cni plugin not initialized\"), \"cni_not_ready\",\n    match(signature,\"insufficient cpu\"), \"insufficient_cpu\",\n    match(signature,\"imagepullbackoff|errimagepull\"), \"image_pull\",\n    match(signature,\"back-off\"), \"backoff\",\n    match(signature,\"oomkilled\"), \"oomkilled\",\n    match(signature,\"fail\"), \"failed\",\n    true(), \"other\")\n| where \"$category$\"=\"*\" OR like(category, \"%$category$%\")\n| rex field=_raw \"(?<pvc>pvc-[0-9a-f-]+)\"\n| rex field=_raw \"node (?<node>[^ ]+)\"\n| stats count as events dc(host) as hosts dc(pvc) as pvcs dc(node) as nodes latest(_time) as last_time values(node) as sample_nodes by category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "kube_event_trend_search": {
+            "name": "Kubernetes event trend",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"kube:events\"\n(\"still attached\" OR \"Waiting for a volume\" OR \"NetworkPluginNotReady\" OR \"insufficient cpu\" OR \"Insufficient\" OR \"Failed\" OR \"failed\" OR \"Back-off\" OR \"ImagePullBackOff\" OR \"ErrImagePull\" OR \"OOMKilled\")\n| eval signature=lower(_raw)\n| eval category=case(\n    match(signature,\"still attached\"), \"pvc_still_attached\",\n    match(signature,\"waiting for a volume\"), \"ebs_volume_provision_wait\",\n    match(signature,\"networkpluginnotready|cni plugin not initialized\"), \"cni_not_ready\",\n    match(signature,\"insufficient cpu\"), \"insufficient_cpu\",\n    match(signature,\"imagepullbackoff|errimagepull\"), \"image_pull\",\n    match(signature,\"back-off\"), \"backoff\",\n    match(signature,\"oomkilled\"), \"oomkilled\",\n    match(signature,\"fail\"), \"failed\",\n    true(), \"other\")\n| where \"$category$\"=\"*\" OR like(category, \"%$category$%\")\n| timechart span=15m count by category\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "pvc_stuck_search": {
+            "name": "PVC still attached",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"kube:events\" \"still attached\"\n| rex field=_raw \"(?<pvc>pvc-[0-9a-f-]+)\"\n| rex field=_raw \"node (?<node>[^ ]+)\"\n| stats count as events dc(host) as reporting_hosts latest(_time) as last_time by pvc node\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        }
+    },
+    "defaults": {
+        "dataSources": {
+            "ds.search": {
+                "options": {
+                    "queryParameters": {
+                        "earliest": "$global_time.earliest$",
+                        "latest": "$global_time.latest$"
+                    }
+                }
+            }
+        }
+    },
+    "description": "Kubernetes storage, scheduling, CNI, image-pull, and EKS API storage/controller error patterns.",
+    "inputs": {
+        "input_category": {
+            "options": {
+                "defaultValue": "*",
+                "token": "category"
+            },
+            "title": "Category Contains",
+            "type": "input.text"
+        },
+        "input_global_time": {
+            "options": {
+                "defaultValue": "-24h@h,now",
+                "token": "global_time"
+            },
+            "title": "Global Time Range",
+            "type": "input.timerange"
+        }
+    },
+    "layout": {
+        "globalInputs": [
+            "input_global_time",
+            "input_category"
+        ],
+        "layoutDefinitions": {
+            "layout": {
+                "options": {
+                    "gutterSize": 9
+                },
+                "structure": [
+                    {
+                        "item": "kube_event_categories_table",
+                        "position": {
+                            "h": 340,
+                            "w": 600,
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "kube_event_trend_chart",
+                        "position": {
+                            "h": 340,
+                            "w": 600,
+                            "x": 600,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "pvc_stuck_table",
+                        "position": {
+                            "h": 380,
+                            "w": 600,
+                            "x": 0,
+                            "y": 340
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "ebs_wait_table",
+                        "position": {
+                            "h": 380,
+                            "w": 600,
+                            "x": 600,
+                            "y": 340
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "api_storage_errors_table",
+                        "position": {
+                            "h": 420,
+                            "w": 1200,
+                            "x": 0,
+                            "y": 720
+                        },
+                        "type": "block"
+                    }
+                ],
+                "type": "grid"
+            }
+        },
+        "options": {},
+        "tabs": {
+            "items": [
+                {
+                    "label": "K8s Storage and Network",
+                    "layoutId": "layout"
+                }
+            ]
+        }
+    },
+    "title": "Forge Kubernetes Storage and Network",
+    "visualizations": {
+        "api_storage_errors_table": {
+            "dataSources": {
+                "primary": "api_storage_errors_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "EKS API Storage and Controller Errors",
+            "type": "splunk.table"
+        },
+        "ebs_wait_table": {
+            "dataSources": {
+                "primary": "ebs_wait_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "EBS Provisioning Waits",
+            "type": "splunk.table"
+        },
+        "kube_event_categories_table": {
+            "dataSources": {
+                "primary": "kube_event_categories_search"
+            },
+            "options": {
+                "count": 30
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Kubernetes Event Categories",
+            "type": "splunk.table"
+        },
+        "kube_event_trend_chart": {
+            "dataSources": {
+                "primary": "kube_event_trend_search"
+            },
+            "options": {},
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Kubernetes Event Trend",
+            "type": "splunk.line"
+        },
+        "pvc_stuck_table": {
+            "dataSources": {
+                "primary": "pvc_stuck_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "PVC Still Attached",
+            "type": "splunk.table"
+        }
+    }
+}

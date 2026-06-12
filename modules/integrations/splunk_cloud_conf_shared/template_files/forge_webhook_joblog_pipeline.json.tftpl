@@ -1,0 +1,286 @@
+{
+    "applicationProperties": {
+        "collapseNavigation": true,
+        "hideEdit": false,
+        "hideExport": false,
+        "hideOpenInSearch": false
+    },
+    "dataSources": {
+        "archiver_errors_search": {
+            "name": "Archiver errors",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" (sourcetype=\"aws:cloudwatchlogs:forgecicd\" OR sourcetype=\"aws:cloudwatchlogs\") source=\"*:/aws/lambda/*job-log-archiver*\"\n(\"Job logs not found\" OR \"Missing required IDs\" OR \"missing_ids\" OR \"invalid_json\" OR \"missing_env\" OR \"archiver_error\" OR \"Unhandled exception\" OR \"[ERROR]\" OR Traceback)\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| rex field=_raw \"job_id=(?<job_id>[0-9]+)\"\n| rex field=_raw \"run_id=(?<run_id>[0-9]+)\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| eval category=case(\n    match(_raw,\"Job logs not found\"), \"job_logs_not_found\",\n    match(_raw,\"Missing required IDs|missing_ids\"), \"missing_ids\",\n    match(_raw,\"invalid_json\"), \"invalid_json\",\n    match(_raw,\"missing_env\"), \"missing_env\",\n    match(_raw,\"archiver_error\"), \"archiver_error\",\n    match(_raw,\"Unhandled exception|Traceback|\\\\[ERROR\\\\]\"), \"lambda_error\",\n    true(), \"other\")\n| stats count as events dc(run_id) as runs dc(job_id) as jobs latest(_time) as last_time by tenant lambda_name category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "dispatcher_repos_search": {
+            "name": "Dispatcher enqueues by repo",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" (sourcetype=\"aws:cloudwatchlogs:forgecicd\" OR sourcetype=\"aws:cloudwatchlogs\") \"Enqueued workflow_job\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| rex field=_raw \"repo=(?<repo>[^ ]+) job_id=(?<job_id>[^ ]+) run_id=(?<run_id>[^ ]+)\"\n| rex field=_raw \"action=(?<action>[^ ]+)\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$repo$\"=\"*\" OR like(repo, \"%$repo$%\")\n| stats count as enqueued dc(run_id) as runs dc(job_id) as jobs latest(_time) as last_time by tenant repo action\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - enqueued\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "dispatcher_to_json_search": {
+            "name": "Dispatcher to archived JSON counts",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" (sourcetype=\"aws:cloudwatchlogs:forgecicd\" OR sourcetype=\"aws:cloudwatchlogs\") \"Enqueued workflow_job\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| stats count as dispatcher_enqueued by tenant\n| append [\n    search index=\"${splunk_index}\" sourcetype=\"forgecicd:runner-logs:json\"\n    | eval tenant=coalesce(forgecicd_tenant, github_org)\n    | where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n    | stats count as archived_json count(eval(conclusion=\"failure\")) as archived_failures by tenant\n  ]\n| stats sum(dispatcher_enqueued) as dispatcher_enqueued sum(archived_json) as archived_json sum(archived_failures) as archived_failures by tenant\n| eval archived_json=coalesce(archived_json,0), dispatcher_enqueued=coalesce(dispatcher_enqueued,0)\n| eval archive_gap=dispatcher_enqueued-archived_json\n| sort - archive_gap - dispatcher_enqueued\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "pipeline_stage_search": {
+            "name": "Pipeline stage summary",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" (sourcetype=\"aws:cloudwatchlogs:forgecicd\" OR sourcetype=\"aws:cloudwatchlogs\")\n(\"Enqueued workflow_job\" OR \"Ignoring non-workflow_job\" OR \"Job logs not found\" OR \"Missing required IDs\" OR \"archiver_error\" OR \"invalid_json\" OR \"Started message move task\" OR \"Failed to start message move task\" OR \"SQS_MAP is empty\")\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| eval stage=case(\n    match(lambda_name,\"job-log-dispatcher\"), \"dispatcher\",\n    match(lambda_name,\"job-log-archiver\"), \"archiver\",\n    match(lambda_name,\"redrive-deadletter\"), \"redrive\",\n    true(), \"other\")\n| eval category=case(\n    match(_raw,\"Enqueued workflow_job\"), \"enqueued\",\n    match(_raw,\"Ignoring non-workflow_job\"), \"ignored_non_workflow_job\",\n    match(_raw,\"Job logs not found\"), \"job_logs_not_found\",\n    match(_raw,\"Missing required IDs|missing_ids\"), \"missing_ids\",\n    match(_raw,\"invalid_json\"), \"invalid_json\",\n    match(_raw,\"archiver_error\"), \"archiver_error\",\n    match(_raw,\"Started message move task\"), \"dlq_redrive_started\",\n    match(_raw,\"Failed to start message move task\"), \"dlq_redrive_failed\",\n    match(_raw,\"SQS_MAP is empty\"), \"dlq_map_empty\",\n    true(), \"other\")\n| stats count as events dc(lambda_name) as functions latest(_time) as last_time by tenant stage category lambda_name\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort tenant stage - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "pipeline_trend_search": {
+            "name": "Pipeline trend",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" (sourcetype=\"aws:cloudwatchlogs:forgecicd\" OR sourcetype=\"aws:cloudwatchlogs\")\n(\"Enqueued workflow_job\" OR \"Job logs not found\" OR \"Missing required IDs\" OR \"archiver_error\" OR \"invalid_json\" OR \"Started message move task\" OR \"Failed to start message move task\")\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| eval category=case(\n    match(_raw,\"Enqueued workflow_job\"), \"enqueued\",\n    match(_raw,\"Job logs not found\"), \"job_logs_not_found\",\n    match(_raw,\"Missing required IDs|missing_ids\"), \"missing_ids\",\n    match(_raw,\"invalid_json\"), \"invalid_json\",\n    match(_raw,\"archiver_error\"), \"archiver_error\",\n    match(_raw,\"Started message move task\"), \"dlq_redrive_started\",\n    match(_raw,\"Failed to start message move task\"), \"dlq_redrive_failed\",\n    true(), \"other\")\n| timechart span=15m count by category limit=12\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "redrive_activity_search": {
+            "name": "DLQ redrive activity",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" (sourcetype=\"aws:cloudwatchlogs:forgecicd\" OR sourcetype=\"aws:cloudwatchlogs\") source=\"*:/aws/lambda/*redrive-deadletter*\"\n(\"Starting DLQ redrive\" OR \"Processing SQS mapping\" OR \"Started message move task\" OR \"Failed to start message move task\" OR \"SQS_MAP is empty\" OR \"Unhandled exception\")\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| rex field=_raw \"key=(?<mapping_key>[^ ]+)\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| eval category=case(\n    match(_raw,\"Starting DLQ redrive\"), \"redrive_run\",\n    match(_raw,\"Processing SQS mapping\"), \"mapping_processed\",\n    match(_raw,\"Started message move task\"), \"move_task_started\",\n    match(_raw,\"Failed to start message move task\"), \"move_task_failed\",\n    match(_raw,\"SQS_MAP is empty\"), \"empty_map\",\n    match(_raw,\"Unhandled exception\"), \"lambda_error\",\n    true(), \"other\")\n| stats count as events dc(mapping_key) as mappings latest(_time) as last_time by tenant lambda_name category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        }
+    },
+    "defaults": {
+        "dataSources": {
+            "ds.search": {
+                "options": {
+                    "queryParameters": {
+                        "earliest": "$global_time.earliest$",
+                        "latest": "$global_time.latest$"
+                    }
+                }
+            }
+        }
+    },
+    "description": "GitHub workflow_job webhook, dispatcher, SQS redrive, archiver, S3, and Splunk runner-log ingestion health.",
+    "inputs": {
+        "input_global_time": {
+            "options": {
+                "defaultValue": "-24h@h,now",
+                "token": "global_time"
+            },
+            "title": "Global Time Range",
+            "type": "input.timerange"
+        },
+        "input_repo": {
+            "options": {
+                "defaultValue": "*",
+                "token": "repo"
+            },
+            "title": "Repo Contains",
+            "type": "input.text"
+        },
+        "input_tenant": {
+            "options": {
+                "defaultValue": "*",
+                "items": ${jsonencode(
+                    concat(
+                        [{ label = "All", value = "*" }],
+                        [for tenant in tenants : { label = tenant, value = tenant }]
+                    )
+                )},
+                "token": "tenant"
+            },
+            "title": "Forge Tenant",
+            "type": "input.dropdown"
+        }
+    },
+    "layout": {
+        "globalInputs": [
+            "input_global_time",
+            "input_tenant",
+            "input_repo"
+        ],
+        "layoutDefinitions": {
+            "layout": {
+                "options": {
+                    "gutterSize": 9
+                },
+                "structure": [
+                    {
+                        "item": "pipeline_stage_table",
+                        "position": {
+                            "h": 360,
+                            "w": 640,
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "pipeline_trend_chart",
+                        "position": {
+                            "h": 360,
+                            "w": 560,
+                            "x": 640,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "dispatcher_repos_table",
+                        "position": {
+                            "h": 380,
+                            "w": 600,
+                            "x": 0,
+                            "y": 360
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "archiver_errors_table",
+                        "position": {
+                            "h": 380,
+                            "w": 600,
+                            "x": 600,
+                            "y": 360
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "redrive_activity_table",
+                        "position": {
+                            "h": 360,
+                            "w": 600,
+                            "x": 0,
+                            "y": 740
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "dispatcher_to_json_table",
+                        "position": {
+                            "h": 360,
+                            "w": 600,
+                            "x": 600,
+                            "y": 740
+                        },
+                        "type": "block"
+                    }
+                ],
+                "type": "grid"
+            }
+        },
+        "options": {},
+        "tabs": {
+            "items": [
+                {
+                    "label": "Webhook Job Log Pipeline",
+                    "layoutId": "layout"
+                }
+            ]
+        }
+    },
+    "title": "Forge Webhook Job Log Pipeline",
+    "visualizations": {
+        "archiver_errors_table": {
+            "dataSources": {
+                "primary": "archiver_errors_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Archiver Errors",
+            "type": "splunk.table"
+        },
+        "dispatcher_repos_table": {
+            "dataSources": {
+                "primary": "dispatcher_repos_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Dispatcher Enqueues by Repo",
+            "type": "splunk.table"
+        },
+        "dispatcher_to_json_table": {
+            "dataSources": {
+                "primary": "dispatcher_to_json_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Dispatcher to Archived JSON Counts",
+            "type": "splunk.table"
+        },
+        "pipeline_stage_table": {
+            "dataSources": {
+                "primary": "pipeline_stage_search"
+            },
+            "options": {
+                "count": 60
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Pipeline Stage Summary",
+            "type": "splunk.table"
+        },
+        "pipeline_trend_chart": {
+            "dataSources": {
+                "primary": "pipeline_trend_search"
+            },
+            "options": {},
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Pipeline Trend",
+            "type": "splunk.line"
+        },
+        "redrive_activity_table": {
+            "dataSources": {
+                "primary": "redrive_activity_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "DLQ Redrive Activity",
+            "type": "splunk.table"
+        }
+    }
+}

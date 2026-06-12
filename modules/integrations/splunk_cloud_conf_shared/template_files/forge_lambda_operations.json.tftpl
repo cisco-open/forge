@@ -1,0 +1,252 @@
+{
+    "applicationProperties": {
+        "collapseNavigation": true,
+        "hideEdit": false,
+        "hideExport": false,
+        "hideOpenInSearch": false
+    },
+    "dataSources": {
+        "ingestion_retries_search": {
+            "name": "Splunk S3 runner log ingestion retries",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs\" source=\"*:/aws/lambda/splunk-s3-runner-logs-lambda-*\"\n(invalid_json_body_skip OR json_object_failed OR unsupported_object_skip OR tag_fetch_failed OR kinesis_put_retry OR kinesis_put_failed_after_retries OR line_too_large_skip)\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| eval category=case(\n    searchmatch(\"kinesis_put_failed_after_retries\"), \"kinesis_put_failed_after_retries\",\n    searchmatch(\"kinesis_put_retry\"), \"kinesis_put_retry\",\n    searchmatch(\"invalid_json_body_skip\"), \"invalid_json_body_skip\",\n    searchmatch(\"json_object_failed\"), \"json_object_failed\",\n    searchmatch(\"unsupported_object_skip\"), \"unsupported_object_skip\",\n    searchmatch(\"tag_fetch_failed\"), \"tag_fetch_failed\",\n    searchmatch(\"line_too_large_skip\"), \"line_too_large_skip\",\n    true(), \"other\")\n| stats count as events latest(_time) as last_time by lambda_name category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "lambda_error_trend_search": {
+            "name": "Lambda error trend",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs\" source=\"*:/aws/lambda/*\"\n(\"[ERROR]\" OR Traceback OR \"Task timed out\" OR \"Runtime.ExitError\" OR AccessDenied OR \"InvalidInstanceID.NotFound\" OR \"runner_name missing\" OR \"Basic AssumeRole failed\" OR \"Job logs not found\" OR invalid_json OR kinesis_put_retry OR kinesis_put_failed_after_retries OR \"Signature mismatch\")\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$lambda_name$\"=\"*\" OR like(lambda_name, \"%$lambda_name$%\")\n| eval category=case(\n    searchmatch(\"runner_name missing\"), \"runner_name_missing\",\n    searchmatch(\"InvalidInstanceID.NotFound\"), \"invalid_instance_id\",\n    searchmatch(\"Basic AssumeRole failed\"), \"trust_assume_role_failed\",\n    searchmatch(\"AccessDenied\"), \"access_denied\",\n    searchmatch(\"Task timed out\"), \"lambda_timeout\",\n    searchmatch(\"Runtime.ExitError\"), \"runtime_exit_error\",\n    searchmatch(\"kinesis_put_failed_after_retries\"), \"kinesis_put_failed_after_retries\",\n    searchmatch(\"kinesis_put_retry\"), \"kinesis_put_retry\",\n    searchmatch(\"Traceback\"), \"traceback\",\n    true(), \"lambda_error\")\n| timechart span=15m count by category limit=12\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "lambda_errors_search": {
+            "name": "Lambda errors by category",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs\" source=\"*:/aws/lambda/*\"\n(\"[ERROR]\" OR Traceback OR \"Task timed out\" OR \"Runtime.ExitError\" OR AccessDenied OR \"InvalidInstanceID.NotFound\" OR \"runner_name missing\" OR \"Basic AssumeRole failed\" OR \"Job logs not found\" OR invalid_json OR kinesis_put_retry OR kinesis_put_failed_after_retries OR \"Signature mismatch\")\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$lambda_name$\"=\"*\" OR like(lambda_name, \"%$lambda_name$%\")\n| eval category=case(\n    searchmatch(\"runner_name missing\"), \"runner_name_missing\",\n    searchmatch(\"InvalidInstanceID.NotFound\"), \"invalid_instance_id\",\n    searchmatch(\"Basic AssumeRole failed\"), \"trust_assume_role_failed\",\n    searchmatch(\"AccessDenied\"), \"access_denied\",\n    searchmatch(\"Task timed out\"), \"lambda_timeout\",\n    searchmatch(\"Runtime.ExitError\"), \"runtime_exit_error\",\n    searchmatch(\"Job logs not found\"), \"job_logs_not_found\",\n    searchmatch(\"invalid_json\"), \"invalid_json\",\n    searchmatch(\"kinesis_put_failed_after_retries\"), \"kinesis_put_failed_after_retries\",\n    searchmatch(\"kinesis_put_retry\"), \"kinesis_put_retry\",\n    searchmatch(\"Signature mismatch\"), \"signature_mismatch\",\n    searchmatch(\"Traceback\"), \"traceback\",\n    searchmatch(\"[ERROR]\"), \"lambda_error\",\n    true(), \"other\")\n| stats count as events dc(source) as streams latest(_time) as last_time by tenant lambda_name category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "lambda_samples_search": {
+            "name": "Latest Lambda error samples",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs\" source=\"*:/aws/lambda/*\"\n(\"[ERROR]\" OR Traceback OR \"Task timed out\" OR \"Runtime.ExitError\" OR AccessDenied OR \"InvalidInstanceID.NotFound\" OR \"runner_name missing\")\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$lambda_name$\"=\"*\" OR like(lambda_name, \"%$lambda_name$%\")\n| eval sample=replace(_raw,\"\\n.*$\",\"\")\n| eval sample=substr(sample,1,300)\n| stats count as events latest(_time) as last_time by tenant lambda_name sample\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - last_time\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "runner_tag_failures_search": {
+            "name": "EC2 runner tagging failures",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs\" source=\"*:/aws/lambda/*ec2-update-runner-tags*\"\n(\"runner_name missing\" OR \"InvalidInstanceID.NotFound\" OR \"[ERROR]\" OR Traceback)\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| eval category=case(\n    searchmatch(\"runner_name missing\"), \"runner_name_missing\",\n    searchmatch(\"InvalidInstanceID.NotFound\"), \"invalid_instance_id\",\n    searchmatch(\"Traceback\"), \"traceback\",\n    true(), \"other_error\")\n| rex field=_raw \"instance ID '(?<instance_id>i-[0-9a-f]+)'\"\n| stats count as events dc(source) as streams dc(instance_id) as instances latest(_time) as last_time by tenant lambda_name category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        }
+    },
+    "defaults": {
+        "dataSources": {
+            "ds.search": {
+                "options": {
+                    "queryParameters": {
+                        "earliest": "$global_time.earliest$",
+                        "latest": "$global_time.latest$"
+                    }
+                }
+            }
+        }
+    },
+    "description": "Forge support Lambda errors, runner-tagging failures, trust validator errors, and Splunk ingestion retries.",
+    "inputs": {
+        "input_global_time": {
+            "options": {
+                "defaultValue": "-24h@h,now",
+                "token": "global_time"
+            },
+            "title": "Global Time Range",
+            "type": "input.timerange"
+        },
+        "input_lambda": {
+            "options": {
+                "defaultValue": "*",
+                "token": "lambda_name"
+            },
+            "title": "Lambda Name Contains",
+            "type": "input.text"
+        },
+        "input_tenant": {
+            "options": {
+                "defaultValue": "*",
+                "items": ${jsonencode(
+                    concat(
+                        [{ label = "All", value = "*" }],
+                        [for tenant in tenants : { label = tenant, value = tenant }]
+                    )
+                )},
+                "token": "tenant"
+            },
+            "title": "Forge Tenant",
+            "type": "input.dropdown"
+        }
+    },
+    "layout": {
+        "globalInputs": [
+            "input_global_time",
+            "input_tenant",
+            "input_lambda"
+        ],
+        "layoutDefinitions": {
+            "layout": {
+                "options": {
+                    "gutterSize": 9
+                },
+                "structure": [
+                    {
+                        "item": "lambda_errors_table",
+                        "position": {
+                            "h": 360,
+                            "w": 700,
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "lambda_error_trend_chart",
+                        "position": {
+                            "h": 360,
+                            "w": 500,
+                            "x": 700,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "runner_tag_failures_table",
+                        "position": {
+                            "h": 360,
+                            "w": 600,
+                            "x": 0,
+                            "y": 360
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "ingestion_retries_table",
+                        "position": {
+                            "h": 360,
+                            "w": 600,
+                            "x": 600,
+                            "y": 360
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "lambda_samples_table",
+                        "position": {
+                            "h": 420,
+                            "w": 1200,
+                            "x": 0,
+                            "y": 720
+                        },
+                        "type": "block"
+                    }
+                ],
+                "type": "grid"
+            }
+        },
+        "options": {},
+        "tabs": {
+            "items": [
+                {
+                    "label": "Lambda Operations",
+                    "layoutId": "layout"
+                }
+            ]
+        }
+    },
+    "title": "Forge Lambda Operations",
+    "visualizations": {
+        "ingestion_retries_table": {
+            "dataSources": {
+                "primary": "ingestion_retries_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Splunk S3 Runner Log Ingestion Retries",
+            "type": "splunk.table"
+        },
+        "lambda_error_trend_chart": {
+            "dataSources": {
+                "primary": "lambda_error_trend_search"
+            },
+            "options": {},
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Lambda Error Trend",
+            "type": "splunk.line"
+        },
+        "lambda_errors_table": {
+            "dataSources": {
+                "primary": "lambda_errors_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Lambda Errors by Category",
+            "type": "splunk.table"
+        },
+        "lambda_samples_table": {
+            "dataSources": {
+                "primary": "lambda_samples_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Latest Lambda Error Samples",
+            "type": "splunk.table"
+        },
+        "runner_tag_failures_table": {
+            "dataSources": {
+                "primary": "runner_tag_failures_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "EC2 Runner Tagging Failures",
+            "type": "splunk.table"
+        }
+    }
+}
