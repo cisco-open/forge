@@ -1,18 +1,18 @@
 locals {
-  forge_webhook_joblog_pipeline_definition = templatefile(
-    "${path.module}/template_files/forge_webhook_joblog_pipeline.json.tftpl",
+  forge_arc_k8s_runner_lifecycle_definition = templatefile(
+    "${path.module}/template_files/forge_arc_k8s_runner_lifecycle.json.tftpl",
     {
       splunk_index = var.splunk_conf.index,
       tenants      = sort(var.splunk_conf.tenant_names)
     }
   )
 
-  forge_webhook_joblog_pipeline_eai_data = <<EOF
+  forge_arc_k8s_runner_lifecycle_eai_data = <<EOF
 <dashboard version="2" theme="light">
-    <label>Forge Webhook Job Log Pipeline</label>
+    <label>Forge ARC K8S Runner Lifecycle</label>
     <description></description>
     <definition>
-        <![CDATA[${local.forge_webhook_joblog_pipeline_definition}]]>
+        <![CDATA[${local.forge_arc_k8s_runner_lifecycle_definition}]]>
     </definition>
     <meta type="hiddenElements">
         <![CDATA[
@@ -27,9 +27,9 @@ locals {
 EOF
 }
 
-resource "splunk_data_ui_views" "forge_webhook_joblog_pipeline" {
-  name     = "forge_webhook_joblog_pipeline"
-  eai_data = local.forge_webhook_joblog_pipeline_eai_data
+resource "splunk_data_ui_views" "forge_arc_k8s_runner_health" {
+  name     = "forge_arc_k8s_runner_health"
+  eai_data = local.forge_arc_k8s_runner_lifecycle_eai_data
 
   acl {
     app     = var.splunk_conf.acl.app

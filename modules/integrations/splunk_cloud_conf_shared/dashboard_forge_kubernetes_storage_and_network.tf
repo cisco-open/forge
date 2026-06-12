@@ -1,18 +1,18 @@
 locals {
-  forge_arc_dind_health_definition = templatefile(
-    "${path.module}/template_files/forge_arc_dind_health.json.tftpl",
+  forge_kubernetes_storage_and_network_definition = templatefile(
+    "${path.module}/template_files/forge_kubernetes_storage_and_network.json.tftpl",
     {
       splunk_index = var.splunk_conf.index,
       tenants      = sort(var.splunk_conf.tenant_names)
     }
   )
 
-  forge_arc_dind_health_eai_data = <<EOF
+  forge_kubernetes_storage_and_network_eai_data = <<EOF
 <dashboard version="2" theme="light">
-    <label>Forge ARC DIND Runner Lifecycle</label>
+    <label>Forge Kubernetes Storage and Network</label>
     <description></description>
     <definition>
-        <![CDATA[${local.forge_arc_dind_health_definition}]]>
+        <![CDATA[${local.forge_kubernetes_storage_and_network_definition}]]>
     </definition>
     <meta type="hiddenElements">
         <![CDATA[
@@ -27,9 +27,9 @@ locals {
 EOF
 }
 
-resource "splunk_data_ui_views" "forge_arc_dind_health" {
-  name     = "forge_arc_dind_health"
-  eai_data = local.forge_arc_dind_health_eai_data
+resource "splunk_data_ui_views" "forge_k8s_storage_network" {
+  name     = "forge_k8s_storage_network"
+  eai_data = local.forge_kubernetes_storage_and_network_eai_data
 
   acl {
     app     = var.splunk_conf.acl.app

@@ -1,18 +1,17 @@
 locals {
-  forge_k8s_storage_network_definition = templatefile(
-    "${path.module}/template_files/forge_k8s_storage_network.json.tftpl",
+  forge_tenant_logs_definition = templatefile(
+    "${path.module}/template_files/forge_tenant_logs.json.tftpl",
     {
       splunk_index = var.splunk_conf.index,
       tenants      = sort(var.splunk_conf.tenant_names)
     }
   )
-
-  forge_k8s_storage_network_eai_data = <<EOF
+  forge_tenant_logs_eai_data = <<EOF
 <dashboard version="2" theme="light">
-    <label>Forge Kubernetes Storage and Network</label>
+    <label>Forge Tenant Logs</label>
     <description></description>
     <definition>
-        <![CDATA[${local.forge_k8s_storage_network_definition}]]>
+        <![CDATA[${local.forge_tenant_logs_definition}]]>
     </definition>
     <meta type="hiddenElements">
         <![CDATA[
@@ -27,9 +26,9 @@ locals {
 EOF
 }
 
-resource "splunk_data_ui_views" "forge_k8s_storage_network" {
-  name     = "forge_k8s_storage_network"
-  eai_data = local.forge_k8s_storage_network_eai_data
+resource "splunk_data_ui_views" "tenant" {
+  name     = "tenant"
+  eai_data = local.forge_tenant_logs_eai_data
 
   acl {
     app     = var.splunk_conf.acl.app

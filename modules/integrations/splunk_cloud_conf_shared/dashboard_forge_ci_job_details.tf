@@ -1,17 +1,17 @@
 locals {
-  job_definition = templatefile(
-    "${path.module}/template_files/ci_jobs.json.tftpl",
+  forge_ci_job_details_definition = templatefile(
+    "${path.module}/template_files/forge_ci_job_details.json.tftpl",
     {
       splunk_index = var.splunk_conf.index,
       tenants      = sort(var.splunk_conf.tenant_names)
     }
   )
-  job_eai_data = <<EOF
+  forge_ci_job_details_eai_data = <<EOF
 <dashboard version="2" theme="light">
     <label>Forge CI Job Details</label>
     <description></description>
     <definition>
-        <![CDATA[${local.job_definition}]]>
+        <![CDATA[${local.forge_ci_job_details_definition}]]>
     </definition>
     <meta type="hiddenElements">
         <![CDATA[
@@ -28,7 +28,7 @@ EOF
 
 resource "splunk_data_ui_views" "ci_jobs" {
   name     = "ci_jobs"
-  eai_data = local.job_eai_data
+  eai_data = local.forge_ci_job_details_eai_data
 
   acl {
     app     = var.splunk_conf.acl.app

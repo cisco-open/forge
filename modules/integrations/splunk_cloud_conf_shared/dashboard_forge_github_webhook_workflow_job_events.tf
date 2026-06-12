@@ -1,5 +1,5 @@
 locals {
-  github_webhook_workflow_jobs_definition = jsonencode({
+  forge_github_webhook_workflow_job_events_definition = jsonencode({
     title       = "Forge GitHub Webhook Workflow Job Events"
     description = "Shows per-tenant GitHub workflow_job webhook health checks and event details."
     inputs = {
@@ -423,12 +423,12 @@ locals {
     }
   })
 
-  github_webhook_workflow_jobs_eai_data = <<EOF
+  forge_github_webhook_workflow_job_events_eai_data = <<EOF
 <dashboard version="2" theme="light">
     <label>Forge GitHub Webhook Workflow Job Events</label>
     <description></description>
     <definition>
-        <![CDATA[${local.github_webhook_workflow_jobs_definition}]]>
+        <![CDATA[${local.forge_github_webhook_workflow_job_events_definition}]]>
     </definition>
     <meta type="hiddenElements">
         <![CDATA[
@@ -445,7 +445,7 @@ EOF
 
 resource "splunk_data_ui_views" "github_webhook_workflow_jobs" {
   name     = "github_webhook_workflow_jobs"
-  eai_data = local.github_webhook_workflow_jobs_eai_data
+  eai_data = local.forge_github_webhook_workflow_job_events_eai_data
 
   acl {
     app     = var.splunk_conf.acl.app
