@@ -21,15 +21,10 @@ No modules.
 | Name | Type |
 | ---- | ---- |
 | [signalfx_dashboard.runner_ec2](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/dashboard) | resource |
-| [signalfx_list_chart.chart_active_ec2_runners_by_tenant](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
-| [signalfx_list_chart.chart_active_ec2_runners_by_tenant_and_instance_type](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
 | [signalfx_list_chart.chart_active_hosts_by_availability_zone](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
 | [signalfx_list_chart.chart_active_hosts_per_instance_type](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
 | [signalfx_list_chart.chart_disk_metrics_24h_change](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
 | [signalfx_list_chart.chart_disk_summary_utilization](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
-| [signalfx_list_chart.chart_ec2_runner_hours_by_tenant](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
-| [signalfx_list_chart.chart_ec2_runner_hours_by_tenant_and_instance_type](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
-| [signalfx_list_chart.chart_runner_totals_by_runtime](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
 | [signalfx_list_chart.chart_top_5_network_in_bytes](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
 | [signalfx_list_chart.chart_top_5_network_out_bytes](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
 | [signalfx_list_chart.chart_top_images_by_mean_cpu_utilization](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
@@ -38,7 +33,6 @@ No modules.
 | [signalfx_list_chart.chart_total_network_errors](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
 | [signalfx_single_value_chart.chart_active_hosts](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/single_value_chart) | resource |
 | [signalfx_single_value_chart.chart_hosts_with_agent_installed](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/single_value_chart) | resource |
-| [signalfx_time_chart.chart_active_hosts_by_tenant](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.chart_cpu_utilization](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.chart_disk_io_bytes](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.chart_disk_ops](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |

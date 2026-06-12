@@ -10,6 +10,18 @@ resource "signalfx_dashboard_group" "forgecicd" {
   }
 }
 
+resource "signalfx_dashboard_group" "forgecicd_impact" {
+  name        = "ForgeCICD Impact Dashboards"
+  description = "ForgeCICD adoption, usage, and showback dashboards."
+  teams       = [var.team]
+
+  lifecycle {
+    ignore_changes = [
+      import_qualifier
+    ]
+  }
+}
+
 # Core platform health
 module "dashboard_runner_ec2" {
   source = "./dashboards/runner_ec2"
@@ -82,6 +94,16 @@ module "dashboard_ebs" {
   tenant_names      = var.dashboard_variables.ebs.tenant_names
   dynamic_variables = var.dashboard_variables.ebs.dynamic_variables
   dashboard_group   = signalfx_dashboard_group.forgecicd.id
+}
+
+module "dashboard_forge_impact" {
+  source = "./dashboards/forge_impact"
+
+  providers = {
+    signalfx = signalfx
+  }
+
+  dashboard_group = signalfx_dashboard_group.forgecicd_impact.id
 }
 
 # Cost and usage
