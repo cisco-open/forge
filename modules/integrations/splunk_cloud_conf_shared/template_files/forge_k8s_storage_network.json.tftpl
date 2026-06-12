@@ -18,11 +18,35 @@
             },
             "type": "ds.search"
         },
+        "calico_tigera_health_search": {
+            "name": "Calico and Tigera health",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype IN (\"kube:container:calico-node\",\"kube:container:calico-kube-controllers\",\"kube:container:calico-typha\",\"kube:container:tigera-operator\",\"kube:container:install-cni\")\n(\"Waiting for Tigera API server\" OR \"ResourceNotReady\" OR \"unexpected type for AllocationBlock\" OR \"Reporter is not ready\" OR \"BIRD is not ready\" OR \"bird is not ready\" OR \"bgp not established\" OR \"FailedCreatePodSandBox\" OR NetworkPluginNotReady OR \"failed to\" OR \"Failed to\" OR \"level\":\"error\" OR \"level=error\" OR \"connection refused\" OR \"i/o timeout\" OR fatal OR panic OR unable)\n| rex field=source \"/var/log/pods/(?<namespace>[^_]+)_(?<pod>[^_]+)_[^/]+/(?<container>[^/]+)/\"\n| eval raw_l=lower(_raw)\n| eval category=case(\n    match(raw_l,\"waiting for tigera api server|resourcenotready|resource is not ready\"), \"tigera_api_not_ready\",\n    match(raw_l,\"unexpected type for allocationblock\"), \"ipam_allocation_block\",\n    match(raw_l,\"reporter is not ready|felix-cache\"), \"felix_or_typha_not_ready\",\n    match(raw_l,\"bird is not ready|bgp not established\"), \"bgp_or_bird\",\n    match(raw_l,\"failedcreatepodsandbox|networkpluginnotready\"), \"cni_pod_sandbox\",\n    match(raw_l,\"connection refused|i/o timeout|timeout\"), \"connectivity_timeout\",\n    match(raw_l,\"fatal|panic|level\\\":\\\"error|level=error|failed to|unable\"), \"error_failed\",\n    true(), \"other\")\n| where category!=\"other\"\n| eval sample=substr(replace(_raw,\"\\n.*$\",\"\"),1,240)\n| stats count as events dc(pod) as pods latest(sample) as sample latest(_time) as last_time by namespace container sourcetype category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
         "ebs_wait_search": {
             "name": "EBS provisioning waits",
             "options": {
                 "enableSmartSources": true,
                 "query": "index=\"${splunk_index}\" sourcetype=\"kube:events\" \"Waiting for a volume\"\n| eval sample=substr(_raw,1,260)\n| stats count as events dc(host) as hosts latest(_time) as last_time by sample\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "karpenter_controller_health_search": {
+            "name": "Karpenter controller health",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"kube:container:controller\" (namespace=karpenter OR source=\"*/karpenter_*\")\n| spath path=level output=level\n| spath path=message output=message\n| spath path=controller output=controller_name\n| spath path=NodeClaim.name output=nodeclaim\n| spath path=NodePool.name output=nodepool\n| eval severity=case(level=\"ERROR\", \"error\", level=\"WARN\" OR level=\"WARNING\", \"warning\", true(), \"info\")\n| eval category=case(\n    match(message,\"(?i)failed listing instance types\"), \"failed_listing_instance_types\",\n    match(message,\"(?i)created nodeclaim|launched nodeclaim|registered nodeclaim|initialized nodeclaim\"), \"nodeclaim_lifecycle\",\n    match(message,\"(?i)computed new nodeclaim\"), \"computed_nodeclaims\",\n    match(message,\"(?i)disrupting|tainted node|deleted node|deleted nodeclaim\"), \"disruption_or_termination\",\n    match(message,\"(?i)watch ended with error\"), \"watch_ended_with_error\",\n    match(message,\"(?i)reconciler error\"), \"reconciler_error\",\n    true(), \"other\")\n| where severity!=\"info\" OR category!=\"other\"\n| stats count as events dc(nodeclaim) as nodeclaims dc(nodepool) as nodepools latest(_time) as last_time by severity category controller_name message\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort severity - events\n| head 100\n",
                 "queryParameters": {
                     "earliest": "$global_time.earliest$",
                     "latest": "$global_time.latest$"
@@ -79,7 +103,7 @@
             }
         }
     },
-    "description": "Kubernetes storage, scheduling, CNI, image-pull, and EKS API storage/controller error patterns.",
+    "description": "Kubernetes storage, scheduling, CNI, image-pull, Karpenter, Calico/Tigera, and EKS API storage/controller error patterns.",
     "inputs": {
         "input_category": {
             "options": {
@@ -158,6 +182,26 @@
                             "y": 720
                         },
                         "type": "block"
+                    },
+                    {
+                        "item": "karpenter_controller_health_table",
+                        "position": {
+                            "h": 420,
+                            "w": 600,
+                            "x": 0,
+                            "y": 1140
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "calico_tigera_health_table",
+                        "position": {
+                            "h": 420,
+                            "w": 600,
+                            "x": 600,
+                            "y": 1140
+                        },
+                        "type": "block"
                     }
                 ],
                 "type": "grid"
@@ -197,6 +241,30 @@
             "showLastUpdated": true,
             "showProgressBar": false,
             "title": "EBS Provisioning Waits",
+            "type": "splunk.table"
+        },
+        "calico_tigera_health_table": {
+            "dataSources": {
+                "primary": "calico_tigera_health_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Calico and Tigera Health",
+            "type": "splunk.table"
+        },
+        "karpenter_controller_health_table": {
+            "dataSources": {
+                "primary": "karpenter_controller_health_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Karpenter Controller Health",
             "type": "splunk.table"
         },
         "kube_event_categories_table": {
