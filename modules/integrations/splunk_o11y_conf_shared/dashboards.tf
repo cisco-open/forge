@@ -103,6 +103,7 @@ module "dashboard_forge_impact" {
     signalfx = signalfx
   }
 
+  tenant_names    = var.dashboard_variables.runner_k8s.tenant_names
   dashboard_group = signalfx_dashboard_group.forgecicd_impact.id
 }
 

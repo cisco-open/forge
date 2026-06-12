@@ -10,7 +10,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | < 10.0.0 |
+| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.1 |
 
 ## Modules
 
@@ -35,6 +35,7 @@ No modules.
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_dashboard_group"></a> [dashboard\_group](#input\_dashboard\_group) | Dashboard group name for organizing dashboards. | `string` | n/a | yes |
+| <a name="input_tenant_names"></a> [tenant\_names](#input\_tenant\_names) | Tenant namespaces that run Forge ARC runners. | `list(string)` | n/a | yes |
 
 ## Outputs
 

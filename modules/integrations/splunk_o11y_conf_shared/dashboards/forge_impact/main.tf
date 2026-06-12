@@ -1,10 +1,18 @@
+locals {
+  k8s_tenant_namespace_filter = length(var.tenant_names) > 0 ? join(" or ", [
+    for namespace in sort(var.tenant_names) : "filter('k8s.namespace.name', '${namespace}')"
+  ]) : "filter('k8s.namespace.name', '*')"
+
+  k8s_runner_container_filter = "filter('k8s.container.name', 'runner') and (${local.k8s_tenant_namespace_filter})"
+}
+
 resource "signalfx_list_chart" "runner_totals_by_runtime" {
   name        = "Runner totals by runtime"
   description = "Shows total active EC2 runner instances and running K8S runner pods."
 
   program_text = <<-EOF
 A = data('CPUUtilization', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=2).max(by=['aws_instance_id']).count().publish(label='EC2 runners')
-B = data('k8s.pod.phase', filter=filter('k8s.pod.name', '*-runner-*'), rollup='latest').between(1.5, 2.5, low_inclusive=True, high_inclusive=True).count().publish(label='K8S runner pods')
+B = data('k8s.container.ready', filter=(${local.k8s_runner_container_filter}), rollup='latest').sum(by=['k8s.pod.uid']).above(0, inclusive=False).count().publish(label='K8S runner pods')
 EOF
 
   sort_by = "-value"
@@ -198,7 +206,7 @@ resource "signalfx_list_chart" "k8s_runners_by_tenant" {
   name        = "# K8S runners per tenant"
   description = "Counts running ARC runner pods by tenant namespace."
 
-  program_text = "A = data('k8s.pod.phase', filter=filter('k8s.pod.name', '*-runner-*'), rollup='latest').between(1.5, 2.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.namespace.name']).publish(label='A')"
+  program_text = "A = data('k8s.container.ready', filter=(${local.k8s_runner_container_filter}), rollup='latest').sum(by=['k8s.namespace.name', 'k8s.pod.uid']).above(0, inclusive=False).count(by=['k8s.namespace.name']).publish(label='A')"
 
   sort_by = "-value"
 
@@ -227,7 +235,7 @@ resource "signalfx_list_chart" "k8s_runner_hours_by_tenant" {
   name        = "K8S runner-hours by tenant (24h)"
   description = "Estimates K8S runner-hours by tenant from average running ARC runner pods over the last 24 hours."
 
-  program_text = "A = data('k8s.pod.phase', filter=filter('k8s.pod.name', '*-runner-*'), rollup='latest').between(1.5, 2.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.namespace.name']).mean(over='24h').scale(24).publish(label='A')"
+  program_text = "A = data('k8s.container.ready', filter=(${local.k8s_runner_container_filter}), rollup='latest').sum(by=['k8s.namespace.name', 'k8s.pod.uid']).above(0, inclusive=False).count(by=['k8s.namespace.name']).mean(over='24h').scale(24).publish(label='A')"
 
   sort_by = "-value"
 
