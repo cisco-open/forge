@@ -123,7 +123,7 @@ locals {
             | spath path=github.started_at output=started_at
             | where github_event="workflow_job"
             | where "$tenant$"="*" OR forgecicd_tenant="$tenant$"
-            | where "$repository$"="*" OR like(repository, replace("$repository$", "*", "%"))
+            | where "$repository$"="*" OR like(repository, "%$repository$%")
             | eval started_epoch=strptime(started_at, "%Y-%m-%dT%H:%M:%SZ")
             | stats latest(_time) as last_seen latest(action) as latest_action latest(status) as latest_status latest(conclusion) as latest_conclusion latest(started_epoch) as latest_started_epoch by forgecicd_tenant workflow_job_id repository job
             | eval stuck=if(latest_status!="completed" AND isnotnull(latest_started_epoch) AND latest_started_epoch<=relative_time(now(), "-5m"), 1, 0)
@@ -156,7 +156,7 @@ locals {
             | spath path=github.started_at output=started_at
             | where github_event="workflow_job"
             | where "$tenant$"="*" OR forgecicd_tenant="$tenant$"
-            | where "$repository$"="*" OR like(repository, replace("$repository$", "*", "%"))
+            | where "$repository$"="*" OR like(repository, "%$repository$%")
             | eval started_epoch=strptime(started_at, "%Y-%m-%dT%H:%M:%SZ")
             | stats latest(_time) as last_seen latest(action) as latest_action latest(status) as latest_status latest(conclusion) as latest_conclusion latest(started_at) as started_at latest(started_epoch) as latest_started_epoch by forgecicd_tenant workflow_job_id repository job
             | eval age_sec=now()-latest_started_epoch
@@ -191,7 +191,7 @@ locals {
             | spath path=github.github-delivery output=delivery_id
             | where github_event="workflow_job" AND status="completed" AND conclusion="failure"
             | where "$tenant$"="*" OR forgecicd_tenant="$tenant$"
-            | where "$repository$"="*" OR like(repository, replace("$repository$", "*", "%"))
+            | where "$repository$"="*" OR like(repository, "%$repository$%")
             | eval started_epoch=strptime(started_at, "%Y-%m-%dT%H:%M:%SZ")
             | eval completed_epoch=strptime(completed_at, "%Y-%m-%dT%H:%M:%SZ")
             | eval duration=if(isnotnull(completed_epoch) AND isnotnull(started_epoch), tostring(completed_epoch-started_epoch, "duration"), null())
@@ -223,7 +223,7 @@ locals {
             | spath path=github.github-delivery output=delivery_id
             | where github_event="workflow_job" AND status="completed" AND conclusion="cancelled"
             | where "$tenant$"="*" OR forgecicd_tenant="$tenant$"
-            | where "$repository$"="*" OR like(repository, replace("$repository$", "*", "%"))
+            | where "$repository$"="*" OR like(repository, "%$repository$%")
             | eval started_epoch=strptime(started_at, "%Y-%m-%dT%H:%M:%SZ")
             | eval completed_epoch=strptime(completed_at, "%Y-%m-%dT%H:%M:%SZ")
             | eval duration=if(isnotnull(completed_epoch) AND isnotnull(started_epoch), tostring(completed_epoch-started_epoch, "duration"), null())
@@ -257,7 +257,7 @@ locals {
             | spath path=github.github-hook-installation-target-id output=installation_target_id
             | where github_event="workflow_job"
             | where "$tenant$"="*" OR forgecicd_tenant="$tenant$"
-            | where "$repository$"="*" OR like(repository, replace("$repository$", "*", "%"))
+            | where "$repository$"="*" OR like(repository, "%$repository$%")
             | eval aws_region=coalesce(aws_region, region, Region)
             | eval aws_request_id='aws-request-id'
             | eval started_epoch=strptime(started_at, "%Y-%m-%dT%H:%M:%SZ")

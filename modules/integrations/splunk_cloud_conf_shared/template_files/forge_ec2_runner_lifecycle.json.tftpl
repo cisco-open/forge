@@ -66,6 +66,18 @@
             },
             "type": "ds.search"
         },
+        "runner_version_search": {
+            "name": "EC2 runner versions",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs:forgecicd\" source=\"*:/github-self-hosted-runners/*/forge-logs:*/runner\" \"Current runner version\"\n| rex field=source \"^[^:]+:/github-self-hosted-runners/(?<runner_pool>[^/]+)/forge-logs:(?<source_instance_id>i-[^/]+)/(?<source_log_type>[^/]+)$\"\n| rex field=runner_pool \"^(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-(?<source_runner_type>.+)$\"\n| rex field=_raw \"Current runner version: '?([^0-9]*(?<runner_version>[0-9][^' ]+))\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant)\n| eval runner_type=coalesce(forgecicd_runner_type, source_runner_type, runner_pool)\n| eval ec2_instance_id=coalesce(forgecicd_instance_id, source_instance_id)\n| eval log_type=coalesce(forgecicd_log_type, source_log_type)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$runner_pool$\"=\"*\" OR like(runner_pool, \"%$runner_pool$%\") OR like(runner_type, \"%$runner_pool$%\")\n| stats count as events dc(ec2_instance_id) as instances values(log_type) as log_types latest(_time) as last_time by tenant runner_pool runner_type runner_version\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort tenant runner_pool runner_type - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
         "scale_capacity_search": {
             "name": "Scale capacity and AWS API errors",
             "options": {
@@ -195,6 +207,16 @@
                             "y": 720
                         },
                         "type": "block"
+                    },
+                    {
+                        "item": "runner_version_table",
+                        "position": {
+                            "h": 360,
+                            "w": 1200,
+                            "x": 0,
+                            "y": 1100
+                        },
+                        "type": "block"
                     }
                 ],
                 "type": "grid"
@@ -268,6 +290,18 @@
             "showLastUpdated": true,
             "showProgressBar": false,
             "title": "Runner Instance Log Symptoms",
+            "type": "splunk.table"
+        },
+        "runner_version_table": {
+            "dataSources": {
+                "primary": "runner_version_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Runner Versions",
             "type": "splunk.table"
         },
         "scale_capacity_table": {

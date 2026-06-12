@@ -8,7 +8,7 @@ locals {
   )
   job_eai_data = <<EOF
 <dashboard version="2" theme="light">
-    <label>CI Job Result</label>
+    <label>Forge CI Job Result</label>
     <description></description>
     <definition>
         <![CDATA[${local.job_definition}]]>

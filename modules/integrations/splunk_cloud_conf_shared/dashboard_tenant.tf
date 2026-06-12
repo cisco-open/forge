@@ -8,7 +8,7 @@ locals {
   )
   tenant_eai_data = <<EOF
 <dashboard version="2" theme="light">
-    <label>Tenant Logs</label>
+    <label>Forge Tenant Logs</label>
     <description></description>
     <definition>
         <![CDATA[${local.tenant_definition}]]>
