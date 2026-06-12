@@ -11,6 +11,7 @@
 | Name | Version |
 | ---- | ------- |
 | <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.1 |
+| <a name="provider_terraform"></a> [terraform](#provider\_terraform) | n/a |
 
 ## Modules
 
@@ -29,6 +30,7 @@ No modules.
 | [signalfx_list_chart.k8s_runners_by_tenant](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
 | [signalfx_list_chart.runner_totals_by_runtime](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
 | [signalfx_time_chart.active_ec2_runners_by_tenant_and_instance_type](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
+| [terraform_data.dashboard_parent](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data) | resource |
 
 ## Inputs
 
