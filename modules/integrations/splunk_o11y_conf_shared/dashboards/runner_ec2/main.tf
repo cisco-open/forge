@@ -1540,21 +1540,11 @@ resource "signalfx_list_chart" "chart_active_ec2_runners_by_tenant" {
 
   sort_by = "-value"
 
-  color_by                = "Scale"
   hide_missing_values     = true
   max_precision           = 0
   secondary_visualization = "Sparkline"
   time_range              = 900
   unit_prefix             = "Metric"
-
-  color_scale {
-    color = "blue"
-    gt    = 0
-  }
-  color_scale {
-    color = "red"
-    lte   = 0
-  }
 
   legend_options_fields {
     enabled  = true
@@ -1579,21 +1569,11 @@ resource "signalfx_list_chart" "chart_active_ec2_runners_by_tenant_and_instance_
 
   sort_by = "-value"
 
-  color_by                = "Scale"
   hide_missing_values     = true
   max_precision           = 0
   secondary_visualization = "Sparkline"
   time_range              = 900
   unit_prefix             = "Metric"
-
-  color_scale {
-    color = "blue"
-    gt    = 0
-  }
-  color_scale {
-    color = "red"
-    lte   = 0
-  }
 
   legend_options_fields {
     enabled  = true
@@ -1622,21 +1602,11 @@ resource "signalfx_list_chart" "chart_ec2_runner_hours_by_tenant" {
 
   sort_by = "-value"
 
-  color_by                = "Scale"
   hide_missing_values     = true
   max_precision           = 2
   secondary_visualization = "Sparkline"
   time_range              = 86400
   unit_prefix             = "Metric"
-
-  color_scale {
-    color = "blue"
-    gt    = 0
-  }
-  color_scale {
-    color = "red"
-    lte   = 0
-  }
 
   legend_options_fields {
     enabled  = true
@@ -1662,21 +1632,11 @@ resource "signalfx_list_chart" "chart_ec2_runner_hours_by_tenant_and_instance_ty
 
   sort_by = "-value"
 
-  color_by                = "Scale"
   hide_missing_values     = true
   max_precision           = 2
   secondary_visualization = "Sparkline"
   time_range              = 86400
   unit_prefix             = "Metric"
-
-  color_scale {
-    color = "blue"
-    gt    = 0
-  }
-  color_scale {
-    color = "red"
-    lte   = 0
-  }
 
   legend_options_fields {
     enabled  = true
@@ -1709,21 +1669,11 @@ EOF
 
   sort_by = "-value"
 
-  color_by                = "Scale"
   hide_missing_values     = true
   max_precision           = 0
   secondary_visualization = "Sparkline"
   time_range              = 900
   unit_prefix             = "Metric"
-
-  color_scale {
-    color = "blue"
-    gt    = 0
-  }
-  color_scale {
-    color = "red"
-    lte   = 0
-  }
 
   legend_options_fields {
     enabled  = false
