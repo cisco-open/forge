@@ -66,7 +66,7 @@ locals {
         }
         showLastUpdated = true
         showProgressBar = false
-        title           = "Stuck Jobs > 5 Minutes"
+        title           = "Queued Jobs > 5 Minutes"
         type            = "splunk.table"
       }
       failed_jobs_table = {
@@ -120,15 +120,21 @@ locals {
             | spath path=github.conclusion output=conclusion
             | spath path=github.name output=job
             | spath path=github.workflowJobId output=workflow_job_id
+            | spath path=github.created_at output=created_at
             | spath path=github.started_at output=started_at
             | where github_event="workflow_job"
             | where "$tenant$"="*" OR forgecicd_tenant="$tenant$"
             | where "$repository$"="*" OR like(repository, "%$repository$%")
-            | eval started_epoch=strptime(started_at, "%Y-%m-%dT%H:%M:%SZ")
-            | stats latest(_time) as last_seen latest(action) as latest_action latest(status) as latest_status latest(conclusion) as latest_conclusion latest(started_epoch) as latest_started_epoch by forgecicd_tenant workflow_job_id repository job
-            | eval stuck=if(latest_status!="completed" AND isnotnull(latest_started_epoch) AND latest_started_epoch<=relative_time(now(), "-5m"), 1, 0)
+            | eval workflow_status=coalesce(status, action)
+            | eval created_epoch=strptime(created_at, "%Y-%m-%dT%H:%M:%SZ")
+            | eval queued_epoch=if(workflow_status="queued", coalesce(created_epoch, _time), null())
+            | eval queued_seen_at=if(workflow_status="queued", _time, null())
+            | eval terminal_seen_at=if(workflow_status="completed" OR match(conclusion, "^(success|failure|cancelled|canceled|skipped|timed_out|action_required|neutral)$"), _time, null())
+            | stats latest(_time) as last_seen latest(action) as latest_action latest(workflow_status) as latest_status latest(conclusion) as latest_conclusion max(queued_epoch) as queued_epoch max(queued_seen_at) as queued_seen_at max(terminal_seen_at) as terminal_seen_at by forgecicd_tenant workflow_job_id repository job
+            | eval age_sec=now()-queued_epoch
+            | eval stuck=if(latest_status="queued" AND isnotnull(queued_epoch) AND age_sec>300 AND (isnull(terminal_seen_at) OR terminal_seen_at<queued_seen_at), 1, 0)
             | eval failed=if(latest_status="completed" AND latest_conclusion="failure", 1, 0)
-            | eval canceled=if(latest_status="completed" AND latest_conclusion="cancelled", 1, 0)
+            | eval canceled=if(latest_status="completed" AND (latest_conclusion="cancelled" OR latest_conclusion="canceled"), 1, 0)
             | stats sum(stuck) as stuck_jobs_over_5m sum(failed) as failed_jobs sum(canceled) as canceled_jobs count as workflow_jobs by forgecicd_tenant
             | where stuck_jobs_over_5m>0 OR failed_jobs>0 OR canceled_jobs>0
             | sort - stuck_jobs_over_5m - failed_jobs - canceled_jobs
@@ -153,17 +159,23 @@ locals {
             | spath path=github.conclusion output=conclusion
             | spath path=github.name output=job
             | spath path=github.workflowJobId output=workflow_job_id
+            | spath path=github.created_at output=created_at
             | spath path=github.started_at output=started_at
             | where github_event="workflow_job"
             | where "$tenant$"="*" OR forgecicd_tenant="$tenant$"
             | where "$repository$"="*" OR like(repository, "%$repository$%")
-            | eval started_epoch=strptime(started_at, "%Y-%m-%dT%H:%M:%SZ")
-            | stats latest(_time) as last_seen latest(action) as latest_action latest(status) as latest_status latest(conclusion) as latest_conclusion latest(started_at) as started_at latest(started_epoch) as latest_started_epoch by forgecicd_tenant workflow_job_id repository job
-            | eval age_sec=now()-latest_started_epoch
-            | where latest_status!="completed" AND isnotnull(latest_started_epoch) AND age_sec>300
+            | eval workflow_status=coalesce(status, action)
+            | eval created_epoch=strptime(created_at, "%Y-%m-%dT%H:%M:%SZ")
+            | eval queued_epoch=if(workflow_status="queued", coalesce(created_epoch, _time), null())
+            | eval queued_seen_at=if(workflow_status="queued", _time, null())
+            | eval terminal_seen_at=if(workflow_status="completed" OR match(conclusion, "^(success|failure|cancelled|canceled|skipped|timed_out|action_required|neutral)$"), _time, null())
+            | stats latest(_time) as last_seen latest(action) as latest_action latest(workflow_status) as latest_status latest(conclusion) as latest_conclusion latest(created_at) as queued_at max(queued_epoch) as queued_epoch max(queued_seen_at) as queued_seen_at max(terminal_seen_at) as terminal_seen_at by forgecicd_tenant workflow_job_id repository job
+            | eval age_sec=now()-queued_epoch
+            | where latest_status="queued" AND isnotnull(queued_epoch) AND age_sec>300 AND (isnull(terminal_seen_at) OR terminal_seen_at<queued_seen_at)
             | eval age=tostring(age_sec, "duration")
+            | eval queued_at=coalesce(queued_at, strftime(queued_epoch, "%Y-%m-%dT%H:%M:%SZ"))
             | eval last_seen=strftime(last_seen, "%Y-%m-%d %H:%M:%S")
-            | table forgecicd_tenant repository job workflow_job_id latest_action latest_status started_at age last_seen
+            | table forgecicd_tenant repository job workflow_job_id latest_action latest_status latest_conclusion queued_at age last_seen
             | sort - age_sec
           EOT
           queryParameters = {

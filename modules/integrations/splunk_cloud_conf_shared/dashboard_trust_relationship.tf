@@ -8,7 +8,7 @@ locals {
   )
   trust_relationship_validation_eai_data = <<EOF
 <dashboard version="2" theme="light">
-    <label>Trust Relationship Validation</label>
+    <label>Forge Trust Relationship Validation</label>
     <description></description>
     <definition>
         <![CDATA[${local.trust_relationship_validation_definition}]]>
