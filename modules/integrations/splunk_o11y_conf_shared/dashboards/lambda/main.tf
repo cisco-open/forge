@@ -681,7 +681,7 @@ resource "signalfx_dashboard" "lambda" {
     description            = ""
     values                 = []
     value_required         = false
-    values_suggested       = var.tenant_names
+    values_suggested       = sort(var.tenant_names)
     restricted_suggestions = true
   }
 

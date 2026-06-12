@@ -10,7 +10,7 @@ locals {
   ]) : "filter('k8s.cluster.name', '__forge_cluster_scope_not_configured__')"
 
   k8s_tenant_namespace_filter = length(var.tenant_names) > 0 ? join(" or ", [
-    for namespace in var.tenant_names : "filter('k8s.namespace.name', '${namespace}')"
+    for namespace in sort(var.tenant_names) : "filter('k8s.namespace.name', '${namespace}')"
   ]) : "filter('k8s.namespace.name', '*')"
   k8s_tenant_filter = "(${local.k8s_cluster_filter}) and (${local.k8s_tenant_namespace_filter})"
 

@@ -33,6 +33,7 @@ No modules.
 | [signalfx_list_chart.chart_total_network_errors](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
 | [signalfx_single_value_chart.chart_active_hosts](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/single_value_chart) | resource |
 | [signalfx_single_value_chart.chart_hosts_with_agent_installed](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/single_value_chart) | resource |
+| [signalfx_time_chart.chart_active_hosts_by_tenant](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.chart_cpu_utilization](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.chart_disk_io_bytes](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.chart_disk_ops](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
@@ -42,6 +43,7 @@ No modules.
 | [signalfx_time_chart.chart_network_in_bytes_vs_24h_change](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.chart_network_out_bytes](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.chart_network_out_bytes_vs_24h_change](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
+| [signalfx_time_chart.chart_status_check_failures](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.chart_total_memory_overview_bytes](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 
 ## Inputs

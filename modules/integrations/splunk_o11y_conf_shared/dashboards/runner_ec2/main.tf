@@ -383,10 +383,6 @@ EOF
   }
   legend_options_fields {
     enabled  = true
-    property = "cloud.region"
-  }
-  legend_options_fields {
-    enabled  = true
     property = "cloud.provider"
   }
   legend_options_fields {
@@ -757,10 +753,6 @@ EOF
   legend_options_fields {
     enabled  = true
     property = "sf_metric"
-  }
-  legend_options_fields {
-    enabled  = true
-    property = "cloud.region"
   }
   legend_options_fields {
     enabled  = true
@@ -1343,10 +1335,6 @@ EOF
   }
   legend_options_fields {
     enabled  = true
-    property = "cloud.region"
-  }
-  legend_options_fields {
-    enabled  = true
     property = "cloud.provider"
   }
   legend_options_fields {
@@ -1506,6 +1494,80 @@ resource "signalfx_list_chart" "chart_top_5_network_in_bytes" {
   }
 }
 
+resource "signalfx_time_chart" "chart_active_hosts_by_tenant" {
+  name        = "Active hosts by tenant and instance type"
+  description = "Tracks active EC2 runner host count over time by tenant and instance type."
+
+  program_text = <<-EOF
+A = data('CPUUtilization', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=5).max(over='5m').count(by=['aws_tag_TenantName', 'aws_instance_type']).publish(label='A')
+EOF
+
+  plot_type        = "LineChart"
+  axes_precision   = 0
+  disable_sampling = false
+  show_event_lines = false
+  time_range       = 900
+  unit_prefix      = "Metric"
+
+  axis_left {
+    label = "Hosts"
+  }
+
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_instance_type"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
+  }
+
+  viz_options {
+    display_name = "Active hosts"
+    label        = "A"
+  }
+}
+
+resource "signalfx_time_chart" "chart_status_check_failures" {
+  name        = "EC2 status check failures"
+  description = "Shows EC2 instance and system status check failures for runner hosts."
+
+  program_text = <<-EOF
+A = data('StatusCheckFailed', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'maximum'), rollup='max').sum(by=['aws_tag_TenantName', 'aws_instance_id']).publish(label='Any failure')
+B = data('StatusCheckFailed_Instance', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'maximum'), rollup='max').sum(by=['aws_tag_TenantName', 'aws_instance_id']).publish(label='Instance failure')
+C = data('StatusCheckFailed_System', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'maximum'), rollup='max').sum(by=['aws_tag_TenantName', 'aws_instance_id']).publish(label='System failure')
+EOF
+
+  plot_type                 = "LineChart"
+  axes_precision            = 0
+  disable_sampling          = false
+  on_chart_legend_dimension = "plot_label"
+  show_event_lines          = false
+  time_range                = 900
+  unit_prefix               = "Metric"
+
+  axis_left {
+    label = "Failures"
+  }
+
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_instance_id"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
+  }
+}
+
 resource "signalfx_dashboard" "runner_ec2" {
   name            = "EC2 Runners"
   description     = "EC2-based GitHub Actions runners: CPU, memory, disk, and network."
@@ -1517,7 +1579,7 @@ resource "signalfx_dashboard" "runner_ec2" {
     description            = ""
     values                 = []
     value_required         = false
-    values_suggested       = var.tenant_names
+    values_suggested       = sort(var.tenant_names)
     restricted_suggestions = true
   }
 
@@ -1697,6 +1759,22 @@ resource "signalfx_dashboard" "runner_ec2" {
     row      = 6
     column   = 4
     width    = 4
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_time_chart.chart_active_hosts_by_tenant.id
+    row      = 7
+    column   = 0
+    width    = 6
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_time_chart.chart_status_check_failures.id
+    row      = 7
+    column   = 6
+    width    = 6
     height   = 1
   }
 

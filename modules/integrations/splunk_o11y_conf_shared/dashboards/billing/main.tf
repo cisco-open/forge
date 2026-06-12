@@ -4,8 +4,8 @@ resource "signalfx_time_chart" "cost_per_service" {
 
   program_text = <<-EOF
 A = data('forge.per_service.cost_usd')
-B = A.max(by=['usage_date', 'service', 'forgecicd_tenant','usage_month', 'usage_year'])
-C = B.sum(by=['service', 'forgecicd_tenant','usage_month', 'usage_year'])
+B = A.max(by=['usage_date', 'service', 'forgecicd_tenant', 'usage_month', 'usage_year'])
+C = B.sum(by=['service', 'forgecicd_tenant', 'usage_month', 'usage_year'])
 
 # publish both current and baseline
 C.publish(label='current')
@@ -35,8 +35,8 @@ resource "signalfx_time_chart" "net_cost_per_service" {
 
   program_text = <<-EOF
 A = data('forge.per_service.net_cost_usd')
-B = A.max(by=['usage_date', 'service', 'forgecicd_tenant','usage_month', 'usage_year'])
-C = B.sum(by=['service', 'forgecicd_tenant','usage_month', 'usage_year'])  # removes usage_date from label
+B = A.max(by=['usage_date', 'service', 'forgecicd_tenant', 'usage_month', 'usage_year'])
+C = B.sum(by=['service', 'forgecicd_tenant', 'usage_month', 'usage_year'])  # removes usage_date from label
 
 # publish both current and baseline
 C.publish(label='current')
@@ -65,8 +65,8 @@ resource "signalfx_time_chart" "net_cost_per_tenant" {
 
   program_text = <<-EOF
 A = data('forge.per_service.net_cost_usd')
-B = A.max(by=['usage_date', 'service', 'forgecicd_tenant','usage_month', 'usage_year'])
-C = B.sum(by=['forgecicd_tenant','usage_month', 'usage_year'])
+B = A.max(by=['usage_date', 'service', 'forgecicd_tenant', 'usage_month', 'usage_year'])
+C = B.sum(by=['forgecicd_tenant', 'usage_month', 'usage_year'])
 D = C.timeshift('29d')
 
 # publish both current and baseline
@@ -97,8 +97,8 @@ resource "signalfx_time_chart" "cost_per_tenant" {
 
   program_text = <<-EOF
 A = data('forge.per_service.cost_usd')
-B = A.max(by=['usage_date', 'service', 'forgecicd_tenant','usage_month', 'usage_year'])
-C = B.sum(by=['forgecicd_tenant','usage_month', 'usage_year'])
+B = A.max(by=['usage_date', 'service', 'forgecicd_tenant', 'usage_month', 'usage_year'])
+C = B.sum(by=['forgecicd_tenant', 'usage_month', 'usage_year'])
 D = C.timeshift('29d')
 
 # publish both current and baseline
@@ -131,8 +131,8 @@ resource "signalfx_time_chart" "total_cost" {
   program_text = <<-EOF
 A = data('forge.per_service.cost_usd')
 
-# Take max per day/service/tenant, carrying forward last value if missing
-B = A.max(by=['usage_date', 'service', 'forgecicd_tenant','usage_month', 'usage_year'])
+# Take max per daily cost stream before collapsing to the total
+B = A.max(by=['usage_date', 'service', 'forgecicd_tenant', 'usage_month', 'usage_year'])
 
 # Sum by month, still carrying forward where needed
 C = B.sum(by=['usage_month', 'usage_year'])
@@ -176,8 +176,8 @@ resource "signalfx_time_chart" "total_net_cost" {
   program_text = <<-EOF
 A = data('forge.per_service.net_cost_usd')
 
-# Take max per day/service/tenant, carrying forward last value if missing
-B = A.max(by=['usage_date', 'service', 'forgecicd_tenant','usage_month', 'usage_year'])
+# Take max per daily cost stream before collapsing to the total
+B = A.max(by=['usage_date', 'service', 'forgecicd_tenant', 'usage_month', 'usage_year'])
 
 # Sum by month, still carrying forward where needed
 C = B.sum(by=['usage_month', 'usage_year'])
@@ -207,6 +207,73 @@ EOF
   }
 }
 
+resource "signalfx_time_chart" "runner_related_net_cost" {
+  name        = "Runner-related net cost"
+  description = "Shows net cost for AWS services that commonly back Forge runners and the job-log pipeline."
+
+  program_text = <<-EOF
+A = data('forge.per_service.net_cost_usd', filter=filter('service', 'AmazonEC2', 'AmazonEKS', 'AWSLambda', 'AmazonSQS', 'AmazonDynamoDB', 'AmazonS3', 'AmazonVPC', 'AmazonCloudWatch', 'awskms', 'AWSSecretsManager', 'AmazonECR'))
+B = A.max(by=['usage_date', 'service', 'forgecicd_tenant', 'usage_month', 'usage_year'])
+C = B.sum(by=['service', 'forgecicd_tenant', 'usage_month', 'usage_year'])
+C.publish(label='current')
+EOF
+
+  plot_type      = "AreaChart"
+  axes_precision = 0
+  time_range     = 3600
+
+  on_chart_legend_dimension = "service"
+
+  histogram_options {
+    color_theme = "gold"
+  }
+
+  viz_options {
+    axis         = "left"
+    color        = "blue"
+    display_name = "current"
+    label        = "current"
+  }
+}
+
+resource "signalfx_list_chart" "top_tenant_service_net_cost" {
+  name        = "Top tenant/service net cost"
+  description = "Ranks tenant and service combinations by current net cost."
+
+  program_text = <<-EOF
+A = data('forge.per_service.net_cost_usd')
+B = A.max(by=['usage_date', 'service', 'forgecicd_tenant', 'usage_month', 'usage_year'])
+C = B.sum(by=['forgecicd_tenant', 'service']).top(count=20).publish(label='A')
+EOF
+
+  sort_by = "-value"
+
+  disable_sampling        = false
+  hide_missing_values     = true
+  max_precision           = 4
+  secondary_visualization = "None"
+  time_range              = 3600
+  unit_prefix             = "Metric"
+
+  legend_options_fields {
+    enabled  = true
+    property = "forgecicd_tenant"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "service"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
+  }
+
+  viz_options {
+    display_name = "Net cost"
+    label        = "A"
+  }
+}
+
 resource "signalfx_dashboard" "billing" {
   name            = "Billing"
   description     = "Forge CICD cost and net cost by service and tenant."
@@ -220,7 +287,7 @@ resource "signalfx_dashboard" "billing" {
     description            = ""
     values                 = []
     value_required         = false
-    values_suggested       = var.tenant_names
+    values_suggested       = sort(var.tenant_names)
     restricted_suggestions = true
   }
 
@@ -282,6 +349,22 @@ resource "signalfx_dashboard" "billing" {
   chart {
     chart_id = signalfx_time_chart.total_net_cost.id
     row      = 2
+    column   = 6
+    width    = 6
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_time_chart.runner_related_net_cost.id
+    row      = 3
+    column   = 0
+    width    = 6
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_list_chart.top_tenant_service_net_cost.id
+    row      = 3
     column   = 6
     width    = 6
     height   = 1
