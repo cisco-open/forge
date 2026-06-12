@@ -554,6 +554,37 @@ resource "signalfx_list_chart" "k8s_runners_by_tenant" {
   }
 }
 
+resource "signalfx_list_chart" "k8s_runner_hours_by_tenant" {
+  name        = "K8S runner-hours by tenant (24h)"
+  description = "Estimates K8S runner-hours by tenant from average running ARC runner pods over the last 24 hours."
+
+  program_text = "A = data('k8s.pod.phase', filter=filter('k8s.pod.name', '*-runner-*'), rollup='latest').between(1.5, 2.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.namespace.name']).mean(over='24h').scale(24).publish(label='A')"
+
+  sort_by = "-value"
+
+  color_by                = "Scale"
+  hide_missing_values     = true
+  max_precision           = 2
+  secondary_visualization = "Sparkline"
+  time_range              = 86400
+  unit_prefix             = "Metric"
+
+  legend_options_fields {
+    enabled  = true
+    property = "k8s.namespace.name"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
+  }
+
+  viz_options {
+    display_name = "K8S runner-hours"
+    label        = "A"
+    value_unit   = "Hour"
+  }
+}
+
 
 resource "signalfx_dashboard" "runner_k8s" {
   name            = "K8S Runners"
@@ -700,6 +731,14 @@ resource "signalfx_dashboard" "runner_k8s" {
 
   chart {
     chart_id = signalfx_list_chart.k8s_runners_by_tenant.id
+    row      = 4
+    column   = 0
+    width    = 3
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_list_chart.k8s_runner_hours_by_tenant.id
     row      = 4
     column   = 3
     width    = 3
