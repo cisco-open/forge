@@ -1532,6 +1532,70 @@ EOF
   }
 }
 
+resource "signalfx_list_chart" "chart_active_ec2_runners_by_tenant" {
+  name        = "# EC2 runners per tenant"
+  description = "Counts active EC2 runner instances by tenant."
+
+  program_text = "A = data('CPUUtilization', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=2).max(by=['aws_instance_id', 'aws_tag_TenantName']).count(by=['aws_tag_TenantName']).publish(label='A')"
+
+  sort_by = "-value"
+
+  color_by                = "Scale"
+  hide_missing_values     = true
+  max_precision           = 0
+  secondary_visualization = "Sparkline"
+  time_range              = 900
+  unit_prefix             = "Metric"
+
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
+  }
+
+  viz_options {
+    display_name = "EC2 runners"
+    label        = "A"
+  }
+}
+
+resource "signalfx_list_chart" "chart_active_ec2_runners_by_tenant_and_instance_type" {
+  name        = "# EC2 runners by tenant and instance type"
+  description = "Counts active EC2 runner instances by tenant and EC2 instance type."
+
+  program_text = "A = data('CPUUtilization', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=2).max(by=['aws_instance_id', 'aws_tag_TenantName', 'aws_instance_type']).count(by=['aws_tag_TenantName', 'aws_instance_type']).publish(label='A')"
+
+  sort_by = "-value"
+
+  color_by                = "Scale"
+  hide_missing_values     = true
+  max_precision           = 0
+  secondary_visualization = "Sparkline"
+  time_range              = 900
+  unit_prefix             = "Metric"
+
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_instance_type"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
+  }
+
+  viz_options {
+    display_name = "EC2 runners"
+    label        = "A"
+  }
+}
+
 resource "signalfx_time_chart" "chart_status_check_failures" {
   name        = "EC2 status check failures"
   description = "Shows EC2 instance and system status check failures for runner hosts."
@@ -1773,6 +1837,22 @@ resource "signalfx_dashboard" "runner_ec2" {
   chart {
     chart_id = signalfx_time_chart.chart_status_check_failures.id
     row      = 7
+    column   = 6
+    width    = 6
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_list_chart.chart_active_ec2_runners_by_tenant.id
+    row      = 8
+    column   = 0
+    width    = 6
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_list_chart.chart_active_ec2_runners_by_tenant_and_instance_type.id
+    row      = 8
     column   = 6
     width    = 6
     height   = 1

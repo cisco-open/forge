@@ -524,6 +524,36 @@ EOF
   }
 }
 
+resource "signalfx_list_chart" "k8s_runners_by_tenant" {
+  name        = "# K8S runners per tenant"
+  description = "Counts running ARC runner pods by tenant namespace."
+
+  program_text = "A = data('k8s.pod.phase', filter=filter('k8s.pod.name', '*-runner-*'), rollup='latest').between(1.5, 2.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.namespace.name']).publish(label='A')"
+
+  sort_by = "-value"
+
+  color_by                = "Scale"
+  hide_missing_values     = true
+  max_precision           = 0
+  secondary_visualization = "Sparkline"
+  time_range              = 900
+  unit_prefix             = "Metric"
+
+  legend_options_fields {
+    enabled  = true
+    property = "k8s.namespace.name"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
+  }
+
+  viz_options {
+    display_name = "K8S runners"
+    label        = "A"
+  }
+}
+
 
 resource "signalfx_dashboard" "runner_k8s" {
   name            = "K8S Runners"
@@ -664,6 +694,14 @@ resource "signalfx_dashboard" "runner_k8s" {
     chart_id = signalfx_time_chart.k8s_otel_collector_pods.id
     row      = 3
     column   = 9
+    width    = 3
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_list_chart.k8s_runners_by_tenant.id
+    row      = 4
+    column   = 3
     width    = 3
     height   = 1
   }
