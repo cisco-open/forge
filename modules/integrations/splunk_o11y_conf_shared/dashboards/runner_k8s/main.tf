@@ -18,8 +18,8 @@ resource "signalfx_list_chart" "k8s_top_10_cpu_usage_per_pod" {
   description = "Pod name | Node name"
 
   program_text = <<-EOF
-A = data('container_cpu_utilization', rollup='rate').mean(by=['k8s.pod.name', 'k8s.node.name', 'k8s.cluster.name', 'k8s.pod.uid']).scale(0.01).top(count=10).publish(label='A')
-B = data('container.cpu.time').mean(by=['k8s.pod.name', 'k8s.node.name', 'k8s.cluster.name', 'k8s.pod.uid']).top(count=10).publish(label='B')
+A = data('container_cpu_utilization', rollup='rate').mean(by=['k8s.namespace.name', 'k8s.pod.name', 'k8s.node.name', 'k8s.cluster.name', 'k8s.pod.uid']).scale(0.01).top(count=10).publish(label='A')
+B = data('container.cpu.time').mean(by=['k8s.namespace.name', 'k8s.pod.name', 'k8s.node.name', 'k8s.cluster.name', 'k8s.pod.uid']).top(count=10).publish(label='B')
 EOF
 
   sort_by = "-value"
@@ -33,6 +33,10 @@ EOF
   legend_options_fields {
     enabled  = false
     property = "sf_metric"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "k8s.namespace.name"
   }
   legend_options_fields {
     enabled  = true
@@ -127,7 +131,7 @@ resource "signalfx_list_chart" "k8s_network_errors_per_sec" {
   name        = "Network errors / sec"
   description = ""
 
-  program_text = "A = data('k8s.pod.network.errors', filter=filter('k8s.cluster.name', '*') and filter('k8s.namespace.name', '*') and filter('k8s.deployment.name', '*', match_missing=True) and filter('sf_tags', '*', match_missing=True), rollup='rate').sum(by=['k8s.pod.name', 'k8s.cluster.name', 'k8s.node.name', 'k8s.pod.uid']).publish(label='A')"
+  program_text = "A = data('k8s.pod.network.errors', filter=filter('k8s.cluster.name', '*') and filter('k8s.namespace.name', '*') and filter('k8s.deployment.name', '*', match_missing=True) and filter('sf_tags', '*', match_missing=True), rollup='rate').sum(by=['k8s.namespace.name', 'k8s.pod.name', 'k8s.cluster.name', 'k8s.node.name', 'k8s.pod.uid']).publish(label='A')"
 
   sort_by = "-value"
 
@@ -136,6 +140,10 @@ resource "signalfx_list_chart" "k8s_network_errors_per_sec" {
   refresh_interval = 5
   time_range       = 900
 
+  legend_options_fields {
+    enabled  = true
+    property = "k8s.namespace.name"
+  }
   legend_options_fields {
     enabled  = true
     property = "k8s.pod.name"
@@ -259,7 +267,7 @@ resource "signalfx_list_chart" "k8s_top_10_pods_by_avg_memory_usage" {
   name        = "Top 10 pods by average memory usage (bytes)"
   description = "Pod name | Node name"
 
-  program_text = "A = data('container.memory.usage', filter=filter('k8s.cluster.name', '*') and filter('k8s.namespace.name', '*') and filter('k8s.deployment.name', '*', match_missing=True) and filter('sf_tags', '*', match_missing=True)).mean(by=['k8s.pod.name', 'k8s.node.name', 'k8s.cluster.name', 'k8s.pod.uid']).top(count=10).publish(label='A')"
+  program_text = "A = data('container.memory.usage', filter=filter('k8s.cluster.name', '*') and filter('k8s.namespace.name', '*') and filter('k8s.deployment.name', '*', match_missing=True) and filter('sf_tags', '*', match_missing=True)).mean(by=['k8s.namespace.name', 'k8s.pod.name', 'k8s.node.name', 'k8s.cluster.name', 'k8s.pod.uid']).top(count=10).publish(label='A')"
 
   sort_by = "-value"
 
@@ -270,6 +278,10 @@ resource "signalfx_list_chart" "k8s_top_10_pods_by_avg_memory_usage" {
   secondary_visualization = "None"
   time_range              = 900
 
+  legend_options_fields {
+    enabled  = true
+    property = "k8s.namespace.name"
+  }
   legend_options_fields {
     enabled  = true
     property = "k8s.pod.name"
@@ -307,11 +319,11 @@ resource "signalfx_list_chart" "k8s_pods_by_phase" {
   description = ""
 
   program_text = <<-EOF
-B = data('k8s.pod.phase', rollup='latest').between(1.5, 2.5, low_inclusive=True, high_inclusive=True).count().publish(label='B')
-A = data('k8s.pod.phase', rollup='latest').between(0, 1.5, low_inclusive=True, high_inclusive=True).count().publish(label='A')
-C = data('k8s.pod.phase', rollup='latest').between(2.5, 3.5, low_inclusive=True, high_inclusive=True).count().publish(label='C')
-D = data('k8s.pod.phase', rollup='latest').between(3.5, 4.5, low_inclusive=True, high_inclusive=True).count().publish(label='D')
-E = data('k8s.pod.phase', rollup='latest').between(4.5, 5.5, low_inclusive=True, high_inclusive=True).count().publish(label='E')
+B = data('k8s.pod.phase', rollup='latest').between(1.5, 2.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.namespace.name']).publish(label='B')
+A = data('k8s.pod.phase', rollup='latest').between(0, 1.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.namespace.name']).publish(label='A')
+C = data('k8s.pod.phase', rollup='latest').between(2.5, 3.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.namespace.name']).publish(label='C')
+D = data('k8s.pod.phase', rollup='latest').between(3.5, 4.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.namespace.name']).publish(label='D')
+E = data('k8s.pod.phase', rollup='latest').between(4.5, 5.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.namespace.name']).publish(label='E')
 EOF
 
   sort_by = "+sf_originatingMetric"
@@ -324,6 +336,10 @@ EOF
   legend_options_fields {
     enabled  = false
     property = "sf_originatingMetric"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "k8s.namespace.name"
   }
   legend_options_fields {
     enabled  = true

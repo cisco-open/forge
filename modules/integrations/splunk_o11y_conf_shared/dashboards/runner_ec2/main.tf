@@ -250,7 +250,7 @@ resource "signalfx_list_chart" "chart_top_instances_by_cpu_utilization" {
   name        = "Top instances by CPU utilization (%)"
   description = "By AWSUniqueId"
 
-  program_text = "A = data('^aws.ec2.cpu.utilization', extrapolation='last_value', maxExtrapolations=5).mean(by=['AWSUniqueId']).top(count=5).publish(label='A')"
+  program_text = "A = data('^aws.ec2.cpu.utilization', extrapolation='last_value', maxExtrapolations=5).mean(by=['AWSUniqueId', 'aws_tag_TenantName']).top(count=5).publish(label='A')"
 
   sort_by = "-value"
 
@@ -272,6 +272,10 @@ resource "signalfx_list_chart" "chart_top_instances_by_cpu_utilization" {
   legend_options_fields {
     enabled  = true
     property = "AWSUniqueId"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
   }
   legend_options_fields {
     enabled  = false
@@ -485,16 +489,16 @@ resource "signalfx_list_chart" "chart_disk_metrics_24h_change" {
   description = "Change over 24h"
 
   program_text = <<-EOF
-A = data('^aws.ec2.disk.ops.read.total').sum().mean(over='1h').scale(60).publish(label='A', enable=False)
+A = data('^aws.ec2.disk.ops.read.total').sum(by=['aws_tag_TenantName']).mean(over='1h').scale(60).publish(label='A', enable=False)
 B = (A).timeshift('1d').publish(label='B', enable=False)
 C = (A/B-1).scale(100).publish(label='C')
-D = data('^aws.ec2.disk.ops.write.total').sum().mean(over='1h').scale(60).publish(label='D', enable=False)
+D = data('^aws.ec2.disk.ops.write.total').sum(by=['aws_tag_TenantName']).mean(over='1h').scale(60).publish(label='D', enable=False)
 E = (D).timeshift('1d').publish(label='E', enable=False)
 F = (D/E-1).scale(100).publish(label='F')
-G = data('^aws.ec2.disk.io.read.total').sum().mean(over='1h').scale(60).publish(label='G', enable=False)
+G = data('^aws.ec2.disk.io.read.total').sum(by=['aws_tag_TenantName']).mean(over='1h').scale(60).publish(label='G', enable=False)
 H = (G).timeshift('1d').publish(label='H', enable=False)
 I = (G/H-1).scale(100).publish(label='I')
-J = data('^aws.ec2.disk.io.write.total').sum().mean(over='1h').scale(60).publish(label='J', enable=False)
+J = data('^aws.ec2.disk.io.write.total').sum(by=['aws_tag_TenantName']).mean(over='1h').scale(60).publish(label='J', enable=False)
 K = (J).timeshift('1d').publish(label='K', enable=False)
 L = (J/K-1).scale(100).publish(label='L')
 EOF
@@ -517,6 +521,10 @@ EOF
     lte   = 0
   }
 
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
+  }
   legend_options_fields {
     enabled  = true
     property = "sf_metric"
@@ -585,8 +593,8 @@ resource "signalfx_list_chart" "chart_top_images_by_mean_cpu_utilization" {
   description = "By aws_image_id"
 
   program_text = <<-EOF
-A = data('CPUUtilization', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=5).mean(by=['aws_image_id']).top(count=5).publish(label='A',enable=False)
-B = data('cpu.utilization', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks'), extrapolation='last_value', maxExtrapolations=5).dimensions(renames={'aws_image_id':'host.image.id'}).mean(by=['aws_image_id']).top(count=5).publish(label='B',enable=False)
+A = data('CPUUtilization', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=5).mean(by=['aws_image_id', 'aws_tag_TenantName']).top(count=5).publish(label='A',enable=False)
+B = data('cpu.utilization', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks'), extrapolation='last_value', maxExtrapolations=5).dimensions(renames={'aws_image_id':'host.image.id'}).mean(by=['aws_image_id', 'aws_tag_TenantName']).top(count=5).publish(label='B',enable=False)
 C = union(A,B).top(count=5).publish("C")
 EOF
 
@@ -610,6 +618,10 @@ EOF
   legend_options_fields {
     enabled  = true
     property = "aws_image_id"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
   }
   legend_options_fields {
     enabled  = false
@@ -1010,8 +1022,8 @@ resource "signalfx_list_chart" "chart_total_network_errors" {
   name = "# Total network errors"
 
   program_text = <<-EOF
-A = data('system.network.errors', filter=filter('direction', 'receive') and filter('cloud.platform', 'aws_ec2', 'aws_eks')).count().publish(label='A')
-B = data('system.network.errors', filter=filter('direction', 'transmit') and filter('cloud.platform', 'aws_ec2', 'aws_eks')).count().publish(label='B')
+A = data('system.network.errors', filter=filter('direction', 'receive') and filter('cloud.platform', 'aws_ec2', 'aws_eks')).count(by=['aws_tag_TenantName']).publish(label='A')
+B = data('system.network.errors', filter=filter('direction', 'transmit') and filter('cloud.platform', 'aws_ec2', 'aws_eks')).count(by=['aws_tag_TenantName']).publish(label='B')
 EOF
 
   sort_by = "-value"
@@ -1024,6 +1036,10 @@ EOF
   legend_options_fields {
     enabled  = false
     property = "sf_originatingMetric"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
   }
   legend_options_fields {
     enabled  = true
@@ -1047,8 +1063,8 @@ resource "signalfx_list_chart" "chart_top_memory_page_swaps_sec" {
   description = "From hosts with agent installed"
 
   program_text = <<-EOF
-A = data('vmpage_io.swap.in', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks')).mean(by=['host.name']).top(count=5).publish(label='A')
-B = data('vmpage_io.swap.out', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks'), rollup='rate').mean(by=['host.name']).top(count=5).publish(label='B')
+A = data('vmpage_io.swap.in', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks')).mean(by=['host.name', 'aws_tag_TenantName']).top(count=5).publish(label='A')
+B = data('vmpage_io.swap.out', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks'), rollup='rate').mean(by=['host.name', 'aws_tag_TenantName']).top(count=5).publish(label='B')
 EOF
 
   sort_by = "-value"
@@ -1070,6 +1086,10 @@ EOF
   legend_options_fields {
     enabled  = true
     property = "host.name"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
   }
   legend_options_fields {
     enabled  = false
@@ -1095,7 +1115,7 @@ resource "signalfx_list_chart" "chart_active_hosts_per_instance_type" {
   description = "That reported in the last hour"
 
   program_text = <<-EOF
-A = data('CPUUtilization', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=5).max(over='1h').count(by=['aws_instance_type']).publish(label='A',enable=False)
+A = data('CPUUtilization', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=5).max(over='1h').count(by=['aws_instance_type', 'aws_tag_TenantName']).publish(label='A',enable=False)
 A.publish("C")
 EOF
 
@@ -1118,6 +1138,10 @@ EOF
   legend_options_fields {
     enabled  = true
     property = "aws_instance_type"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
   }
   legend_options_fields {
     enabled  = false
@@ -1214,8 +1238,8 @@ resource "signalfx_list_chart" "chart_active_hosts_by_availability_zone" {
   description = "That reported in the last hour"
 
   program_text = <<-EOF
-A = data('CPUUtilization', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=5).max(over='1h').count(by=['aws_availability_zone']).publish(label='A',enable=False)
-B = data('cpu.utilization', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks'), extrapolation='last_value', maxExtrapolations=5).dimensions(renames={'aws_availability_zone':'cloud.availability_zone'}).max(over='1h').count(by=['aws_availability_zone']).publish(label='B',enable=False)
+A = data('CPUUtilization', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=5).max(over='1h').count(by=['aws_availability_zone', 'aws_tag_TenantName']).publish(label='A',enable=False)
+B = data('cpu.utilization', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks'), extrapolation='last_value', maxExtrapolations=5).dimensions(renames={'aws_availability_zone':'cloud.availability_zone'}).max(over='1h').count(by=['aws_availability_zone', 'aws_tag_TenantName']).publish(label='B',enable=False)
 C = union(A,B).publish("C")
 EOF
 
@@ -1237,6 +1261,10 @@ EOF
   legend_options_fields {
     enabled  = true
     property = "aws_availability_zone"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
   }
   legend_options_fields {
     enabled  = false
@@ -1264,7 +1292,7 @@ resource "signalfx_list_chart" "chart_disk_summary_utilization" {
   program_text = <<-EOF
 A = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks') and filter('state', 'used')).publish(label='A', enable=False)
 B = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks') and filter('state', 'free')).publish(label='B', enable=False)
-C = ((A/(A+B))*100).mean(by=['host.name', 'AWSUniqueId']).publish(label='C')
+C = ((A/(A+B))*100).mean(by=['host.name', 'AWSUniqueId', 'aws_tag_TenantName']).publish(label='C')
 EOF
 
   sort_by = "-value"
@@ -1292,6 +1320,10 @@ EOF
   legend_options_fields {
     enabled  = true
     property = "AWSUniqueId"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
   }
   legend_options_fields {
     enabled  = true
@@ -1395,7 +1427,7 @@ resource "signalfx_list_chart" "chart_top_5_network_out_bytes" {
   name        = "Top 5 network out (bytes)"
   description = "By AWSUniqueId"
 
-  program_text = "A = data('^aws.ec2.network.io.transmit.total', extrapolation='last_value', maxExtrapolations=5).mean(by=['AWSUniqueId']).top(count=5).publish(label='A')"
+  program_text = "A = data('^aws.ec2.network.io.transmit.total', extrapolation='last_value', maxExtrapolations=5).mean(by=['AWSUniqueId', 'aws_tag_TenantName']).top(count=5).publish(label='A')"
 
   sort_by = "-value"
 
@@ -1418,6 +1450,10 @@ resource "signalfx_list_chart" "chart_top_5_network_out_bytes" {
   legend_options_fields {
     enabled  = true
     property = "AWSUniqueId"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
   }
   legend_options_fields {
     enabled  = false
@@ -1454,7 +1490,7 @@ resource "signalfx_list_chart" "chart_top_5_network_in_bytes" {
   name        = "Top 5 network in (bytes)"
   description = "By AWSUniqueId"
 
-  program_text = "A = data('^aws.ec2.network.io.receive.total', extrapolation='last_value', maxExtrapolations=5).mean(by=['AWSUniqueId']).top(count=5).publish(label='A')"
+  program_text = "A = data('^aws.ec2.network.io.receive.total', extrapolation='last_value', maxExtrapolations=5).mean(by=['AWSUniqueId', 'aws_tag_TenantName']).top(count=5).publish(label='A')"
 
   sort_by = "-value"
 
@@ -1477,6 +1513,10 @@ resource "signalfx_list_chart" "chart_top_5_network_in_bytes" {
   legend_options_fields {
     enabled  = true
     property = "AWSUniqueId"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
   }
   legend_options_fields {
     enabled  = false

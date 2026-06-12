@@ -8,11 +8,11 @@ locals {
 
 resource "signalfx_list_chart" "runner_totals_by_runtime" {
   name        = "Runner totals by runtime"
-  description = "Shows total active EC2 runner instances and running K8S runner pods."
+  description = "Shows active EC2 runner instances and K8S runner pods that reached ready at least once in the last 15 minutes."
 
   program_text = <<-EOF
 A = data('CPUUtilization', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=2).max(by=['aws_instance_id']).count().publish(label='EC2 runners')
-B = data('k8s.container.ready', filter=(${local.k8s_runner_container_filter}), rollup='latest').sum(by=['k8s.pod.uid']).above(0, inclusive=False).count().publish(label='K8S runner pods')
+B = data('k8s.container.ready', filter=(${local.k8s_runner_container_filter}), rollup='max').max(over='15m').sum(by=['k8s.pod.uid']).above(0, inclusive=False).count().publish(label='K8S runner pods')
 EOF
 
   sort_by = "-value"

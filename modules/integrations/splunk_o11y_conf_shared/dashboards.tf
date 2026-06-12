@@ -10,18 +10,6 @@ resource "signalfx_dashboard_group" "forgecicd" {
   }
 }
 
-resource "signalfx_dashboard_group" "forgecicd_impact" {
-  name        = "ForgeCICD Impact Dashboards"
-  description = "ForgeCICD adoption, usage, and showback dashboards."
-  teams       = [var.team]
-
-  lifecycle {
-    ignore_changes = [
-      import_qualifier
-    ]
-  }
-}
-
 # Core platform health
 module "dashboard_runner_ec2" {
   source = "./dashboards/runner_ec2"
@@ -104,7 +92,7 @@ module "dashboard_forge_impact" {
   }
 
   tenant_names    = var.dashboard_variables.runner_k8s.tenant_names
-  dashboard_group = signalfx_dashboard_group.forgecicd_impact.id
+  dashboard_group = signalfx_dashboard_group.forgecicd.id
 }
 
 # Cost and usage
