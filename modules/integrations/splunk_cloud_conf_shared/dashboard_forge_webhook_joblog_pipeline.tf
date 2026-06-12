@@ -3,7 +3,7 @@ locals {
     "${path.module}/template_files/forge_webhook_joblog_pipeline.json.tftpl",
     {
       splunk_index = var.splunk_conf.index,
-      tenants      = var.splunk_conf.tenant_names
+      tenants      = sort(var.splunk_conf.tenant_names)
     }
   )
 

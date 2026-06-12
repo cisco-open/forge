@@ -3,12 +3,12 @@ locals {
     "${path.module}/template_files/ci_jobs.json.tftpl",
     {
       splunk_index = var.splunk_conf.index,
-      tenants      = var.splunk_conf.tenant_names
+      tenants      = sort(var.splunk_conf.tenant_names)
     }
   )
   job_eai_data = <<EOF
 <dashboard version="2" theme="light">
-    <label>Forge CI Job Result</label>
+    <label>Forge CI Job Details</label>
     <description></description>
     <definition>
         <![CDATA[${local.job_definition}]]>

@@ -1,6 +1,6 @@
 locals {
   github_webhook_workflow_jobs_definition = jsonencode({
-    title       = "GitHub Webhook Workflow Job Events"
+    title       = "Forge GitHub Webhook Workflow Job Events"
     description = "Shows per-tenant GitHub workflow_job webhook health checks and event details."
     inputs = {
       input_global_time = {
@@ -16,7 +16,7 @@ locals {
           defaultValue = "*"
           items = concat(
             [{ label = "All", value = "*" }],
-            [for tenant in var.splunk_conf.tenant_names : { label = tenant, value = tenant }]
+            [for tenant in sort(var.splunk_conf.tenant_names) : { label = tenant, value = tenant }]
           )
           token = "tenant"
         }
@@ -54,19 +54,31 @@ locals {
         }
         showLastUpdated = true
         showProgressBar = false
-        title           = "Per-Tenant Job Health"
+        title           = "Per-Tenant Completed Job Outcomes"
         type            = "splunk.table"
       }
-      stuck_jobs_table = {
+      ec2_queued_jobs_table = {
         dataSources = {
-          primary = "stuck_jobs_search"
+          primary = "ec2_queued_jobs_search"
         }
         options = {
           count = 20
         }
         showLastUpdated = true
         showProgressBar = false
-        title           = "Queued Jobs > 5 Minutes"
+        title           = "EC2 Queued Jobs > 5 Minutes"
+        type            = "splunk.table"
+      }
+      k8s_queued_jobs_table = {
+        dataSources = {
+          primary = "k8s_queued_jobs_search"
+        }
+        options = {
+          count = 20
+        }
+        showLastUpdated = true
+        showProgressBar = false
+        title           = "K8S Queued Jobs > 5 Minutes"
         type            = "splunk.table"
       }
       failed_jobs_table = {
@@ -102,7 +114,7 @@ locals {
         }
         showLastUpdated = true
         showProgressBar = false
-        title           = "GitHub Webhook Workflow Job Events"
+        title           = "Forge GitHub Webhook Workflow Job Events"
         type            = "splunk.table"
       }
     }
@@ -118,26 +130,14 @@ locals {
             | spath path=github.action output=action
             | spath path=github.status output=status
             | spath path=github.conclusion output=conclusion
-            | spath path=github.name output=job
-            | spath path=github.workflowJobId output=workflow_job_id
-            | spath path=github.created_at output=created_at
-            | spath path=github.started_at output=started_at
             | where github_event="workflow_job"
             | where "$tenant$"="*" OR forgecicd_tenant="$tenant$"
             | where "$repository$"="*" OR like(repository, "%$repository$%")
-            | eval workflow_status=coalesce(status, action)
-            | eval created_epoch=strptime(created_at, "%Y-%m-%dT%H:%M:%SZ")
-            | eval queued_epoch=if(workflow_status="queued", coalesce(created_epoch, _time), null())
-            | eval queued_seen_at=if(workflow_status="queued", _time, null())
-            | eval terminal_seen_at=if(workflow_status="completed" OR match(conclusion, "^(success|failure|cancelled|canceled|skipped|timed_out|action_required|neutral)$"), _time, null())
-            | stats latest(_time) as last_seen latest(action) as latest_action latest(workflow_status) as latest_status latest(conclusion) as latest_conclusion max(queued_epoch) as queued_epoch max(queued_seen_at) as queued_seen_at max(terminal_seen_at) as terminal_seen_at by forgecicd_tenant workflow_job_id repository job
-            | eval age_sec=now()-queued_epoch
-            | eval stuck=if(latest_status="queued" AND isnotnull(queued_epoch) AND age_sec>300 AND (isnull(terminal_seen_at) OR terminal_seen_at<queued_seen_at), 1, 0)
-            | eval failed=if(latest_status="completed" AND latest_conclusion="failure", 1, 0)
-            | eval canceled=if(latest_status="completed" AND (latest_conclusion="cancelled" OR latest_conclusion="canceled"), 1, 0)
-            | stats sum(stuck) as stuck_jobs_over_5m sum(failed) as failed_jobs sum(canceled) as canceled_jobs count as workflow_jobs by forgecicd_tenant
-            | where stuck_jobs_over_5m>0 OR failed_jobs>0 OR canceled_jobs>0
-            | sort - stuck_jobs_over_5m - failed_jobs - canceled_jobs
+            | eval failed=if(status="completed" AND conclusion="failure", 1, 0)
+            | eval canceled=if(status="completed" AND (conclusion="cancelled" OR conclusion="canceled"), 1, 0)
+            | stats sum(failed) as failed_jobs sum(canceled) as canceled_jobs count as workflow_jobs by forgecicd_tenant
+            | where failed_jobs>0 OR canceled_jobs>0
+            | sort - failed_jobs - canceled_jobs
           EOT
           queryParameters = {
             earliest = "$global_time.earliest$"
@@ -146,37 +146,83 @@ locals {
         }
         type = "ds.search"
       }
-      stuck_jobs_search = {
-        name = "Stuck workflow_job events"
+      ec2_queued_jobs_search = {
+        name = "EC2 queued workflow_job events"
         options = {
           enableSmartSources = true
           query              = <<-EOT
-            index="${var.splunk_conf.index}" forgecicd_log_type="webhook" "Github event"
-            | spath path=github.github-event output=github_event
-            | spath path=github.repository output=repository
-            | spath path=github.action output=action
-            | spath path=github.status output=status
-            | spath path=github.conclusion output=conclusion
-            | spath path=github.name output=job
-            | spath path=github.workflowJobId output=workflow_job_id
-            | spath path=github.created_at output=created_at
-            | spath path=github.started_at output=started_at
-            | where github_event="workflow_job"
-            | where "$tenant$"="*" OR forgecicd_tenant="$tenant$"
+            index="${var.splunk_conf.index}" forgecicd_tenant="-" ((forgecicd_log_type=webhook github.status=*) OR ("Successfully dispatched job for"))
+            | rex field=message "to the queue (?<queued_url>https?://\S+)\s-\sJob ID:\s(?<dispatch_workflowJobId>\d+)"
+            | eval workflowJobId=coalesce('github.workflowJobId', dispatch_workflowJobId)
+            | where isnotnull(workflowJobId)
+            | where "$repository$"="*" OR like('github.repository', "%$repository$%") OR like(queued_url, "%$repository$%")
+            | eval is_webhook=if(forgecicd_log_type="webhook", 1, 0)
+            | eval is_queued=if(forgecicd_log_type="webhook" AND 'github.status'="queued", 1, 0)
+            | eval is_dispatch=if(searchmatch("Successfully dispatched job for"), 1, 0)
+            | stats
+                count(eval(is_webhook=1)) as total_events
+                sum(is_queued) as queued_count
+                max(is_dispatch) as has_dispatch
+                min(_time) as first_seen
+                max(_time) as last_seen
+                latest(github.name) as job_name
+                latest(forgecicd_tenant) as forgecicd_tenant
+                latest(github.repository) as repository
+                latest(github.started_at) as started_at
+                values(github.labels) as labels
+                values(github.github-delivery) as github_deliveries
+                values(queued_url) as queued_url
+              by workflowJobId
+            | where total_events = queued_count
+            | where has_dispatch = 1
+            | eval stuck_since=strftime(first_seen, "%Y-%m-%dT%H:%M:%S%Z"), stuck_minutes=round((now() - first_seen) / 60, 1)
+            | where stuck_minutes > 5
+            | sort - stuck_minutes
+            | table workflowJobId job_name repository labels started_at stuck_since stuck_minutes queued_url github_deliveries forgecicd_tenant
+          EOT
+          queryParameters = {
+            earliest = "$global_time.earliest$"
+            latest   = "$global_time.latest$"
+          }
+        }
+        type = "ds.search"
+      }
+      k8s_queued_jobs_search = {
+        name = "K8S queued workflow_job events"
+        options = {
+          enableSmartSources = true
+          query              = <<-EOT
+            index="${var.splunk_conf.index}" forgecicd_tenant="-" ((forgecicd_log_type=webhook github.status=*) OR ("Received event contains runner labels" "Job ID:"))
+            | rex field=message "Received event contains runner labels '(?<runner_labels>[^']+)' from '(?<warning_repo>[^']+)'.*Job ID:\s(?<warning_workflowJobId>\d+)"
+            | eval workflowJobId=coalesce('github.workflowJobId', warning_workflowJobId)
+            | where isnotnull(workflowJobId)
+            | eval repository=coalesce('github.repository', warning_repo)
             | where "$repository$"="*" OR like(repository, "%$repository$%")
-            | eval workflow_status=coalesce(status, action)
-            | eval created_epoch=strptime(created_at, "%Y-%m-%dT%H:%M:%SZ")
-            | eval queued_epoch=if(workflow_status="queued", coalesce(created_epoch, _time), null())
-            | eval queued_seen_at=if(workflow_status="queued", _time, null())
-            | eval terminal_seen_at=if(workflow_status="completed" OR match(conclusion, "^(success|failure|cancelled|canceled|skipped|timed_out|action_required|neutral)$"), _time, null())
-            | stats latest(_time) as last_seen latest(action) as latest_action latest(workflow_status) as latest_status latest(conclusion) as latest_conclusion latest(created_at) as queued_at max(queued_epoch) as queued_epoch max(queued_seen_at) as queued_seen_at max(terminal_seen_at) as terminal_seen_at by forgecicd_tenant workflow_job_id repository job
-            | eval age_sec=now()-queued_epoch
-            | where latest_status="queued" AND isnotnull(queued_epoch) AND age_sec>300 AND (isnull(terminal_seen_at) OR terminal_seen_at<queued_seen_at)
-            | eval age=tostring(age_sec, "duration")
-            | eval queued_at=coalesce(queued_at, strftime(queued_epoch, "%Y-%m-%dT%H:%M:%SZ"))
-            | eval last_seen=strftime(last_seen, "%Y-%m-%d %H:%M:%S")
-            | table forgecicd_tenant repository job workflow_job_id latest_action latest_status latest_conclusion queued_at age last_seen
-            | sort - age_sec
+            | eval is_webhook=if(forgecicd_log_type="webhook", 1, 0)
+            | eval is_queued=if(forgecicd_log_type="webhook" AND 'github.status'="queued", 1, 0)
+            | eval has_runner_label_warning=if(searchmatch("Received event contains runner labels"), 1, 0)
+            | stats
+                count(eval(is_webhook=1)) as total_events
+                sum(is_queued) as queued_count
+                max(has_runner_label_warning) as has_runner_label_warning
+                min(_time) as first_seen
+                max(_time) as last_seen
+                latest(github.name) as job_name
+                latest(forgecicd_tenant) as forgecicd_tenant
+                latest(github.repository) as repository
+                latest(github.started_at) as started_at
+                values(github.labels) as github_labels
+                values(github.github-delivery) as github_deliveries
+                values(runner_labels) as runner_labels
+                values(warning_repo) as warning_repo
+              by workflowJobId
+            | where total_events = queued_count
+            | where has_runner_label_warning = 1
+            | eval stuck_since=strftime(first_seen, "%Y-%m-%dT%H:%M:%S%Z"), stuck_minutes=round((now() - first_seen) / 60, 1)
+            | where stuck_minutes > 5
+            | eval labels=coalesce(mvjoin(runner_labels, ", "), mvjoin(github_labels, ", "))
+            | sort - stuck_minutes
+            | table workflowJobId job_name repository warning_repo labels started_at stuck_since stuck_minutes github_deliveries forgecicd_tenant
           EOT
           queryParameters = {
             earliest = "$global_time.earliest$"
@@ -309,11 +355,21 @@ locals {
               type = "block"
             },
             {
-              item = "stuck_jobs_table"
+              item = "ec2_queued_jobs_table"
               position = {
                 h = 340
-                w = 1200
+                w = 600
                 x = 0
+                y = 260
+              }
+              type = "block"
+            },
+            {
+              item = "k8s_queued_jobs_table"
+              position = {
+                h = 340
+                w = 600
+                x = 600
                 y = 260
               }
               type = "block"
@@ -369,7 +425,7 @@ locals {
 
   github_webhook_workflow_jobs_eai_data = <<EOF
 <dashboard version="2" theme="light">
-    <label>GitHub Webhook Workflow Job Events</label>
+    <label>Forge GitHub Webhook Workflow Job Events</label>
     <description></description>
     <definition>
         <![CDATA[${local.github_webhook_workflow_jobs_definition}]]>

@@ -35,7 +35,7 @@ resource "splunk_configs_conf" "forgecicd_cloudwatchlogs_runner_pages_github_rep
 
   variables = {
     "REGEX"      = "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]+Z Working directory is '(?:\\/opt\\/actions-runner\\/_work|\\/__w)\\/(?<repo>[^\\/]+)\\/.*"
-    "FORMAT"     = "<github_repo_name>::$2 forgecicd_type::ec2"
+    "FORMAT"     = "github_repo_name::$1 forgecicd_type::ec2"
     "SOURCE_KEY" = "_raw"
     "CLEAN_KEYS" = "0"
   }
@@ -130,7 +130,7 @@ resource "splunk_configs_conf" "forgecicd_cloudwatchlogs_lambda_tenant_fields" {
   name = "transforms/forgecicd_cloudwatchlogs_lambda_tenant_fields"
 
   variables = {
-    "REGEX"      = "(?<aws_region>[^:]+):\\/aws\\/lambda\\/(?<forgecicd_tenant>[a-z0-9]+)-(?<forgecicd_region_alias>[a-z0-9]+)-(?<forgecicd_vpc_alias>[a-z0-9]+)-(?<forgecicd_runner_type>[a-z0-9-]+)-(?<forgecicd_log_type>scale-down|scale-up|pool)"
+    "REGEX"      = "(?<aws_region>[^:]+):\\/aws\\/lambda\\/(?<forgecicd_tenant>[a-z0-9]+)-(?<forgecicd_region_alias>[a-z0-9]+)-(?<forgecicd_vpc_alias>[a-z0-9]+)-(?<forgecicd_runner_type>[a-z0-9-]+)-(?<forgecicd_log_type>scale-down|scale-up|pool|ssm-housekeeper)"
     "FORMAT"     = "aws_region::$1 forgecicd_tenant::$2 forgecicd_region_alias::$3 forgecicd_vpc_alias::$4 forgecicd_runner_type::$5 forgecicd_log_type::$6 forgecicd_type::ec2"
     "SOURCE_KEY" = "source"
     "CLEAN_KEYS" = "0"

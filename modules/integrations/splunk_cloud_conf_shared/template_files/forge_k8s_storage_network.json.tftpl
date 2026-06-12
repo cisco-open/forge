@@ -42,6 +42,30 @@
             },
             "type": "ds.search"
         },
+        "ebs_csi_health_search": {
+            "name": "EBS CSI health",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype IN (\"kube:container:csi-provisioner\",\"kube:container:ebs-plugin\",\"kube:container:csi-attacher\",\"kube:container:csi-snapshotter\",\"kube:container:csi-resizer\",\"kube:container:liveness-probe\")\n(error OR failed OR timeout OR thrott* OR Unauthorized OR AccessDenied OR \"Multi-Attach\" OR \"volume attachment\" OR \"deadline exceeded\")\n| rex field=source \"/var/log/pods/(?<namespace>[^_]+)_(?<pod>[^/]+)/(?<container>[^/]+)/\"\n| eval raw_l=lower(_raw)\n| eval category=case(\n    match(raw_l,\"multi-attach\"), \"multi_attach\",\n    match(raw_l,\"accessdenied|unauthorized\"), \"access_denied\",\n    match(raw_l,\"throttl|deadline exceeded|timeout\"), \"aws_api_or_timeout\",\n    match(raw_l,\"failed to remove finalizer|failed to delete persistentvolume|error syncing pvc|persistentvolume\"), \"pv_pvc_reconcile\",\n    match(raw_l,\"failed to watch\"), \"watch_failure\",\n    match(raw_l,\"error processing\"), \"processing_error\",\n    match(raw_l,\"error|failed\"), \"error_failed\",\n    true(), \"other\")\n| where category!=\"other\"\n| eval sample=substr(replace(_raw,\"\\n.*$\",\"\"),1,260)\n| stats count as events dc(pod) as pods latest(sample) as sample latest(_time) as last_time by namespace container sourcetype category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "eks_pod_identity_health_search": {
+            "name": "EKS Pod Identity health",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"kube:container:eks-pod-identity-agent\"\n(error OR failed OR denied OR AccessDenied OR timeout OR unable OR thrott* OR \"AssumeRoleForPodIdentity\")\n| rex field=source \"/var/log/pods/(?<namespace>[^_]+)_(?<pod>[^/]+)/(?<container>[^/]+)/\"\n| eval raw_l=lower(_raw)\n| eval category=case(\n    match(raw_l,\"error getting credentials|unable to fetch credentials|assumeroleforpodidentity\"), \"credential_fetch\",\n    match(raw_l,\"accessdenied|unauthorized|denied\"), \"access_denied\",\n    match(raw_l,\"deadline exceeded|timeout\"), \"timeout\",\n    match(raw_l,\"throttl\"), \"throttling\",\n    match(raw_l,\"error|failed|unable\"), \"error_failed\",\n    true(), \"other\")\n| where category!=\"other\"\n| eval sample=substr(replace(_raw,\"\\n.*$\",\"\"),1,260)\n| stats count as events dc(pod) as pods latest(sample) as sample latest(_time) as last_time by namespace container category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
         "karpenter_controller_health_search": {
             "name": "Karpenter controller health",
             "options": {
@@ -103,7 +127,7 @@
             }
         }
     },
-    "description": "Kubernetes storage, scheduling, CNI, image-pull, Karpenter, Calico/Tigera, and EKS API storage/controller error patterns.",
+    "description": "Kubernetes storage, EBS CSI, EKS pod identity, scheduling, CNI, image-pull, Karpenter, Calico/Tigera, and EKS API storage/controller error patterns.",
     "inputs": {
         "input_category": {
             "options": {
@@ -202,6 +226,26 @@
                             "y": 1140
                         },
                         "type": "block"
+                    },
+                    {
+                        "item": "ebs_csi_health_table",
+                        "position": {
+                            "h": 420,
+                            "w": 600,
+                            "x": 0,
+                            "y": 1560
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "eks_pod_identity_health_table",
+                        "position": {
+                            "h": 420,
+                            "w": 600,
+                            "x": 600,
+                            "y": 1560
+                        },
+                        "type": "block"
                     }
                 ],
                 "type": "grid"
@@ -241,6 +285,30 @@
             "showLastUpdated": true,
             "showProgressBar": false,
             "title": "EBS Provisioning Waits",
+            "type": "splunk.table"
+        },
+        "ebs_csi_health_table": {
+            "dataSources": {
+                "primary": "ebs_csi_health_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "EBS CSI Health",
+            "type": "splunk.table"
+        },
+        "eks_pod_identity_health_table": {
+            "dataSources": {
+                "primary": "eks_pod_identity_health_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "EKS Pod Identity Health",
             "type": "splunk.table"
         },
         "calico_tigera_health_table": {
