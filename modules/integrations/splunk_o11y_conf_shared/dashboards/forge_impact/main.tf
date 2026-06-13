@@ -44,10 +44,10 @@ EOF
 
 resource "signalfx_list_chart" "runner_minutes_by_runtime" {
   name        = "Runner-minutes by runtime over selected window"
-  description = "Estimates total EC2 and K8S runner runtime minutes during the selected dashboard time window."
+  description = "Estimates total EC2 and K8S runner runtime minutes during the selected dashboard time window. EC2 instances must have aws_tag_TenantName."
 
   program_text = <<-EOF
-A = data('CPUUtilization', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=2).max(by=['aws_instance_id']).count().fill(value=0, duration=${local.runner_usage_window}).integrate().sum(over=${local.runner_usage_window}).scale(${local.runner_minutes_scale}).publish(label='EC2 runner-minutes')
+A = data('CPUUtilization', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'mean') and filter('aws_tag_TenantName', '*'), extrapolation='last_value', maxExtrapolations=2).max(by=['aws_instance_id']).count().fill(value=0, duration=${local.runner_usage_window}).integrate().sum(over=${local.runner_usage_window}).scale(${local.runner_minutes_scale}).publish(label='EC2 runner-minutes')
 B = ${local.k8s_runner_container_runtime}.count().fill(value=0, duration=${local.runner_usage_window}).integrate().sum(over=${local.runner_usage_window}).scale(${local.runner_minutes_scale}).publish(label='K8S runner-minutes')
 EOF
 
