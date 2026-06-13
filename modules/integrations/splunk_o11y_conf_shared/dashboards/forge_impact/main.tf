@@ -5,7 +5,7 @@ locals {
 
   k8s_runner_container_filter  = "filter('k8s.container.name', 'runner') and (${local.k8s_tenant_namespace_filter})"
   k8s_runner_pod_dimensions    = "['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name']"
-  k8s_runner_container_runtime = "data('container.cpu.time', filter=(${local.k8s_runner_container_filter}), rollup='latest').mean(by=${local.k8s_runner_pod_dimensions})"
+  k8s_runner_container_runtime = "data('container.memory.usage', filter=(${local.k8s_runner_container_filter}), rollup='latest').mean(by=${local.k8s_runner_pod_dimensions})"
   dashboard_window             = "Args.get('ui.dashboard_window', '15m')"
   runner_usage_window          = "Args.get('ui.dashboard_window', '24h')"
   runner_minutes_scale         = 0.016666666666666666

@@ -19,7 +19,6 @@ resource "signalfx_list_chart" "k8s_top_10_cpu_usage_per_pod" {
 
   program_text = <<-EOF
 A = data('container_cpu_utilization', rollup='rate').mean(by=['k8s.namespace.name', 'k8s.pod.name', 'k8s.node.name', 'k8s.cluster.name', 'k8s.pod.uid']).scale(0.01).top(count=10).publish(label='A')
-B = data('container.cpu.time').mean(by=['k8s.namespace.name', 'k8s.pod.name', 'k8s.node.name', 'k8s.cluster.name', 'k8s.pod.uid']).top(count=10).publish(label='B')
 EOF
 
   sort_by = "-value"
@@ -59,10 +58,6 @@ EOF
     property = "k8s.pod.uid"
   }
 
-  viz_options {
-    display_name = "OTel pre translated CPU usage"
-    label        = "B"
-  }
   viz_options {
     display_name = "Top 10 pods by average CPU usage"
     label        = "A"
