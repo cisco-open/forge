@@ -4,6 +4,7 @@ locals {
   ]) : "filter('k8s.namespace.name', '*')"
 
   k8s_runner_container_filter = "filter('k8s.container.name', 'runner') and (${local.k8s_tenant_namespace_filter})"
+  k8s_runner_pod_dimensions   = "['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name']"
   dashboard_window            = "Args.get('ui.dashboard_window', '15m')"
   runner_hours_window         = "Args.get('ui.dashboard_window', '24h')"
 }
@@ -14,7 +15,7 @@ resource "signalfx_list_chart" "runner_totals_by_runtime" {
 
   program_text = <<-EOF
 A = data('CPUUtilization', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=2).max(over=${local.dashboard_window}).max(by=['aws_instance_id']).count().publish(label='EC2 runners')
-B = data('k8s.container.ready', filter=(${local.k8s_runner_container_filter}), rollup='max').max(over=${local.dashboard_window}).sum(by=['k8s.pod.uid']).above(0, inclusive=False).count().publish(label='K8S runner pods')
+B = data('k8s.container.ready', filter=(${local.k8s_runner_container_filter}), rollup='max').sum(by=${local.k8s_runner_pod_dimensions}).above(0, inclusive=False).count(over=${local.dashboard_window}).above(0, inclusive=False).count().publish(label='K8S runner pods')
 EOF
 
   sort_by = "-value"
@@ -200,9 +201,9 @@ resource "signalfx_list_chart" "ec2_runner_hours_by_tenant_and_instance_type" {
 
 resource "signalfx_list_chart" "k8s_runners_by_tenant" {
   name        = "# K8S runners per tenant"
-  description = "Counts running ARC runner pods by tenant namespace."
+  description = "Counts ARC runner pods that were ready during the selected dashboard time window by tenant namespace."
 
-  program_text = "A = data('k8s.container.ready', filter=(${local.k8s_runner_container_filter}), rollup='max').max(over=${local.dashboard_window}).sum(by=['k8s.namespace.name', 'k8s.pod.uid']).above(0, inclusive=False).count(by=['k8s.namespace.name']).publish(label='A')"
+  program_text = "A = data('k8s.container.ready', filter=(${local.k8s_runner_container_filter}), rollup='max').sum(by=${local.k8s_runner_pod_dimensions}).above(0, inclusive=False).count(over=${local.dashboard_window}).above(0, inclusive=False).count(by=['k8s.namespace.name']).publish(label='A')"
 
   sort_by = "-value"
 
@@ -228,9 +229,9 @@ resource "signalfx_list_chart" "k8s_runners_by_tenant" {
 
 resource "signalfx_list_chart" "k8s_runner_hours_by_tenant" {
   name        = "K8S runner-hours by tenant"
-  description = "Estimates K8S runner-hours by tenant over the selected dashboard time window."
+  description = "Estimates total K8S runner running hours by tenant over the selected dashboard time window, based on runner container readiness."
 
-  program_text = "A = data('k8s.container.ready', filter=(${local.k8s_runner_container_filter}), rollup='max').sum(by=['k8s.namespace.name', 'k8s.pod.uid']).above(0, inclusive=False).count(by=['k8s.namespace.name']).integrate().sum(over=${local.runner_hours_window}).scale(0.0002777777777777778).publish(label='A')"
+  program_text = "A = data('k8s.container.ready', filter=(${local.k8s_runner_container_filter}), rollup='max').sum(by=${local.k8s_runner_pod_dimensions}).above(0, inclusive=False).count(by=['k8s.namespace.name']).fill(value=0, duration=${local.runner_hours_window}).integrate().sum(over=${local.runner_hours_window}).scale(0.0002777777777777778).publish(label='A')"
 
   sort_by = "-value"
 
