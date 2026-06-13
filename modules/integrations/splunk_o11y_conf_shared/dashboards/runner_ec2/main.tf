@@ -1290,8 +1290,8 @@ resource "signalfx_list_chart" "chart_disk_summary_utilization" {
   description = "Percent of disk space utilized on all volumes on active hosts with agent installed. Instance id | Host"
 
   program_text = <<-EOF
-A = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks') and filter('state', 'used')).publish(label='A', enable=False)
-B = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks') and filter('state', 'free')).publish(label='B', enable=False)
+A = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks') and filter('aws_tag_TenantName', '*') and filter('state', 'used')).publish(label='A', enable=False)
+B = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks') and filter('aws_tag_TenantName', '*') and filter('state', 'free')).publish(label='B', enable=False)
 C = ((A/(A+B))*100).mean(by=['host.name', 'AWSUniqueId', 'aws_tag_TenantName']).publish(label='C')
 EOF
 
