@@ -1,10 +1,35 @@
 {
-    "title": "Trust Relationship",
-    "description": "",
+    "title": "Forge Tenant Logs",
+    "description": "Displays Forge runner logs for a selected tenant, log type, and time range.",
     "inputs": {
+        "input_4A2iEpn6": {
+            "options": {
+                "defaultValue": "*",
+                "token": "text_9yxn14bn"
+            },
+            "title": "Forge Instance ID",
+            "type": "input.text"
+        },
+        "input_ch5zNZ2X": {
+            "dataSources": {
+                "primary": "ds_5a4R8xaz"
+            },
+            "options": {
+                "defaultValue": "",
+                "items": [
+                    {
+                        "label": "All",
+                        "value": "*"
+                    }
+                ],
+                "token": "dd_ZlvrLiNG"
+            },
+            "title": "Forge Log Type",
+            "type": "input.dropdown"
+        },
         "input_global_trp": {
             "options": {
-                "defaultValue": "-7d@h,now",
+                "defaultValue": "-60m@m,now",
                 "token": "global_time"
             },
             "title": "Global Time Range",
@@ -48,27 +73,41 @@
         }
     },
     "visualizations": {
-        "viz_YqZBTBIB": {
+        "viz_KuqTQOYc": {
             "containerOptions": {},
+            "context": {},
             "dataSources": {
-                "primary": "ds_yDvZOb30"
+                "primary": "ds_iONxCEsT"
             },
-            "eventHandlers": [],
-            "options": {
-                "count": 20
-            },
+            "options": {},
             "showLastUpdated": false,
             "showProgressBar": false,
-            "title": "",
-            "type": "splunk.table"
+            "type": "splunk.events"
         }
     },
     "dataSources": {
-        "ds_yDvZOb30": {
-            "name": "Trust relationship validation",
+        "ds_5a4R8xaz": {
+            "name": "log type list",
             "options": {
-                "enableSmartSources": true,
-                "query": "index=\"${splunk_index}\" forgecicd_tenant=\"$dd_8enHUmpH$\" forgecicd_log_type=\"forge-trust-validator\" \"Delayed validation run complete\"\n| eventstats max(_time) as tenant_last_seen by forgecicd_tenant\n| where _time=tenant_last_seen\n\n| eval trust_json=tostring(mvindex(forgecicd_trust_validation, 0))\n| spath input=trust_json path=validation_results{} output=item\n| mvexpand item\n| spath input=item path=forge_role_arn output=forge_role\n| spath input=item path=tenant_results{} output=tenant_results\n| mvexpand tenant_results\n| spath input=tenant_results\n\n| eval assume_status=if(tostring(assume_role_success)==\"true\",\"assumed\",\"not assumed\")\n| eval tag_status=if(tostring(tag_session_success)==\"true\",\"session tagged\",\"session not tagged\")\n\n| table forgecicd_tenant forge_role tenant_role_arn assume_status assume_role_error tag_status tag_session_error\n| sort forge_role tenant_role_arn",
+                "query": "index=\"${splunk_index}\" | stats count by forgecicd_log_type | table forgecicd_log_type",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "ds_iONxCEsT": {
+            "name": "logs",
+            "options": {
+                "query": "index=\"${splunk_index}\" forgecicd_tenant=\"$dd_8enHUmpH$\" forgecicd_log_type=\"$dd_ZlvrLiNG$\"\n| where \"$text_9yxn14bn$\"=\"*\" OR forgecicd_instance_id=\"$text_9yxn14bn$\"\n| sort _time asc"
+            },
+            "type": "ds.search"
+        },
+        "ds_x8AMw4ri": {
+            "name": "tenant list",
+            "options": {
+                "query": "index=\"${splunk_index}\" | stats count by forgecicd_tenant | table forgecicd_tenant",
                 "queryParameters": {
                     "earliest": "$global_time.earliest$",
                     "latest": "$global_time.latest$"
@@ -80,19 +119,22 @@
     "layout": {
         "globalInputs": [
             "input_global_trp",
-            "input_uFiEIG6X"
+            "input_uFiEIG6X",
+            "input_ch5zNZ2X",
+            "input_4A2iEpn6"
         ],
         "layoutDefinitions": {
-            "layout_6CHuojec": {
+            "layout_1": {
                 "options": {
-                    "gutterSize": 9
+                    "height": 960,
+                    "width": 1440
                 },
                 "structure": [
                     {
-                        "item": "viz_YqZBTBIB",
+                        "item": "viz_KuqTQOYc",
                         "position": {
-                            "h": 974,
-                            "w": 1200,
+                            "h": 626,
+                            "w": 1440,
                             "x": 0,
                             "y": 0
                         },
@@ -106,16 +148,13 @@
         "tabs": {
             "items": [
                 {
-                    "label": "Trust Relationship Validation",
-                    "layoutId": "layout_6CHuojec"
+                    "label": "Runner Logs",
+                    "layoutId": "layout_1"
                 }
             ]
         }
     },
     "applicationProperties": {
-        "collapseNavigation": true,
-        "hideEdit": false,
-        "hideExport": false,
-        "hideOpenInSearch": false
+        "collapseNavigation": true
     }
 }

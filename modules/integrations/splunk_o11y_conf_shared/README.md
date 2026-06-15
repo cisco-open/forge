@@ -21,6 +21,7 @@
 | <a name="module_dashboard_billing"></a> [dashboard\_billing](#module\_dashboard\_billing) | ./dashboards/billing | n/a |
 | <a name="module_dashboard_dynamodb"></a> [dashboard\_dynamodb](#module\_dashboard\_dynamodb) | ./dashboards/dynamodb | n/a |
 | <a name="module_dashboard_ebs"></a> [dashboard\_ebs](#module\_dashboard\_ebs) | ./dashboards/ebs | n/a |
+| <a name="module_dashboard_forge_impact"></a> [dashboard\_forge\_impact](#module\_dashboard\_forge\_impact) | ./dashboards/forge_impact | n/a |
 | <a name="module_dashboard_lambda"></a> [dashboard\_lambda](#module\_dashboard\_lambda) | ./dashboards/lambda | n/a |
 | <a name="module_dashboard_runner_ec2"></a> [dashboard\_runner\_ec2](#module\_dashboard\_runner\_ec2) | ./dashboards/runner_ec2 | n/a |
 | <a name="module_dashboard_runner_k8s"></a> [dashboard\_runner\_k8s](#module\_dashboard\_runner\_k8s) | ./dashboards/runner_k8s | n/a |

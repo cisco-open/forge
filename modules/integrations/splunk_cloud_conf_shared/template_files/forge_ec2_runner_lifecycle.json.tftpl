@@ -1,0 +1,320 @@
+{
+    "applicationProperties": {
+        "collapseNavigation": true,
+        "hideEdit": false,
+        "hideExport": false,
+        "hideOpenInSearch": false
+    },
+    "dataSources": {
+        "ami_ssm_search": {
+            "name": "AMI and SSM update failures",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" (sourcetype=\"aws:cloudwatchlogs\" OR sourcetype=\"aws:cloudwatchlogs:forgecicd\") source=\"*:/aws/lambda/*ec2-update-runner-ssm-ami*\"\n(\"No AMIs found\" OR \"SSM parameter not found\" OR AccessDenied OR \"[ERROR]\" OR Traceback)\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| eval category=case(\n    match(_raw,\"No AMIs found\"), \"no_amis_found\",\n    match(_raw,\"SSM parameter not found\"), \"ssm_parameter_not_found\",\n    match(_raw,\"AccessDenied|UnauthorizedOperation\"), \"access_denied\",\n    match(_raw,\"Traceback|\\\\[ERROR\\\\]\"), \"lambda_error\",\n    true(), \"other\")\n| eval sample=substr(replace(_raw,\"\\n.*$\",\"\"),1,300)\n| stats count as events dc(source) as streams latest(_time) as last_time values(sample) as samples by tenant lambda_name category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "hook_activity_search": {
+            "name": "Runner hook activity",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs:forgecicd\" source=\"*:/github-self-hosted-runners/*/forge-logs:*/*hook*\"\n(\"\\\"type\\\":\\\"started\\\"\" OR \"\\\"type\\\":\\\"completed\\\"\" OR \"GitHub Actions environment variables exported\" OR \"Instance \" OR \"Tagged \" OR \"create-tags\" OR \"AccessDenied\" OR \"permission denied\" OR \"runner_name\")\n| rex field=source \"^[^:]+:/github-self-hosted-runners/(?<runner_pool>[^/]+)/forge-logs:(?<instance_id>i-[^/]+)/(?<log_file>[^/]+)$\"\n| rex field=runner_pool \"^(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$runner_pool$\"=\"*\" OR like(runner_pool, \"%$runner_pool$%\")\n| eval hook_type=case(\n    match(_raw,\"\\\"type\\\":\\\"started\\\"\"), \"started\",\n    match(_raw,\"\\\"type\\\":\\\"completed\\\"\"), \"completed\",\n    match(_raw,\"Tagged .* completion timestamp\"), \"tagged_completed\",\n    match(_raw,\"Instance .* tagged with GitHub Actions metadata\"), \"tagged_started\",\n    match(_raw,\"AccessDenied|permission denied\"), \"tagging_error\",\n    true(), \"other\")\n| stats count as events dc(instance_id) as instances latest(_time) as last_time by tenant runner_pool hook_type\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "lifecycle_lambda_search": {
+            "name": "EC2 lifecycle Lambda signals",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" (sourcetype=\"aws:cloudwatchlogs\" OR sourcetype=\"aws:cloudwatchlogs:forgecicd\") source=\"*:/aws/lambda/*\"\n(\"[ERROR]\" OR Traceback OR \"Task timed out\" OR \"Runtime.ExitError\" OR AccessDenied OR \"InvalidInstanceID.NotFound\" OR \"runner_name missing\" OR \"No AMIs found\" OR \"SSM parameter not found\" OR \"Signature mismatch\" OR \"InsufficientInstanceCapacity\" OR \"UnfulfillableCapacity\" OR \"MaxSpotInstanceCountExceeded\" OR \"TargetCapacityLimitExceededException\" OR \"RequestLimitExceeded\" OR \"ResourceLimitExceeded\")\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where like(lambda_name,\"%webhook%\") OR like(lambda_name,\"%runner%\") OR like(lambda_name,\"%ec2-update%\") OR like(lambda_name,\"%register-github-app-runner-group%\")\n| eval category=case(\n    match(_raw,\"runner_name missing\"), \"runner_name_missing\",\n    match(_raw,\"InvalidInstanceID.NotFound\"), \"invalid_instance_id\",\n    match(_raw,\"No AMIs found|SSM parameter not found\"), \"ami_ssm_lookup\",\n    match(_raw,\"Signature mismatch\"), \"webhook_signature\",\n    match(_raw,\"InsufficientInstanceCapacity|UnfulfillableCapacity|MaxSpotInstanceCountExceeded|TargetCapacityLimitExceededException|RequestLimitExceeded|ResourceLimitExceeded\"), \"scale_capacity_or_limit\",\n    match(_raw,\"AccessDenied|UnauthorizedOperation\"), \"access_denied\",\n    match(_raw,\"Task timed out|Runtime.ExitError\"), \"runtime_or_timeout\",\n    match(_raw,\"Traceback|\\\\[ERROR\\\\]\"), \"lambda_error\",\n    true(), \"other\")\n| stats count as events dc(source) as streams latest(_time) as last_time by tenant lambda_name category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "lifecycle_lambda_trend_search": {
+            "name": "EC2 lifecycle Lambda trend",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" (sourcetype=\"aws:cloudwatchlogs\" OR sourcetype=\"aws:cloudwatchlogs:forgecicd\") source=\"*:/aws/lambda/*\"\n(\"[ERROR]\" OR Traceback OR AccessDenied OR \"InvalidInstanceID.NotFound\" OR \"runner_name missing\" OR \"No AMIs found\" OR \"SSM parameter not found\" OR \"InsufficientInstanceCapacity\" OR \"UnfulfillableCapacity\")\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where like(lambda_name,\"%webhook%\") OR like(lambda_name,\"%runner%\") OR like(lambda_name,\"%ec2-update%\") OR like(lambda_name,\"%register-github-app-runner-group%\")\n| eval category=case(\n    match(_raw,\"runner_name missing\"), \"runner_name_missing\",\n    match(_raw,\"InvalidInstanceID.NotFound\"), \"invalid_instance_id\",\n    match(_raw,\"No AMIs found|SSM parameter not found\"), \"ami_ssm_lookup\",\n    match(_raw,\"InsufficientInstanceCapacity|UnfulfillableCapacity|MaxSpotInstanceCountExceeded|TargetCapacityLimitExceededException|RequestLimitExceeded|ResourceLimitExceeded\"), \"scale_capacity_or_limit\",\n    match(_raw,\"AccessDenied|UnauthorizedOperation\"), \"access_denied\",\n    true(), \"lambda_error\")\n| timechart span=15m count by category limit=12\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "runner_log_symptoms_search": {
+            "name": "Runner instance log symptoms",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs:forgecicd\"\n(\"No space left\" OR \"Out of memory\" OR OOM OR \"no buffer space available\" OR \"unable to acquire credentials\" OR \"AccessDeniedException\" OR \"permission denied\" OR \"Establish connection with\" OR \"timed out\" OR \"amazon-cloudwatch-agent\" OR \"cloud-init\" OR \"docker\" OR \"fatal\")\n| rex field=source \"^[^:]+:/github-self-hosted-runners/(?<runner_pool>[^/]+)/forge-logs:(?<instance_id>i-[^/]+)/(?<log_file>[^/]+)$\"\n| rex field=runner_pool \"^(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$runner_pool$\"=\"*\" OR like(runner_pool, \"%$runner_pool$%\")\n| eval category=case(\n    match(_raw,\"(?i)no space left\"), \"disk_full\",\n    match(_raw,\"(?i)out of memory|oom\"), \"oom\",\n    match(_raw,\"(?i)no buffer space available\"), \"auditd_no_buffer_space\",\n    match(_raw,\"(?i)unable to acquire credentials|AccessDeniedException\"), \"ssm_credentials_access_denied\",\n    match(_raw,\"(?i)permission denied\"), \"permission_denied\",\n    match(_raw,\"(?i)establish connection with .*timeout|timed out|timeout\"), \"runner_connection_timeout\",\n    match(_raw,\"(?i)amazon-cloudwatch-agent\"), \"cloudwatch_agent\",\n    match(_raw,\"(?i)cloud-init\"), \"cloud_init\",\n    match(_raw,\"(?i)docker\"), \"docker\",\n    match(_raw,\"(?i)fatal\"), \"fatal\",\n    true(), \"other\")\n| stats count as events dc(instance_id) as instances latest(_time) as last_time by tenant runner_pool log_file category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "runner_version_search": {
+            "name": "EC2 runner versions",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs:forgecicd\" source=\"*:/github-self-hosted-runners/*/forge-logs:*/runner\" \"Current runner version\"\n| rex field=source \"^[^:]+:/github-self-hosted-runners/(?<runner_pool>[^/]+)/forge-logs:(?<source_instance_id>i-[^/]+)/(?<source_log_type>[^/]+)$\"\n| rex field=runner_pool \"^(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-(?<source_runner_type>.+)$\"\n| rex field=_raw \"Current runner version: '?([^0-9]*(?<runner_version>[0-9][^' ]+))\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant)\n| eval runner_type=coalesce(forgecicd_runner_type, source_runner_type, runner_pool)\n| eval ec2_instance_id=coalesce(forgecicd_instance_id, source_instance_id)\n| eval log_type=coalesce(forgecicd_log_type, source_log_type)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$runner_pool$\"=\"*\" OR like(runner_pool, \"%$runner_pool$%\") OR like(runner_type, \"%$runner_pool$%\")\n| stats count as events dc(ec2_instance_id) as instances values(log_type) as log_types latest(_time) as last_time by tenant runner_pool runner_type runner_version\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort tenant runner_pool runner_type - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "scale_capacity_search": {
+            "name": "Scale capacity and AWS API errors",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" (sourcetype=\"aws:cloudwatchlogs\" OR sourcetype=\"aws:cloudwatchlogs:forgecicd\") source=\"*:/aws/lambda/*\"\n(\"UnfulfillableCapacity\" OR \"MaxSpotInstanceCountExceeded\" OR \"TargetCapacityLimitExceededException\" OR \"RequestLimitExceeded\" OR \"ResourceLimitExceeded\" OR \"MaxSpotFleetRequestCountExceeded\" OR \"InsufficientInstanceCapacity\" OR \"InsufficientCapacityOnHost\" OR \"UnauthorizedOperation\")\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| eval scale_error=case(\n    match(_raw,\"UnfulfillableCapacity\"), \"UnfulfillableCapacity\",\n    match(_raw,\"MaxSpotInstanceCountExceeded\"), \"MaxSpotInstanceCountExceeded\",\n    match(_raw,\"TargetCapacityLimitExceededException\"), \"TargetCapacityLimitExceededException\",\n    match(_raw,\"RequestLimitExceeded\"), \"RequestLimitExceeded\",\n    match(_raw,\"ResourceLimitExceeded\"), \"ResourceLimitExceeded\",\n    match(_raw,\"MaxSpotFleetRequestCountExceeded\"), \"MaxSpotFleetRequestCountExceeded\",\n    match(_raw,\"InsufficientInstanceCapacity\"), \"InsufficientInstanceCapacity\",\n    match(_raw,\"InsufficientCapacityOnHost\"), \"InsufficientCapacityOnHost\",\n    match(_raw,\"UnauthorizedOperation\"), \"UnauthorizedOperation\",\n    true(), \"other\")\n| eval sample=substr(replace(_raw,\"\\n.*$\",\"\"),1,300)\n| stats count as events dc(source) as streams latest(_time) as last_time values(sample) as samples by tenant lambda_name scale_error\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        }
+    },
+    "defaults": {
+        "dataSources": {
+            "ds.search": {
+                "options": {
+                    "queryParameters": {
+                        "earliest": "$global_time.earliest$",
+                        "latest": "$global_time.latest$"
+                    }
+                }
+            }
+        }
+    },
+    "description": "EC2 runner webhook, scale, AMI, SSM, user-data, hook, runner diagnostics, and instance tagging signals.",
+    "inputs": {
+        "input_global_time": {
+            "options": {
+                "defaultValue": "-24h@h,now",
+                "token": "global_time"
+            },
+            "title": "Global Time Range",
+            "type": "input.timerange"
+        },
+        "input_runner_pool": {
+            "options": {
+                "defaultValue": "*",
+                "token": "runner_pool"
+            },
+            "title": "Runner Pool Contains",
+            "type": "input.text"
+        },
+        "input_tenant": {
+            "options": {
+                "defaultValue": "*",
+                "items": ${jsonencode(
+                    concat(
+                        [{ label = "All", value = "*" }],
+                        [for tenant in tenants : { label = tenant, value = tenant }]
+                    )
+                )},
+                "token": "tenant"
+            },
+            "title": "Forge Tenant",
+            "type": "input.dropdown"
+        }
+    },
+    "layout": {
+        "globalInputs": [
+            "input_global_time",
+            "input_tenant",
+            "input_runner_pool"
+        ],
+        "layoutDefinitions": {
+            "layout": {
+                "options": {
+                    "gutterSize": 9
+                },
+                "structure": [
+                    {
+                        "item": "lifecycle_lambda_table",
+                        "position": {
+                            "h": 360,
+                            "w": 640,
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "lifecycle_lambda_trend_chart",
+                        "position": {
+                            "h": 360,
+                            "w": 560,
+                            "x": 640,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "scale_capacity_table",
+                        "position": {
+                            "h": 360,
+                            "w": 600,
+                            "x": 0,
+                            "y": 360
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "ami_ssm_table",
+                        "position": {
+                            "h": 360,
+                            "w": 600,
+                            "x": 600,
+                            "y": 360
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "runner_log_symptoms_table",
+                        "position": {
+                            "h": 380,
+                            "w": 600,
+                            "x": 0,
+                            "y": 720
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "hook_activity_table",
+                        "position": {
+                            "h": 380,
+                            "w": 600,
+                            "x": 600,
+                            "y": 720
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "runner_version_table",
+                        "position": {
+                            "h": 360,
+                            "w": 1200,
+                            "x": 0,
+                            "y": 1100
+                        },
+                        "type": "block"
+                    }
+                ],
+                "type": "grid"
+            }
+        },
+        "options": {},
+        "tabs": {
+            "items": [
+                {
+                    "label": "EC2 Runner Lifecycle",
+                    "layoutId": "layout"
+                }
+            ]
+        }
+    },
+    "title": "Forge EC2 Runner Lifecycle",
+    "visualizations": {
+        "ami_ssm_table": {
+            "dataSources": {
+                "primary": "ami_ssm_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "AMI and SSM Update Failures",
+            "type": "splunk.table"
+        },
+        "hook_activity_table": {
+            "dataSources": {
+                "primary": "hook_activity_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Runner Hook Activity",
+            "type": "splunk.table"
+        },
+        "lifecycle_lambda_table": {
+            "dataSources": {
+                "primary": "lifecycle_lambda_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "EC2 Lifecycle Lambda Signals",
+            "type": "splunk.table"
+        },
+        "lifecycle_lambda_trend_chart": {
+            "dataSources": {
+                "primary": "lifecycle_lambda_trend_search"
+            },
+            "options": {},
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "EC2 Lifecycle Lambda Trend",
+            "type": "splunk.line"
+        },
+        "runner_log_symptoms_table": {
+            "dataSources": {
+                "primary": "runner_log_symptoms_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Runner Instance Log Symptoms",
+            "type": "splunk.table"
+        },
+        "runner_version_table": {
+            "dataSources": {
+                "primary": "runner_version_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Runner Versions",
+            "type": "splunk.table"
+        },
+        "scale_capacity_table": {
+            "dataSources": {
+                "primary": "scale_capacity_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Scale Capacity and AWS API Errors",
+            "type": "splunk.table"
+        }
+    }
+}

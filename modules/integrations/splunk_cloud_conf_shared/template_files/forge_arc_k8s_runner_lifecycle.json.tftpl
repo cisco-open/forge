@@ -1,0 +1,286 @@
+{
+    "applicationProperties": {
+        "collapseNavigation": true,
+        "hideEdit": false,
+        "hideExport": false,
+        "hideOpenInSearch": false
+    },
+    "dataSources": {
+        "k8s_hook_categories_search": {
+            "name": "ARC K8S hook sidecar signals",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"kube:container:hook\" source=\"*_k8s-*/*\"\n| rex field=source \"/var/log/pods/(?<namespace>[^_]+)_(?<pod>[^_]+)_[^/]+/(?<container>[^/]+)/\"\n| eval tenant=coalesce(forgecicd_tenant, namespace)\n| eval scale_set=coalesce(forgecicd_arc_type, replace(pod, \"-runner-[^-]+$\", \"\"))\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$scale_set$\"=\"*\" OR like(scale_set, \"%$scale_set$%\")\n| eval raw_l=lower(_raw)\n| eval category=case(\n    match(raw_l,\"permission denied|forbidden|unauthorized\"), \"rbac_or_permission\",\n    match(raw_l,\"timeout|context deadline\"), \"timeout_or_deadline\",\n    match(raw_l,\"prepare_job|cleanup_job|create_container|container hook|k8s/index.js\"), \"container_hook\",\n    match(raw_l,\"podspec|pod-template|pod-templates\"), \"pod_template\",\n    match(raw_l,\"error|failed|failure\"), \"error_failed\",\n    match(raw_l,\"waiting|tail -f|hook.log\"), \"tailing_hook_log\",\n    true(), \"other\")\n| stats count as events dc(pod) as pods latest(_time) as last_time by tenant scale_set category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "k8s_hook_trend_search": {
+            "name": "ARC K8S hook sidecar trend",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"kube:container:hook\" source=\"*_k8s-*/*\"\n| rex field=source \"/var/log/pods/(?<namespace>[^_]+)_(?<pod>[^_]+)_[^/]+/(?<container>[^/]+)/\"\n| eval tenant=coalesce(forgecicd_tenant, namespace)\n| eval scale_set=coalesce(forgecicd_arc_type, replace(pod, \"-runner-[^-]+$\", \"\"))\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$scale_set$\"=\"*\" OR like(scale_set, \"%$scale_set$%\")\n| eval raw_l=lower(_raw)\n| eval category=case(\n    match(raw_l,\"permission denied|forbidden|unauthorized\"), \"rbac_or_permission\",\n    match(raw_l,\"timeout|context deadline\"), \"timeout_or_deadline\",\n    match(raw_l,\"prepare_job|cleanup_job|create_container|container hook|k8s/index.js\"), \"container_hook\",\n    match(raw_l,\"podspec|pod-template|pod-templates\"), \"pod_template\",\n    match(raw_l,\"error|failed|failure\"), \"error_failed\",\n    match(raw_l,\"waiting|tail -f|hook.log\"), \"tailing_hook_log\",\n    true(), \"other\")\n| timechart span=15m count by category limit=12\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "k8s_runner_volume_search": {
+            "name": "ARC Kubernetes runner log volume",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype IN (\"kube:container:runner\",\"kube:container:runner-logs\",\"kube:container:hook\") source=\"*_k8s-*/*\"\n| rex field=source \"/var/log/pods/(?<namespace>[^_]+)_(?<pod>[^_]+)_[^/]+/(?<container>[^/]+)/\"\n| eval tenant=coalesce(forgecicd_tenant, namespace)\n| eval scale_set=coalesce(forgecicd_arc_type, replace(pod, \"-runner-[^-]+$\", \"\"))\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$scale_set$\"=\"*\" OR like(scale_set, \"%$scale_set$%\")\n| stats count as events dc(source) as sources dc(pod) as pods latest(_time) as last_time by tenant scale_set sourcetype container\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "k8s_runner_version_search": {
+            "name": "ARC Kubernetes runner versions",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype IN (\"kube:container:runner\",\"kube:container:runner-logs\") source=\"*_k8s-*/*\" \"Current runner version\"\n| rex field=source \"/var/log/pods/(?<namespace>[^_]+)_(?<pod>[^_]+)_[^/]+/(?<container>[^/]+)/\"\n| rex field=_raw \"Current runner version: '?([^0-9]*(?<runner_version>[0-9][^' ]+))\"\n| eval tenant=coalesce(forgecicd_tenant, namespace)\n| eval scale_set=coalesce(forgecicd_arc_type, replace(pod, \"-runner-[^-]+$\", \"\"))\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$scale_set$\"=\"*\" OR like(scale_set, \"%$scale_set$%\")\n| stats count as events dc(pod) as pods latest(_time) as last_time by tenant scale_set runner_version\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort tenant scale_set - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "k8s_pod_events_search": {
+            "name": "ARC Kubernetes pod events",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"kube:events\" (\"k8s-\" OR \"runner\") (\"FailedMount\" OR \"FailedScheduling\" OR \"Back-off\" OR \"FailedCreatePodSandBox\" OR \"NetworkPluginNotReady\" OR \"persistentvolumeclaim\" OR \"unbound immediate PersistentVolumeClaims\" OR \"forbidden\" OR \"timeout\")\n| eval raw_l=lower(_raw)\n| eval tenant=coalesce(forgecicd_tenant,'k8s.namespace.name',namespace,\"unknown\")\n| eval runner_pod=coalesce('k8s.pod.name','k8s.object.name')\n| rex field=_raw \"(?<raw_runner_pod>k8s-[a-z0-9-]+)\"\n| eval runner_pod=replace(coalesce(runner_pod,raw_runner_pod),\"-work$\",\"\")\n| where like(runner_pod,\"k8s-%\")\n| eval scale_set=replace(runner_pod,\"-runner-.*$\",\"\")\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| eval category=case(\n    match(raw_l,\"failedscheduling|insufficient|node affinity|didn.t match pod\"), \"scheduling\",\n    match(raw_l,\"failedmount|persistentvolumeclaim|unbound immediate persistentvolumeclaims|waiting for a volume\"), \"workspace_pvc\",\n    match(raw_l,\"failedcreatepodsandbox|networkpluginnotready|cni\"), \"cni_pod_sandbox\",\n    match(raw_l,\"back-off|imagepullbackoff|errimagepull\"), \"image_or_backoff\",\n    match(raw_l,\"forbidden|unauthorized|permission denied\"), \"rbac_or_permission\",\n    match(raw_l,\"timeout|context deadline\"), \"timeout_or_deadline\",\n    true(), \"other\")\n| stats count as events dc(host) as hosts dc(scale_set) as scale_sets dc(runner_pod) as runner_pods latest(scale_set) as sample_scale_set latest(_time) as last_time by tenant category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| table tenant category events hosts scale_sets runner_pods sample_scale_set last_seen\n| sort tenant - events\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "k8s_pod_scale_set_events_search": {
+            "name": "ARC K8S pod and PVC events by scale set",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"kube:events\" (\"k8s-\" OR \"runner\") (\"FailedMount\" OR \"FailedScheduling\" OR \"Back-off\" OR \"FailedCreatePodSandBox\" OR \"NetworkPluginNotReady\" OR \"persistentvolumeclaim\" OR \"unbound immediate PersistentVolumeClaims\" OR \"forbidden\" OR \"timeout\")\n| eval raw_l=lower(_raw)\n| eval tenant=coalesce(forgecicd_tenant,'k8s.namespace.name',namespace,\"unknown\")\n| eval runner_pod=coalesce('k8s.pod.name','k8s.object.name')\n| rex field=_raw \"(?<raw_runner_pod>k8s-[a-z0-9-]+)\"\n| rex field=_raw \"(?<pvc>pvc-[0-9a-f-]+)\"\n| rex field=_raw \"persistentvolumeclaim \\\"(?<work_pvc>[^\\\"]+)\\\"\"\n| rex field=_raw \"node (?<node>[^ ]+)\"\n| eval runner_pod=replace(coalesce(runner_pod,raw_runner_pod),\"-work$\",\"\")\n| where like(runner_pod,\"k8s-%\")\n| eval scale_set=coalesce(replace(runner_pod,\"-runner-.*$\",\"\"), \"unknown\")\n| eval pvc=coalesce(pvc,work_pvc)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$scale_set$\"=\"*\" OR like(scale_set, \"%$scale_set$%\")\n| eval category=case(\n    match(raw_l,\"failedscheduling|insufficient|node affinity|didn.t match pod\"), \"scheduling\",\n    match(raw_l,\"failedmount|persistentvolumeclaim|unbound immediate persistentvolumeclaims|waiting for a volume\"), \"workspace_pvc\",\n    match(raw_l,\"failedcreatepodsandbox|networkpluginnotready|cni\"), \"cni_pod_sandbox\",\n    match(raw_l,\"back-off|imagepullbackoff|errimagepull\"), \"image_or_backoff\",\n    match(raw_l,\"forbidden|unauthorized|permission denied\"), \"rbac_or_permission\",\n    match(raw_l,\"timeout|context deadline\"), \"timeout_or_deadline\",\n    true(), \"other\")\n| stats count as events dc(runner_pod) as runner_pods dc(pvc) as pvcs dc(node) as nodes dc(host) as hosts latest(runner_pod) as sample_runner_pod latest(pvc) as sample_pvc latest(node) as sample_node latest(_time) as last_time by tenant scale_set category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| table tenant scale_set category events runner_pods pvcs nodes hosts sample_runner_pod sample_pvc sample_node last_seen\n| sort tenant - events\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        }
+    },
+    "defaults": {
+        "dataSources": {
+            "ds.search": {
+                "options": {
+                    "queryParameters": {
+                        "earliest": "$global_time.earliest$",
+                        "latest": "$global_time.latest$"
+                    }
+                }
+            }
+        }
+    },
+    "description": "ARC K8S-mode runner, hook sidecar, runner version, log-volume, and job-pod PVC or scheduling lifecycle signals.",
+    "inputs": {
+        "input_global_time": {
+            "options": {
+                "defaultValue": "-24h@h,now",
+                "token": "global_time"
+            },
+            "title": "Global Time Range",
+            "type": "input.timerange"
+        },
+        "input_scale_set": {
+            "options": {
+                "defaultValue": "*",
+                "token": "scale_set"
+            },
+            "title": "Scale Set Contains",
+            "type": "input.text"
+        },
+        "input_tenant": {
+            "options": {
+                "defaultValue": "*",
+                "items": ${jsonencode(
+                    concat(
+                        [{ label = "All", value = "*" }],
+                        [for tenant in tenants : { label = tenant, value = tenant }]
+                    )
+                )},
+                "token": "tenant"
+            },
+            "title": "Forge Tenant",
+            "type": "input.dropdown"
+        }
+    },
+    "layout": {
+        "globalInputs": [
+            "input_global_time",
+            "input_tenant",
+            "input_scale_set"
+        ],
+        "layoutDefinitions": {
+            "layout": {
+                "options": {
+                    "gutterSize": 9
+                },
+                "structure": [
+                    {
+                        "item": "k8s_hook_categories_table",
+                        "position": {
+                            "h": 360,
+                            "w": 640,
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "k8s_hook_trend_chart",
+                        "position": {
+                            "h": 360,
+                            "w": 560,
+                            "x": 640,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "k8s_runner_volume_table",
+                        "position": {
+                            "h": 380,
+                            "w": 600,
+                            "x": 0,
+                            "y": 360
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "k8s_runner_version_table",
+                        "position": {
+                            "h": 380,
+                            "w": 600,
+                            "x": 600,
+                            "y": 360
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "k8s_pod_events_table",
+                        "position": {
+                            "h": 380,
+                            "w": 600,
+                            "x": 0,
+                            "y": 740
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "k8s_pod_scale_set_events_table",
+                        "position": {
+                            "h": 380,
+                            "w": 600,
+                            "x": 600,
+                            "y": 740
+                        },
+                        "type": "block"
+                    }
+                ],
+                "type": "grid"
+            }
+        },
+        "options": {},
+        "tabs": {
+            "items": [
+                {
+                    "label": "ARC K8S Runner Lifecycle",
+                    "layoutId": "layout"
+                }
+            ]
+        }
+    },
+    "title": "Forge ARC K8S Runner Lifecycle",
+    "visualizations": {
+        "k8s_hook_categories_table": {
+            "dataSources": {
+                "primary": "k8s_hook_categories_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Hook Sidecar Signals",
+            "type": "splunk.table"
+        },
+        "k8s_hook_trend_chart": {
+            "dataSources": {
+                "primary": "k8s_hook_trend_search"
+            },
+            "options": {},
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Hook Sidecar Trend",
+            "type": "splunk.line"
+        },
+        "k8s_pod_events_table": {
+            "dataSources": {
+                "primary": "k8s_pod_events_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "K8s Pod and PVC Events",
+            "type": "splunk.table"
+        },
+        "k8s_pod_scale_set_events_table": {
+            "dataSources": {
+                "primary": "k8s_pod_scale_set_events_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "K8s Pod and PVC Events by Scale Set",
+            "type": "splunk.table"
+        },
+        "k8s_runner_version_table": {
+            "dataSources": {
+                "primary": "k8s_runner_version_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "K8s Runner Versions",
+            "type": "splunk.table"
+        },
+        "k8s_runner_volume_table": {
+            "dataSources": {
+                "primary": "k8s_runner_volume_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "K8s Runner Log Volume",
+            "type": "splunk.table"
+        }
+    }
+}

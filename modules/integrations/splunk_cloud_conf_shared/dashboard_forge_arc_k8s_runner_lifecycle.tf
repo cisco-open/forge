@@ -1,17 +1,18 @@
 locals {
-  job_definition = templatefile(
-    "${path.module}/template_files/ci_jobs.json.tftpl",
+  forge_arc_k8s_runner_lifecycle_definition = templatefile(
+    "${path.module}/template_files/forge_arc_k8s_runner_lifecycle.json.tftpl",
     {
       splunk_index = var.splunk_conf.index,
-      tenants      = var.splunk_conf.tenant_names
+      tenants      = sort(var.splunk_conf.tenant_names)
     }
   )
-  job_eai_data = <<EOF
+
+  forge_arc_k8s_runner_lifecycle_eai_data = <<EOF
 <dashboard version="2" theme="light">
-    <label>CI Job Result</label>
+    <label>Forge ARC K8S Runner Lifecycle</label>
     <description></description>
     <definition>
-        <![CDATA[${local.job_definition}]]>
+        <![CDATA[${local.forge_arc_k8s_runner_lifecycle_definition}]]>
     </definition>
     <meta type="hiddenElements">
         <![CDATA[
@@ -26,9 +27,9 @@ locals {
 EOF
 }
 
-resource "splunk_data_ui_views" "ci_jobs" {
-  name     = "ci_jobs"
-  eai_data = local.job_eai_data
+resource "splunk_data_ui_views" "forge_arc_k8s_runner_lifecycle" {
+  name     = "forge_arc_k8s_runner_lifecycle"
+  eai_data = local.forge_arc_k8s_runner_lifecycle_eai_data
 
   acl {
     app     = var.splunk_conf.acl.app

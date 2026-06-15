@@ -1,17 +1,18 @@
 locals {
-  trust_relationship_validation_definition = templatefile(
-    "${path.module}/template_files/trust_relationship_validation.json.tftpl",
+  forge_lambda_operations_definition = templatefile(
+    "${path.module}/template_files/forge_lambda_operations.json.tftpl",
     {
       splunk_index = var.splunk_conf.index,
-      tenants      = var.splunk_conf.tenant_names
+      tenants      = sort(var.splunk_conf.tenant_names)
     }
   )
-  trust_relationship_validation_eai_data = <<EOF
+
+  forge_lambda_operations_eai_data = <<EOF
 <dashboard version="2" theme="light">
-    <label>Trust Relationship Validation</label>
+    <label>Forge Lambda Operations</label>
     <description></description>
     <definition>
-        <![CDATA[${local.trust_relationship_validation_definition}]]>
+        <![CDATA[${local.forge_lambda_operations_definition}]]>
     </definition>
     <meta type="hiddenElements">
         <![CDATA[
@@ -26,9 +27,9 @@ locals {
 EOF
 }
 
-resource "splunk_data_ui_views" "trust_relationship_validation" {
-  name     = "trust_relationship_validation"
-  eai_data = local.trust_relationship_validation_eai_data
+resource "splunk_data_ui_views" "forge_lambda_operations" {
+  name     = "forge_lambda_operations"
+  eai_data = local.forge_lambda_operations_eai_data
 
   acl {
     app     = var.splunk_conf.acl.app

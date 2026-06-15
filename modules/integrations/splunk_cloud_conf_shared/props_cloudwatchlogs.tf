@@ -8,6 +8,7 @@ resource "splunk_configs_conf" "forgecicd_cloudwatchlogs" {
     "REPORT-forgecicd_extra_lambda_tenant_fields"                 = "forgecicd_extra_lambda_tenant_fields"
     "REPORT-forgecicd_trust_validation"                           = "forgecicd_trust_validation"
     "REPORT-forgecicd_extra_lambda_ec2_tenant_fields"             = "forgecicd_extra_lambda_ec2_tenant_fields"
+    "REPORT-forgecicd_eks_control_plane_fields"                   = "forgecicd_eks_control_plane_fields"
   }
 
   acl {
@@ -65,6 +66,7 @@ resource "splunk_configs_conf" "forgecicd_cloudwatchlogs" {
     splunk_configs_conf.forgecicd_cloudwatchlogs_global_lambda_tenant_fields,
     splunk_configs_conf.forgecicd_extra_lambda_tenant_fields,
     splunk_configs_conf.forgecicd_extra_lambda_ec2_tenant_fields,
-    splunk_configs_conf.forgecicd_trust_validation
+    splunk_configs_conf.forgecicd_trust_validation,
+    splunk_configs_conf.forgecicd_eks_control_plane_fields
   ]
 }

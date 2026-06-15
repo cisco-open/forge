@@ -1,0 +1,373 @@
+{
+    "applicationProperties": {
+        "collapseNavigation": true,
+        "hideEdit": false,
+        "hideExport": false,
+        "hideOpenInSearch": false
+    },
+    "dataSources": {
+        "api_storage_errors_search": {
+            "name": "EKS API storage and controller errors",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs\" source=\"*:/aws/eks/*/cluster:kube-apiserver-audit-*\"\n| spath path=responseStatus.code output=status_code\n| spath path=verb output=verb\n| spath path=objectRef.resource output=resource\n| spath path=objectRef.namespace output=namespace\n| spath path=user.username output=username\n| where isnotnull(status_code) AND tonumber(status_code)>=400\n| search resource IN (\"persistentvolumes\",\"persistentvolumeclaims\",\"volumeattachments\",\"volumesnapshotcontents\",\"volumesnapshotclasses\",\"ephemeralrunners\",\"tiers\",\"ipamhandles\",\"leases\")\n| rex field=source \"^[^:]+:/aws/eks/(?<cluster>[^/]+)/cluster:\"\n| stats count as events dc(username) as users latest(_time) as last_time by cluster status_code verb resource namespace\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "calico_tigera_health_search": {
+            "name": "Calico and Tigera health",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype IN (\"kube:container:calico-node\",\"kube:container:calico-kube-controllers\",\"kube:container:calico-typha\",\"kube:container:tigera-operator\",\"kube:container:install-cni\")\n(\"Waiting for Tigera API server\" OR \"ResourceNotReady\" OR \"unexpected type for AllocationBlock\" OR \"Reporter is not ready\" OR \"BIRD is not ready\" OR \"bird is not ready\" OR \"bgp not established\" OR \"FailedCreatePodSandBox\" OR NetworkPluginNotReady OR \"failed to\" OR \"Failed to\" OR \"level\":\"error\" OR \"level=error\" OR \"connection refused\" OR \"i/o timeout\" OR fatal OR panic OR unable)\n| rex field=source \"/var/log/pods/(?<namespace>[^_]+)_(?<pod>[^_]+)_[^/]+/(?<container>[^/]+)/\"\n| eval raw_l=lower(_raw)\n| eval category=case(\n    match(raw_l,\"waiting for tigera api server|resourcenotready|resource is not ready\"), \"tigera_api_not_ready\",\n    match(raw_l,\"unexpected type for allocationblock\"), \"ipam_allocation_block\",\n    match(raw_l,\"reporter is not ready|felix-cache\"), \"felix_or_typha_not_ready\",\n    match(raw_l,\"bird is not ready|bgp not established\"), \"bgp_or_bird\",\n    match(raw_l,\"failedcreatepodsandbox|networkpluginnotready\"), \"cni_pod_sandbox\",\n    match(raw_l,\"connection refused|i/o timeout|timeout\"), \"connectivity_timeout\",\n    match(raw_l,\"fatal|panic|level\\\":\\\"error|level=error|failed to|unable\"), \"error_failed\",\n    true(), \"other\")\n| where category!=\"other\"\n| eval sample=substr(replace(_raw,\"\\n.*$\",\"\"),1,240)\n| stats count as events dc(pod) as pods latest(sample) as sample latest(_time) as last_time by namespace container sourcetype category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "ebs_wait_search": {
+            "name": "EBS provisioning waits",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"kube:events\" \"Waiting for a volume\"\n| eval sample=substr(_raw,1,260)\n| stats count as events dc(host) as hosts latest(_time) as last_time by sample\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "ebs_csi_health_search": {
+            "name": "EBS CSI health",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype IN (\"kube:container:csi-provisioner\",\"kube:container:ebs-plugin\",\"kube:container:csi-attacher\",\"kube:container:csi-snapshotter\",\"kube:container:csi-resizer\",\"kube:container:liveness-probe\")\n(error OR failed OR timeout OR thrott* OR Unauthorized OR AccessDenied OR \"Multi-Attach\" OR \"volume attachment\" OR \"deadline exceeded\")\n| rex field=source \"/var/log/pods/(?<namespace>[^_]+)_(?<pod>[^/]+)/(?<container>[^/]+)/\"\n| eval raw_l=lower(_raw)\n| eval category=case(\n    match(raw_l,\"multi-attach\"), \"multi_attach\",\n    match(raw_l,\"accessdenied|unauthorized\"), \"access_denied\",\n    match(raw_l,\"throttl|deadline exceeded|timeout\"), \"aws_api_or_timeout\",\n    match(raw_l,\"failed to remove finalizer|failed to delete persistentvolume|error syncing pvc|persistentvolume\"), \"pv_pvc_reconcile\",\n    match(raw_l,\"failed to watch\"), \"watch_failure\",\n    match(raw_l,\"error processing\"), \"processing_error\",\n    match(raw_l,\"error|failed\"), \"error_failed\",\n    true(), \"other\")\n| where category!=\"other\"\n| eval sample=substr(replace(_raw,\"\\n.*$\",\"\"),1,260)\n| stats count as events dc(pod) as pods latest(sample) as sample latest(_time) as last_time by namespace container sourcetype category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "eks_pod_identity_health_search": {
+            "name": "EKS Pod Identity health",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"kube:container:eks-pod-identity-agent\"\n(error OR failed OR denied OR AccessDenied OR timeout OR unable OR thrott* OR \"AssumeRoleForPodIdentity\")\n| rex field=source \"/var/log/pods/(?<namespace>[^_]+)_(?<pod>[^/]+)/(?<container>[^/]+)/\"\n| eval raw_l=lower(_raw)\n| eval category=case(\n    match(raw_l,\"error getting credentials|unable to fetch credentials|assumeroleforpodidentity\"), \"credential_fetch\",\n    match(raw_l,\"accessdenied|unauthorized|denied\"), \"access_denied\",\n    match(raw_l,\"deadline exceeded|timeout\"), \"timeout\",\n    match(raw_l,\"throttl\"), \"throttling\",\n    match(raw_l,\"error|failed|unable\"), \"error_failed\",\n    true(), \"other\")\n| where category!=\"other\"\n| eval sample=substr(replace(_raw,\"\\n.*$\",\"\"),1,260)\n| stats count as events dc(pod) as pods latest(sample) as sample latest(_time) as last_time by namespace container category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "karpenter_controller_health_search": {
+            "name": "Karpenter controller health",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"kube:container:controller\" (namespace=karpenter OR source=\"*/karpenter_*\")\n| spath path=level output=level\n| spath path=message output=message\n| spath path=controller output=controller_name\n| spath path=NodeClaim.name output=nodeclaim\n| spath path=NodePool.name output=nodepool\n| eval severity=case(level=\"ERROR\", \"error\", level=\"WARN\" OR level=\"WARNING\", \"warning\", true(), \"info\")\n| eval category=case(\n    match(message,\"(?i)failed listing instance types\"), \"failed_listing_instance_types\",\n    match(message,\"(?i)created nodeclaim|launched nodeclaim|registered nodeclaim|initialized nodeclaim\"), \"nodeclaim_lifecycle\",\n    match(message,\"(?i)computed new nodeclaim\"), \"computed_nodeclaims\",\n    match(message,\"(?i)disrupting|tainted node|deleted node|deleted nodeclaim\"), \"disruption_or_termination\",\n    match(message,\"(?i)watch ended with error\"), \"watch_ended_with_error\",\n    match(message,\"(?i)reconciler error\"), \"reconciler_error\",\n    true(), \"other\")\n| where severity!=\"info\" OR category!=\"other\"\n| stats count as events dc(nodeclaim) as nodeclaims dc(nodepool) as nodepools latest(_time) as last_time by severity category controller_name message\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort severity - events\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "kube_event_categories_search": {
+            "name": "Storage, scheduler, and CNI signals",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"kube:events\"\n(\"still attached\" OR \"Waiting for a volume\" OR \"NetworkPluginNotReady\" OR \"cni\" OR \"insufficient cpu\" OR \"Insufficient\" OR \"FailedScheduling\" OR \"didn't match Pod\" OR \"node affinity\" OR \"Failed\" OR \"failed\" OR \"Back-off\" OR \"ImagePullBackOff\" OR \"ErrImagePull\" OR \"OOMKilled\")\n| eval signature=lower(_raw)\n| eval category=case(\n    match(signature,\"still attached\"), \"pvc_still_attached\",\n    match(signature,\"waiting for a volume\"), \"ebs_volume_provision_wait\",\n    match(signature,\"networkpluginnotready|cni plugin not initialized|cni\"), \"cni_not_ready\",\n    match(signature,\"failedscheduling|insufficient|didn.t match pod|node affinity\"), \"scheduler_capacity_affinity\",\n    match(signature,\"imagepullbackoff|errimagepull\"), \"image_pull\",\n    match(signature,\"back-off\"), \"backoff\",\n    match(signature,\"oomkilled\"), \"oomkilled\",\n    match(signature,\"fail\"), \"failed\",\n    true(), \"other\")\n| where \"$category$\"=\"*\" OR like(category, \"%$category$%\")\n| rex field=_raw \"(?<pvc>pvc-[0-9a-f-]+)\"\n| rex field=_raw \"node (?<node>[^ ]+)\"\n| stats count as events dc(host) as hosts dc(pvc) as pvcs dc(node) as nodes latest(_time) as last_time values(node) as sample_nodes by category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "kube_event_trend_search": {
+            "name": "Kubernetes event trend",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"kube:events\"\n(\"still attached\" OR \"Waiting for a volume\" OR \"NetworkPluginNotReady\" OR \"cni\" OR \"insufficient cpu\" OR \"Insufficient\" OR \"FailedScheduling\" OR \"didn't match Pod\" OR \"node affinity\" OR \"Failed\" OR \"failed\" OR \"Back-off\" OR \"ImagePullBackOff\" OR \"ErrImagePull\" OR \"OOMKilled\")\n| eval signature=lower(_raw)\n| eval category=case(\n    match(signature,\"still attached\"), \"pvc_still_attached\",\n    match(signature,\"waiting for a volume\"), \"ebs_volume_provision_wait\",\n    match(signature,\"networkpluginnotready|cni plugin not initialized|cni\"), \"cni_not_ready\",\n    match(signature,\"failedscheduling|insufficient|didn.t match pod|node affinity\"), \"scheduler_capacity_affinity\",\n    match(signature,\"imagepullbackoff|errimagepull\"), \"image_pull\",\n    match(signature,\"back-off\"), \"backoff\",\n    match(signature,\"oomkilled\"), \"oomkilled\",\n    match(signature,\"fail\"), \"failed\",\n    true(), \"other\")\n| where \"$category$\"=\"*\" OR like(category, \"%$category$%\")\n| timechart span=15m count by category\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "pvc_stuck_search": {
+            "name": "PVC still attached",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"kube:events\" \"still attached\"\n| rex field=_raw \"(?<pvc>pvc-[0-9a-f-]+)\"\n| rex field=_raw \"node (?<node>[^ ]+)\"\n| stats count as events dc(host) as reporting_hosts latest(_time) as last_time by pvc node\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        }
+    },
+    "defaults": {
+        "dataSources": {
+            "ds.search": {
+                "options": {
+                    "queryParameters": {
+                        "earliest": "$global_time.earliest$",
+                        "latest": "$global_time.latest$"
+                    }
+                }
+            }
+        }
+    },
+    "description": "Kubernetes storage, EBS CSI, EKS pod identity, scheduling, CNI, image-pull, Karpenter, Calico/Tigera, and EKS API storage/controller error patterns.",
+    "inputs": {
+        "input_category": {
+            "options": {
+                "defaultValue": "*",
+                "token": "category"
+            },
+            "title": "Category Contains",
+            "type": "input.text"
+        },
+        "input_global_time": {
+            "options": {
+                "defaultValue": "-24h@h,now",
+                "token": "global_time"
+            },
+            "title": "Global Time Range",
+            "type": "input.timerange"
+        }
+    },
+    "layout": {
+        "globalInputs": [
+            "input_global_time",
+            "input_category"
+        ],
+        "layoutDefinitions": {
+            "layout": {
+                "options": {
+                    "gutterSize": 9
+                },
+                "structure": [
+                    {
+                        "item": "kube_event_categories_table",
+                        "position": {
+                            "h": 340,
+                            "w": 600,
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "kube_event_trend_chart",
+                        "position": {
+                            "h": 340,
+                            "w": 600,
+                            "x": 600,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "pvc_stuck_table",
+                        "position": {
+                            "h": 380,
+                            "w": 600,
+                            "x": 0,
+                            "y": 340
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "ebs_wait_table",
+                        "position": {
+                            "h": 380,
+                            "w": 600,
+                            "x": 600,
+                            "y": 340
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "api_storage_errors_table",
+                        "position": {
+                            "h": 420,
+                            "w": 1200,
+                            "x": 0,
+                            "y": 720
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "karpenter_controller_health_table",
+                        "position": {
+                            "h": 420,
+                            "w": 600,
+                            "x": 0,
+                            "y": 1140
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "calico_tigera_health_table",
+                        "position": {
+                            "h": 420,
+                            "w": 600,
+                            "x": 600,
+                            "y": 1140
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "ebs_csi_health_table",
+                        "position": {
+                            "h": 420,
+                            "w": 600,
+                            "x": 0,
+                            "y": 1560
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "eks_pod_identity_health_table",
+                        "position": {
+                            "h": 420,
+                            "w": 600,
+                            "x": 600,
+                            "y": 1560
+                        },
+                        "type": "block"
+                    }
+                ],
+                "type": "grid"
+            }
+        },
+        "options": {},
+        "tabs": {
+            "items": [
+                {
+                    "label": "K8s Storage and Network",
+                    "layoutId": "layout"
+                }
+            ]
+        }
+    },
+    "title": "Forge Kubernetes Storage and Network",
+    "visualizations": {
+        "api_storage_errors_table": {
+            "dataSources": {
+                "primary": "api_storage_errors_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "EKS API Storage and Controller Errors",
+            "type": "splunk.table"
+        },
+        "ebs_wait_table": {
+            "dataSources": {
+                "primary": "ebs_wait_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "EBS Provisioning Waits",
+            "type": "splunk.table"
+        },
+        "ebs_csi_health_table": {
+            "dataSources": {
+                "primary": "ebs_csi_health_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "EBS CSI Health",
+            "type": "splunk.table"
+        },
+        "eks_pod_identity_health_table": {
+            "dataSources": {
+                "primary": "eks_pod_identity_health_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "EKS Pod Identity Health",
+            "type": "splunk.table"
+        },
+        "calico_tigera_health_table": {
+            "dataSources": {
+                "primary": "calico_tigera_health_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Calico and Tigera Health",
+            "type": "splunk.table"
+        },
+        "karpenter_controller_health_table": {
+            "dataSources": {
+                "primary": "karpenter_controller_health_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Karpenter Controller Health",
+            "type": "splunk.table"
+        },
+        "kube_event_categories_table": {
+            "dataSources": {
+                "primary": "kube_event_categories_search"
+            },
+            "options": {
+                "count": 30
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Storage, Scheduler, and CNI Signals",
+            "type": "splunk.table"
+        },
+        "kube_event_trend_chart": {
+            "dataSources": {
+                "primary": "kube_event_trend_search"
+            },
+            "options": {},
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Storage, Scheduler, and CNI Trend",
+            "type": "splunk.line"
+        },
+        "pvc_stuck_table": {
+            "dataSources": {
+                "primary": "pvc_stuck_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "PVC Still Attached",
+            "type": "splunk.table"
+        }
+    }
+}

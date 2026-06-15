@@ -160,7 +160,7 @@ resource "signalfx_list_chart" "oldest_message_age" {
   name        = "Oldest message age"
   description = "Displays the max age of the oldest unprocessed message in seconds"
 
-  program_text = "A = data('ApproximateAgeOfOldestMessage', filter=filter('namespace', 'AWS/SQS') and filter('stat', 'mean')).sum(by=['QueueName', 'aws_region']).publish(label='A')"
+  program_text = "A = data('ApproximateAgeOfOldestMessage', filter=filter('namespace', 'AWS/SQS') and filter('stat', 'mean')).sum(by=['QueueName']).publish(label='A')"
 
   disable_sampling    = false
   hide_missing_values = true
@@ -190,13 +190,8 @@ resource "signalfx_list_chart" "oldest_message_age" {
     enabled  = false
     property = "stat"
   }
-  legend_options_fields {
-    enabled  = true
-    property = "aws_region"
-  }
-
   viz_options {
-    display_name = "ApproximateAgeOfOldestMessage - Sum by QueueName,aws_region"
+    display_name = "ApproximateAgeOfOldestMessage - Sum by QueueName"
     label        = "A"
   }
 }
@@ -347,6 +342,109 @@ resource "signalfx_time_chart" "messages_deleted" {
   }
 }
 
+resource "signalfx_time_chart" "dead_letter_backlog_trend" {
+  name        = "DLQ backlog trend"
+  description = "Tracks visible and in-flight messages in dead-letter queues."
+
+  program_text = <<-EOF
+A = data('ApproximateNumberOfMessagesVisible', filter=filter('namespace', 'AWS/SQS') and filter('QueueName', '*dead-letter*', '*dlq*', '*DLQ*') and filter('stat', 'mean'), rollup='latest').sum(by=['QueueName', 'aws_tag_TenantName']).publish(label='Visible')
+B = data('ApproximateNumberOfMessagesNotVisible', filter=filter('namespace', 'AWS/SQS') and filter('QueueName', '*dead-letter*', '*dlq*', '*DLQ*') and filter('stat', 'mean'), rollup='latest').sum(by=['QueueName', 'aws_tag_TenantName']).publish(label='In-flight')
+EOF
+
+  plot_type                 = "AreaChart"
+  axes_precision            = 0
+  disable_sampling          = false
+  on_chart_legend_dimension = "plot_label"
+  show_event_lines          = false
+  stacked                   = true
+  time_range                = 900
+  unit_prefix               = "Metric"
+
+  axis_left {
+    label = "# Messages"
+  }
+
+  legend_options_fields {
+    enabled  = true
+    property = "QueueName"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
+  }
+}
+
+resource "signalfx_list_chart" "dead_letter_oldest_message_age" {
+  name        = "DLQ oldest message age"
+  description = "Ranks dead-letter queues by oldest message age."
+
+  program_text = "A = data('ApproximateAgeOfOldestMessage', filter=filter('namespace', 'AWS/SQS') and filter('QueueName', '*dead-letter*', '*dlq*', '*DLQ*') and filter('stat', 'mean'), rollup='latest').max(by=['QueueName', 'aws_tag_TenantName']).top(count=20).publish(label='A')"
+  sort_by      = "-value"
+
+  disable_sampling        = false
+  hide_missing_values     = true
+  max_precision           = 4
+  secondary_visualization = "None"
+  time_range              = 900
+  unit_prefix             = "Metric"
+
+  legend_options_fields {
+    enabled  = true
+    property = "QueueName"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
+  }
+
+  viz_options {
+    display_name = "Oldest DLQ message age"
+    label        = "A"
+    value_unit   = "Second"
+  }
+}
+
+resource "signalfx_list_chart" "dead_letter_visible_messages" {
+  name        = "DLQ visible messages"
+  description = "Ranks dead-letter queues by visible backlog."
+
+  program_text = "A = data('ApproximateNumberOfMessagesVisible', filter=filter('namespace', 'AWS/SQS') and filter('QueueName', '*dead-letter*', '*dlq*', '*DLQ*') and filter('stat', 'mean'), rollup='latest').sum(by=['QueueName', 'aws_tag_TenantName']).top(count=20).publish(label='A')"
+  sort_by      = "-value"
+
+  disable_sampling        = false
+  hide_missing_values     = true
+  max_precision           = 4
+  secondary_visualization = "None"
+  time_range              = 900
+  unit_prefix             = "Metric"
+
+  legend_options_fields {
+    enabled  = true
+    property = "QueueName"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
+  }
+
+  viz_options {
+    display_name = "Visible DLQ messages"
+    label        = "A"
+  }
+}
+
 resource "signalfx_dashboard" "sqs" {
   name        = "SQS"
   description = "SQS queue counts, message states, sizes, and processing trends."
@@ -359,7 +457,7 @@ resource "signalfx_dashboard" "sqs" {
     description            = ""
     values                 = []
     value_required         = false
-    values_suggested       = var.tenant_names
+    values_suggested       = sort(var.tenant_names)
     restricted_suggestions = true
   }
 
@@ -447,6 +545,30 @@ resource "signalfx_dashboard" "sqs" {
     column   = 0
     row      = 4
     width    = 12
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_time_chart.dead_letter_backlog_trend.id
+    column   = 0
+    row      = 5
+    width    = 4
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_list_chart.dead_letter_visible_messages.id
+    column   = 4
+    row      = 5
+    width    = 4
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_list_chart.dead_letter_oldest_message_age.id
+    column   = 8
+    row      = 5
+    width    = 4
     height   = 1
   }
 }

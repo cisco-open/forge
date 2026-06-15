@@ -1,0 +1,421 @@
+{
+    "title": "Forge CI Job Details",
+    "description": "Shows recent Forge GitHub Actions job executions with repository, runner, label, queue, and duration details.",
+    "inputs": {
+        "input_global_time": {
+            "options": {
+                "defaultValue": "-24h@h,now",
+                "token": "global_time"
+            },
+            "title": "Global Time Range",
+            "type": "input.timerange"
+        },
+        "input_tenant": {
+            "context": {},
+            "dataSources": {},
+            "options": {
+                "defaultValue": "*",
+                "items": ${jsonencode(
+                    concat(
+                        [{ label = "All", value = "*" }],
+                        [for tenant in tenants : { label = tenant, value = tenant }]
+                    )
+                )},
+                "token": "tenant"
+            },
+            "title": "Forge Tenant",
+            "type": "input.dropdown"
+        },
+        "input_result": {
+            "options": {
+                "defaultValue": "*",
+                "items": [
+                    {
+                        "label": "All",
+                        "value": "*"
+                    },
+                    {
+                        "label": "Success",
+                        "value": "success"
+                    },
+                    {
+                        "label": "Failure",
+                        "value": "failure"
+                    },
+                    {
+                        "label": "Cancelled",
+                        "value": "cancelled"
+                    },
+                    {
+                        "label": "Skipped",
+                        "value": "skipped"
+                    }
+                ],
+                "token": "result"
+            },
+            "title": "CI Result",
+            "type": "input.dropdown"
+        },
+        "input_repository": {
+            "options": {
+                "defaultValue": "*",
+                "token": "repository"
+            },
+            "title": "Repository Contains",
+            "type": "input.text"
+        },
+        "input_runner_group": {
+            "options": {
+                "defaultValue": "*",
+                "token": "runner_group"
+            },
+            "title": "Runner Group Contains",
+            "type": "input.text"
+        },
+        "input_instance": {
+            "options": {
+                "defaultValue": "*",
+                "token": "instance_id"
+            },
+            "title": "Instance or Runner Contains",
+            "type": "input.text"
+        },
+        "input_window_span": {
+            "options": {
+                "defaultValue": "1h",
+                "items": [
+                    {
+                        "label": "15 minutes",
+                        "value": "15m"
+                    },
+                    {
+                        "label": "30 minutes",
+                        "value": "30m"
+                    },
+                    {
+                        "label": "1 hour",
+                        "value": "1h"
+                    },
+                    {
+                        "label": "4 hours",
+                        "value": "4h"
+                    },
+                    {
+                        "label": "1 day",
+                        "value": "1d"
+                    }
+                ],
+                "token": "window_span"
+            },
+            "title": "Window Span",
+            "type": "input.dropdown"
+        }
+    },
+    "defaults": {
+        "dataSources": {
+            "ds.o11y": {
+                "options": {
+                    "queryParameters": {
+                        "earliest": "$global_time.earliest$",
+                        "latest": "$global_time.latest$"
+                    }
+                }
+            },
+            "ds.search": {
+                "options": {
+                    "queryParameters": {
+                        "earliest": "$global_time.earliest$",
+                        "latest": "$global_time.latest$"
+                    }
+                }
+            }
+        }
+    },
+    "visualizations": {
+        "queued_windows_table": {
+            "containerOptions": {},
+            "dataSources": {
+                "primary": "queued_windows_search"
+            },
+            "eventHandlers": [],
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Queued Jobs by Time Window",
+            "type": "splunk.table"
+        },
+        "runner_type_repo_windows_table": {
+            "containerOptions": {},
+            "dataSources": {
+                "primary": "runner_type_repo_windows_search"
+            },
+            "eventHandlers": [],
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Busiest Windows by Runner Type and Repo",
+            "type": "splunk.table"
+        },
+        "runner_type_timing_table": {
+            "containerOptions": {},
+            "dataSources": {
+                "primary": "runner_type_timing_search"
+            },
+            "eventHandlers": [],
+            "options": {
+                "count": 30
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Runner Type Timing",
+            "type": "splunk.table"
+        },
+        "runner_type_usage_window_chart": {
+            "containerOptions": {},
+            "dataSources": {
+                "primary": "runner_type_usage_window_search"
+            },
+            "eventHandlers": [],
+            "options": {},
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Runner Type Usage by Time Window",
+            "type": "splunk.line"
+        },
+        "runner_type_workflow_windows_table": {
+            "containerOptions": {},
+            "dataSources": {
+                "primary": "runner_type_workflow_windows_search"
+            },
+            "eventHandlers": [],
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Busiest Windows by Runner Type and Workflow Job",
+            "type": "splunk.table"
+        },
+        "workflow_runner_usage_table": {
+            "containerOptions": {},
+            "dataSources": {
+                "primary": "workflow_runner_usage_search"
+            },
+            "eventHandlers": [],
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Workflow Job Runner Usage",
+            "type": "splunk.table"
+        },
+        "ci_job_details_table": {
+            "containerOptions": {},
+            "dataSources": {
+                "primary": "ci_job_details_search"
+            },
+            "eventHandlers": [],
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "CI Job Details",
+            "type": "splunk.table"
+        }
+    },
+    "dataSources": {
+        "queued_windows_search": {
+            "name": "Queued jobs by time window",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" forgecicd_log_type=\"runner-job-event\"\n| eval ci_result='workflow_job.conclusion'\n| eval repository='repository.full_name'\n| eval workflow_name='workflow_job.name'\n| eval created_at='workflow_job.created_at'\n| eval started_at='workflow_job.started_at'\n| eval completed_at='workflow_job.completed_at'\n| eval runner_group='workflow_job.runner_group_name'\n| eval runner_name='workflow_job.runner_name'\n| eval labels=mvjoin('workflow_job.labels{}', \", \")\n| eval runner_type=coalesce(forgecicd_type, \"unknown\")\n| where \"$tenant$\"=\"*\" OR forgecicd_tenant=\"$tenant$\"\n| where \"$result$\"=\"*\" OR ci_result=\"$result$\"\n| where \"$repository$\"=\"*\" OR like(repository, \"%$repository$%\")\n| where \"$runner_group$\"=\"*\" OR like(runner_group, \"%$runner_group$%\")\n| where \"$instance_id$\"=\"*\" OR like(forgecicd_instance_id, \"%$instance_id$%\") OR like(runner_name, \"%$instance_id$%\")\n| eval created_epoch=strptime(created_at, \"%Y-%m-%dT%H:%M:%SZ\")\n| eval started_epoch=strptime(started_at, \"%Y-%m-%dT%H:%M:%SZ\")\n| eval queue_sec=started_epoch-created_epoch\n| where isnotnull(created_epoch) AND isnotnull(started_epoch) AND queue_sec>=0\n| eval _time=created_epoch\n| bin _time span=$window_span$\n| stats count as queued_jobs avg(queue_sec) as avg_queue_sec perc95(queue_sec) as p95_queue_sec max(queue_sec) as max_queue_sec dc(repository) as repositories dc(workflow_name) as workflow_jobs values(labels) as labels by _time forgecicd_tenant runner_type runner_group\n| eval time_window=strftime(_time, \"%Y-%m-%d %H:%M:%S\")\n| eval avg_queue=tostring(round(avg_queue_sec,0), \"duration\"), p95_queue=tostring(round(p95_queue_sec,0), \"duration\"), max_queue=tostring(round(max_queue_sec,0), \"duration\")\n| sort - queued_jobs - p95_queue_sec\n| table time_window forgecicd_tenant runner_type runner_group labels queued_jobs repositories workflow_jobs avg_queue p95_queue max_queue avg_queue_sec p95_queue_sec max_queue_sec\n| head 100",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "runner_type_repo_windows_search": {
+            "name": "Busiest runner type repository windows",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" forgecicd_log_type=\"runner-job-event\"\n| eval ci_result='workflow_job.conclusion'\n| eval repository='repository.full_name'\n| eval workflow_name='workflow_job.name'\n| eval created_at='workflow_job.created_at'\n| eval started_at='workflow_job.started_at'\n| eval completed_at='workflow_job.completed_at'\n| eval runner_group='workflow_job.runner_group_name'\n| eval runner_name='workflow_job.runner_name'\n| eval labels=mvjoin('workflow_job.labels{}', \", \")\n| eval runner_type=coalesce(forgecicd_type, \"unknown\")\n| where \"$tenant$\"=\"*\" OR forgecicd_tenant=\"$tenant$\"\n| where \"$result$\"=\"*\" OR ci_result=\"$result$\"\n| where \"$repository$\"=\"*\" OR like(repository, \"%$repository$%\")\n| where \"$runner_group$\"=\"*\" OR like(runner_group, \"%$runner_group$%\")\n| where \"$instance_id$\"=\"*\" OR like(forgecicd_instance_id, \"%$instance_id$%\") OR like(runner_name, \"%$instance_id$%\")\n| eval created_epoch=strptime(created_at, \"%Y-%m-%dT%H:%M:%SZ\")\n| eval started_epoch=strptime(started_at, \"%Y-%m-%dT%H:%M:%SZ\")\n| eval completed_epoch=strptime(completed_at, \"%Y-%m-%dT%H:%M:%SZ\")\n| eval queue_sec=started_epoch-created_epoch, duration_sec=completed_epoch-started_epoch\n| where isnotnull(started_epoch) AND isnotnull(completed_epoch) AND queue_sec>=0 AND duration_sec>=0\n| eval _time=started_epoch\n| bin _time span=$window_span$\n| stats count as jobs avg(queue_sec) as avg_queue_sec perc95(queue_sec) as p95_queue_sec avg(duration_sec) as avg_run_sec perc95(duration_sec) as p95_run_sec values(labels) as labels by _time forgecicd_tenant runner_type repository\n| eval time_window=strftime(_time, \"%Y-%m-%d %H:%M:%S\")\n| eval avg_queue=tostring(round(avg_queue_sec,0), \"duration\"), p95_queue=tostring(round(p95_queue_sec,0), \"duration\"), avg_run=tostring(round(avg_run_sec,0), \"duration\"), p95_run=tostring(round(p95_run_sec,0), \"duration\")\n| sort - jobs - p95_queue_sec\n| table time_window forgecicd_tenant runner_type repository labels jobs avg_queue p95_queue avg_run p95_run avg_queue_sec p95_queue_sec avg_run_sec p95_run_sec\n| head 100",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "runner_type_timing_search": {
+            "name": "Runner type timing",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" forgecicd_log_type=\"runner-job-event\"\n| eval ci_result='workflow_job.conclusion'\n| eval repository='repository.full_name'\n| eval workflow_name='workflow_job.name'\n| eval created_at='workflow_job.created_at'\n| eval started_at='workflow_job.started_at'\n| eval completed_at='workflow_job.completed_at'\n| eval runner_group='workflow_job.runner_group_name'\n| eval runner_name='workflow_job.runner_name'\n| eval labels=mvjoin('workflow_job.labels{}', \", \")\n| eval runner_type=coalesce(forgecicd_type, \"unknown\")\n| where \"$tenant$\"=\"*\" OR forgecicd_tenant=\"$tenant$\"\n| where \"$result$\"=\"*\" OR ci_result=\"$result$\"\n| where \"$repository$\"=\"*\" OR like(repository, \"%$repository$%\")\n| where \"$runner_group$\"=\"*\" OR like(runner_group, \"%$runner_group$%\")\n| where \"$instance_id$\"=\"*\" OR like(forgecicd_instance_id, \"%$instance_id$%\") OR like(runner_name, \"%$instance_id$%\")\n| eval created_epoch=strptime(created_at, \"%Y-%m-%dT%H:%M:%SZ\")\n| eval started_epoch=strptime(started_at, \"%Y-%m-%dT%H:%M:%SZ\")\n| eval completed_epoch=strptime(completed_at, \"%Y-%m-%dT%H:%M:%SZ\")\n| eval queue_sec=started_epoch-created_epoch, duration_sec=completed_epoch-started_epoch, total_sec=completed_epoch-created_epoch\n| where isnotnull(queue_sec) AND isnotnull(duration_sec) AND queue_sec>=0 AND duration_sec>=0\n| stats count as jobs dc(repository) as repositories dc(workflow_name) as workflow_jobs avg(queue_sec) as avg_queue_sec perc95(queue_sec) as p95_queue_sec avg(duration_sec) as avg_run_sec perc95(duration_sec) as p95_run_sec avg(total_sec) as avg_total_sec values(labels) as labels by forgecicd_tenant runner_type runner_group forgecicd_type\n| eval avg_queue=tostring(round(avg_queue_sec,0), \"duration\"), p95_queue=tostring(round(p95_queue_sec,0), \"duration\"), avg_run=tostring(round(avg_run_sec,0), \"duration\"), p95_run=tostring(round(p95_run_sec,0), \"duration\"), avg_total=tostring(round(avg_total_sec,0), \"duration\")\n| sort - jobs\n| table forgecicd_tenant runner_type runner_group forgecicd_type labels jobs repositories workflow_jobs avg_queue p95_queue avg_run p95_run avg_total avg_queue_sec p95_queue_sec avg_run_sec p95_run_sec avg_total_sec",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "runner_type_usage_window_search": {
+            "name": "Runner type usage by time window",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" forgecicd_log_type=\"runner-job-event\"\n| eval ci_result='workflow_job.conclusion'\n| eval repository='repository.full_name'\n| eval created_at='workflow_job.created_at'\n| eval started_at='workflow_job.started_at'\n| eval runner_group='workflow_job.runner_group_name'\n| eval runner_name='workflow_job.runner_name'\n| eval labels=mvjoin('workflow_job.labels{}', \", \")\n| eval runner_type=coalesce(forgecicd_type, \"unknown\")\n| where \"$tenant$\"=\"*\" OR forgecicd_tenant=\"$tenant$\"\n| where \"$result$\"=\"*\" OR ci_result=\"$result$\"\n| where \"$repository$\"=\"*\" OR like(repository, \"%$repository$%\")\n| where \"$runner_group$\"=\"*\" OR like(runner_group, \"%$runner_group$%\")\n| where \"$instance_id$\"=\"*\" OR like(forgecicd_instance_id, \"%$instance_id$%\") OR like(runner_name, \"%$instance_id$%\")\n| eval started_epoch=strptime(started_at, \"%Y-%m-%dT%H:%M:%SZ\")\n| where isnotnull(started_epoch)\n| eval _time=started_epoch\n| eval tenant_runner_type=forgecicd_tenant.\" / \".runner_type\n| timechart span=$window_span$ count as jobs by tenant_runner_type limit=20",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "runner_type_workflow_windows_search": {
+            "name": "Busiest runner type workflow job windows",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" forgecicd_log_type=\"runner-job-event\"\n| eval ci_result='workflow_job.conclusion'\n| eval repository='repository.full_name'\n| eval workflow_name='workflow_job.name'\n| eval created_at='workflow_job.created_at'\n| eval started_at='workflow_job.started_at'\n| eval completed_at='workflow_job.completed_at'\n| eval runner_group='workflow_job.runner_group_name'\n| eval runner_name='workflow_job.runner_name'\n| eval labels=mvjoin('workflow_job.labels{}', \", \")\n| eval runner_type=coalesce(forgecicd_type, \"unknown\")\n| where \"$tenant$\"=\"*\" OR forgecicd_tenant=\"$tenant$\"\n| where \"$result$\"=\"*\" OR ci_result=\"$result$\"\n| where \"$repository$\"=\"*\" OR like(repository, \"%$repository$%\")\n| where \"$runner_group$\"=\"*\" OR like(runner_group, \"%$runner_group$%\")\n| where \"$instance_id$\"=\"*\" OR like(forgecicd_instance_id, \"%$instance_id$%\") OR like(runner_name, \"%$instance_id$%\")\n| eval created_epoch=strptime(created_at, \"%Y-%m-%dT%H:%M:%SZ\")\n| eval started_epoch=strptime(started_at, \"%Y-%m-%dT%H:%M:%SZ\")\n| eval completed_epoch=strptime(completed_at, \"%Y-%m-%dT%H:%M:%SZ\")\n| eval queue_sec=started_epoch-created_epoch, duration_sec=completed_epoch-started_epoch\n| where isnotnull(started_epoch) AND isnotnull(completed_epoch) AND queue_sec>=0 AND duration_sec>=0\n| eval _time=started_epoch\n| bin _time span=$window_span$\n| stats count as jobs avg(queue_sec) as avg_queue_sec perc95(queue_sec) as p95_queue_sec avg(duration_sec) as avg_run_sec perc95(duration_sec) as p95_run_sec values(labels) as labels by _time forgecicd_tenant runner_type runner_group repository workflow_name\n| eval time_window=strftime(_time, \"%Y-%m-%d %H:%M:%S\")\n| eval avg_queue=tostring(round(avg_queue_sec,0), \"duration\"), p95_queue=tostring(round(p95_queue_sec,0), \"duration\"), avg_run=tostring(round(avg_run_sec,0), \"duration\"), p95_run=tostring(round(p95_run_sec,0), \"duration\")\n| sort - jobs - p95_queue_sec\n| table time_window forgecicd_tenant runner_type runner_group repository workflow_name labels jobs avg_queue p95_queue avg_run p95_run avg_queue_sec p95_queue_sec avg_run_sec p95_run_sec\n| head 100",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "workflow_runner_usage_search": {
+            "name": "Workflow job runner usage",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" forgecicd_log_type=\"runner-job-event\"\n| eval ci_result='workflow_job.conclusion'\n| eval repository='repository.full_name'\n| eval workflow_name='workflow_job.name'\n| eval workflow_run_id='workflow_job.run_id'\n| eval created_at='workflow_job.created_at'\n| eval started_at='workflow_job.started_at'\n| eval completed_at='workflow_job.completed_at'\n| eval runner_group='workflow_job.runner_group_name'\n| eval runner_name='workflow_job.runner_name'\n| eval labels=mvjoin('workflow_job.labels{}', \", \")\n| eval runner_type=coalesce(forgecicd_type, \"unknown\")\n| where \"$tenant$\"=\"*\" OR forgecicd_tenant=\"$tenant$\"\n| where \"$result$\"=\"*\" OR ci_result=\"$result$\"\n| where \"$repository$\"=\"*\" OR like(repository, \"%$repository$%\")\n| where \"$runner_group$\"=\"*\" OR like(runner_group, \"%$runner_group$%\")\n| where \"$instance_id$\"=\"*\" OR like(forgecicd_instance_id, \"%$instance_id$%\") OR like(runner_name, \"%$instance_id$%\")\n| eval created_epoch=strptime(created_at, \"%Y-%m-%dT%H:%M:%SZ\")\n| eval started_epoch=strptime(started_at, \"%Y-%m-%dT%H:%M:%SZ\")\n| eval completed_epoch=strptime(completed_at, \"%Y-%m-%dT%H:%M:%SZ\")\n| eval queue_sec=started_epoch-created_epoch, duration_sec=completed_epoch-started_epoch\n| where isnotnull(queue_sec) AND isnotnull(duration_sec) AND queue_sec>=0 AND duration_sec>=0\n| stats count as jobs dc(workflow_run_id) as workflow_runs avg(queue_sec) as avg_queue_sec perc95(queue_sec) as p95_queue_sec avg(duration_sec) as avg_run_sec perc95(duration_sec) as p95_run_sec values(labels) as labels by forgecicd_tenant repository workflow_name runner_type runner_group\n| eval avg_queue=tostring(round(avg_queue_sec,0), \"duration\"), p95_queue=tostring(round(p95_queue_sec,0), \"duration\"), avg_run=tostring(round(avg_run_sec,0), \"duration\"), p95_run=tostring(round(p95_run_sec,0), \"duration\")\n| sort - jobs - p95_queue_sec\n| table forgecicd_tenant repository workflow_name runner_type runner_group labels jobs workflow_runs avg_queue p95_queue avg_run p95_run avg_queue_sec p95_queue_sec avg_run_sec p95_run_sec\n| head 100",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "ci_job_details_search": {
+            "name": "Forge CI job details",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" forgecicd_log_type=\"runner-job-event\"\n| eval ci_result='workflow_job.conclusion'\n| eval repository='repository.full_name'\n| eval workflow_name='workflow_job.name'\n| eval workflow_run_id='workflow_job.run_id'\n| eval workflow_run_attempt='workflow_job.run_attempt'\n| eval workflow_job_id='workflow_job.id'\n| eval created_at='workflow_job.created_at'\n| eval started_at='workflow_job.started_at'\n| eval completed_at='workflow_job.completed_at'\n| eval runner_group='workflow_job.runner_group_name'\n| eval runner_name='workflow_job.runner_name'\n| eval run_url='workflow_job.html_url'\n| eval labels=mvjoin('workflow_job.labels{}', \", \")\n| eval runner_type=coalesce(forgecicd_type, \"unknown\")\n| where \"$tenant$\"=\"*\" OR forgecicd_tenant=\"$tenant$\"\n| where \"$result$\"=\"*\" OR ci_result=\"$result$\"\n| where \"$repository$\"=\"*\" OR like(repository, \"%$repository$%\")\n| where \"$runner_group$\"=\"*\" OR like(runner_group, \"%$runner_group$%\")\n| where \"$instance_id$\"=\"*\" OR like(forgecicd_instance_id, \"%$instance_id$%\") OR like(runner_name, \"%$instance_id$%\")\n| eval created_epoch=strptime(created_at, \"%Y-%m-%dT%H:%M:%SZ\")\n| eval started_epoch=strptime(started_at, \"%Y-%m-%dT%H:%M:%SZ\")\n| eval completed_epoch=strptime(completed_at, \"%Y-%m-%dT%H:%M:%SZ\")\n| eval queue_sec=started_epoch-created_epoch, duration_sec=completed_epoch-started_epoch, total_sec=completed_epoch-created_epoch\n| eval queue_time=if(isnotnull(queue_sec), tostring(queue_sec, \"duration\"), null())\n| eval run_duration=if(isnotnull(duration_sec), tostring(duration_sec, \"duration\"), null())\n| eval total_duration=if(isnotnull(total_sec), tostring(total_sec, \"duration\"), null())\n| table _time run_url ci_result forgecicd_tenant repository workflow_name workflow_run_id workflow_run_attempt workflow_job_id runner_type runner_group runner_name labels created_at started_at completed_at queue_time run_duration total_duration queue_sec duration_sec total_sec forgecicd_instance_id\n| sort - _time",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        }
+    },
+    "layout": {
+        "globalInputs": [
+            "input_global_time",
+            "input_tenant",
+            "input_result",
+            "input_repository",
+            "input_runner_group",
+            "input_instance",
+            "input_window_span"
+        ],
+        "layoutDefinitions": {
+            "layout_6CHuojec": {
+                "options": {
+                    "gutterSize": 9
+                },
+                "structure": [
+                    {
+                        "item": "runner_type_timing_table",
+                        "position": {
+                            "h": 360,
+                            "w": 600,
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "workflow_runner_usage_table",
+                        "position": {
+                            "h": 360,
+                            "w": 600,
+                            "x": 600,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "runner_type_usage_window_chart",
+                        "position": {
+                            "h": 360,
+                            "w": 600,
+                            "x": 0,
+                            "y": 360
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "queued_windows_table",
+                        "position": {
+                            "h": 360,
+                            "w": 600,
+                            "x": 600,
+                            "y": 360
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "runner_type_repo_windows_table",
+                        "position": {
+                            "h": 420,
+                            "w": 600,
+                            "x": 0,
+                            "y": 720
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "runner_type_workflow_windows_table",
+                        "position": {
+                            "h": 420,
+                            "w": 600,
+                            "x": 600,
+                            "y": 720
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "ci_job_details_table",
+                        "position": {
+                            "h": 720,
+                            "w": 1200,
+                            "x": 0,
+                            "y": 1140
+                        },
+                        "type": "block"
+                    }
+                ],
+                "type": "grid"
+            }
+        },
+        "options": {},
+        "tabs": {
+            "items": [
+                {
+                    "label": "CI Job Details",
+                    "layoutId": "layout_6CHuojec"
+                }
+            ]
+        }
+    },
+    "applicationProperties": {
+        "collapseNavigation": true
+    }
+}

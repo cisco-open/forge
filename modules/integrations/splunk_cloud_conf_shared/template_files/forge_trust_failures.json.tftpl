@@ -1,0 +1,218 @@
+{
+    "applicationProperties": {
+        "collapseNavigation": true,
+        "hideEdit": false,
+        "hideExport": false,
+        "hideOpenInSearch": false
+    },
+    "dataSources": {
+        "assume_role_failures_search": {
+            "name": "Basic AssumeRole failures",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs\" source=\"*:/aws/lambda/*forge-trust-validator*\" \"Basic AssumeRole failed for\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| eval validator_tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR validator_tenant=\"$tenant$\"\n| rex field=_raw \"Basic AssumeRole failed for (?<tenant_role_arn>arn:aws:iam::\\d+:role[^:]+): (?<error>.*)$\"\n| rex field=_raw \"User: (?<forge_assumed_role>arn:aws:sts::\\d+:assumed-role/[^/]+/[^ ]+) is not authorized to perform: (?<action>[^ ]+) on resource: (?<resource>arn:aws:iam::\\d+:role[^\\s]+)\"\n| rex field=forge_assumed_role \"arn:aws:sts::(?<forge_account_id>\\d+):assumed-role/(?<forge_role_name>[^/]+)/\"\n| eval tenant_role=coalesce(tenant_role_arn, resource, \"unknown\")\n| eval forge_role=if(isnotnull(forge_account_id) AND isnotnull(forge_role_name), \"arn:aws:iam::\".forge_account_id.\":role/\".forge_role_name, coalesce(forge_assumed_role,\"unknown\"))\n| where \"$role$\"=\"*\" OR like(tenant_role, \"%$role$%\") OR like(forge_role, \"%$role$%\")\n| stats count as failures dc(lambda_name) as validators values(action) as actions latest(_time) as last_time by validator_tenant tenant_role forge_role\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| table validator_tenant tenant_role forge_role failures validators actions last_seen\n| sort - failures\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "latest_validation_search": {
+            "name": "Latest validation detail",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs\" source=\"*:/aws/lambda/*forge-trust-validator*\" \"Delayed validation run complete\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| eval validator_tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR validator_tenant=\"$tenant$\"\n| eventstats max(_time) as tenant_last_seen by validator_tenant\n| where _time=tenant_last_seen\n| rex field=_raw \"Delayed validation run complete: (?<trust_json>\\{.*\\})\"\n| spath input=trust_json path=validation_results{} output=item\n| mvexpand item\n| spath input=item path=forge_role_arn output=forge_role\n| spath input=item path=tenant_results{} output=tenant_results\n| mvexpand tenant_results\n| spath input=tenant_results\n| where \"$role$\"=\"*\" OR like(forge_role, \"%$role$%\") OR like(tenant_role_arn, \"%$role$%\")\n| eval assume_status=if(tostring(assume_role_success)=\"true\",\"assumed\",\"not assumed\")\n| eval tag_status=if(tostring(tag_session_success)=\"true\",\"session tagged\",\"session not tagged\")\n| table validator_tenant forge_role tenant_role_arn assume_status assume_role_error tag_status tag_session_error\n| sort validator_tenant assume_status tag_status forge_role tenant_role_arn\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "trust_failure_trend_search": {
+            "name": "Trust failure trend",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs\" source=\"*:/aws/lambda/*forge-trust-validator*\"\n(\"Basic AssumeRole failed\" OR AccessDenied OR \"tag_session_success\\\": false\" OR \"assume_role_success\\\": false\")\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| eval validator_tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR validator_tenant=\"$tenant$\"\n| eval category=case(\n    searchmatch(\"Basic AssumeRole failed\"), \"basic_assume_role_failed\",\n    searchmatch(\"AccessDenied\"), \"access_denied\",\n    searchmatch(\"tag_session_success\\\": false\"), \"tag_session_failed\",\n    searchmatch(\"assume_role_success\\\": false\"), \"assume_role_failed\",\n    true(), \"other\")\n| timechart span=15m count by category\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "validator_access_denied_search": {
+            "name": "Validator AccessDenied errors",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs\" source=\"*:/aws/lambda/*forge-trust-validator*\" AccessDenied\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| eval validator_tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR validator_tenant=\"$tenant$\"\n| eval sample=replace(_raw,\"\\n.*$\",\"\")\n| eval sample=substr(sample,1,300)\n| stats count as events latest(_time) as last_time by validator_tenant lambda_name sample\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        }
+    },
+    "defaults": {
+        "dataSources": {
+            "ds.search": {
+                "options": {
+                    "queryParameters": {
+                        "earliest": "$global_time.earliest$",
+                        "latest": "$global_time.latest$"
+                    }
+                }
+            }
+        }
+    },
+    "description": "IAM trust validation failures by validator tenant, Forge role, tenant role, and error type.",
+    "inputs": {
+        "input_global_time": {
+            "options": {
+                "defaultValue": "-24h@h,now",
+                "token": "global_time"
+            },
+            "title": "Global Time Range",
+            "type": "input.timerange"
+        },
+        "input_role": {
+            "options": {
+                "defaultValue": "*",
+                "token": "role"
+            },
+            "title": "Role Contains",
+            "type": "input.text"
+        },
+        "input_tenant": {
+            "options": {
+                "defaultValue": "*",
+                "items": ${jsonencode(
+                    concat(
+                        [{ label = "All", value = "*" }],
+                        [for tenant in tenants : { label = tenant, value = tenant }]
+                    )
+                )},
+                "token": "tenant"
+            },
+            "title": "Forge Tenant",
+            "type": "input.dropdown"
+        }
+    },
+    "layout": {
+        "globalInputs": [
+            "input_global_time",
+            "input_tenant",
+            "input_role"
+        ],
+        "layoutDefinitions": {
+            "layout": {
+                "options": {
+                    "gutterSize": 9
+                },
+                "structure": [
+                    {
+                        "item": "assume_role_failures_table",
+                        "position": {
+                            "h": 420,
+                            "w": 760,
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "trust_failure_trend_chart",
+                        "position": {
+                            "h": 420,
+                            "w": 440,
+                            "x": 760,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "latest_validation_table",
+                        "position": {
+                            "h": 520,
+                            "w": 720,
+                            "x": 0,
+                            "y": 420
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "validator_access_denied_table",
+                        "position": {
+                            "h": 520,
+                            "w": 480,
+                            "x": 720,
+                            "y": 420
+                        },
+                        "type": "block"
+                    }
+                ],
+                "type": "grid"
+            }
+        },
+        "options": {},
+        "tabs": {
+            "items": [
+                {
+                    "label": "Trust Failures",
+                    "layoutId": "layout"
+                }
+            ]
+        }
+    },
+    "title": "Forge Trust Failures",
+    "visualizations": {
+        "assume_role_failures_table": {
+            "dataSources": {
+                "primary": "assume_role_failures_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Basic AssumeRole Failures",
+            "type": "splunk.table"
+        },
+        "latest_validation_table": {
+            "dataSources": {
+                "primary": "latest_validation_search"
+            },
+            "options": {
+                "count": 80
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Latest Validation Detail",
+            "type": "splunk.table"
+        },
+        "trust_failure_trend_chart": {
+            "dataSources": {
+                "primary": "trust_failure_trend_search"
+            },
+            "options": {},
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Trust Failure Trend",
+            "type": "splunk.line"
+        },
+        "validator_access_denied_table": {
+            "dataSources": {
+                "primary": "validator_access_denied_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Validator AccessDenied Errors",
+            "type": "splunk.table"
+        }
+    }
+}

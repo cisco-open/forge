@@ -1,0 +1,749 @@
+{
+    "applicationProperties": {
+        "collapseNavigation": true,
+        "hideEdit": false,
+        "hideExport": false,
+        "hideOpenInSearch": false
+    },
+    "dataSources": {
+        "arc_listener_activity_search": {
+            "name": "ARC listener activity",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"kube:container:listener\" \"component=worker\"\n| eval operation=case(searchmatch(\"Compare\"), \"compare\", searchmatch(\"Patch\"), \"patch\", true(), \"other\")\n| timechart span=15m count by operation\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "arc_runner_state_search": {
+            "name": "ARC runner set state",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"kube:container:manager\" \"ephemeral runner counts\"\n| rex field=_raw \"\\\"ephemeralrunnerset\\\": \\{\\\"name\\\":\\\"(?<erset>[^\\\"]+)\\\",\\\"namespace\\\":\\\"(?<namespace>[^\\\"]+)\\\"\\}\"\n| rex field=_raw \"\\\"pending\\\": (?<pending>\\d+), \\\"running\\\": (?<running>\\d+), \\\"finished\\\": (?<finished>\\d+), \\\"failed\\\": (?<failed>\\d+), \\\"deleting\\\": (?<deleting>\\d+)\"\n| eval tenant=coalesce(forgecicd_tenant, namespace)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| eval pending=tonumber(pending), running=tonumber(running), finished=tonumber(finished), failed=tonumber(failed), deleting=tonumber(deleting)\n| stats latest(pending) as latest_pending\n        latest(running) as latest_running\n        latest(finished) as latest_finished\n        latest(failed) as latest_failed\n        latest(deleting) as latest_deleting\n        max(pending) as max_pending\n        max(running) as max_running\n        max(failed) as max_failed\n        count as samples\n        by namespace erset\n| sort - max_failed - max_pending - latest_running\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "ec2_runner_samples_search": {
+            "name": "EC2 runner symptom samples",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs:forgecicd\"\n(\"No space left\" OR \"Out of memory\" OR OOM OR \"no buffer space available\" OR \"unable to acquire credentials\" OR \"AccessDeniedException\" OR \"permission denied\" OR \"cannot open shared object file\" OR \"Establish connection with\" OR \"timed out\" OR \"fatal\")\n| rex field=source \"^[^:]+:/github-self-hosted-runners/(?<runner_pool>[^/]+)/forge-logs:(?<instance_id>i-[^/]+)/(?<log_file>[^/]+)$\"\n| rex field=runner_pool \"^(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| eval sample=lower(_raw)\n| eval sample=replace(sample,\"i-[0-9a-f]+\",\"i-*\")\n| eval sample=replace(sample,\"[0-9a-f]{8,}\",\"hex-*\")\n| eval sample=replace(sample,\"\\d+\",\"#\")\n| eval sample=substr(sample,1,260)\n| stats count as events dc(instance_id) as instances latest(_time) as last_time by tenant runner_pool log_file sample\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "ec2_runner_symptoms_search": {
+            "name": "EC2 runner symptoms",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs:forgecicd\"\n(\"No space left\" OR \"Out of memory\" OR OOM OR \"no buffer space available\" OR \"unable to acquire credentials\" OR \"AccessDeniedException\" OR \"permission denied\" OR \"cannot open shared object file\" OR \"Establish connection with\" OR \"timed out\" OR \"fatal\")\n| rex field=source \"^[^:]+:/github-self-hosted-runners/(?<runner_pool>[^/]+)/forge-logs:(?<instance_id>i-[^/]+)/(?<log_file>[^/]+)$\"\n| rex field=runner_pool \"^(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| eval category=case(\n    match(_raw,\"(?i)no space left|disk full\"), \"disk_full\",\n    match(_raw,\"(?i)out of memory|oom\"), \"oom\",\n    match(_raw,\"(?i)no buffer space available\"), \"auditd_no_buffer_space\",\n    match(_raw,\"(?i)unable to acquire credentials|AccessDeniedException\"), \"ssm_credentials_access_denied\",\n    match(_raw,\"(?i)cannot open shared object file: permission denied|permission denied\"), \"permission_denied\",\n    match(_raw,\"(?i)establish connection with .* timeout|timed out|timeout\"), \"runner_connection_timeout\",\n    match(_raw,\"(?i)fatal\"), \"fatal\",\n    true(), \"other\")\n| stats count as events dc(instance_id) as instances latest(_time) as last_time by tenant runner_pool log_file category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "eks_api_403_search": {
+            "name": "EKS API 403 authorization errors",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs\" source=\"*:/aws/eks/*/cluster:kube-apiserver-audit-*\"\n| spath path=responseStatus.code output=status_code\n| spath path=verb output=verb\n| spath path=objectRef.resource output=resource\n| spath path=objectRef.namespace output=namespace\n| spath path=user.username output=username\n| spath path=responseStatus.message output=message\n| where tostring(status_code)=\"403\"\n| rex field=source \"^[^:]+:/aws/eks/(?<cluster>[^/]+)/cluster:\"\n| stats count as events latest(message) as sample_message latest(_time) as last_time by cluster username namespace verb resource\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "eks_api_errors_search": {
+            "name": "EKS API errors",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs\" source=\"*:/aws/eks/*/cluster:kube-apiserver-audit-*\"\n| spath path=responseStatus.code output=status_code\n| spath path=verb output=verb\n| spath path=objectRef.resource output=resource\n| spath path=user.username output=username\n| where isnotnull(status_code) AND tonumber(status_code)>=400\n| rex field=source \"^[^:]+:/aws/eks/(?<cluster>[^/]+)/cluster:\"\n| stats count as events dc(username) as users by status_code verb resource cluster\n| sort - events\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "ingestion_trend_search": {
+            "name": "Ingestion trend",
+            "options": {
+                "enableSmartSources": true,
+                "query": "| tstats count where index=\"${splunk_index}\" by _time sourcetype span=15m\n| timechart span=15m sum(count) as events by sourcetype limit=12\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "job_failure_hotspots_search": {
+            "name": "Job failure hot spots",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"forgecicd:runner-logs:json\"\n| spath path=workflow_job.conclusion output=conclusion\n| search conclusion=\"failure\"\n| spath path=repository.full_name output=repo\n| spath path=workflow_job.name output=job_name\n| spath path=workflow_job.workflow_name output=workflow_name\n| spath path=workflow_job.runner_group_name output=runner_group\n| spath path=workflow_job.runner_name output=runner_name\n| rex field=source \"^(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-forge-gh-logs-\\d+:(?<source_repo>[^/]+/[^/]+)/(?<run_id>\\d+)/(?<attempt>\\d+)/(?<job_id>\\d+)\\.json$\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant), repo=coalesce(repo, source_repo)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$runner_group$\"=\"*\" OR like(runner_group, \"%$runner_group$%\")\n| where \"$repository$\"=\"*\" OR like(repo, \"%$repository$%\")\n| stats count as failures dc(run_id) as workflow_runs dc(runner_name) as runners values(runner_group) as runner_groups by tenant repo workflow_name job_name\n| sort - failures\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "job_result_overview_search": {
+            "name": "GitHub job result overview",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"forgecicd:runner-logs:json\"\n| spath path=workflow_job.conclusion output=conclusion\n| spath path=workflow_job.created_at output=created_at\n| spath path=workflow_job.started_at output=started_at\n| spath path=workflow_job.completed_at output=completed_at\n| spath path=workflow_job.runner_group_name output=runner_group\n| spath path=repository.full_name output=repo\n| rex field=source \"^(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-forge-gh-logs-\\d+:(?<source_repo>[^/]+/[^/]+)/(?<run_id>\\d+)/(?<attempt>\\d+)/(?<job_id>\\d+)\\.json$\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant), repo=coalesce(repo, source_repo)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$runner_group$\"=\"*\" OR like(runner_group, \"%$runner_group$%\")\n| where \"$repository$\"=\"*\" OR like(repo, \"%$repository$%\")\n| eval queue_sec=strptime(started_at,\"%Y-%m-%dT%H:%M:%SZ\")-strptime(created_at,\"%Y-%m-%dT%H:%M:%SZ\")\n| eval duration_sec=strptime(completed_at,\"%Y-%m-%dT%H:%M:%SZ\")-strptime(started_at,\"%Y-%m-%dT%H:%M:%SZ\")\n| stats count as jobs\n        count(eval(conclusion=\"success\")) as success\n        count(eval(conclusion=\"failure\")) as failure\n        count(eval(conclusion=\"cancelled\" OR conclusion=\"canceled\")) as canceled\n        dc(repo) as repos\n        p95(eval(if(queue_sec>=0, queue_sec, null()))) as p95_queue_sec\n        p95(duration_sec) as p95_duration_sec\n        by tenant runner_group\n| eval failure_rate=round(100*failure/jobs,2),\n       p95_queue_sec=round(p95_queue_sec,1),\n       p95_duration_sec=round(p95_duration_sec,1)\n| sort - failure - p95_queue_sec\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "kube_event_categories_search": {
+            "name": "Kubernetes event categories",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"kube:events\"\n(\"still attached\" OR \"Waiting for a volume\" OR \"NetworkPluginNotReady\" OR \"insufficient cpu\" OR \"Insufficient\" OR \"Failed\" OR \"failed\" OR \"Back-off\" OR \"ImagePullBackOff\" OR \"ErrImagePull\" OR \"OOMKilled\")\n| eval signature=lower(_raw)\n| eval category=case(\n    match(signature,\"still attached\"), \"pvc_still_attached\",\n    match(signature,\"waiting for a volume\"), \"ebs_volume_provision_wait\",\n    match(signature,\"networkpluginnotready|cni plugin not initialized\"), \"cni_not_ready\",\n    match(signature,\"insufficient cpu\"), \"insufficient_cpu\",\n    match(signature,\"imagepullbackoff|errimagepull\"), \"image_pull\",\n    match(signature,\"back-off\"), \"backoff\",\n    match(signature,\"oomkilled\"), \"oomkilled\",\n    match(signature,\"fail\"), \"failed\",\n    true(), \"other\")\n| rex field=_raw \"(?<pvc>pvc-[0-9a-f-]+)\"\n| rex field=_raw \"node (?<node>[^ ]+)\"\n| stats count as events dc(host) as hosts dc(pvc) as pvcs dc(node) as nodes latest(_time) as last_time values(node) as sample_nodes by category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "lambda_error_categories_search": {
+            "name": "Lambda error categories",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs\" source=\"*:/aws/lambda/*\"\n(\"[ERROR]\" OR Traceback OR \"Task timed out\" OR \"Runtime.ExitError\" OR AccessDenied OR \"InvalidInstanceID.NotFound\" OR \"runner_name missing\" OR \"Basic AssumeRole failed\" OR \"Job logs not found\" OR invalid_json OR kinesis_put_retry OR kinesis_put_failed_after_retries OR \"Signature mismatch\")\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| eval category=case(\n    searchmatch(\"runner_name missing\"), \"runner_name_missing\",\n    searchmatch(\"InvalidInstanceID.NotFound\"), \"invalid_instance_id\",\n    searchmatch(\"Basic AssumeRole failed\"), \"trust_assume_role_failed\",\n    searchmatch(\"AccessDenied\"), \"access_denied\",\n    searchmatch(\"Task timed out\"), \"lambda_timeout\",\n    searchmatch(\"Runtime.ExitError\"), \"runtime_exit_error\",\n    searchmatch(\"Job logs not found\"), \"job_logs_not_found\",\n    searchmatch(\"invalid_json\"), \"invalid_json\",\n    searchmatch(\"kinesis_put_failed_after_retries\"), \"kinesis_put_failed_after_retries\",\n    searchmatch(\"kinesis_put_retry\"), \"kinesis_put_retry\",\n    searchmatch(\"Signature mismatch\"), \"signature_mismatch\",\n    searchmatch(\"Traceback\"), \"traceback\",\n    searchmatch(\"[ERROR]\"), \"lambda_error\",\n    true(), \"other\")\n| stats count as events dc(source) as streams latest(_time) as last_time by category lambda_name tenant\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "lambda_error_samples_search": {
+            "name": "Lambda error samples",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs\" source=\"*:/aws/lambda/*\"\n(\"[ERROR]\" OR Traceback OR \"Task timed out\" OR \"Runtime.ExitError\" OR AccessDenied OR \"InvalidInstanceID.NotFound\" OR \"runner_name missing\")\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| eval sample=replace(_raw,\"\\n.*$\",\"\")\n| eval sample=substr(sample,1,300)\n| stats count as events dc(source) as streams latest(_time) as last_time by tenant lambda_name sample\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "negative_queue_search": {
+            "name": "Negative queue time",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"forgecicd:runner-logs:json\"\n| spath path=workflow_job.created_at output=created_at\n| spath path=workflow_job.started_at output=started_at\n| spath path=workflow_job.runner_group_name output=runner_group\n| spath path=repository.full_name output=repo\n| rex field=source \"^(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-forge-gh-logs-\\d+:(?<source_repo>[^/]+/[^/]+)/(?<run_id>\\d+)/(?<attempt>\\d+)/(?<job_id>\\d+)\\.json$\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant), repo=coalesce(repo, source_repo)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$runner_group$\"=\"*\" OR like(runner_group, \"%$runner_group$%\")\n| where \"$repository$\"=\"*\" OR like(repo, \"%$repository$%\")\n| eval queue_sec=strptime(started_at,\"%Y-%m-%dT%H:%M:%SZ\")-strptime(created_at,\"%Y-%m-%dT%H:%M:%SZ\")\n| where queue_sec < 0\n| stats count as negative_queue_jobs min(queue_sec) as worst_queue_sec latest(_time) as last_seen by tenant runner_group repo\n| eval last_seen=strftime(last_seen,\"%Y-%m-%d %H:%M:%S\")\n| sort worst_queue_sec\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "queue_duration_search": {
+            "name": "Queue and duration by runner group",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"forgecicd:runner-logs:json\"\n| spath path=workflow_job.created_at output=created_at\n| spath path=workflow_job.started_at output=started_at\n| spath path=workflow_job.completed_at output=completed_at\n| spath path=workflow_job.runner_group_name output=runner_group\n| spath path=workflow_job.runner_name output=runner_name\n| spath path=repository.full_name output=repo\n| rex field=source \"^(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-forge-gh-logs-\\d+:(?<source_repo>[^/]+/[^/]+)/(?<run_id>\\d+)/(?<attempt>\\d+)/(?<job_id>\\d+)\\.json$\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant), repo=coalesce(repo, source_repo)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$runner_group$\"=\"*\" OR like(runner_group, \"%$runner_group$%\")\n| where \"$repository$\"=\"*\" OR like(repo, \"%$repository$%\")\n| eval queue_sec=strptime(started_at,\"%Y-%m-%dT%H:%M:%SZ\")-strptime(created_at,\"%Y-%m-%dT%H:%M:%SZ\")\n| eval duration_sec=strptime(completed_at,\"%Y-%m-%dT%H:%M:%SZ\")-strptime(started_at,\"%Y-%m-%dT%H:%M:%SZ\")\n| eval negative_queue=if(queue_sec<0,1,0), queue_ge_10m=if(queue_sec>=600,1,0), duration_ge_1h=if(duration_sec>=3600,1,0)\n| stats count as jobs\n        sum(negative_queue) as negative_queue_jobs\n        sum(queue_ge_10m) as queue_ge_10m\n        sum(duration_ge_1h) as duration_ge_1h\n        p50(eval(if(queue_sec>=0, queue_sec, null()))) as p50_queue_sec\n        p95(eval(if(queue_sec>=0, queue_sec, null()))) as p95_queue_sec\n        p99(eval(if(queue_sec>=0, queue_sec, null()))) as p99_queue_sec\n        p95(duration_sec) as p95_duration_sec\n        dc(repo) as repos\n        dc(runner_name) as runners\n        by tenant runner_group\n| eval p50_queue_sec=round(p50_queue_sec,1),\n       p95_queue_sec=round(p95_queue_sec,1),\n       p99_queue_sec=round(p99_queue_sec,1),\n       p95_duration_sec=round(p95_duration_sec,1)\n| sort - queue_ge_10m - p95_queue_sec\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "sourcetype_volume_search": {
+            "name": "Sourcetype volume",
+            "options": {
+                "enableSmartSources": true,
+                "query": "| tstats count where index=\"${splunk_index}\" by sourcetype\n| sort - count\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "top_sources_search": {
+            "name": "Top sources",
+            "options": {
+                "enableSmartSources": true,
+                "query": "| tstats count where index=\"${splunk_index}\" by sourcetype source host\n| sort - count\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "trust_assume_role_search": {
+            "name": "Trust AssumeRole failures",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs\" source=\"*:/aws/lambda/*forge-trust-validator*\" \"Basic AssumeRole failed for\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| eval validator_tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR validator_tenant=\"$tenant$\"\n| rex field=_raw \"Basic AssumeRole failed for (?<tenant_role_arn>arn:aws:iam::\\d+:role[^:]+): (?<error>.*)$\"\n| rex field=_raw \"User: (?<forge_assumed_role>arn:aws:sts::\\d+:assumed-role/[^/]+/[^ ]+) is not authorized to perform: (?<action>[^ ]+) on resource: (?<resource>arn:aws:iam::\\d+:role[^\\s]+)\"\n| rex field=forge_assumed_role \"arn:aws:sts::(?<forge_account_id>\\d+):assumed-role/(?<forge_role_name>[^/]+)/\"\n| eval tenant_role=coalesce(tenant_role_arn, resource, \"unknown\")\n| eval forge_role=if(isnotnull(forge_account_id) AND isnotnull(forge_role_name), \"arn:aws:iam::\".forge_account_id.\":role/\".forge_role_name, coalesce(forge_assumed_role,\"unknown\"))\n| stats count as failures dc(lambda_name) as validators values(action) as actions latest(_time) as last_time by validator_tenant tenant_role forge_role\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| table validator_tenant tenant_role forge_role failures validators actions last_seen\n| sort - failures\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "trust_latest_expanded_search": {
+            "name": "Latest trust validation detail",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs\" source=\"*:/aws/lambda/*forge-trust-validator*\" \"Delayed validation run complete\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| eval validator_tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR validator_tenant=\"$tenant$\"\n| eventstats max(_time) as tenant_last_seen by validator_tenant\n| where _time=tenant_last_seen\n| rex field=_raw \"Delayed validation run complete: (?<trust_json>\\{.*\\})\"\n| spath input=trust_json path=validation_results{} output=item\n| mvexpand item\n| spath input=item path=forge_role_arn output=forge_role\n| spath input=item path=tenant_results{} output=tenant_results\n| mvexpand tenant_results\n| spath input=tenant_results\n| eval assume_status=if(tostring(assume_role_success)=\"true\",\"assumed\",\"not assumed\")\n| eval tag_status=if(tostring(tag_session_success)=\"true\",\"session tagged\",\"session not tagged\")\n| table validator_tenant forge_role tenant_role_arn assume_status assume_role_error tag_status tag_session_error\n| sort validator_tenant forge_role tenant_role_arn\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        }
+    },
+    "defaults": {
+        "dataSources": {
+            "ds.search": {
+                "options": {
+                    "queryParameters": {
+                        "earliest": "$global_time.earliest$",
+                        "latest": "$global_time.latest$"
+                    }
+                }
+            }
+        }
+    },
+    "description": "Operational troubleshooting dashboards for Forge runners, support Lambdas, trust validation, EKS/ARC, EC2 runners, and API audit logs.",
+    "inputs": {
+        "input_global_time": {
+            "options": {
+                "defaultValue": "-24h@h,now",
+                "token": "global_time"
+            },
+            "title": "Global Time Range",
+            "type": "input.timerange"
+        },
+        "input_repository": {
+            "options": {
+                "defaultValue": "*",
+                "token": "repository"
+            },
+            "title": "Repository",
+            "type": "input.text"
+        },
+        "input_runner_group": {
+            "options": {
+                "defaultValue": "*",
+                "token": "runner_group"
+            },
+            "title": "Runner Group",
+            "type": "input.text"
+        },
+        "input_tenant": {
+            "options": {
+                "defaultValue": "*",
+                "items": ${jsonencode(
+                    concat(
+                        [{ label = "All", value = "*" }],
+                        [for tenant in tenants : { label = tenant, value = tenant }]
+                    )
+                )},
+                "token": "tenant"
+            },
+            "title": "Forge Tenant",
+            "type": "input.dropdown"
+        }
+    },
+    "layout": {
+        "globalInputs": [
+            "input_global_time",
+            "input_tenant",
+            "input_runner_group",
+            "input_repository"
+        ],
+        "layoutDefinitions": {
+            "ec2_api": {
+                "options": {
+                    "gutterSize": 9
+                },
+                "structure": [
+                    {
+                        "item": "ec2_runner_symptoms_table",
+                        "position": {
+                            "h": 420,
+                            "w": 600,
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "ec2_runner_samples_table",
+                        "position": {
+                            "h": 420,
+                            "w": 600,
+                            "x": 600,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "eks_api_errors_table",
+                        "position": {
+                            "h": 420,
+                            "w": 600,
+                            "x": 0,
+                            "y": 420
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "eks_api_403_table",
+                        "position": {
+                            "h": 420,
+                            "w": 600,
+                            "x": 600,
+                            "y": 420
+                        },
+                        "type": "block"
+                    }
+                ],
+                "type": "grid"
+            },
+            "eks_arc": {
+                "options": {
+                    "gutterSize": 9
+                },
+                "structure": [
+                    {
+                        "item": "arc_runner_state_table",
+                        "position": {
+                            "h": 420,
+                            "w": 650,
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "arc_listener_activity_chart",
+                        "position": {
+                            "h": 420,
+                            "w": 550,
+                            "x": 650,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "kube_event_categories_table",
+                        "position": {
+                            "h": 500,
+                            "w": 1200,
+                            "x": 0,
+                            "y": 420
+                        },
+                        "type": "block"
+                    }
+                ],
+                "type": "grid"
+            },
+            "jobs": {
+                "options": {
+                    "gutterSize": 9
+                },
+                "structure": [
+                    {
+                        "item": "job_result_overview_table",
+                        "position": {
+                            "h": 300,
+                            "w": 1200,
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "queue_duration_table",
+                        "position": {
+                            "h": 420,
+                            "w": 1200,
+                            "x": 0,
+                            "y": 300
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "job_failure_hotspots_table",
+                        "position": {
+                            "h": 460,
+                            "w": 760,
+                            "x": 0,
+                            "y": 720
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "negative_queue_table",
+                        "position": {
+                            "h": 460,
+                            "w": 440,
+                            "x": 760,
+                            "y": 720
+                        },
+                        "type": "block"
+                    }
+                ],
+                "type": "grid"
+            },
+            "lambda_trust": {
+                "options": {
+                    "gutterSize": 9
+                },
+                "structure": [
+                    {
+                        "item": "lambda_error_categories_table",
+                        "position": {
+                            "h": 420,
+                            "w": 600,
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "lambda_error_samples_table",
+                        "position": {
+                            "h": 420,
+                            "w": 600,
+                            "x": 600,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "trust_assume_role_table",
+                        "position": {
+                            "h": 420,
+                            "w": 600,
+                            "x": 0,
+                            "y": 420
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "trust_latest_expanded_table",
+                        "position": {
+                            "h": 420,
+                            "w": 600,
+                            "x": 600,
+                            "y": 420
+                        },
+                        "type": "block"
+                    }
+                ],
+                "type": "grid"
+            },
+            "overview": {
+                "options": {
+                    "gutterSize": 9
+                },
+                "structure": [
+                    {
+                        "item": "sourcetype_volume_table",
+                        "position": {
+                            "h": 360,
+                            "w": 420,
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "ingestion_trend_chart",
+                        "position": {
+                            "h": 360,
+                            "w": 780,
+                            "x": 420,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "top_sources_table",
+                        "position": {
+                            "h": 520,
+                            "w": 1200,
+                            "x": 0,
+                            "y": 360
+                        },
+                        "type": "block"
+                    }
+                ],
+                "type": "grid"
+            }
+        },
+        "options": {},
+        "tabs": {
+            "items": [
+                {
+                    "label": "Overview",
+                    "layoutId": "overview"
+                },
+                {
+                    "label": "GitHub Jobs",
+                    "layoutId": "jobs"
+                },
+                {
+                    "label": "Lambda and Trust",
+                    "layoutId": "lambda_trust"
+                },
+                {
+                    "label": "EKS and ARC",
+                    "layoutId": "eks_arc"
+                },
+                {
+                    "label": "EC2 and API Audit",
+                    "layoutId": "ec2_api"
+                }
+            ]
+        }
+    },
+    "title": "Forge Troubleshooting",
+    "visualizations": {
+        "arc_listener_activity_chart": {
+            "dataSources": {
+                "primary": "arc_listener_activity_search"
+            },
+            "options": {},
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "ARC Listener Activity",
+            "type": "splunk.line"
+        },
+        "arc_runner_state_table": {
+            "dataSources": {
+                "primary": "arc_runner_state_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "ARC Runner Set State",
+            "type": "splunk.table"
+        },
+        "ec2_runner_samples_table": {
+            "dataSources": {
+                "primary": "ec2_runner_samples_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "EC2 Runner Symptom Samples",
+            "type": "splunk.table"
+        },
+        "ec2_runner_symptoms_table": {
+            "dataSources": {
+                "primary": "ec2_runner_symptoms_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Actionable EC2 Runner Symptoms",
+            "type": "splunk.table"
+        },
+        "eks_api_403_table": {
+            "dataSources": {
+                "primary": "eks_api_403_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "EKS API 403 Authorization Errors",
+            "type": "splunk.table"
+        },
+        "eks_api_errors_table": {
+            "dataSources": {
+                "primary": "eks_api_errors_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "EKS API Errors by Cluster and Resource",
+            "type": "splunk.table"
+        },
+        "ingestion_trend_chart": {
+            "dataSources": {
+                "primary": "ingestion_trend_search"
+            },
+            "options": {},
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Ingestion Trend by Sourcetype",
+            "type": "splunk.line"
+        },
+        "job_failure_hotspots_table": {
+            "dataSources": {
+                "primary": "job_failure_hotspots_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Failure Hot Spots",
+            "type": "splunk.table"
+        },
+        "job_result_overview_table": {
+            "dataSources": {
+                "primary": "job_result_overview_search"
+            },
+            "options": {
+                "count": 20
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "GitHub Job Result Overview",
+            "type": "splunk.table"
+        },
+        "kube_event_categories_table": {
+            "dataSources": {
+                "primary": "kube_event_categories_search"
+            },
+            "options": {
+                "count": 30
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Kubernetes Event Categories",
+            "type": "splunk.table"
+        },
+        "lambda_error_categories_table": {
+            "dataSources": {
+                "primary": "lambda_error_categories_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Lambda Errors by Category",
+            "type": "splunk.table"
+        },
+        "lambda_error_samples_table": {
+            "dataSources": {
+                "primary": "lambda_error_samples_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Lambda Error Samples",
+            "type": "splunk.table"
+        },
+        "negative_queue_table": {
+            "dataSources": {
+                "primary": "negative_queue_search"
+            },
+            "options": {
+                "count": 30
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Negative Queue Time Data Quality",
+            "type": "splunk.table"
+        },
+        "queue_duration_table": {
+            "dataSources": {
+                "primary": "queue_duration_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Queue and Duration by Runner Group",
+            "type": "splunk.table"
+        },
+        "sourcetype_volume_table": {
+            "dataSources": {
+                "primary": "sourcetype_volume_search"
+            },
+            "options": {
+                "count": 20
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Event Volume by Sourcetype",
+            "type": "splunk.table"
+        },
+        "top_sources_table": {
+            "dataSources": {
+                "primary": "top_sources_search"
+            },
+            "options": {
+                "count": 25
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Top Sources",
+            "type": "splunk.table"
+        },
+        "trust_assume_role_table": {
+            "dataSources": {
+                "primary": "trust_assume_role_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Trust Validation AssumeRole Failures",
+            "type": "splunk.table"
+        },
+        "trust_latest_expanded_table": {
+            "dataSources": {
+                "primary": "trust_latest_expanded_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Latest Trust Validation Detail",
+            "type": "splunk.table"
+        }
+    }
+}

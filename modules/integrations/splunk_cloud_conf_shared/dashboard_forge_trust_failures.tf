@@ -1,17 +1,18 @@
 locals {
-  tenant_definition = templatefile(
-    "${path.module}/template_files/tenant.json.tftpl",
+  forge_trust_failures_definition = templatefile(
+    "${path.module}/template_files/forge_trust_failures.json.tftpl",
     {
       splunk_index = var.splunk_conf.index,
-      tenants      = var.splunk_conf.tenant_names
+      tenants      = sort(var.splunk_conf.tenant_names)
     }
   )
-  tenant_eai_data = <<EOF
+
+  forge_trust_failures_eai_data = <<EOF
 <dashboard version="2" theme="light">
-    <label>Tenant Logs</label>
+    <label>Forge Trust Failures</label>
     <description></description>
     <definition>
-        <![CDATA[${local.tenant_definition}]]>
+        <![CDATA[${local.forge_trust_failures_definition}]]>
     </definition>
     <meta type="hiddenElements">
         <![CDATA[
@@ -26,9 +27,9 @@ locals {
 EOF
 }
 
-resource "splunk_data_ui_views" "tenant" {
-  name     = "tenant"
-  eai_data = local.tenant_eai_data
+resource "splunk_data_ui_views" "forge_trust_failures" {
+  name     = "forge_trust_failures"
+  eai_data = local.forge_trust_failures_eai_data
 
   acl {
     app     = var.splunk_conf.acl.app

@@ -1,0 +1,286 @@
+{
+    "applicationProperties": {
+        "collapseNavigation": true,
+        "hideEdit": false,
+        "hideExport": false,
+        "hideOpenInSearch": false
+    },
+    "dataSources": {
+        "dind_categories_search": {
+            "name": "ARC DIND and hook categories",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" source=\"*_dind-*/*\" (sourcetype=\"kube:container:dind\" OR sourcetype=\"kube:container:init-dind-externals\" OR sourcetype=\"kube:container:init-docker-creds\" OR sourcetype=\"kube:container:init-work\" OR sourcetype=\"kube:container:hook\")\n(\"error\" OR \"failed\" OR \"failure\" OR \"permission denied\" OR \"No space left\" OR \"Cannot connect to the Docker daemon\" OR \"context deadline\" OR \"timeout\" OR \"No such file\")\n| rex field=source \"/var/log/pods/(?<namespace>[^_]+)_(?<pod>[^_]+)_[^/]+/(?<container>[^/]+)/\"\n| eval tenant=coalesce(forgecicd_tenant, namespace)\n| eval scale_set=coalesce(forgecicd_arc_type, replace(pod, \"-runner-[^-]+$\", \"\"))\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$scale_set$\"=\"*\" OR like(scale_set, \"%$scale_set$%\")\n| eval category=case(\n    match(_raw,\"(?i)cannot connect to the docker daemon|docker.*not.*running\"), \"docker_daemon_unavailable\",\n    match(_raw,\"(?i)permission denied\"), \"permission_denied\",\n    match(_raw,\"(?i)no space left\"), \"disk_full\",\n    match(_raw,\"(?i)context deadline|timeout\"), \"timeout_or_deadline\",\n    match(_raw,\"(?i)no such file\"), \"missing_file\",\n    match(_raw,\"(?i)error|failed|failure\"), \"error_failed\",\n    true(), \"other\")\n| stats count as events dc(host) as hosts dc(pod) as pods latest(_time) as last_time by tenant scale_set container sourcetype category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "dind_trend_search": {
+            "name": "ARC DIND and hook trend",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" source=\"*_dind-*/*\" (sourcetype=\"kube:container:dind\" OR sourcetype=\"kube:container:init-dind-externals\" OR sourcetype=\"kube:container:init-docker-creds\" OR sourcetype=\"kube:container:init-work\" OR sourcetype=\"kube:container:hook\")\n(\"error\" OR \"failed\" OR \"failure\" OR \"permission denied\" OR \"No space left\" OR \"Cannot connect to the Docker daemon\" OR \"context deadline\" OR \"timeout\" OR \"No such file\")\n| rex field=source \"/var/log/pods/(?<namespace>[^_]+)_(?<pod>[^_]+)_[^/]+/(?<container>[^/]+)/\"\n| eval tenant=coalesce(forgecicd_tenant, namespace)\n| eval scale_set=coalesce(forgecicd_arc_type, replace(pod, \"-runner-[^-]+$\", \"\"))\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$scale_set$\"=\"*\" OR like(scale_set, \"%$scale_set$%\")\n| eval category=case(\n    match(_raw,\"(?i)cannot connect to the docker daemon|docker.*not.*running\"), \"docker_daemon_unavailable\",\n    match(_raw,\"(?i)permission denied\"), \"permission_denied\",\n    match(_raw,\"(?i)no space left\"), \"disk_full\",\n    match(_raw,\"(?i)context deadline|timeout\"), \"timeout_or_deadline\",\n    match(_raw,\"(?i)no such file\"), \"missing_file\",\n    match(_raw,\"(?i)error|failed|failure\"), \"error_failed\",\n    true(), \"other\")\n| timechart span=15m count by category limit=12\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "hook_sidecar_search": {
+            "name": "Hook sidecar signals",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype=\"kube:container:hook\" source=\"*_dind-*/*\"\n| rex field=source \"/var/log/pods/(?<namespace>[^_]+)_(?<pod>[^_]+)_[^/]+/(?<container>[^/]+)/\"\n| eval tenant=coalesce(forgecicd_tenant, namespace)\n| eval scale_set=coalesce(forgecicd_arc_type, replace(pod, \"-runner-[^-]+$\", \"\"))\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$scale_set$\"=\"*\" OR like(scale_set, \"%$scale_set$%\")\n| eval category=case(\n    match(_raw,\"(?i)error|failed|failure\"), \"hook_error\",\n    match(_raw,\"(?i)permission denied\"), \"permission_denied\",\n    match(_raw,\"(?i)waiting|tail -f|hook.log\"), \"tailing_hook_log\",\n    true(), \"other\")\n| stats count as events dc(pod) as pods latest(_time) as last_time by tenant scale_set category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "init_failures_search": {
+            "name": "Init container failures",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" source=\"*_dind-*/*\" (sourcetype=\"kube:container:init-dind-externals\" OR sourcetype=\"kube:container:init-docker-creds\" OR sourcetype=\"kube:container:init-work\")\n(\"error\" OR \"failed\" OR \"permission denied\" OR \"No space left\" OR \"timeout\" OR \"context deadline\")\n| rex field=source \"/var/log/pods/(?<namespace>[^_]+)_(?<pod>[^_]+)_[^/]+/(?<container>[^/]+)/\"\n| eval tenant=coalesce(forgecicd_tenant, namespace)\n| eval scale_set=coalesce(forgecicd_arc_type, replace(pod, \"-runner-[^-]+$\", \"\"))\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$scale_set$\"=\"*\" OR like(scale_set, \"%$scale_set$%\")\n| eval sample=substr(replace(_raw,\"\\n.*$\",\"\"),1,300)\n| stats count as events dc(pod) as pods latest(_time) as last_time by tenant scale_set container sample\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "runner_version_search": {
+            "name": "Runner versions",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" source=\"*_dind-*/*\" (sourcetype=\"kube:container:runner\" OR sourcetype=\"kube:container:runner-logs\") \"Current runner version\"\n| rex field=source \"/var/log/pods/(?<namespace>[^_]+)_(?<pod>[^_]+)_[^/]+/(?<container>[^/]+)/\"\n| rex field=_raw \"Current runner version: '?([^0-9]*(?<runner_version>[0-9][^' ]+))\"\n| eval tenant=coalesce(forgecicd_tenant, namespace)\n| eval scale_set=coalesce(forgecicd_arc_type, replace(pod, \"-runner-[^-]+$\", \"\"))\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$scale_set$\"=\"*\" OR like(scale_set, \"%$scale_set$%\")\n| stats count as events dc(pod) as pods latest(_time) as last_time by tenant scale_set runner_version\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort tenant scale_set - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "dind_runner_volume_search": {
+            "name": "ARC DIND runner log volume",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" source=\"*_dind-*/*\" sourcetype IN (\"kube:container:runner\",\"kube:container:runner-logs\",\"kube:container:hook\",\"kube:container:dind\",\"kube:container:init-dind-externals\",\"kube:container:init-docker-creds\",\"kube:container:init-work\")\n| rex field=source \"/var/log/pods/(?<namespace>[^_]+)_(?<pod>[^_]+)_[^/]+/(?<container>[^/]+)/\"\n| eval tenant=coalesce(forgecicd_tenant, namespace)\n| eval scale_set=coalesce(forgecicd_arc_type, replace(pod, \"-runner-[^-]+$\", \"\"))\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$scale_set$\"=\"*\" OR like(scale_set, \"%$scale_set$%\")\n| stats count as events dc(source) as sources dc(pod) as pods latest(_time) as last_time by tenant scale_set sourcetype container\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        }
+    },
+    "defaults": {
+        "dataSources": {
+            "ds.search": {
+                "options": {
+                    "queryParameters": {
+                        "earliest": "$global_time.earliest$",
+                        "latest": "$global_time.latest$"
+                    }
+                }
+            }
+        }
+    },
+    "description": "ARC DIND runner scale set, init container, hook sidecar, runner version, and log-volume lifecycle signals.",
+    "inputs": {
+        "input_global_time": {
+            "options": {
+                "defaultValue": "-24h@h,now",
+                "token": "global_time"
+            },
+            "title": "Global Time Range",
+            "type": "input.timerange"
+        },
+        "input_scale_set": {
+            "options": {
+                "defaultValue": "*",
+                "token": "scale_set"
+            },
+            "title": "Scale Set Contains",
+            "type": "input.text"
+        },
+        "input_tenant": {
+            "options": {
+                "defaultValue": "*",
+                "items": ${jsonencode(
+                    concat(
+                        [{ label = "All", value = "*" }],
+                        [for tenant in tenants : { label = tenant, value = tenant }]
+                    )
+                )},
+                "token": "tenant"
+            },
+            "title": "Forge Tenant",
+            "type": "input.dropdown"
+        }
+    },
+    "layout": {
+        "globalInputs": [
+            "input_global_time",
+            "input_tenant",
+            "input_scale_set"
+        ],
+        "layoutDefinitions": {
+            "layout": {
+                "options": {
+                    "gutterSize": 9
+                },
+                "structure": [
+                    {
+                        "item": "dind_categories_table",
+                        "position": {
+                            "h": 360,
+                            "w": 640,
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "dind_trend_chart",
+                        "position": {
+                            "h": 360,
+                            "w": 560,
+                            "x": 640,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "init_failures_table",
+                        "position": {
+                            "h": 380,
+                            "w": 600,
+                            "x": 0,
+                            "y": 360
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "hook_sidecar_table",
+                        "position": {
+                            "h": 380,
+                            "w": 600,
+                            "x": 600,
+                            "y": 360
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "runner_version_table",
+                        "position": {
+                            "h": 360,
+                            "w": 600,
+                            "x": 0,
+                            "y": 740
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "dind_runner_volume_table",
+                        "position": {
+                            "h": 360,
+                            "w": 600,
+                            "x": 600,
+                            "y": 740
+                        },
+                        "type": "block"
+                    }
+                ],
+                "type": "grid"
+            }
+        },
+        "options": {},
+        "tabs": {
+            "items": [
+                {
+                    "label": "ARC DIND Runner Lifecycle",
+                    "layoutId": "layout"
+                }
+            ]
+        }
+    },
+    "title": "Forge ARC DIND Runner Lifecycle",
+    "visualizations": {
+        "dind_categories_table": {
+            "dataSources": {
+                "primary": "dind_categories_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "ARC DIND and Hook Categories",
+            "type": "splunk.table"
+        },
+        "dind_trend_chart": {
+            "dataSources": {
+                "primary": "dind_trend_search"
+            },
+            "options": {},
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "ARC DIND and Hook Trend",
+            "type": "splunk.line"
+        },
+        "hook_sidecar_table": {
+            "dataSources": {
+                "primary": "hook_sidecar_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Hook Sidecar Signals",
+            "type": "splunk.table"
+        },
+        "init_failures_table": {
+            "dataSources": {
+                "primary": "init_failures_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Init Container Failures",
+            "type": "splunk.table"
+        },
+        "runner_version_table": {
+            "dataSources": {
+                "primary": "runner_version_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Runner Versions",
+            "type": "splunk.table"
+        },
+        "dind_runner_volume_table": {
+            "dataSources": {
+                "primary": "dind_runner_volume_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "DIND Runner Log Volume",
+            "type": "splunk.table"
+        }
+    }
+}
