@@ -16,6 +16,12 @@ data "aws_eks_addon_version" "coredns" {
   kubernetes_version = var.cluster_version
 }
 
+# Fetch the most recent version of the kube-proxy
+data "aws_eks_addon_version" "kube_proxy" {
+  addon_name         = "kube-proxy"
+  kubernetes_version = var.cluster_version
+}
+
 resource "aws_eks_addon" "aws_ebs_csi_driver" {
   cluster_name             = var.cluster_name
   addon_name               = "aws-ebs-csi-driver"

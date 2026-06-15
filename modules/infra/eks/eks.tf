@@ -26,7 +26,9 @@ module "eks" {
   subnet_ids = var.subnet_ids
 
   addons = {
-    kube-proxy = {}
+    kube-proxy = {
+      addon_version = data.aws_eks_addon_version.kube_proxy.version
+    }
   }
 
   endpoint_public_access = var.cluster_endpoint_public_access
