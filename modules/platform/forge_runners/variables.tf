@@ -10,12 +10,11 @@ variable "aws_region" {
 
 variable "ec2_deployment_specs" {
   type = object({
-    lambda_subnet_ids     = list(string)
-    subnet_ids            = list(string)
-    lambda_vpc_id         = string
-    vpc_id                = string
-    scale_errors          = optional(list(string), [])
-    enable_dynamic_labels = optional(bool, false)
+    lambda_subnet_ids = list(string)
+    subnet_ids        = list(string)
+    lambda_vpc_id     = string
+    vpc_id            = string
+    scale_errors      = optional(list(string), [])
     runner_specs = map(object({
       ami_filter = object({
         name  = list(string)
@@ -77,7 +76,6 @@ variable "ec2_deployment_specs" {
       These can be more permissive than the runner subnets.
     - subnet_ids       : Subnets where the EC2 runners are launched.
     - vpc_id           : VPC that contains both runner and lambda subnets.
-    - enable_dynamic_labels: Enables dynamic `ghr-` labels for EC2 runners.
     - runner_specs     : Map of runner pool keys to their EC2 sizing and
                          scheduling configuration.
 
