@@ -42,9 +42,8 @@ module "ec2_runners" {
       id             = var.deployment_config.github_app.id
       webhook_secret = aws_ssm_parameter.github_app_webhook_secret.value
     }
-    runner_group_name     = var.deployment_config.github.runner_group_name
-    scale_errors          = var.ec2_deployment_specs.scale_errors
-    enable_dynamic_labels = var.ec2_deployment_specs.enable_dynamic_labels
-    runner_specs          = var.ec2_deployment_specs.runner_specs
+    runner_group_name = var.deployment_config.github.runner_group_name
+    scale_errors      = var.ec2_deployment_specs.scale_errors
+    runner_specs      = var.ec2_deployment_specs.runner_specs
   }
 }

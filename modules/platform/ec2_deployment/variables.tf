@@ -19,7 +19,6 @@ variable "runner_configs" {
     runner_iam_role_managed_policy_arns = list(string)
     runner_group_name                   = string
     scale_errors                        = optional(list(string), [])
-    enable_dynamic_labels               = optional(bool, false)
     runner_specs = map(object({
       ami_filter = object({
         name  = list(string)
