@@ -51,6 +51,7 @@ No modules.
 | [splunk_configs_conf.forgecicd_kube_container_runner](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_kube_container_runner_ci_result](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_kube_container_runner_gh_runner_version](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
+| [splunk_configs_conf.forgecicd_kube_container_runner_logs](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_kube_container_runner_tenant_fields](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_metadata](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_metadata_image_id](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
@@ -64,9 +65,19 @@ No modules.
 | [splunk_configs_conf.forgecicd_runner_logs_tenant_fields_event](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_runner_logs_tenant_fields_logs](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_trust_validation](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
+| [splunk_data_ui_views.forge_arc_dind_runner_lifecycle](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
+| [splunk_data_ui_views.forge_arc_k8s_runner_lifecycle](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
 | [splunk_data_ui_views.forge_ci_job_details](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
+| [splunk_data_ui_views.forge_ec2_runner_lifecycle](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
 | [splunk_data_ui_views.forge_github_webhook_workflow_job_events](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
+| [splunk_data_ui_views.forge_ingestion_quality](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
+| [splunk_data_ui_views.forge_kubernetes_storage_and_network](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
+| [splunk_data_ui_views.forge_lambda_operations](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
+| [splunk_data_ui_views.forge_runner_capacity](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
 | [splunk_data_ui_views.forge_tenant_logs](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
+| [splunk_data_ui_views.forge_troubleshooting](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
+| [splunk_data_ui_views.forge_trust_failures](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
+| [splunk_data_ui_views.forge_webhook_job_log_pipeline](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
 | [aws_secretsmanager_secret.secrets](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/secretsmanager_secret) | data source |
 | [aws_secretsmanager_secret_version.secrets](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/secretsmanager_secret_version) | data source |
 

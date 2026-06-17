@@ -10,7 +10,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.1 |
+| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.2 |
 | <a name="provider_terraform"></a> [terraform](#provider\_terraform) | n/a |
 
 ## Modules
