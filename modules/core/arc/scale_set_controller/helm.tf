@@ -13,6 +13,7 @@ resource "helm_release" "gha_runner_scale_set_controller" {
       {
         name      = var.controller_config.name
         namespace = var.namespace
+        log_level = lower(var.log_level)
       }
     )
   ]

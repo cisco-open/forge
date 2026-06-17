@@ -27,5 +27,6 @@ module "arc_runners" {
     }
     runner_group_name = var.deployment_config.github.runner_group_name
     runner_specs      = var.arc_deployment_specs.runner_specs
+    log_level         = var.log_level
   }
 }

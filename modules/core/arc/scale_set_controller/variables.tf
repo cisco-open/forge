@@ -38,3 +38,9 @@ variable "migrate_arc_cluster" {
   description = "Flag to indicate if the cluster is being migrated."
   default     = false
 }
+
+variable "log_level" {
+  type        = string
+  description = "Log level for the ARC controller (one of: debug, info, warn, error). Case-insensitive."
+  default     = "INFO"
+}

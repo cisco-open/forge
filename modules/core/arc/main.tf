@@ -15,6 +15,8 @@ module "controller" {
   github_app = var.github_app
 
   migrate_arc_cluster = var.migrate_arc_cluster
+
+  log_level = var.log_level
 }
 
 module "scale_sets" {
@@ -61,6 +63,8 @@ module "scale_sets" {
   # IAM Role Policies
   iam_role_name                       = "${each.value.runner_config.prefix}-arc-runner-role"
   runner_iam_role_managed_policy_arns = each.value.runner_config.runner_iam_role_managed_policy_arns
+
+  log_level = var.log_level
 
   depends_on = [module.controller]
 

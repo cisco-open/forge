@@ -37,6 +37,12 @@ variable "eks_cluster_name" {
   type        = string
 }
 
+variable "log_level" {
+  type        = string
+  description = "Log level for runner pod init commands (e.g., INFO, DEBUG, WARN, ERROR). When set to DEBUG, init container commands run in verbose mode."
+  default     = "INFO"
+}
+
 variable "tags" {
   type        = map(string)
   description = "A map of tags to apply to resources."

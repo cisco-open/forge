@@ -69,6 +69,7 @@ resource "helm_release" "gha_runner_scale_set" {
         container_actions_runner     = var.container_actions_runner
         runner_role                  = aws_iam_role.runner_role.arn
         tenant                       = var.controller.namespace
+        debug                        = lower(var.log_level) == "debug"
       }
     )
   ]

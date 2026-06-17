@@ -20,7 +20,7 @@ template:
       - name: init-dind-externals
         image: ${container_actions_runner}
         imagePullPolicy: Always
-        command: ["cp", "-r", "-v", "/home/runner/externals/.", "/home/runner/tmpDir/"]
+        command: ["cp", "-r"%{ if debug }, "-v"%{ endif }, "/home/runner/externals/.", "/home/runner/tmpDir/"]
         volumeMounts:
           - name: dind-externals
             mountPath: /home/runner/tmpDir
@@ -32,7 +32,9 @@ template:
           - sh
           - -c
           - |
+            %{ if debug ~}
             set -x
+            %{ endif ~}
             chown 1001:123 /home/runner/_work
         securityContext:
           runAsUser: 0
@@ -69,7 +71,9 @@ template:
           - sh
           - -c
           - |
+            %{ if debug ~}
             set -x
+            %{ endif ~}
             chown 1001:1001 /home/runner/.docker/
             echo '{
               "credHelpers": {

@@ -22,6 +22,7 @@ variable "runner_configs" {
     migrate_arc_cluster                 = optional(bool, false)
     runner_iam_role_managed_policy_arns = list(string)
     runner_group_name                   = string
+    log_level                           = optional(string, "INFO")
     runner_specs = map(object({
       runner_size = object({
         max_runners = number

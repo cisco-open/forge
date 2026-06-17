@@ -58,4 +58,6 @@ module "arc" {
   github_app = var.runner_configs.github_app
 
   migrate_arc_cluster = var.runner_configs.migrate_arc_cluster
+
+  log_level = var.runner_configs.log_level
 }
