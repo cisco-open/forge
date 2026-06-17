@@ -32,10 +32,7 @@ template:
           - sh
           - -c
           - |
-            %{ if debug ~}
-            set -x
-            %{ endif ~}
-            chown 1001:123 /home/runner/_work
+            ${debug ? "set -x\n            " : ""}chown 1001:123 /home/runner/_work
         securityContext:
           runAsUser: 0
         volumeMounts:
@@ -49,7 +46,7 @@ template:
           - sh
           - -c
           - |
-            cp -a /etc/. /dind-etc/
+            ${debug ? "set -x\n            " : ""}cp -a /etc/. /dind-etc/
             echo 'runner:x:1001:1001:runner:/home/runner:/bin/ash' >> /dind-etc/passwd
             echo 'runner:x:1001:' >> /dind-etc/group
             echo 'runner:100000:65536' >> /dind-etc/subuid
@@ -71,10 +68,7 @@ template:
           - sh
           - -c
           - |
-            %{ if debug ~}
-            set -x
-            %{ endif ~}
-            chown 1001:1001 /home/runner/.docker/
+            ${debug ? "set -x\n            " : ""}chown 1001:1001 /home/runner/.docker/
             echo '{
               "credHelpers": {
                 %{ for registry in container_ecr_registries ~}
@@ -126,7 +120,7 @@ template:
         lifecycle:
           preStop:
             exec:
-              command: ["sh", "-c", "echo 'Main container stopped' > /tmp/stopfile"]
+              command: ["sh", "-c", "${debug ? "set -x; " : ""}echo 'Main container stopped' > /tmp/stopfile"]
         resources:
           limits:
             cpu: ${container_limits_cpu}
@@ -138,7 +132,7 @@ template:
       - name: dind
         image: public.ecr.aws/docker/library/docker:dind-rootless
         imagePullPolicy: Always
-        args: ["dockerd", "--host=unix:///home/runner/var/run/docker.sock"]
+        args: ["dockerd", "--host=unix:///home/runner/var/run/docker.sock"%{ if debug }, "--debug"%{ endif }]
         securityContext:
           runAsUser: 1001
           runAsGroup: 1001
@@ -171,7 +165,7 @@ template:
           - sh
           - -c
           - |
-            while [ ! -f /tmp/stopfile ]; do
+            ${debug ? "set -x\n            " : ""}while [ ! -f /tmp/stopfile ]; do
               logs=$(ls /home/runner/_diag/pages/*.log 2>/dev/null)
               if [ -n "$logs" ]; then
                 tail -f $logs
@@ -198,7 +192,7 @@ template:
           - sh
           - -c
           - |
-            while [ ! -f /home/runner/_diag/hook.log ]; do sleep 1; done
+            ${debug ? "set -x\n            " : ""}while [ ! -f /home/runner/_diag/hook.log ]; do sleep 1; done
             while [ ! -f /tmp/stopfile ]; do
               tail -f /home/runner/_diag/hook.log &
               tail_pid=$!

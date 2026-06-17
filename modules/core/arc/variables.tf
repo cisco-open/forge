@@ -39,7 +39,7 @@ variable "eks_cluster_name" {
 
 variable "log_level" {
   type        = string
-  description = "Log level for runner pod init commands (e.g., INFO, DEBUG, WARN, ERROR). When set to DEBUG, init container commands run in verbose mode."
+  description = "Log level for ARC controller and runner pod commands (e.g., INFO, DEBUG, WARN, ERROR). When set to DEBUG, runner template shell commands and dockerd run in verbose mode."
   default     = "INFO"
 }
 

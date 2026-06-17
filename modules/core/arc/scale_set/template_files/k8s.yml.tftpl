@@ -64,7 +64,7 @@ template:
         lifecycle:
           preStop:
             exec:
-              command: ["sh", "-c", "echo 'Main container stopped' > /tmp/stopfile"]
+              command: ["sh", "-c", "${debug ? "set -x; " : ""}echo 'Main container stopped' > /tmp/stopfile"]
         resources:
           limits:
             cpu: ${container_limits_cpu}
@@ -79,7 +79,7 @@ template:
           - sh
           - -c
           - |
-            while [ ! -f /tmp/stopfile ]; do
+            ${debug ? "set -x\n            " : ""}while [ ! -f /tmp/stopfile ]; do
               logs=$(ls /home/runner/_diag/pages/*.log 2>/dev/null)
               if [ -n "$logs" ]; then
                 tail -f $logs
@@ -106,7 +106,7 @@ template:
           - sh
           - -c
           - |
-            while [ ! -f /home/runner/_diag/hook.log ]; do sleep 1; done
+            ${debug ? "set -x\n            " : ""}while [ ! -f /home/runner/_diag/hook.log ]; do sleep 1; done
             while [ ! -f /tmp/stopfile ]; do
               tail -f /home/runner/_diag/hook.log &
               tail_pid=$!
