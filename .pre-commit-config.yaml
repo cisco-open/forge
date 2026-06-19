@@ -230,7 +230,7 @@ repos:
         always_run: true
 
   - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: v1.106.0
+    rev: v1.107.0
     hooks:
       - id: terraform_fmt
         name: Terraform · Formatter
