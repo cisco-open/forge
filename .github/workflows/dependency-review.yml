@@ -20,8 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      # Required to publish the dependency review summary comment.
-      pull-requests: write
+      pull-requests: write # Required to publish the dependency review summary comment.
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4

@@ -21,10 +21,8 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     permissions:
-      # Required to create releases and tags.
-      contents: write
-      # Required to create and update Release Please pull requests.
-      pull-requests: write
+      contents: write # Required to create releases and tags.
+      pull-requests: write # Required to create and update Release Please pull requests.
     environment: release
     steps:
       - name: Harden the runner (Audit all outbound calls)

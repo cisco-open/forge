@@ -13,8 +13,7 @@ on:
 
 permissions:
   contents: read
-  # Required to read the pull request title and labels.
-  pull-requests: read
+  pull-requests: read # Required to read the pull request title and labels.
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
