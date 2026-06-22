@@ -19,7 +19,7 @@ Archives completed GitHub Actions workflow job logs into per-tenant S3 buckets f
 2. EventBridge rule filters for `workflow_job` with `action=completed`.
 3. Dispatcher Lambda validates mapping & completion status, then enqueues a concise message to SQS.
 4. Downloader Lambda (SQS trigger) consumes batches, performs GitHub API log download, and writes to S3.
-5. Object stored at: `s3://<bucket>/<workflow_name>/<run_attempt>/<job_id>.zip`.
+5. Objects stored at: `s3://<bucket>/<repo_full_name>/<run_id>/<run_attempt>/<job_id>.log` (raw log) and `s3://<bucket>/<repo_full_name>/<run_id>/<run_attempt>/<job_id>.json` (the workflow_job event detail), both SSE-KMS encrypted and tagged with runner/job metadata.
 
 ### Direct Mode (fallback)
 Set `enable_queue_pipeline = false` to revert to the original single-Lambda flow (less durable, fewer moving parts for very low volume environments).
