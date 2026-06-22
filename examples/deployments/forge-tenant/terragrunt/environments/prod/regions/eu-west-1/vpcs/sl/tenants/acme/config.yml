@@ -99,7 +99,8 @@ arc_runner_specs:
       min_runners: 1
     scale_set_name: dependabot
     scale_set_type: dind
-    container_actions_runner: 123456789012.dkr.ecr.eu-west-1.amazonaws.com/actions-runner:latest
+    container_images:
+      actions_runner: ghcr.io/actions/actions-runner:latest
     container_requests_cpu: 500m
     container_requests_memory: 1Gi
     container_limits_cpu: '1'
@@ -112,7 +113,8 @@ arc_runner_specs:
       min_runners: 1
     scale_set_name: k8s
     scale_set_type: k8s
-    container_actions_runner: 123456789012.dkr.ecr.eu-west-1.amazonaws.com/actions-runner:latest
+    container_images:
+      actions_runner: ghcr.io/actions/actions-runner:latest
     container_requests_cpu: 500m
     container_requests_memory: 1Gi
     container_limits_cpu: '1'

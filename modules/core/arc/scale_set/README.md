@@ -42,8 +42,8 @@ No modules.
 | <a name="input_chart_name"></a> [chart\_name](#input\_chart\_name) | Chart URL for the Helm chart | `string` | n/a | yes |
 | <a name="input_chart_version"></a> [chart\_version](#input\_chart\_version) | Chart version for the Helm chart | `string` | n/a | yes |
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | Name of the EKS cluster. | `string` | n/a | yes |
-| <a name="input_container_actions_runner"></a> [container\_actions\_runner](#input\_container\_actions\_runner) | Container Actions Runner | `string` | n/a | yes |
 | <a name="input_container_ecr_registries"></a> [container\_ecr\_registries](#input\_container\_ecr\_registries) | List of ECR registries. | `list(string)` | n/a | yes |
+| <a name="input_container_images"></a> [container\_images](#input\_container\_images) | Container images used by the ARC runner, sidecars, and DinD containers. | <pre>object({<br/>    actions_runner = optional(string, "ghcr.io/actions/actions-runner:latest")<br/>    busybox        = optional(string, "public.ecr.aws/docker/library/busybox:stable")<br/>    dind_rootless  = optional(string, "public.ecr.aws/docker/library/docker:dind-rootless")<br/>  })</pre> | `{}` | no |
 | <a name="input_container_limits_cpu"></a> [container\_limits\_cpu](#input\_container\_limits\_cpu) | Container CPU limits. | `string` | n/a | yes |
 | <a name="input_container_limits_memory"></a> [container\_limits\_memory](#input\_container\_limits\_memory) | Container memory limits. | `string` | n/a | yes |
 | <a name="input_container_requests_cpu"></a> [container\_requests\_cpu](#input\_container\_requests\_cpu) | Container CPU requests. | `string` | n/a | yes |

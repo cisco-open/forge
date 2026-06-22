@@ -66,7 +66,7 @@ resource "helm_release" "gha_runner_scale_set" {
         github_config_url            = local.github_config_url
         controller_namespace         = var.controller.namespace
         controller_service_account   = var.controller.service_account
-        container_actions_runner     = var.container_actions_runner
+        container_images             = var.container_images
         runner_role                  = aws_iam_role.runner_role.arn
         tenant                       = var.controller.namespace
         debug                        = lower(var.log_level) == "debug"

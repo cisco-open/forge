@@ -30,7 +30,7 @@ module "arc" {
         scale_set_name                      = val.scale_set_name
         scale_set_type                      = val.scale_set_type
         scale_set_labels                    = val.scale_set_labels
-        container_actions_runner            = val.container_actions_runner
+        container_images                    = val.container_images
         container_limits_cpu                = val.container_limits_cpu
         container_limits_memory             = val.container_limits_memory
         container_requests_cpu              = val.container_requests_cpu

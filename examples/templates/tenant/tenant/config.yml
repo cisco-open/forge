@@ -61,7 +61,10 @@ arc_runner_specs:
       min_runners: <MIN>
     scale_set_name: <NAME>
     scale_set_type: <TYPE>
-    container_actions_runner: <ECR_IMAGE>
+    container_images:
+      actions_runner: ghcr.io/actions/actions-runner:latest
+      busybox: public.ecr.aws/docker/library/busybox:stable
+      dind_rootless: public.ecr.aws/docker/library/docker:dind-rootless
     container_requests_cpu: <CPU>
     container_requests_memory: <MEM>
     container_limits_cpu: <CPU>

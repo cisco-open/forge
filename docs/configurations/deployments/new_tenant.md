@@ -125,7 +125,10 @@ arc_runner_specs:
     scale_set_type: <dind|k8s>      # Must be exactly 'dind' or 'k8s', no other values allowed
     scale_set_labels:               # GitHub runner labels advertised by this ARC scale set
       - <LABEL>                     # e.g. dependabot, k8s, dind
-    container_actions_runner: <ECR_IMAGE_URL>   # Full ECR container image URL for the runner container
+    container_images:               # Optional image overrides; omit fields to use module defaults
+      actions_runner: ghcr.io/actions/actions-runner:latest
+      busybox: public.ecr.aws/docker/library/busybox:stable
+      dind_rootless: public.ecr.aws/docker/library/docker:dind-rootless
     container_requests_cpu: <CPU>   # Kubernetes CPU requests, e.g. 500m (mandatory unit)
     container_requests_memory: <MEM> # Kubernetes memory requests, e.g. 1Gi (mandatory unit)
     container_limits_cpu: <CPU>     # Kubernetes CPU limits
@@ -364,7 +367,10 @@ arc_runner_specs:
     scale_set_labels:
       - dependabot
       - dind
-    container_actions_runner: 123456789012.dkr.ecr.us-east-1.amazonaws.com/actions-runner:latest
+    container_images:
+      actions_runner: ghcr.io/actions/actions-runner:latest
+      busybox: public.ecr.aws/docker/library/busybox:stable
+      dind_rootless: public.ecr.aws/docker/library/docker:dind-rootless
     container_requests_cpu: 500m
     container_requests_memory: 1Gi
     container_limits_cpu: '1'

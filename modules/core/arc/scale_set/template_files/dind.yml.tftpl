@@ -18,7 +18,7 @@ template:
 
     initContainers:
       - name: init-dind-externals
-        image: ${container_actions_runner}
+        image: ${container_images.actions_runner}
         imagePullPolicy: Always
         command: ["cp", "-r"%{ if debug }, "-v"%{ endif }, "/home/runner/externals/.", "/home/runner/tmpDir/"]
         volumeMounts:
@@ -26,7 +26,7 @@ template:
             mountPath: /home/runner/tmpDir
 
       - name: init-work
-        image: ${container_actions_runner}
+        image: ${container_images.actions_runner}
         imagePullPolicy: Always
         command:
           - sh
@@ -41,7 +41,7 @@ template:
 
       - name: init-dind-rootless
         imagePullPolicy: Always
-        image: public.ecr.aws/docker/library/docker:dind-rootless
+        image: ${container_images.dind_rootless}
         command:
           - sh
           - -c
@@ -63,7 +63,7 @@ template:
             mountPath: /dind-home
 
       - name: init-docker-creds
-        image: ${container_actions_runner}
+        image: ${container_images.actions_runner}
         command:
           - sh
           - -c
@@ -86,7 +86,7 @@ template:
 
     containers:
       - name: runner
-        image: ${container_actions_runner}
+        image: ${container_images.actions_runner}
         imagePullPolicy: Always
         command: ["/home/runner/run.sh"]
         env:
@@ -130,7 +130,7 @@ template:
             memory: ${container_requests_memory}
 
       - name: dind
-        image: public.ecr.aws/docker/library/docker:dind-rootless
+        image: ${container_images.dind_rootless}
         imagePullPolicy: Always
         args: ["dockerd", "--host=unix:///home/runner/var/run/docker.sock"%{ if debug }, "--debug"%{ endif }]
         securityContext:
@@ -160,7 +160,7 @@ template:
             memory: ${container_requests_memory}
 
       - name: runner-logs
-        image: public.ecr.aws/docker/library/busybox:stable
+        image: ${container_images.busybox}
         command:
           - sh
           - -c
@@ -187,7 +187,7 @@ template:
             memory: "64Mi"
 
       - name: hook
-        image: public.ecr.aws/docker/library/busybox:stable
+        image: ${container_images.busybox}
         command:
           - sh
           - -c

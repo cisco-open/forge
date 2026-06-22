@@ -130,7 +130,7 @@ locals {
         "vpc:${local.vpc_alias}",
         "tnt:${local.tenant_name}",
       ]
-      container_actions_runner     = spec.container_actions_runner
+      container_images             = try(spec.container_images, {})
       container_requests_cpu       = spec.container_requests_cpu
       container_requests_memory    = spec.container_requests_memory
       container_limits_cpu         = spec.container_limits_cpu

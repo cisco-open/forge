@@ -8,9 +8,14 @@ variable "chart_version" {
   type        = string
 }
 
-variable "container_actions_runner" {
-  description = "Container Actions Runner"
-  type        = string
+variable "container_images" {
+  description = "Container images used by the ARC runner, sidecars, and DinD containers."
+  type = object({
+    actions_runner = optional(string, "ghcr.io/actions/actions-runner:latest")
+    busybox        = optional(string, "public.ecr.aws/docker/library/busybox:stable")
+    dind_rootless  = optional(string, "public.ecr.aws/docker/library/docker:dind-rootless")
+  })
+  default = {}
 }
 
 variable "controller" {

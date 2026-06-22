@@ -32,7 +32,7 @@ template:
     automountServiceAccountToken: true
     containers:
       - name: runner
-        image: ${container_actions_runner}
+        image: ${container_images.actions_runner}
         imagePullPolicy: Always
         command: ["/home/runner/run.sh"]
         env:
@@ -74,7 +74,7 @@ template:
             memory: ${container_requests_memory}
 
       - name: runner-logs
-        image: public.ecr.aws/docker/library/busybox:stable
+        image: ${container_images.busybox}
         command:
           - sh
           - -c
@@ -101,7 +101,7 @@ template:
             memory: "64Mi"
 
       - name: hook
-        image: public.ecr.aws/docker/library/busybox:stable
+        image: ${container_images.busybox}
         command:
           - sh
           - -c

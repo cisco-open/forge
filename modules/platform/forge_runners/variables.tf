@@ -186,10 +186,14 @@ variable "arc_deployment_specs" {
         max_runners = number
         min_runners = number
       })
-      scale_set_name               = string
-      scale_set_type               = string
-      scale_set_labels             = list(string)
-      container_actions_runner     = string
+      scale_set_name   = string
+      scale_set_type   = string
+      scale_set_labels = list(string)
+      container_images = optional(object({
+        actions_runner = optional(string, "ghcr.io/actions/actions-runner:latest")
+        busybox        = optional(string, "public.ecr.aws/docker/library/busybox:stable")
+        dind_rootless  = optional(string, "public.ecr.aws/docker/library/docker:dind-rootless")
+      }), {})
       container_limits_cpu         = string
       container_limits_memory      = string
       container_requests_cpu       = string
@@ -217,7 +221,8 @@ variable "arc_deployment_specs" {
       kubernetes or containerapp, depending on integration).
     - scale_set_labels       : GitHub runner labels advertised by this ARC
       scale set.
-    - container_actions_runner    : Container image used for the ARC runner.
+    - container_images            : Container images used by the ARC runner,
+                                    sidecars, and DinD containers.
     - container_limits_cpu        : CPU limit for the runner container.
     - container_limits_memory     : Memory limit for the runner container.
     - container_requests_cpu      : CPU request (baseline reservation).

@@ -28,10 +28,14 @@ variable "runner_configs" {
         max_runners = number
         min_runners = number
       })
-      scale_set_name               = string
-      scale_set_type               = string
-      scale_set_labels             = list(string)
-      container_actions_runner     = string
+      scale_set_name   = string
+      scale_set_type   = string
+      scale_set_labels = list(string)
+      container_images = optional(object({
+        actions_runner = optional(string, "ghcr.io/actions/actions-runner:latest")
+        busybox        = optional(string, "public.ecr.aws/docker/library/busybox:stable")
+        dind_rootless  = optional(string, "public.ecr.aws/docker/library/docker:dind-rootless")
+      }), {})
       container_limits_cpu         = string
       container_limits_memory      = string
       volume_requests_storage_size = string

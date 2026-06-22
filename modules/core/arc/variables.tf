@@ -61,17 +61,21 @@ variable "multi_runner_config" {
         max_runners = number
         min_runners = number
       })
-      prefix                              = string
-      scale_set_name                      = string
-      scale_set_type                      = string
-      scale_set_labels                    = list(string)
-      container_limits_cpu                = string
-      container_limits_memory             = string
-      container_requests_cpu              = string
-      container_requests_memory           = string
-      volume_requests_storage_size        = string
-      volume_requests_storage_type        = string
-      container_actions_runner            = string
+      prefix                       = string
+      scale_set_name               = string
+      scale_set_type               = string
+      scale_set_labels             = list(string)
+      container_limits_cpu         = string
+      container_limits_memory      = string
+      container_requests_cpu       = string
+      container_requests_memory    = string
+      volume_requests_storage_size = string
+      volume_requests_storage_type = string
+      container_images = optional(object({
+        actions_runner = optional(string, "ghcr.io/actions/actions-runner:latest")
+        busybox        = optional(string, "public.ecr.aws/docker/library/busybox:stable")
+        dind_rootless  = optional(string, "public.ecr.aws/docker/library/docker:dind-rootless")
+      }), {})
       container_ecr_registries            = list(string)
       runner_iam_role_managed_policy_arns = list(string)
       controller = object({
@@ -94,6 +98,7 @@ variable "multi_runner_config" {
         prefix: "Prefix for naming resources."
         scale_set_name: "Name of the scale set."
         scale_set_labels: "GitHub runner labels advertised by the ARC scale set."
+        container_images: "Container images used by the ARC runner, sidecars, and DinD containers."
         runner_iam_role_managed_policy_arns: "Attach AWS or customer-managed IAM policies (by ARN) to the runner IAM role."
       }
       runner_set_configs: {
