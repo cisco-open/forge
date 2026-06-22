@@ -1,0 +1,39 @@
+---
+# yamllint disable rule:comments
+# yamllint disable rule:truthy
+name: GitHub Actions Security Analysis
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/*.ya?ml
+  pull_request:
+    paths:
+      - .github/workflows/*.ya?ml
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  zizmor:
+    name: Run zizmor
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Run zizmor
+        uses: zizmorcore/zizmor-action@5f14fd08f7cf1cb1609c1e344975f152c7ee938d # v0.5.6
+        with:
+          persona: pedantic
