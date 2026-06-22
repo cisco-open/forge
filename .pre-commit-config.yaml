@@ -286,4 +286,4 @@ repos:
           - mdformat-ruff
           - mdformat-frontmatter
           - ruff
-        exclude: (modules/)
+        exclude: (modules/|CHANGELOG.md)
