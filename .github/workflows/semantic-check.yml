@@ -4,14 +4,16 @@
 name: Semantic Check
 
 on:
-  pull_request_target:
+  pull_request:
     types:
       - opened
       - edited
+      - reopened
       - synchronize
 
 permissions:
   contents: read
+  # Required to read the pull request title and labels.
   pull-requests: read
 
 concurrency:

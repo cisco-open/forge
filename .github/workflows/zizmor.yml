@@ -24,8 +24,10 @@ jobs:
     name: Run zizmor
     runs-on: ubuntu-latest
     permissions:
+      # Required so zizmor can inspect workflow metadata.
       actions: read
       contents: read
+      # Required to upload zizmor SARIF results to code scanning.
       security-events: write
     steps:
       - name: Checkout repository

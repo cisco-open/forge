@@ -20,6 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      # Required to publish the dependency review summary comment.
       pull-requests: write
     steps:
       - name: Harden the runner (Audit all outbound calls)
