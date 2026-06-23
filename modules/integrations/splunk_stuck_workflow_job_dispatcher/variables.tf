@@ -63,8 +63,10 @@ variable "redelivery_config" {
     sleep_seconds      = optional(number, 0)
     tenant_configs = optional(list(object({
       tenant             = string
-      github_api_url     = optional(string)
       github_api_version = optional(string)
+      gh_config = object({
+        ghes_url = string
+      })
       prefixes = list(object({
         aws_region   = string
         vpc_alias    = optional(string)

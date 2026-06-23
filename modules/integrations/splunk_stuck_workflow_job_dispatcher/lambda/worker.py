@@ -242,6 +242,13 @@ def github_request(
         return err.code, headers, err.read()
 
 
+def github_api_url_from_ghes_url(ghes_url: Any) -> str:
+    normalized_ghes_url = str(ghes_url or '').strip().rstrip('/')
+    if not normalized_ghes_url:
+        return os.environ.get('GITHUB_API_URL', 'https://api.github.com')
+    return f"{normalized_ghes_url}/api/v3"
+
+
 def resolve_tenant_config(payload: Dict[str, Any]) -> Dict[str, str]:
     tenant = payload['tenant']
     aws_region = payload['region']
@@ -265,10 +272,9 @@ def resolve_tenant_config(payload: Dict[str, Any]) -> Dict[str, str]:
                 prefix_config.get('vpc_alias') != vpc_alias
             ):
                 continue
-            github_api_url = tenant_config.get('github_api_url')
-            if not github_api_url:
-                github_api_url = os.environ.get(
-                    'GITHUB_API_URL', 'https://api.github.com')
+            gh_config = tenant_config.get('gh_config') or {}
+            ghes_url = gh_config.get('ghes_url') or ''
+            github_api_url = github_api_url_from_ghes_url(ghes_url)
             github_api_version = (
                 tenant_config['github_api_version']
                 if 'github_api_version' in tenant_config
@@ -276,6 +282,7 @@ def resolve_tenant_config(payload: Dict[str, Any]) -> Dict[str, str]:
             )
             matches.append({
                 'prefix': prefix_config['prefix'],
+                'ghes_url': ghes_url,
                 'github_api_url': github_api_url,
                 'github_api_version': github_api_version,
             })
@@ -322,10 +329,11 @@ def load_github_app_credentials(payload: Dict[str, Any]) -> Dict[str, Any]:
             f"Neither GitHub App client ID nor app ID exists for {prefix}")
 
     LOG.info(
-        'loaded_github_app_credentials tenant=%s region=%s prefix=%s github_api_url=%s installation_id=%s',
+        'loaded_github_app_credentials tenant=%s region=%s prefix=%s github_mode=%s github_api_url=%s installation_id=%s',
         tenant,
         region,
         prefix,
+        'ghes' if tenant_config['ghes_url'] else 'saas',
         tenant_config['github_api_url'],
         installation_id,
     )
