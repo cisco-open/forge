@@ -49,7 +49,20 @@ variable "splunk_conf" {
     index        = string
     tenant_names = optional(list(string), [])
   })
-  description = "Splunk Cloud connection, ACL, and Forge index settings."
+  description = <<-EOT
+    Splunk Cloud connection, ACL, and Forge index settings.
+
+    Nested attributes:
+    - splunk_cloud: Splunk Cloud host name used by the Splunk provider.
+    - acl: Access control settings for the saved search.
+    - acl.app: Splunk app that owns the saved search.
+    - acl.owner: Splunk owner for the saved search.
+    - acl.sharing: Splunk sharing scope for the saved search ACL.
+    - acl.read: Splunk roles allowed to read the saved search.
+    - acl.write: Splunk roles allowed to update the saved search.
+    - index: Splunk index containing Forge CICD webhook and dispatch logs.
+    - tenant_names: Optional tenant allow-list retained for compatibility with shared Splunk configuration.
+  EOT
 }
 
 variable "redelivery_config" {
@@ -68,7 +81,21 @@ variable "redelivery_config" {
       }))
     })), [])
   })
-  description = "GitHub App webhook redelivery behavior."
+  description = <<-EOT
+    GitHub App webhook redelivery behavior.
+
+    Nested attributes:
+    - tenant_configs: Tenant-specific GitHub Enterprise and SSM prefix mappings.
+    - tenant_configs.tenant: Forge tenant name from Splunk logs.
+    - tenant_configs.github_api_version: Optional GitHub API version header; defaults to 2022-11-28.
+    - tenant_configs.gh_config: GitHub deployment settings for the tenant.
+    - tenant_configs.gh_config.ghes_url: GitHub Enterprise Server base URL; empty string selects github.com.
+    - tenant_configs.prefixes: AWS region and VPC-specific SSM parameter prefix mappings for the tenant.
+    - tenant_configs.prefixes.aws_region: AWS region where the tenant GitHub App SSM parameters are stored.
+    - tenant_configs.prefixes.vpc_alias: Optional VPC alias used to disambiguate multiple prefixes in the same region.
+    - tenant_configs.prefixes.region_alias: Optional region alias used to disambiguate multiple prefixes.
+    - tenant_configs.prefixes.prefix: SSM prefix under /forge/<prefix>/ for GitHub App credentials.
+  EOT
   default     = {}
 }
 
@@ -83,7 +110,19 @@ variable "splunk_alert" {
     stuck_minutes_threshold = optional(number, 5)
     suppress_period         = optional(string, "30m")
   })
-  description = "Splunk saved-search alert configuration."
+  description = <<-EOT
+    Splunk saved-search alert configuration.
+
+    Nested attributes:
+    - name: Splunk saved-search name.
+    - description: Splunk saved-search description.
+    - disabled: Whether to create the saved search in a disabled state.
+    - cron_schedule: Cron schedule for evaluating the saved search.
+    - dispatch_earliest_time: Earliest Splunk search time for each alert run.
+    - dispatch_latest_time: Latest Splunk search time for each alert run.
+    - stuck_minutes_threshold: Minimum queued duration before redelivery is triggered.
+    - suppress_period: Splunk alert suppression window for duplicate stuck-job results.
+  EOT
   default     = {}
 }
 
