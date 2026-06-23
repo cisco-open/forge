@@ -78,7 +78,7 @@ variable "splunk_alert" {
     description             = optional(string, "Queues GitHub App webhook redelivery when Forge workflow_job queued events stay stuck after dispatch.")
     disabled                = optional(bool, false)
     cron_schedule           = optional(string, "*/1 * * * *")
-    dispatch_earliest_time  = optional(string, "-15m")
+    dispatch_earliest_time  = optional(string, "-24h")
     dispatch_latest_time    = optional(string, "now")
     stuck_minutes_threshold = optional(number, 5)
     suppress_period         = optional(string, "30m")

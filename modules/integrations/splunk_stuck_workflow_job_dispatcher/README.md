@@ -42,7 +42,7 @@ must pass the numeric delivery ID required by
 
 ## Splunk Alert
 
-The saved search runs every minute by default, searches the last 15 minutes, and
+The saved search runs every minute by default, searches the last 24 hours, and
 triggers per result. Duplicate alert actions are suppressed by
 `workflowJobId`, `forgecicd_tenant`, and `aws_region` in Splunk and by the
 DynamoDB item key in AWS.
