@@ -226,12 +226,45 @@ def github_request(jwt: str, method: str, path: str, body: Dict[str, Any] | None
         return err.code, headers, err.read()
 
 
-def parameter_prefix(tenant: str, region: str) -> str:
-    aliases = json.loads(os.environ['REGION_ALIASES'])
-    region_slug = aliases.get(region)
-    if not region_slug:
-        raise ValueError(f"Unsupported region '{region}'")
-    return f"{tenant}-{region_slug}-sl"
+def parameter_prefix(payload: Dict[str, Any]) -> str:
+    tenant = payload['tenant']
+    aws_region = payload['region']
+    region_alias = payload.get('region_alias') or ''
+    vpc_alias = payload.get('vpc_alias') or ''
+    tenant_prefixes = json.loads(os.environ.get('TENANT_PREFIXES', '[]'))
+    matches = []
+
+    for tenant_config in tenant_prefixes:
+        if tenant_config.get('tenant') != tenant:
+            continue
+
+        for prefix_config in tenant_config.get('prefixes', []):
+            if prefix_config.get('aws_region') != aws_region:
+                continue
+            if region_alias and prefix_config.get('region_alias') and (
+                prefix_config.get('region_alias') != region_alias
+            ):
+                continue
+            if vpc_alias and prefix_config.get('vpc_alias') and (
+                prefix_config.get('vpc_alias') != vpc_alias
+            ):
+                continue
+            matches.append(prefix_config['prefix'])
+
+    if not matches:
+        raise ValueError(
+            'No tenant prefix configured for '
+            f"tenant={tenant} region={aws_region} "
+            f"region_alias={region_alias or '-'} vpc_alias={vpc_alias or '-'}"
+        )
+    if len(matches) > 1:
+        raise ValueError(
+            'Ambiguous tenant prefix configuration for '
+            f"tenant={tenant} region={aws_region} "
+            f"region_alias={region_alias or '-'} vpc_alias={vpc_alias or '-'}"
+        )
+
+    return matches[0]
 
 
 def get_parameter(ssm_client, name: str) -> str:
@@ -242,7 +275,7 @@ def get_parameter(ssm_client, name: str) -> str:
 def load_github_app_credentials(payload: Dict[str, Any]) -> Dict[str, Any]:
     tenant = payload['tenant']
     region = payload['region']
-    prefix = parameter_prefix(tenant, region)
+    prefix = parameter_prefix(payload)
     ssm_client = boto3.client('ssm', region_name=region)
     parameter_base = f"/forge/{prefix}"
 

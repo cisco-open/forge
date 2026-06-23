@@ -20,6 +20,8 @@ locals {
         latest(github.repository) as repository
         latest(github.started_at) as started_at
         latest(aws_region) as aws_region
+        latest(forgecicd_region_alias) as forgecicd_region_alias
+        latest(forgecicd_vpc_alias) as forgecicd_vpc_alias
         values(github.labels) as labels
         values(github.github-delivery) as github_deliveries
         values(queued_url) as queued_url
@@ -29,7 +31,7 @@ locals {
     | eval stuck_since=strftime(first_seen, "%Y-%m-%dT%H:%M:%S%Z"), stuck_minutes=round((now() - first_seen) / 60, 1)
     | where stuck_minutes > ${var.splunk_alert.stuck_minutes_threshold}
     | sort - stuck_minutes
-    | table workflowJobId job_name repository labels started_at stuck_since stuck_minutes queued_url github_deliveries forgecicd_tenant aws_region
+    | table workflowJobId job_name repository labels started_at stuck_since stuck_minutes queued_url github_deliveries forgecicd_tenant aws_region forgecicd_region_alias forgecicd_vpc_alias
   EOT
 }
 

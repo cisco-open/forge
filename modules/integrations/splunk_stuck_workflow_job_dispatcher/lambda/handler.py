@@ -81,6 +81,14 @@ def first_value(value: Any) -> str:
     return str(value).strip()
 
 
+def first_present(result: Dict[str, Any], *keys: str) -> str:
+    for key in keys:
+        value = first_value(result.get(key))
+        if value:
+            return value
+    return ''
+
+
 def split_multivalue(value: Any) -> List[str]:
     if value is None:
         return []
@@ -114,7 +122,7 @@ def dedupe_preserving_order(values: Iterable[str]) -> List[str]:
 
 
 def parse_region(result: Dict[str, Any]) -> str:
-    explicit = first_value(result.get('aws_region') or result.get('region'))
+    explicit = first_present(result, 'aws_region', 'region')
     if explicit:
         return explicit
 
@@ -128,36 +136,20 @@ def parse_region(result: Dict[str, Any]) -> str:
 
 
 def normalize_result(result: Dict[str, Any]) -> Dict[str, Any]:
-    workflow_job_id = first_value(next(
-        (value for value in (
-            result.get('workflowJobId'),
-            result.get('workflow_job_id'),
-            result.get('github.workflowJobId'),
-        ) if value),
-        None,
-    ))
-    repository = first_value(next(
-        (value for value in (
-            result.get('repository'),
-            result.get('github.repository'),
-        ) if value),
-        None,
-    ))
-    tenant = first_value(next(
-        (value for value in (
-            result.get('forgecicd_tenant'),
-            result.get('tenant'),
-        ) if value),
-        None,
-    ))
+    workflow_job_id = first_present(
+        result,
+        'workflowJobId',
+        'workflow_job_id',
+        'github.workflowJobId',
+    )
+    repository = first_present(result, 'repository', 'github.repository')
+    tenant = first_present(result, 'forgecicd_tenant', 'tenant')
     region = parse_region(result)
-    delivery_ids = split_multivalue(next(
-        (value for value in (
-            result.get('github_deliveries'),
-            result.get('github.github-delivery'),
-            result.get('delivery_ids'),
-        ) if value),
-        None,
+    delivery_ids = split_multivalue(first_present(
+        result,
+        'github_deliveries',
+        'github.github-delivery',
+        'delivery_ids',
     ))
 
     normalized = {
@@ -165,6 +157,16 @@ def normalize_result(result: Dict[str, Any]) -> Dict[str, Any]:
         'repository': repository,
         'tenant': tenant,
         'region': region,
+        'region_alias': first_present(
+            result,
+            'forgecicd_region_alias',
+            'region_alias',
+        ),
+        'vpc_alias': first_present(
+            result,
+            'forgecicd_vpc_alias',
+            'vpc_alias',
+        ),
         'delivery_ids': delivery_ids,
         'stuck_minutes': first_value(result.get('stuck_minutes')),
         'stuck_since': first_value(result.get('stuck_since')),

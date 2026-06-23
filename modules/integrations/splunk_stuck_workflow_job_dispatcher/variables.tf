@@ -61,11 +61,15 @@ variable "redelivery_config" {
     max_deliveries     = optional(number, 5000)
     per_page           = optional(number, 100)
     sleep_seconds      = optional(number, 0)
-    region_aliases = optional(map(string), {
-      eu-west-1 = "euw1"
-      us-east-1 = "use1"
-      us-west-2 = "usw2"
-    })
+    tenant_prefixes = optional(list(object({
+      tenant = string
+      prefixes = list(object({
+        aws_region   = string
+        vpc_alias    = optional(string)
+        region_alias = optional(string)
+        prefix       = string
+      }))
+    })), [])
   })
   description = "GitHub App webhook redelivery behavior. Execute defaults to false for dry-run mode."
   default     = {}

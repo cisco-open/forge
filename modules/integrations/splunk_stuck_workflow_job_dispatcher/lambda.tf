@@ -87,8 +87,8 @@ module "worker" {
     LOG_LEVEL          = var.log_level
     MAX_DELIVERIES     = tostring(var.redelivery_config.max_deliveries)
     PER_PAGE           = tostring(var.redelivery_config.per_page)
-    REGION_ALIASES     = jsonencode(var.redelivery_config.region_aliases)
     SLEEP_SECONDS      = tostring(var.redelivery_config.sleep_seconds)
+    TENANT_PREFIXES    = jsonencode(var.redelivery_config.tenant_prefixes)
   }
 
   attach_policy_json = true
@@ -151,9 +151,7 @@ data "aws_iam_policy_document" "worker" {
     condition {
       test     = "StringLike"
       variable = "kms:ViaService"
-      values = [
-        for region in keys(var.redelivery_config.region_aliases) : "ssm.${region}.amazonaws.com"
-      ]
+      values   = ["ssm.*.amazonaws.com"]
     }
   }
 }

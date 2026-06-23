@@ -25,7 +25,10 @@ Splunk saved search
 
 For each stuck job, the worker:
 
-1. Derives the Forge tenant parameter prefix from `tenant` and `region`.
+1. Selects the Forge tenant parameter prefix from `redelivery_config.tenant_prefixes`
+   using `tenant`, `region`, and optional `vpc_alias` or `region_alias`.
+   If Splunk omits an alias, the worker accepts a single matching prefix and
+   fails closed when multiple prefixes match.
 2. Reads GitHub App credentials from SSM Parameter Store:
    - `/forge/<tenant>-<region-code>-sl/github_app_key`
    - `/forge/<tenant>-<region-code>-sl/github_app_client_id`
@@ -45,9 +48,9 @@ triggers per result. Duplicate alert actions are suppressed by `workflowJobId` i
 Splunk and by the DynamoDB item key in AWS.
 
 The alert query keeps the same core logic as the Forge dashboard query and adds
-`aws_region` to the result table so the worker can find the right tenant SSM
-parameters. If `aws_region` is missing, the receiver tries to parse the region
-from the SQS queue URL.
+`aws_region`, `forgecicd_region_alias`, and `forgecicd_vpc_alias` to the result
+table so the worker can find the right tenant SSM parameters. If `aws_region` is
+missing, the receiver tries to parse the region from the SQS queue URL.
 
 ## Example Module Call
 
@@ -66,11 +69,18 @@ module "splunk_stuck_workflow_job_dispatcher" {
     include_successful = false
     max_deliveries     = 5000
     per_page           = 100
-    region_aliases = {
-      eu-west-1 = "euw1"
-      us-east-1 = "use1"
-      us-west-2 = "usw2"
-    }
+    tenant_prefixes = [
+      {
+        tenant = "cnhe"
+        prefixes = [
+          {
+            aws_region = "us-west-2"
+            vpc_alias  = "sl"
+            prefix     = "cnhe-usw2-sl"
+          }
+        ]
+      }
+    ]
   }
 }
 ```
