@@ -227,8 +227,6 @@ def resolve_tenant_config(payload: Dict[str, Any]) -> Dict[str, str]:
         for prefix_config in tenant_config.get('prefixes', []):
             if prefix_config.get('aws_region') != aws_region:
                 continue
-            gh_config = tenant_config.get('gh_config') or {}
-            ghes_url = gh_config.get('ghes_url') or ''
             github_api_url = tenant_config.get('github_api')
             if not github_api_url:
                 github_api_url = 'https://api.github.com'
@@ -237,7 +235,6 @@ def resolve_tenant_config(payload: Dict[str, Any]) -> Dict[str, str]:
                 github_api_version = '2022-11-28'
             matches.append({
                 'deployment_prefix': prefix_config['deployment_prefix'],
-                'ghes_url': ghes_url,
                 'github_api_url': github_api_url,
                 'github_api_version': github_api_version,
             })
@@ -283,7 +280,8 @@ def load_github_app_credentials(payload: Dict[str, Any]) -> Dict[str, Any]:
         tenant,
         region,
         deployment_prefix,
-        'ghes' if tenant_config['ghes_url'] else 'saas',
+        'saas' if tenant_config['github_api_url'].rstrip(
+            '/') == 'https://api.github.com' else 'ghes',
         tenant_config['github_api_url'],
     )
     return {
