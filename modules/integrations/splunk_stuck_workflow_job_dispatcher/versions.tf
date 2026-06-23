@@ -1,0 +1,19 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 6.47"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = ">= 3.7"
+    }
+    splunk = {
+      source  = "splunk/splunk"
+      version = ">= 1.4.30"
+    }
+  }
+
+  # OpenTofu version.
+  required_version = "~> 1.11"
+}
