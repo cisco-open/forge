@@ -81,8 +81,6 @@ module "worker" {
   environment_variables = {
     DEDUPE_TABLE       = aws_dynamodb_table.dedupe.name
     EXECUTE            = tostring(var.redelivery_config.execute)
-    GITHUB_API_URL     = var.redelivery_config.github_api_url
-    GITHUB_API_VERSION = var.redelivery_config.github_api_version
     INCLUDE_SUCCESSFUL = tostring(var.redelivery_config.include_successful)
     LOG_LEVEL          = var.log_level
     MAX_DELIVERIES     = tostring(var.redelivery_config.max_deliveries)

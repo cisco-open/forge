@@ -207,13 +207,9 @@ def github_request(
     api_url: str | None = None,
     api_version: str | None = None,
 ) -> Tuple[int, Dict[str, str], bytes]:
-    resolved_api_url = (
-        api_url or os.environ.get('GITHUB_API_URL', 'https://api.github.com')
-    ).rstrip('/')
+    resolved_api_url = (api_url or 'https://api.github.com').rstrip('/')
     resolved_api_version = (
-        os.environ.get('GITHUB_API_VERSION', '2022-11-28')
-        if api_version is None
-        else api_version
+        '2022-11-28' if api_version is None else api_version
     )
     data = json.dumps(body).encode('utf-8') if body is not None else None
     headers = {
@@ -269,12 +265,10 @@ def resolve_tenant_config(payload: Dict[str, Any]) -> Dict[str, str]:
             ghes_url = gh_config.get('ghes_url') or ''
             github_api_url = tenant_config.get('github_api')
             if not github_api_url:
-                github_api_url = os.environ.get(
-                    'GITHUB_API_URL', 'https://api.github.com')
+                github_api_url = 'https://api.github.com'
             github_api_version = tenant_config.get('github_api_version')
             if not github_api_version:
-                github_api_version = os.environ.get(
-                    'GITHUB_API_VERSION', '2022-11-28')
+                github_api_version = '2022-11-28'
             matches.append({
                 'prefix': prefix_config['prefix'],
                 'ghes_url': ghes_url,

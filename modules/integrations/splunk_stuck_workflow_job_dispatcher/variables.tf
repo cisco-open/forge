@@ -56,8 +56,6 @@ variable "redelivery_config" {
   type = object({
     execute            = optional(bool, false)
     include_successful = optional(bool, false)
-    github_api_url     = optional(string, "https://api.github.com")
-    github_api_version = optional(string, "2022-11-28")
     max_deliveries     = optional(number, 5000)
     per_page           = optional(number, 100)
     sleep_seconds      = optional(number, 0)
