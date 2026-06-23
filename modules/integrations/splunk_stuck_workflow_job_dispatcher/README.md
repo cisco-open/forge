@@ -25,10 +25,11 @@ Splunk saved search
 
 For each stuck job, the worker:
 
-1. Selects the Forge tenant parameter prefix from `redelivery_config.tenant_prefixes`
+1. Selects the Forge tenant configuration from `redelivery_config.tenant_configs`
    using `tenant`, `region`, and optional `vpc_alias` or `region_alias`.
    If Splunk omits an alias, the worker accepts a single matching prefix and
-   fails closed when multiple prefixes match.
+   fails closed when multiple prefixes match. Each tenant can override the
+   GitHub API URL and API version for GHES or other on-prem GitHub instances.
 2. Reads GitHub App credentials from SSM Parameter Store:
    - `/forge/<tenant>-<region-code>-sl/github_app_key`
    - `/forge/<tenant>-<region-code>-sl/github_app_client_id`
@@ -69,9 +70,10 @@ module "splunk_stuck_workflow_job_dispatcher" {
     include_successful = false
     max_deliveries     = 5000
     per_page           = 100
-    tenant_prefixes = [
+    tenant_configs = [
       {
-        tenant = "cnhe"
+        tenant         = "cnhe"
+        github_api_url = "https://api.github.com"
         prefixes = [
           {
             aws_region = "us-west-2"

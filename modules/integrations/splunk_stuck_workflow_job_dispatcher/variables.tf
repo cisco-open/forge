@@ -61,8 +61,10 @@ variable "redelivery_config" {
     max_deliveries     = optional(number, 5000)
     per_page           = optional(number, 100)
     sleep_seconds      = optional(number, 0)
-    tenant_prefixes = optional(list(object({
-      tenant = string
+    tenant_configs = optional(list(object({
+      tenant             = string
+      github_api_url     = optional(string)
+      github_api_version = optional(string)
       prefixes = list(object({
         aws_region   = string
         vpc_alias    = optional(string)
