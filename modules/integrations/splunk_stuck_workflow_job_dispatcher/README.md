@@ -43,15 +43,18 @@ must pass the numeric delivery ID required by
 ## Splunk Alert
 
 The saved search runs every minute by default, searches the last 15 minutes, and
-triggers per result. Duplicate alert actions are suppressed by `workflowJobId` in
-Splunk and by the DynamoDB item key in AWS.
+triggers per result. Duplicate alert actions are suppressed by
+`workflowJobId`, `forgecicd_tenant`, and `aws_region` in Splunk and by the
+DynamoDB item key in AWS.
 
 The alert query keeps the same core logic as the Forge dashboard query and adds
 `aws_region`, `forgecicd_region_alias`, and `forgecicd_vpc_alias` to the result
-table so the worker can find the right tenant SSM parameters. It also extracts
-`delivery_ids` from `--delivery-id` in the dispatch log and drops results where
-that ID is missing. If `aws_region` is missing, the receiver tries to parse the
-region from the SQS queue URL.
+table so the worker can find the right tenant SSM parameters. It groups stuck
+jobs by workflow job ID, tenant, and AWS region, so one Splunk payload can carry
+results for different tenants without mixing their delivery IDs. It also
+extracts `delivery_ids` from `--delivery-id` in the dispatch log and drops
+results where that ID is missing. If `aws_region` is missing, the receiver tries
+to parse the region from the SQS queue URL.
 
 ## Example Module Call
 

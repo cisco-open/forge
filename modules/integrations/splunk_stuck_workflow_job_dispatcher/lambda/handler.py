@@ -189,8 +189,10 @@ def normalize_result(result: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def dedupe_key(payload: Dict[str, Any]) -> str:
+    tenant = payload.get('tenant') or 'unknown'
+    region = payload.get('region') or 'unknown'
     repository = payload.get('repository') or 'unknown'
-    return f"{repository}#{payload['workflow_job_id']}"
+    return f"{tenant}#{region}#{repository}#{payload['workflow_job_id']}"
 
 
 def put_pending_work_once(key: str, payload: Dict[str, Any]) -> bool:
