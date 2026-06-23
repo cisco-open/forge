@@ -35,13 +35,13 @@ For each stuck job, the worker:
    - `/forge/<tenant>-<region-code>-sl/github_app_key`
    - `/forge/<tenant>-<region-code>-sl/github_app_client_id`
    - `/forge/<tenant>-<region-code>-sl/github_app_id`
-   - `/forge/<tenant>-<region-code>-sl/github_app_installation_id`
 3. Creates a GitHub App JWT in Lambda.
-4. If Splunk passed `github_deliveries`, redelivers those delivery IDs or GUIDs.
-5. If no delivery IDs were passed, scans recent GitHub App webhook deliveries for failed `workflow_job.queued` deliveries for the tenant installation.
+4. Redelivers the numeric `delivery_ids` parsed by Splunk from the dispatch
+   log `--delivery-id` argument.
 
-Delivery GUIDs are resolved through the GitHub App delivery list API before
-execution. Numeric delivery IDs are posted directly.
+The worker does not list GitHub deliveries or resolve delivery GUIDs. Splunk
+must pass the numeric delivery ID required by
+`POST /app/hook/deliveries/{delivery_id}/attempts`.
 
 ## Splunk Alert
 
@@ -51,8 +51,10 @@ Splunk and by the DynamoDB item key in AWS.
 
 The alert query keeps the same core logic as the Forge dashboard query and adds
 `aws_region`, `forgecicd_region_alias`, and `forgecicd_vpc_alias` to the result
-table so the worker can find the right tenant SSM parameters. If `aws_region` is
-missing, the receiver tries to parse the region from the SQS queue URL.
+table so the worker can find the right tenant SSM parameters. It also extracts
+`delivery_ids` from `--delivery-id` in the dispatch log and drops results where
+that ID is missing. If `aws_region` is missing, the receiver tries to parse the
+region from the SQS queue URL.
 
 ## Example Module Call
 
@@ -67,10 +69,7 @@ module "splunk_stuck_workflow_job_dispatcher" {
   splunk_conf  = var.splunk_conf
 
   redelivery_config = {
-    execute            = false
-    include_successful = false
-    max_deliveries     = 5000
-    per_page           = 100
+    execute = false
     tenant_configs = [
       {
         tenant = "cnhe"

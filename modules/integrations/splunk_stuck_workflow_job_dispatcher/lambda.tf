@@ -79,14 +79,11 @@ module "worker" {
   trigger_on_package_timestamp = false
 
   environment_variables = {
-    DEDUPE_TABLE       = aws_dynamodb_table.dedupe.name
-    EXECUTE            = tostring(var.redelivery_config.execute)
-    INCLUDE_SUCCESSFUL = tostring(var.redelivery_config.include_successful)
-    LOG_LEVEL          = var.log_level
-    MAX_DELIVERIES     = tostring(var.redelivery_config.max_deliveries)
-    PER_PAGE           = tostring(var.redelivery_config.per_page)
-    SLEEP_SECONDS      = tostring(var.redelivery_config.sleep_seconds)
-    TENANT_CONFIGS     = jsonencode(local.redelivery_tenant_configs)
+    DEDUPE_TABLE   = aws_dynamodb_table.dedupe.name
+    EXECUTE        = tostring(var.redelivery_config.execute)
+    LOG_LEVEL      = var.log_level
+    SLEEP_SECONDS  = tostring(var.redelivery_config.sleep_seconds)
+    TENANT_CONFIGS = jsonencode(local.redelivery_tenant_configs)
   }
 
   attach_policy_json = true

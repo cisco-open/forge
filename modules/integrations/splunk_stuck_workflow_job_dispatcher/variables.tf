@@ -54,11 +54,8 @@ variable "splunk_conf" {
 
 variable "redelivery_config" {
   type = object({
-    execute            = optional(bool, false)
-    include_successful = optional(bool, false)
-    max_deliveries     = optional(number, 5000)
-    per_page           = optional(number, 100)
-    sleep_seconds      = optional(number, 0)
+    execute       = optional(bool, false)
+    sleep_seconds = optional(number, 0)
     tenant_configs = optional(list(object({
       tenant             = string
       github_api_version = optional(string)

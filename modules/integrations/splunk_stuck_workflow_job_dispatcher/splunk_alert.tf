@@ -4,6 +4,7 @@ locals {
   stuck_workflow_job_search = <<-EOT
     index="${var.splunk_conf.index}" ((forgecicd_log_type=webhook github.status=*) OR ("Successfully dispatched job for"))
     | rex field=message "to the queue (?<queued_url>https?://\S+)\s-\sJob ID:\s(?<dispatch_workflowJobId>\d+)"
+    | rex field=message "(?:^|\s)--delivery-id(?:=|\s+)(?<dispatch_delivery_id>\d+)"
     | eval workflowJobId=coalesce('github.workflowJobId', dispatch_workflowJobId)
     | where isnotnull(workflowJobId)
     | eval is_webhook=if(forgecicd_log_type="webhook", 1, 0)
@@ -23,15 +24,16 @@ locals {
         latest(forgecicd_region_alias) as forgecicd_region_alias
         latest(forgecicd_vpc_alias) as forgecicd_vpc_alias
         values(github.labels) as labels
-        values(github.github-delivery) as github_deliveries
+        values(dispatch_delivery_id) as delivery_ids
         values(queued_url) as queued_url
       by workflowJobId
     | where total_events = queued_count
     | where has_dispatch = 1
+    | where mvcount(delivery_ids) > 0
     | eval stuck_since=strftime(first_seen, "%Y-%m-%dT%H:%M:%S%Z"), stuck_minutes=round((now() - first_seen) / 60, 1)
     | where stuck_minutes > ${var.splunk_alert.stuck_minutes_threshold}
     | sort - stuck_minutes
-    | table workflowJobId job_name repository labels started_at stuck_since stuck_minutes queued_url github_deliveries forgecicd_tenant aws_region forgecicd_region_alias forgecicd_vpc_alias
+    | table workflowJobId job_name repository labels started_at stuck_since stuck_minutes queued_url delivery_ids forgecicd_tenant aws_region forgecicd_region_alias forgecicd_vpc_alias
   EOT
 }
 

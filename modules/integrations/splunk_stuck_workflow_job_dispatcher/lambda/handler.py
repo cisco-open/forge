@@ -147,9 +147,9 @@ def normalize_result(result: Dict[str, Any]) -> Dict[str, Any]:
     region = parse_region(result)
     delivery_ids = split_multivalue(first_present(
         result,
-        'github_deliveries',
-        'github.github-delivery',
         'delivery_ids',
+        'delivery_id',
+        'dispatch_delivery_id',
     ))
 
     normalized = {
@@ -179,6 +179,8 @@ def normalize_result(result: Dict[str, Any]) -> Dict[str, Any]:
         for key in ('workflow_job_id', 'tenant', 'region')
         if not normalized.get(key)
     ]
+    if not delivery_ids:
+        missing.append('delivery_ids')
     if missing:
         raise ValueError(
             f"Splunk result missing required fields: {', '.join(missing)}")
