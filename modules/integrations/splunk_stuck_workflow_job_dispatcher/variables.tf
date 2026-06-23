@@ -74,10 +74,8 @@ variable "redelivery_config" {
         ghes_url = string
       })
       prefixes = list(object({
-        aws_region   = string
-        vpc_alias    = optional(string)
-        region_alias = optional(string)
-        prefix       = string
+        aws_region        = string
+        deployment_prefix = string
       }))
     })), [])
   })
@@ -85,16 +83,14 @@ variable "redelivery_config" {
     GitHub App webhook redelivery behavior.
 
     Nested attributes:
-    - tenant_configs: Tenant-specific GitHub Enterprise and SSM prefix mappings.
+    - tenant_configs: Tenant-specific GitHub Enterprise and deployment prefix mappings.
     - tenant_configs.tenant: Forge tenant name from Splunk logs.
     - tenant_configs.github_api_version: Optional GitHub API version header; defaults to 2022-11-28.
     - tenant_configs.gh_config: GitHub deployment settings for the tenant.
     - tenant_configs.gh_config.ghes_url: GitHub Enterprise Server base URL; empty string selects github.com.
-    - tenant_configs.prefixes: AWS region and VPC-specific SSM parameter prefix mappings for the tenant.
+    - tenant_configs.prefixes: AWS region-specific deployment prefix mappings for the tenant.
     - tenant_configs.prefixes.aws_region: AWS region where the tenant GitHub App SSM parameters are stored.
-    - tenant_configs.prefixes.vpc_alias: Optional VPC alias used to disambiguate multiple prefixes in the same region.
-    - tenant_configs.prefixes.region_alias: Optional region alias used to disambiguate multiple prefixes.
-    - tenant_configs.prefixes.prefix: SSM prefix under /forge/<prefix>/ for GitHub App credentials.
+    - tenant_configs.prefixes.deployment_prefix: SSM prefix under /forge/<deployment_prefix>/ for GitHub App credentials.
   EOT
   default     = {}
 }

@@ -157,16 +157,6 @@ def normalize_result(result: Dict[str, Any]) -> Dict[str, Any]:
         'repository': repository,
         'tenant': tenant,
         'region': region,
-        'region_alias': first_present(
-            result,
-            'forgecicd_region_alias',
-            'region_alias',
-        ),
-        'vpc_alias': first_present(
-            result,
-            'forgecicd_vpc_alias',
-            'vpc_alias',
-        ),
         'delivery_ids': delivery_ids,
         'stuck_minutes': first_value(result.get('stuck_minutes')),
         'stuck_since': first_value(result.get('stuck_since')),

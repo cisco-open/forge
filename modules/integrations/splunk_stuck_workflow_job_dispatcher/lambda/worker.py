@@ -217,8 +217,6 @@ def github_request(
 def resolve_tenant_config(payload: Dict[str, Any]) -> Dict[str, str]:
     tenant = payload['tenant']
     aws_region = payload['region']
-    region_alias = payload.get('region_alias') or ''
-    vpc_alias = payload.get('vpc_alias') or ''
     tenant_configs = json.loads(os.environ.get('TENANT_CONFIGS', '[]'))
     matches = []
 
@@ -229,14 +227,6 @@ def resolve_tenant_config(payload: Dict[str, Any]) -> Dict[str, str]:
         for prefix_config in tenant_config.get('prefixes', []):
             if prefix_config.get('aws_region') != aws_region:
                 continue
-            if region_alias and prefix_config.get('region_alias') and (
-                prefix_config.get('region_alias') != region_alias
-            ):
-                continue
-            if vpc_alias and prefix_config.get('vpc_alias') and (
-                prefix_config.get('vpc_alias') != vpc_alias
-            ):
-                continue
             gh_config = tenant_config.get('gh_config') or {}
             ghes_url = gh_config.get('ghes_url') or ''
             github_api_url = tenant_config.get('github_api')
@@ -246,7 +236,7 @@ def resolve_tenant_config(payload: Dict[str, Any]) -> Dict[str, str]:
             if not github_api_version:
                 github_api_version = '2022-11-28'
             matches.append({
-                'prefix': prefix_config['prefix'],
+                'deployment_prefix': prefix_config['deployment_prefix'],
                 'ghes_url': ghes_url,
                 'github_api_url': github_api_url,
                 'github_api_version': github_api_version,
@@ -254,15 +244,13 @@ def resolve_tenant_config(payload: Dict[str, Any]) -> Dict[str, str]:
 
     if not matches:
         raise ValueError(
-            'No tenant prefix configured for '
-            f"tenant={tenant} region={aws_region} "
-            f"region_alias={region_alias or '-'} vpc_alias={vpc_alias or '-'}"
+            'No tenant deployment prefix configured for '
+            f"tenant={tenant} region={aws_region}"
         )
     if len(matches) > 1:
         raise ValueError(
-            'Ambiguous tenant prefix configuration for '
-            f"tenant={tenant} region={aws_region} "
-            f"region_alias={region_alias or '-'} vpc_alias={vpc_alias or '-'}"
+            'Ambiguous tenant deployment prefix configuration for '
+            f"tenant={tenant} region={aws_region}"
         )
 
     return matches[0]
@@ -277,9 +265,9 @@ def load_github_app_credentials(payload: Dict[str, Any]) -> Dict[str, Any]:
     tenant = payload['tenant']
     region = payload['region']
     tenant_config = resolve_tenant_config(payload)
-    prefix = tenant_config['prefix']
+    deployment_prefix = tenant_config['deployment_prefix']
     ssm_client = boto3.client('ssm', region_name=region)
-    parameter_base = f"/forge/{prefix}"
+    parameter_base = f"/forge/{deployment_prefix}"
 
     raw_key = get_parameter(ssm_client, f"{parameter_base}/github_app_key")
     client_id = get_parameter(
@@ -288,13 +276,13 @@ def load_github_app_credentials(payload: Dict[str, Any]) -> Dict[str, Any]:
     issuer = client_id or app_id
     if not issuer:
         raise ValueError(
-            f"Neither GitHub App client ID nor app ID exists for {prefix}")
+            f"Neither GitHub App client ID nor app ID exists for {deployment_prefix}")
 
     LOG.info(
-        'loaded_github_app_credentials tenant=%s region=%s prefix=%s github_mode=%s github_api_url=%s',
+        'loaded_github_app_credentials tenant=%s region=%s deployment_prefix=%s github_mode=%s github_api_url=%s',
         tenant,
         region,
-        prefix,
+        deployment_prefix,
         'ghes' if tenant_config['ghes_url'] else 'saas',
         tenant_config['github_api_url'],
     )
