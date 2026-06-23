@@ -87,13 +87,6 @@ class DerReader:
         return value
 
 
-def env_float(name: str, default: float) -> float:
-    raw = os.environ.get(name)
-    if not raw:
-        return default
-    return float(raw)
-
-
 def json_default(value: Any) -> Any:
     if isinstance(value, Decimal):
         return int(value) if value % 1 == 0 else float(value)
@@ -384,7 +377,6 @@ def process_rows(
     api_url: str | None = None,
     api_version: str | None = None,
 ) -> Dict[str, Any]:
-    sleep_seconds = env_float('SLEEP_SECONDS', 0)
     tenant = payload['tenant']
     succeeded = 0
 
@@ -406,8 +398,6 @@ def process_rows(
             LOG.info('redelivery_preflight tenant=%s delivery_id=%s',
                      tenant, row.get('id'))
         redeliver_delivery(jwt, row, api_url, api_version)
-        if sleep_seconds > 0:
-            time.sleep(sleep_seconds)
 
         succeeded += 1
 

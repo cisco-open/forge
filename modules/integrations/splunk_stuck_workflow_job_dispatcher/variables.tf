@@ -54,7 +54,6 @@ variable "splunk_conf" {
 
 variable "redelivery_config" {
   type = object({
-    sleep_seconds = optional(number, 0)
     tenant_configs = optional(list(object({
       tenant             = string
       github_api_version = optional(string)
