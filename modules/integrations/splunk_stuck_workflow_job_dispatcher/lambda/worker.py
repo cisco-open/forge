@@ -20,6 +20,7 @@ LOG.setLevel(getattr(logging, os.environ.get(
 
 dynamodb = boto3.client('dynamodb')
 deserializer = TypeDeserializer()
+tenant_configs_cache: List[Dict[str, Any]] | None = None
 
 SHA256_DIGESTINFO_PREFIX = bytes.fromhex(
     '3031300d060960864801650304020105000420')
@@ -214,10 +215,55 @@ def github_request(
         return err.code, headers, err.read()
 
 
+def load_tenant_configs() -> List[Dict[str, Any]]:
+    global tenant_configs_cache
+
+    if tenant_configs_cache is not None:
+        return tenant_configs_cache
+
+    parameter_prefix = os.environ.get('TENANT_CONFIG_PARAMETER_PREFIX')
+    parameter_count_raw = os.environ.get('TENANT_CONFIG_PARAMETER_COUNT')
+    if not parameter_prefix or not parameter_count_raw:
+        raise ValueError('Tenant config SSM parameter settings are missing')
+
+    try:
+        parameter_count = int(parameter_count_raw)
+    except ValueError as err:
+        raise ValueError(
+            'Tenant config SSM parameter count must be an integer') from err
+
+    if parameter_count < 1:
+        raise ValueError(
+            'Tenant config SSM parameter count must be at least 1')
+
+    ssm_client = boto3.client('ssm')
+    chunks = []
+    for index in range(parameter_count):
+        parameter_name = f"{parameter_prefix}/{index}"
+        response = ssm_client.get_parameter(
+            Name=parameter_name,
+            WithDecryption=False,
+        )
+        chunks.append(response['Parameter']['Value'])
+
+    tenant_configs = json.loads(''.join(chunks))
+    if not isinstance(tenant_configs, list):
+        raise ValueError('Tenant config SSM payload must be a JSON array')
+
+    tenant_configs_cache = tenant_configs
+    LOG.info(
+        'loaded_tenant_configs source=ssm prefix=%s chunks=%d tenants=%d',
+        parameter_prefix,
+        parameter_count,
+        len(tenant_configs_cache),
+    )
+    return tenant_configs_cache
+
+
 def resolve_tenant_config(payload: Dict[str, Any]) -> Dict[str, str]:
     tenant = payload['tenant']
     aws_region = payload['region']
-    tenant_configs = json.loads(os.environ.get('TENANT_CONFIGS', '[]'))
+    tenant_configs = load_tenant_configs()
     matches = []
 
     for tenant_config in tenant_configs:
@@ -448,6 +494,9 @@ def stream_image_to_item(image: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def lambda_handler(event, _context):
+    global tenant_configs_cache
+
+    tenant_configs_cache = None
     failures = []
 
     for record in event.get('Records', []):

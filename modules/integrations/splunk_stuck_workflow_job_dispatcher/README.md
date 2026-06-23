@@ -22,17 +22,21 @@ Splunk saved search
 
 For each stuck job, the worker:
 
-1. Selects the Forge tenant configuration from `redelivery_config.tenant_configs`
-   using `tenant` and `aws_region`. Each matching mapping entry provides the
-   `deployment_prefix` used to read GitHub App credentials from SSM. Each tenant
-   carries `gh_config.ghes_url`, so the module can derive `github_api` with
+1. Loads the generated tenant mapping JSON from one or more SSM String
+   parameters under `/forge/<name_prefix>/tenant-configs/<index>`. Terraform
+   splits the JSON into sub-4 KB chunks and passes only the SSM prefix/count to
+   Lambda.
+2. Selects the Forge tenant configuration using `tenant` and `aws_region`.
+   Each matching mapping entry provides the `deployment_prefix` used to read
+   GitHub App credentials from SSM. Each tenant carries `gh_config.ghes_url`, so
+   the module can derive `github_api` with
    `ghes_url == "" ? "https://api.github.com" : "${ghes_url}/api/v3"`.
-2. Reads GitHub App credentials from SSM Parameter Store:
+3. Reads GitHub App credentials from SSM Parameter Store:
    - `/forge/<tenant>-<region-code>-sl/github_app_key`
    - `/forge/<tenant>-<region-code>-sl/github_app_client_id`
    - `/forge/<tenant>-<region-code>-sl/github_app_id`
-3. Creates a GitHub App JWT in Lambda.
-4. Redelivers the numeric `delivery_ids` parsed by Splunk from the dispatch
+4. Creates a GitHub App JWT in Lambda.
+5. Redelivers the numeric `delivery_ids` parsed by Splunk from the dispatch
    log `--delivery-id` argument.
 
 The worker does not list GitHub deliveries or resolve delivery GUIDs. Splunk

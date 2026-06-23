@@ -79,9 +79,10 @@ module "worker" {
   trigger_on_package_timestamp = false
 
   environment_variables = {
-    DEDUPE_TABLE   = aws_dynamodb_table.dedupe.name
-    LOG_LEVEL      = var.log_level
-    TENANT_CONFIGS = jsonencode(local.redelivery_tenant_configs)
+    DEDUPE_TABLE                   = aws_dynamodb_table.dedupe.name
+    LOG_LEVEL                      = var.log_level
+    TENANT_CONFIG_PARAMETER_COUNT  = tostring(length(local.redelivery_tenant_config_chunks))
+    TENANT_CONFIG_PARAMETER_PREFIX = local.redelivery_tenant_config_parameter_prefix
   }
 
   attach_policy_json = true
@@ -91,7 +92,10 @@ module "worker" {
   role_tags     = local.all_security_tags
   tags          = local.all_security_tags
 
-  depends_on = [aws_cloudwatch_log_group.worker]
+  depends_on = [
+    aws_cloudwatch_log_group.worker,
+    aws_ssm_parameter.tenant_configs,
+  ]
 }
 
 resource "aws_lambda_event_source_mapping" "worker_from_dedupe_stream" {
@@ -133,6 +137,17 @@ data "aws_iam_policy_document" "worker" {
     ]
     resources = [
       "arn:aws:ssm:*:${data.aws_caller_identity.current.account_id}:parameter/forge/*/github_app_*",
+    ]
+  }
+
+  statement {
+    sid    = "ReadDispatcherTenantConfigParameters"
+    effect = "Allow"
+    actions = [
+      "ssm:GetParameter",
+    ]
+    resources = [
+      for parameter in aws_ssm_parameter.tenant_configs : parameter.arn
     ]
   }
 
