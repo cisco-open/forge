@@ -6,9 +6,6 @@ API endpoint. The receiver Lambda validates a path token, normalizes the Splunk
 result, and writes one pending work item to DynamoDB. DynamoDB Streams invokes a
 worker Lambda that performs GitHub App webhook redelivery directly.
 
-The default redelivery mode is dry-run. Set `redelivery_config.execute = true`
-only after the alert and payload shape are proven.
-
 ## Flow
 
 ```text
@@ -69,7 +66,6 @@ module "splunk_stuck_workflow_job_dispatcher" {
   splunk_conf  = var.splunk_conf
 
   redelivery_config = {
-    execute = false
     tenant_configs = [
       {
         tenant = "cnhe"

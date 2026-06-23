@@ -54,7 +54,6 @@ variable "splunk_conf" {
 
 variable "redelivery_config" {
   type = object({
-    execute       = optional(bool, false)
     sleep_seconds = optional(number, 0)
     tenant_configs = optional(list(object({
       tenant             = string
@@ -70,7 +69,7 @@ variable "redelivery_config" {
       }))
     })), [])
   })
-  description = "GitHub App webhook redelivery behavior. Execute defaults to false for dry-run mode."
+  description = "GitHub App webhook redelivery behavior."
   default     = {}
 }
 

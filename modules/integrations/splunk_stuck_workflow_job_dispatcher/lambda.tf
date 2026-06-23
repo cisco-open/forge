@@ -80,7 +80,6 @@ module "worker" {
 
   environment_variables = {
     DEDUPE_TABLE   = aws_dynamodb_table.dedupe.name
-    EXECUTE        = tostring(var.redelivery_config.execute)
     LOG_LEVEL      = var.log_level
     SLEEP_SECONDS  = tostring(var.redelivery_config.sleep_seconds)
     TENANT_CONFIGS = jsonencode(local.redelivery_tenant_configs)

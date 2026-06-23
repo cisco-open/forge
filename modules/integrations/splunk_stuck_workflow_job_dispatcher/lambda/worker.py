@@ -87,13 +87,6 @@ class DerReader:
         return value
 
 
-def env_bool(name: str, default: bool = False) -> bool:
-    raw = os.environ.get(name)
-    if raw is None:
-        return default
-    return raw.strip().lower() in {'1', 'true', 'yes', 'y', 'on'}
-
-
 def env_float(name: str, default: float) -> float:
     raw = os.environ.get(name)
     if not raw:
@@ -391,7 +384,6 @@ def process_rows(
     api_url: str | None = None,
     api_version: str | None = None,
 ) -> Dict[str, Any]:
-    execute = env_bool('EXECUTE')
     sleep_seconds = env_float('SLEEP_SECONDS', 0)
     tenant = payload['tenant']
     succeeded = 0
@@ -399,7 +391,7 @@ def process_rows(
     for index, row in enumerate(rows):
         LOG.info(
             '%s tenant=%s delivery_id=%s guid=%s event=%s delivered_at=%s status=%s status_code=%s repository_id=%s',
-            'redelivery_execute' if execute else 'redelivery_dry_run',
+            'redelivery_execute',
             tenant,
             row.get('id'),
             row.get('guid'),
@@ -410,20 +402,19 @@ def process_rows(
             row.get('repository_id'),
         )
 
-        if execute:
-            if index == 0:
-                LOG.info('redelivery_preflight tenant=%s delivery_id=%s',
-                         tenant, row.get('id'))
-            redeliver_delivery(jwt, row, api_url, api_version)
-            if sleep_seconds > 0:
-                time.sleep(sleep_seconds)
+        if index == 0:
+            LOG.info('redelivery_preflight tenant=%s delivery_id=%s',
+                     tenant, row.get('id'))
+        redeliver_delivery(jwt, row, api_url, api_version)
+        if sleep_seconds > 0:
+            time.sleep(sleep_seconds)
 
         succeeded += 1
 
     return {
-        'mode': 'execute' if execute else 'dry-run',
+        'mode': 'execute',
         'candidates': len(rows),
-        'redelivered': succeeded if execute else 0,
+        'redelivered': succeeded,
         'tenant': tenant,
         'region': payload['region'],
         'workflow_job_id': payload['workflow_job_id'],
@@ -467,9 +458,6 @@ def complete_work(key: str, status: str, result: Dict[str, Any]) -> None:
 
 def process_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
     rows = delivery_rows(payload)
-    if not env_bool('EXECUTE'):
-        return process_rows('', payload, rows)
-
     credentials = load_github_app_credentials(payload)
     jwt = create_github_app_jwt(
         credentials['issuer'], credentials['private_key'])
