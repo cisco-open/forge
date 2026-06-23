@@ -88,7 +88,7 @@ module "worker" {
     MAX_DELIVERIES     = tostring(var.redelivery_config.max_deliveries)
     PER_PAGE           = tostring(var.redelivery_config.per_page)
     SLEEP_SECONDS      = tostring(var.redelivery_config.sleep_seconds)
-    TENANT_CONFIGS     = jsonencode(var.redelivery_config.tenant_configs)
+    TENANT_CONFIGS     = jsonencode(local.redelivery_tenant_configs)
   }
 
   attach_policy_json = true

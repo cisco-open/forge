@@ -242,13 +242,6 @@ def github_request(
         return err.code, headers, err.read()
 
 
-def github_api_url_from_ghes_url(ghes_url: Any) -> str:
-    normalized_ghes_url = str(ghes_url or '').strip().rstrip('/')
-    if not normalized_ghes_url:
-        return os.environ.get('GITHUB_API_URL', 'https://api.github.com')
-    return f"{normalized_ghes_url}/api/v3"
-
-
 def resolve_tenant_config(payload: Dict[str, Any]) -> Dict[str, str]:
     tenant = payload['tenant']
     aws_region = payload['region']
@@ -274,12 +267,14 @@ def resolve_tenant_config(payload: Dict[str, Any]) -> Dict[str, str]:
                 continue
             gh_config = tenant_config.get('gh_config') or {}
             ghes_url = gh_config.get('ghes_url') or ''
-            github_api_url = github_api_url_from_ghes_url(ghes_url)
-            github_api_version = (
-                tenant_config['github_api_version']
-                if 'github_api_version' in tenant_config
-                else os.environ.get('GITHUB_API_VERSION', '2022-11-28')
-            )
+            github_api_url = tenant_config.get('github_api')
+            if not github_api_url:
+                github_api_url = os.environ.get(
+                    'GITHUB_API_URL', 'https://api.github.com')
+            github_api_version = tenant_config.get('github_api_version')
+            if not github_api_version:
+                github_api_version = os.environ.get(
+                    'GITHUB_API_VERSION', '2022-11-28')
             matches.append({
                 'prefix': prefix_config['prefix'],
                 'ghes_url': ghes_url,

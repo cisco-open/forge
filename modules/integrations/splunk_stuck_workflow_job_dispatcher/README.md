@@ -29,8 +29,8 @@ For each stuck job, the worker:
    using `tenant`, `region`, and optional `vpc_alias` or `region_alias`.
    If Splunk omits an alias, the worker accepts a single matching prefix and
    fails closed when multiple prefixes match. Each tenant carries
-   `gh_config.ghes_url`, so the worker can distinguish GitHub SaaS from GHES
-   and derive the correct API URL.
+   `gh_config.ghes_url`, so the module can derive `github_api` with
+   `ghes_url == "" ? "https://api.github.com" : "${ghes_url}/api/v3"`.
 2. Reads GitHub App credentials from SSM Parameter Store:
    - `/forge/<tenant>-<region-code>-sl/github_app_key`
    - `/forge/<tenant>-<region-code>-sl/github_app_client_id`
