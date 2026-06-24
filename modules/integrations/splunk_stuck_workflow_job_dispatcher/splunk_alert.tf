@@ -45,6 +45,7 @@ resource "splunk_configs_conf" "stuck_workflow_job_dispatcher" {
     "dispatch.earliest_time"   = var.splunk_alert.dispatch_earliest_time
     "dispatch.latest_time"     = var.splunk_alert.dispatch_latest_time
     "actions"                  = "webhook"
+    "action.webhook"           = "1"
     "action.webhook.param.url" = local.splunk_webhook_url
     "alert_type"               = "number of events"
     "alert_comparator"         = "greater than"
@@ -91,7 +92,6 @@ resource "splunk_configs_conf" "stuck_workflow_job_dispatcher" {
       variables["action.summary_index.track_alert"],
       variables["action.victorops.param.enable_recovery"],
       variables["action.victorops.param.message_type"],
-      variables["action.webhook"],
       variables["alert.expires"],
       variables["alert.managedBy"],
       variables["alert.suppress.group_name"],
