@@ -17,11 +17,10 @@ tenant:
     - 123456789012.dkr.ecr.eu-west-1.amazonaws.com
   github_logs_reader_role_arns:
     - arn:aws:iam::123456789012:role/github_logs_reader
-ec2_config:
-  enable_dynamic_labels: true
 ec2_runner_specs:
   small:
     type: small
+    enable_dynamic_labels: true
     ami_name: forge-gh-runner-amd64-v*
     ami_owner: '123456789012'
     ami_kms_key_arn: ''
@@ -45,6 +44,7 @@ ec2_runner_specs:
       type: gp3
   small-arm:
     type: small
+    enable_dynamic_labels: true
     ami_name: forge-gh-runner-arm64-v*
     ami_owner: '123456789012'
     ami_kms_key_arn: ''
@@ -65,6 +65,7 @@ ec2_runner_specs:
       type: gp3
   mac:
     type: small
+    enable_dynamic_labels: true
     ami_name: forge-gh-runner-macarm-v*
     ami_owner: '123456789012'
     ami_kms_key_arn: ''

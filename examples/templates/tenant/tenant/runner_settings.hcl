@@ -60,8 +60,6 @@ locals {
     }
   }
 
-  ec2_config = local.config.ec2_config
-
   ec2_runner_specs = {
     for size, spec in local.config.ec2_runner_specs :
     size => {
@@ -86,6 +84,8 @@ locals {
         "tnt:${local.tenant_name}",
       ]
       enable_userdata               = true
+      enable_dynamic_labels         = try(spec.enable_dynamic_labels, false)
+      ec2_dynamic_labels_policy     = try(spec.ec2_dynamic_labels_policy, null)
       runner_user                   = spec.runner_user
       instance_target_capacity_type = "on-demand"
       min_run_time                  = 30

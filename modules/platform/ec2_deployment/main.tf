@@ -34,12 +34,12 @@ data "aws_subnet" "runner_subnet" {
 }
 
 data "external" "download_lambdas" {
-  program = ["bash", "${path.module}/scripts/download_lambdas.sh", "/tmp/${var.runner_configs.prefix}/", "feat/per-matcher-dynamic-labels-policy", "github-aws-runners/terraform-aws-github-runner"]
+  program = ["bash", "${path.module}/scripts/download_lambdas.sh", "/tmp/${var.runner_configs.prefix}/", "v7.8.0", "github-aws-runners/terraform-aws-github-runner"]
 }
 
 
 module "runners" {
-  source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=feat/per-matcher-dynamic-labels-policy"
+  source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=v7.8.0"
 
   aws_region = var.aws_region
 
@@ -91,8 +91,9 @@ module "runners" {
             ])
           ]...)
         )
-        exactMatch          = true
-        enableDynamicLabels = true
+        exactMatch             = true
+        enableDynamicLabels    = val["enable_dynamic_labels"]
+        ec2DynamicLabelsPolicy = val["ec2_dynamic_labels_policy"]
       }
       redrive_build_queue = {
         enabled         = true

@@ -20,15 +20,17 @@ variable "ec2_deployment_specs" {
         name  = list(string)
         state = list(string)
       })
-      ami_kms_key_arn     = string
-      ami_owners          = list(string)
-      runner_labels       = list(string)
-      runner_os           = string
-      runner_architecture = string
-      extra_labels        = list(string)
-      max_instances       = number
-      min_run_time        = number
-      instance_types      = list(string)
+      ami_kms_key_arn           = string
+      ami_owners                = list(string)
+      runner_labels             = list(string)
+      runner_os                 = string
+      runner_architecture       = string
+      extra_labels              = list(string)
+      enable_dynamic_labels     = optional(bool, false)
+      ec2_dynamic_labels_policy = optional(any, null)
+      max_instances             = number
+      min_run_time              = number
+      instance_types            = list(string)
       license_specifications = optional(list(object({
         license_configuration_arn = string
       })), null)
@@ -87,6 +89,10 @@ variable "ec2_deployment_specs" {
     - runner_os       : Runner operating system (for example, linux).
     - runner_architecture: CPU architecture (for example, x86_64 or arm64).
     - extra_labels    : Additional GitHub labels that further specialize
+                        this runner pool.
+    - enable_dynamic_labels: Enables dynamic `ghr-` labels for this runner
+                        pool.
+    - ec2_dynamic_labels_policy: Optional policy for `ghr-ec2-*` labels for
                         this runner pool.
     - max_instances   : Maximum number of EC2 runners in this pool.
     - min_run_time    : Minimum job run time (in minutes) before a runner

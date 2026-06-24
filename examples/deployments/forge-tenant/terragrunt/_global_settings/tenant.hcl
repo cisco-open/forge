@@ -54,12 +54,11 @@ inputs = {
   aws_region  = local.region
 
   ec2_deployment_specs = {
-    lambda_subnet_ids     = local.config.locals.lambda_subnet_ids
-    lambda_vpc_id         = local.config.locals.lambda_vpc_id
-    subnet_ids            = local.config.locals.subnet_ids
-    vpc_id                = local.config.locals.vpc_id
-    enable_dynamic_labels = local.config.locals.ec2_config.enable_dynamic_labels
-    runner_specs          = local.config.locals.ec2_runner_specs
+    lambda_subnet_ids = local.config.locals.lambda_subnet_ids
+    lambda_vpc_id     = local.config.locals.lambda_vpc_id
+    subnet_ids        = local.config.locals.subnet_ids
+    vpc_id            = local.config.locals.vpc_id
+    runner_specs      = local.config.locals.ec2_runner_specs
   }
 
   arc_deployment_specs = {

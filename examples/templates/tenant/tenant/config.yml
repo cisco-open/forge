@@ -21,11 +21,11 @@ tenant:
     - <ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com
   github_logs_reader_role_arns:
     - arn:aws:iam::<ACCOUNT_ID>:role/<ROLE_NAME>
-ec2_config:
-  enable_dynamic_labels: <ENABLE_DYNAMIC_LABELS>
 ec2_runner_specs:
   <runner_type-alias>:
     type: <runner_type>
+    enable_dynamic_labels: <ENABLE_DYNAMIC_LABELS>
+    ec2_dynamic_labels_policy: <EC2_DYNAMIC_LABELS_POLICY>
     ami_name: <AMI_NAME_PATTERN>
     ami_owner: <ACCOUNT_ID>
     ami_kms_key_arn: <KMS_ARN>
