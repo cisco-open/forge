@@ -1,3 +1,24 @@
+# Splunk Observability DynamoDB Dashboard
+
+This module creates DynamoDB health and throughput charts for Forge support tables.
+
+## Why This Module Exists
+
+Forge uses DynamoDB for platform coordination patterns such as global locks and dedupe tables. Operators need visibility into throttling, latency, and errors because those tables sit in critical control-plane paths.
+
+## What It Manages
+
+- Read/write capacity percentage charts.
+- Throttle, system error, user error, and latency charts.
+- Returned item count and request trend views.
+- Dashboard placement in the shared Forge O11y group.
+
+## Operational Notes
+
+- Throttle spikes can affect locks, dedupe, or other self-healing workflows.
+- Use tenant and table filters to separate noisy tables from control-plane issues.
+- Pair this with Lambda and SQS dashboards when debugging end-to-end pipelines.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -10,7 +31,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.2 |
+| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.3 |
 
 ## Modules
 

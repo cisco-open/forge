@@ -1,3 +1,24 @@
+# Splunk Observability EC2 Runner Dashboard
+
+This module creates EC2 host-level health charts for Forge runner instances.
+
+## Why This Module Exists
+
+EC2 runners are short-lived, but their lifecycle still needs visibility while jobs run. This dashboard helps explain slow jobs, failed registrations, host health issues, and resource pressure in the VM lane.
+
+## What It Manages
+
+- CPU, memory, disk, network, and status-check charts.
+- Top hosts and images by utilization.
+- Active hosts by instance type and availability zone.
+- Dashboard placement in the shared Forge O11y group.
+
+## Operational Notes
+
+- Because runners are ephemeral, use time windows that include the job execution period.
+- Correlate host metrics with job IDs and tags from runner hooks where available.
+- Capacity failures may still appear first in scaling Lambda logs rather than host metrics.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -10,7 +31,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.2 |
+| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.3 |
 
 ## Modules
 

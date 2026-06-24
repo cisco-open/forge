@@ -1,3 +1,24 @@
+# Splunk OpenTelemetry for EKS
+
+This module installs the Splunk OpenTelemetry Collector on a Forge EKS cluster.
+
+## Why This Module Exists
+
+Forge sends AWS metrics through the Splunk Observability integration, but Kubernetes needs additional pod-level telemetry. This module supplies that cluster-side collector and the AWS identity needed to enrich metrics.
+
+## What It Manages
+
+- A Helm release for the Splunk OTel Collector.
+- IAM role and policy for EC2 describe permissions.
+- EKS Pod Identity association for the collector service account.
+- Secret lookup for Splunk ingest credentials and collector configuration.
+
+## Operational Notes
+
+- This is metrics-oriented telemetry; EKS logs still flow through CloudWatch and Splunk Cloud paths.
+- Collector no-data issues affect dashboards and detectors, so validate this after cluster upgrades.
+- The collector config should include the namespaces and dimensions used by O11y dashboards.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -12,7 +33,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 | <a name="provider_helm"></a> [helm](#provider\_helm) | 3.2.0 |
 
 ## Modules

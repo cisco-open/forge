@@ -1,3 +1,24 @@
+# Splunk Observability Shared Dashboards
+
+This module creates the shared Splunk Observability dashboard group, dashboards, and detectors for Forge metrics.
+
+## Why This Module Exists
+
+Forge operators need dashboards that connect capacity, cost, and health signals to concrete subsystems. This module builds the metrics-side views for EC2 runners, Kubernetes runners, Lambda, SQS, DynamoDB, EBS, billing, and platform impact.
+
+## What It Manages
+
+- A Forge dashboard group in Splunk Observability.
+- Dashboard modules for EC2, Kubernetes, Lambda, SQS, DynamoDB, EBS, billing, and Forge impact.
+- Kubernetes detector modules and notification wiring.
+- Dynamic variables that let dashboards filter by tenant and environment.
+
+## Operational Notes
+
+- Keep dashboard variables aligned with metric dimensions emitted by collectors and AWS integrations.
+- Detector thresholds should be tuned with production noise in mind.
+- Use this alongside the Splunk Cloud log dashboards for full triage context.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -11,8 +32,8 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
-| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.2 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
+| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.3 |
 
 ## Modules
 

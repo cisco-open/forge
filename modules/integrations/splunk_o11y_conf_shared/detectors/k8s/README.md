@@ -1,3 +1,24 @@
+# Splunk Observability Kubernetes Detectors
+
+This module creates alert detectors for Kubernetes and OTel health in the Forge ARC lane.
+
+## Why This Module Exists
+
+A small platform team cannot watch every tenant manually. These detectors convert repeated Kubernetes failure modes into routed alerts for missing telemetry, unhealthy platform pods, pending tenant pods, failed pods, and container restarts.
+
+## What It Manages
+
+- No-data and collector-health detectors for the OTel path.
+- Platform namespace health detectors.
+- Tenant pending-pod, failed-pod, and restart detectors.
+- Notification and team routing configuration.
+
+## Operational Notes
+
+- Tune thresholds to avoid alert fatigue; ARC clusters can be bursty by design.
+- No-data alerts may mean telemetry failure, not workload health.
+- Keep platform namespace lists current as new controllers or agents are added.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -10,7 +31,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.2 |
+| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.3 |
 
 ## Modules
 

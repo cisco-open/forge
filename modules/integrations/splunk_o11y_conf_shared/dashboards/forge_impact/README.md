@@ -1,3 +1,25 @@
+# Splunk Observability Forge Impact Dashboard
+
+This module creates the high-level Forge usage and impact dashboard.
+
+## Why This Module Exists
+
+The platform needs to show adoption and workload shape across tenants, not just raw health. This dashboard summarizes EC2 and Kubernetes runner usage, active capacity, runner hours, and runtime distribution.
+
+## What It Manages
+
+- Runner totals and minutes by runtime.
+- Active EC2 runners by tenant and instance type.
+- EC2 runner hours and total runners by tenant.
+- Kubernetes runner totals and hours by tenant.
+- Dashboard parent relationship in the shared O11y group.
+
+## Operational Notes
+
+- Use this for capacity planning and stakeholder reporting.
+- Tenant names must be consistently emitted as dimensions.
+- This dashboard explains platform usage; use subsystem dashboards for incident triage.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -10,7 +32,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.2 |
+| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.3 |
 | <a name="provider_terraform"></a> [terraform](#provider\_terraform) | n/a |
 
 ## Modules

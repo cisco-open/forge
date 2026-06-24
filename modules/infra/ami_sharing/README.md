@@ -1,3 +1,23 @@
+# AMI Sharing
+
+This module shares selected runner AMIs with one or more AWS accounts.
+
+## Why This Module Exists
+
+Forge separates image building from runner execution. The platform can produce hardened, tested runner images in one account and grant launch permission to the accounts that run EC2-based GitHub Actions jobs.
+
+## What It Manages
+
+- Looks up AMIs by name and state filters.
+- Grants AMI launch permission to the configured AWS account IDs.
+- Keeps AMI distribution as code instead of a console operation.
+
+## Operational Notes
+
+- The filters should be narrow enough to select only intended runner images.
+- Sharing an AMI does not copy its KMS permissions; encrypted AMIs also require compatible KMS access.
+- Use this with the EC2 runner modules when runner accounts consume centrally built images.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -10,7 +30,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 
 ## Modules
 

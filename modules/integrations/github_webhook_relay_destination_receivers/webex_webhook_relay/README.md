@@ -41,6 +41,11 @@ Secret value format (JSON string):
 
 Both `token` and `room_id` keys are required. The function will prepend `Bearer ` to `token` automatically if not present.
 
+## Forge Context
+
+This receiver is the notification endpoint for forwarded Forge GitHub webhook events. It is useful for operator alerts where the platform should post a concise Webex message without giving the sender account direct access to the bot token.
+
+The secret is stored in Secrets Manager and read by the Lambda at runtime. Treat the Webex room and bot token as operational routing configuration: wrong values do not break the relay infrastructure, but they do send the alert to the wrong place or nowhere at all.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -55,7 +60,7 @@ Both `token` and `room_id` keys are required. The function will prepend `Bearer 
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 | <a name="provider_time"></a> [time](#provider\_time) | 0.14.0 |
 
 ## Modules

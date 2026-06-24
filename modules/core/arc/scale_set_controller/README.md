@@ -1,3 +1,23 @@
+# ARC Scale Set Controller
+
+This module installs the GitHub Actions Runner Controller scale set controller for a tenant namespace.
+
+## Why This Module Exists
+
+The controller is the Kubernetes-side reconciler that watches GitHub demand and manages runner scale sets. Forge installs it as code so each tenant namespace has a predictable controller, GitHub App secret, and logging posture.
+
+## What It Manages
+
+- The tenant namespace.
+- The GitHub App Kubernetes secret used by ARC.
+- The `gha-runner-scale-set-controller` Helm release.
+
+## Operational Notes
+
+- Controller version should move deliberately with ARC chart upgrades.
+- During ARC cluster migration, `migrate_arc_cluster` removes the in-cluster controller resources while leaving external tenant identity intact.
+- Controller logs are the first place to inspect when GitHub sees demand but runner pods are not being created.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 

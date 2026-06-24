@@ -1,3 +1,24 @@
+# Dead-Letter Redrive
+
+This module deploys a scheduled Lambda that redrives failed SQS messages for Forge support pipelines.
+
+## Why This Module Exists
+
+Forge favors self-healing queues over manual replay. When transient failures push messages into a dead-letter queue, this module gives the platform a controlled retry loop so short outages do not permanently drop work.
+
+## What It Manages
+
+- A redrive Lambda function.
+- An EventBridge schedule for periodic redrive attempts.
+- CloudWatch logs and IAM permissions to read DLQs and send messages back to source queues.
+- An input map of queue relationships to redrive.
+
+## Operational Notes
+
+- Use this for queues where replay is safe and idempotent.
+- Do not redrive poison messages forever without alerting; repeated failures indicate a real bug or bad event shape.
+- Keep the SQS map updated when adding new Forge queues.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -10,7 +31,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 
 ## Modules
 

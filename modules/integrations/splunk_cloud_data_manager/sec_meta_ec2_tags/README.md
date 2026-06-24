@@ -1,3 +1,24 @@
+# Splunk Security Metadata EC2 Tags
+
+This module deploys a Lambda that enriches Splunk security metadata with EC2 tag patterns.
+
+## Why This Module Exists
+
+Forge depends on tags to connect AWS resources back to tenants, runner types, and jobs. This helper keeps EC2 tag metadata visible to Splunk Data Manager so operational and cost queries can group data correctly.
+
+## What It Manages
+
+- A Lambda function for EC2 tag metadata processing.
+- CloudWatch schedule and invocation permission.
+- Log group and IAM policy for the Lambda.
+- Environment variables that describe the tag-processing configuration.
+
+## Operational Notes
+
+- Tag key changes should be coordinated with Splunk dashboards and Data Manager mappings.
+- Use Lambda logs to diagnose missing or malformed metadata.
+- This module augments security metadata; it does not replace runner-side tagging.
+
 <!-- BEGIN_TF_DOCS -->
 
 ## Requirements

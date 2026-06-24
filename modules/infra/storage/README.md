@@ -1,3 +1,24 @@
+# Shared Storage Buckets
+
+This module creates the long-term and short-term S3 buckets used by Forge account-level workflows.
+
+## Why This Module Exists
+
+Forge produces operational artifacts, logs, and temporary data across many tenants. Separate encrypted buckets with lifecycle controls let the platform keep durable evidence while automatically aging out short-lived material.
+
+## What It Manages
+
+- Long-term and short-term S3 buckets.
+- Versioning, ownership controls, server-side encryption, and public access blocks.
+- Lifecycle configuration for the short-term bucket.
+- Bucket settings exported for downstream modules.
+
+## Operational Notes
+
+- Use the short-term bucket for generated or transient artifacts, not compliance evidence.
+- Retention periods and encryption defaults should match the account data-classification policy.
+- Bucket names and outputs are often consumed by integration modules, so avoid renames without migration planning.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -10,7 +31,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 
 ## Modules
 

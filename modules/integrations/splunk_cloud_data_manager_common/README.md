@@ -1,3 +1,24 @@
+# Splunk Data Manager Common IAM
+
+This module creates the common AWS IAM role and policy used by Splunk Cloud Data Manager.
+
+## Why This Module Exists
+
+Data Manager needs a read-only AWS role to inventory and ingest logs or metadata. Forge manages that role as code so every account exposes a predictable, least-privilege integration surface to Splunk.
+
+## What It Manages
+
+- A Data Manager read-only IAM role.
+- Policy permissions assembled for the Splunk integration.
+- Splunk and AWS account discovery through external data sources.
+- Secret lookup for Splunk Cloud credentials.
+
+## Operational Notes
+
+- Keep the role trust aligned with Splunk Data Manager requirements.
+- When Splunk integration setup fails, confirm both the secret values and the external data-source scripts.
+- This module is shared foundation for several Data Manager inputs.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -11,7 +32,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 | <a name="provider_external"></a> [external](#provider\_external) | 2.4.0 |
 
 ## Modules

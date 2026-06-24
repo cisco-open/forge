@@ -1,3 +1,22 @@
+# Service-Linked Roles
+
+This module creates AWS service-linked roles that Forge expects to exist in runner accounts.
+
+## Why This Module Exists
+
+EC2 runner pools can use Spot capacity and other AWS services that depend on account-level service-linked roles. Creating those roles up front avoids first-use failures during runner scale-up.
+
+## What It Manages
+
+- The EC2 Spot service-linked role.
+- Standard account and region inputs for bootstrap consistency.
+
+## Operational Notes
+
+- Apply this before enabling Spot-backed EC2 runner pools.
+- AWS service-linked roles are account scoped and may already exist; Terraform should own them only where this module is the bootstrap authority.
+- This does not decide whether a runner pool uses Spot; that is configured in the EC2 deployment specs.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -10,7 +29,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 
 ## Modules
 

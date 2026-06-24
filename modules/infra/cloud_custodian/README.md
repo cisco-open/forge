@@ -1,3 +1,23 @@
+# Cloud Custodian Role
+
+This module creates the IAM role and policy used by Cloud Custodian automation in Forge-managed AWS accounts.
+
+## Why This Module Exists
+
+Forge relies on automation to keep multi-tenant runner infrastructure clean and compliant. Cloud Custodian is one of the account-level tools used for inspection and remediation, so its role needs to be reproducible and consistently trusted.
+
+## What It Manages
+
+- An IAM role that the configured Forge role can assume.
+- A policy document for the Cloud Custodian actions required in the account.
+- Policy attachment and standard Forge tags.
+
+## Operational Notes
+
+- Keep the trust principal aligned with the platform role that actually runs custodian policies.
+- Policy scope should be reviewed when new remediation policies are added.
+- This module prepares access; it does not define the custodian policy files themselves.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -10,7 +30,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 
 ## Modules
 

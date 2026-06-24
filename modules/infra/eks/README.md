@@ -1,3 +1,26 @@
+# EKS Cluster Foundation
+
+This module builds the EKS foundation used by the Kubernetes/ARC runner lane.
+
+## Why This Module Exists
+
+Forge runs fast, container-native jobs through Actions Runner Controller on EKS. The article highlights why this cluster is not a generic EKS install: it uses Calico overlay networking to avoid VPC IP exhaustion, Karpenter for elastic nodes, and blue/green style cluster replacement for safer upgrades.
+
+## What It Manages
+
+- The EKS control plane and self-managed node group bootstrap path.
+- Karpenter installation and default node class/node pool manifests.
+- Calico CNI installation after removing `aws-node`.
+- EBS CSI, CoreDNS, and EKS Pod Identity add-ons.
+- Cluster outputs consumed by ARC, Teleport, and observability modules.
+
+## Operational Notes
+
+- Calico is load-bearing: it lets pods use overlay IPs so runner density is not capped by subnet IPs.
+- Cluster upgrades should be treated as replacement/cutover work rather than in-place mutation.
+- Karpenter and CNI ordering matters; nodes joining before networking is ready can fail in confusing ways.
+- This module creates the shared cluster; tenant runner scale sets are created by the ARC modules.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -16,7 +39,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 | <a name="provider_external"></a> [external](#provider\_external) | 2.4.0 |
 | <a name="provider_null"></a> [null](#provider\_null) | 3.3.0 |
 

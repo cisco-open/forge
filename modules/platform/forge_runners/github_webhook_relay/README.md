@@ -1,3 +1,24 @@
+# GitHub Webhook Relay Source Secret
+
+This module prepares the source-side secret and optional relay source for forwarding GitHub webhook events across accounts.
+
+## Why This Module Exists
+
+Forge integrations often need GitHub workflow events in an account that is not the original runner account. The relay pattern preserves webhook validation at the edge, stores the secret in AWS, and forwards normalized events through EventBridge.
+
+## What It Manages
+
+- A generated webhook relay secret stored in Secrets Manager with KMS encryption.
+- A reader role that can expose the source secret to an approved destination account.
+- Optional composition of the `github_webhook_relay_source` module.
+- Outputs for the secret ARN, reader role ARN, and region.
+
+## Operational Notes
+
+- The relay secret protects the public webhook ingress path; rotate intentionally.
+- Cross-account readers should be limited to the destination receiver account and role.
+- This module is source-side plumbing; destination receivers are configured in the integrations modules.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -11,7 +32,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 | <a name="provider_random"></a> [random](#provider\_random) | 3.9.0 |
 
 ## Modules

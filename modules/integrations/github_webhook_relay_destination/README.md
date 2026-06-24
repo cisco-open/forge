@@ -35,6 +35,12 @@ graph TD
   classDef lambda fill:#d9f7d9,stroke:#2d7a2d,stroke-width:1px;
 ```
 
+## Forge Context
+
+This is the receiving side of the Forge webhook relay. It creates the destination EventBridge bus, authorizes the source account to put events, and fans matching events into one or more Lambda receivers.
+
+Use narrow event patterns for each receiver so unrelated GitHub events do not trigger noisy or expensive automation. Cross-account secret reading is optional and should stay limited to the roles that need to validate or consume the forwarded webhook flow.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -48,7 +54,7 @@ graph TD
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 | <a name="provider_external"></a> [external](#provider\_external) | 2.4.0 |
 
 ## Modules

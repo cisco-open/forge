@@ -1,3 +1,24 @@
+# Splunk Data Manager Data Input
+
+This module creates or deletes one Splunk Data Manager integration input and uploads its generated CloudFormation template.
+
+## Why This Module Exists
+
+The parent Data Manager module needs repeatable, reviewable creation of individual Splunk inputs. This submodule handles the API call and template handoff for one integration payload.
+
+## What It Manages
+
+- A generated Splunk integration UUID.
+- External calls that create and delete the Splunk integration.
+- An S3 object containing the CloudFormation template returned by Splunk.
+- Outputs for integration name, tags, and template URL.
+
+## Operational Notes
+
+- The external create/delete scripts are part of the Terraform lifecycle, so failed API calls can affect plan/apply behavior.
+- Do not hand-edit generated CloudFormation templates without reflecting the change in code.
+- Use parent-module outputs to confirm which inputs were created.
+
 <!-- BEGIN_TF_DOCS -->
 
 ## Requirements

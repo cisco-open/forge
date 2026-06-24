@@ -1,3 +1,25 @@
+# EC2 Runner Deployment
+
+This module deploys Forge EC2 runner pools using the upstream `terraform-aws-github-runner` multi-runner module.
+
+## Why This Module Exists
+
+The EC2 lane gives a GitHub Actions job a full VM or dedicated host. Forge uses it for workloads that need VM-level control, custom AMIs, macOS/Windows, larger hardware, or stronger isolation than a normal pod can provide.
+
+## What It Manages
+
+- The upstream multi-runner control plane for webhook, scale-up, scale-down, and ephemeral runner registration.
+- Per-runner-pool label matching, AMI selection, instance types, warm pool schedules, and capacity type.
+- KMS key material, Lambda egress security group, runner tags policy, and logging hooks.
+- Supporting modules that update runner tags and runner AMI SSM parameters.
+
+## Operational Notes
+
+- Every EC2 runner is ephemeral; the instance is expected to register for one job and then be reaped.
+- Label sets are the API contract with tenant workflows, so exact matching matters.
+- Cold starts can take minutes; use warm pools only where latency justifies the idle cost.
+- Subnet IP capacity and EC2 capacity errors are expected operational signals, not unusual exceptions.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -12,7 +34,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 | <a name="provider_external"></a> [external](#provider\_external) | 2.4.0 |
 
 ## Modules

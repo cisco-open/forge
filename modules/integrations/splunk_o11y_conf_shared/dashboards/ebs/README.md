@@ -1,3 +1,24 @@
+# Splunk Observability EBS Dashboard
+
+This module creates EBS volume performance charts for Forge runner and cluster storage.
+
+## Why This Module Exists
+
+ARC runners and EKS infrastructure depend on storage behaving predictably. This dashboard surfaces queue length, latency, throughput, utilization, and volume state when pods are slow to start or jobs are I/O bound.
+
+## What It Manages
+
+- Read/write throughput, operations, and latency charts.
+- Queue length, idle time, byte utilization, and state views.
+- Read/write breakdowns for EBS-backed runner or platform volumes.
+- Dashboard placement in the shared Forge O11y group.
+
+## Operational Notes
+
+- Use this with Kubernetes pending-pod and PVC symptoms.
+- High latency can look like runner slowness even when compute is healthy.
+- Volume dimensions must be tagged or discoverable for tenant attribution.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -10,7 +31,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.2 |
+| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.3 |
 
 ## Modules
 

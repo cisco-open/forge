@@ -1,3 +1,24 @@
+# Splunk Observability Lambda Dashboard
+
+This module creates Lambda operational charts for Forge control-plane functions.
+
+## Why This Module Exists
+
+Forge relies heavily on Lambdas for webhooks, scaling, tagging, log archival, trust validation, and redrive loops. Lambda errors or throttles often explain platform symptoms before the runner itself is involved.
+
+## What It Manages
+
+- Invocation, error, throttle, and duration charts.
+- Provisioned concurrency and spillover views.
+- Version-level percentages and average duration lists.
+- Dashboard placement in the shared Forge O11y group.
+
+## Operational Notes
+
+- Start here when an EventBridge, SQS, webhook, or trust-validation workflow behaves inconsistently.
+- Version-level charts help catch partial deployments or aliases pointing at unexpected code.
+- Pair Lambda errors with CloudWatch/Splunk logs for request-level detail.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -10,7 +31,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.2 |
+| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.3 |
 
 ## Modules
 

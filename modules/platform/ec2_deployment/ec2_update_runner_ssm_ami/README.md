@@ -1,3 +1,24 @@
+# EC2 Runner AMI SSM Updater
+
+This module schedules a Lambda that records the currently selected runner AMIs in SSM Parameter Store.
+
+## Why This Module Exists
+
+Forge runner AMIs are updated as images are rebuilt and tested. This helper keeps a discoverable SSM record of the AMI mapping used by EC2 runner pools, which makes operations and downstream lookups less dependent on Terraform state inspection.
+
+## What It Manages
+
+- A Lambda function built from the local updater code.
+- An EventBridge schedule that invokes the updater.
+- CloudWatch logs and IAM permissions for reading AMI metadata and writing SSM parameters.
+- The runner AMI map passed from the EC2 deployment module.
+
+## Operational Notes
+
+- Use the log group when an expected AMI value is not reflected in SSM.
+- The updater is metadata plumbing; it does not build AMIs or change a runner pool by itself.
+- Keep the schedule aligned with image-release cadence and operational visibility needs.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -10,7 +31,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 
 ## Modules
 

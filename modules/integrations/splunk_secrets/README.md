@@ -1,3 +1,24 @@
+# Splunk Secrets
+
+This module creates regional Secrets Manager entries and KMS keys for Splunk-related integrations.
+
+## Why This Module Exists
+
+Forge integrates with Splunk Cloud and Splunk Observability across several modules. Keeping the shared secret material in a consistent, encrypted regional structure avoids each integration inventing its own credential storage.
+
+## What It Manages
+
+- A regional KMS key and alias.
+- A Secrets Manager secret with optional replicas.
+- A generated initial secret version based on random secret seeds.
+- Tags for shared ownership and audit.
+
+## Operational Notes
+
+- Treat generated placeholder values as bootstrap material if real Splunk credentials are populated later.
+- Replica regions should match where Splunk integrations run.
+- Secret names are consumed by other modules, so coordinate renames carefully.
+
 <!-- BEGIN_TF_DOCS -->
 
 ## Requirements

@@ -1,3 +1,24 @@
+# Splunk Observability SQS Dashboard
+
+This module creates SQS health charts for Forge queue-backed workflows.
+
+## Why This Module Exists
+
+Forge intentionally buffers work through SQS for durability and backpressure. The queues behind job log archival, redrive, and other support flows need visibility into backlog, age, deletes, retries, and DLQ growth.
+
+## What It Manages
+
+- Queue count and top queue charts.
+- Message size, sent/received/deleted, empty receive, and processing trend charts.
+- Oldest-message and dead-letter backlog views.
+- Dashboard placement in the shared Forge O11y group.
+
+## Operational Notes
+
+- Rising oldest-message age means workers are not keeping up or messages are failing repeatedly.
+- DLQ growth should point to either transient provider issues or bad event shapes.
+- Use this with Lambda dashboards to see both queue pressure and worker errors.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -10,7 +31,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.2 |
+| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.3 |
 
 ## Modules
 

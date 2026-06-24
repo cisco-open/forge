@@ -1,3 +1,24 @@
+# Teleport EKS Access
+
+This module configures Teleport access into Forge EKS clusters.
+
+## Why This Module Exists
+
+Forge runners are ephemeral, so most troubleshooting uses logs. When live access is necessary, Teleport provides an audited path into Kubernetes instead of unmanaged SSH or shared kubeconfigs.
+
+## What It Manages
+
+- A Teleport IAM role and EKS access policy.
+- An `aws-auth` Kubernetes ConfigMap entry for Teleport.
+- Per-tenant Kubernetes RBAC through the tenant submodule.
+- Outputs for Teleport role, tenant groups, cluster name, and account ID.
+
+## Operational Notes
+
+- Teleport is a break-glass/debugging path, not the normal operations interface.
+- Access should map to identity groups and tickets outside this module.
+- RBAC changes affect live cluster access, so test with least privilege.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -12,7 +33,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 | <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | 3.2.0 |
 
 ## Modules

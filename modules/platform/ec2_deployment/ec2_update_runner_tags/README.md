@@ -1,3 +1,24 @@
+# EC2 Runner Tag Updater
+
+This module deploys a Lambda that enriches EC2 runner instances with job and workflow metadata.
+
+## Why This Module Exists
+
+Ephemeral runners disappear quickly, so tags have to be applied while a job is active. Forge uses those tags for cost allocation, troubleshooting, and Splunk dimensions that let operators connect a GitHub job back to AWS resources.
+
+## What It Manages
+
+- A Lambda function built from the tag updater code.
+- EventBridge rule and permissions for invocation from runner events.
+- IAM permissions to describe and tag EC2 instances.
+- CloudWatch logging for update attempts and failures.
+
+## Operational Notes
+
+- Missing tags usually point to event-shape, EventBridge, or EC2 permission problems.
+- Tags are part of the observability and cost model; avoid changing keys without updating dashboards and field extractions.
+- This module complements, rather than replaces, the base runner tags configured on the EC2 deployment.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -10,7 +31,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 
 ## Modules
 

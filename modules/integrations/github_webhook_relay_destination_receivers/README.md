@@ -1,3 +1,24 @@
+# GitHub Webhook Relay Destination Receivers
+
+This module composes a destination EventBridge bus with one or more receiver Lambdas for GitHub webhook events.
+
+## Why This Module Exists
+
+The Forge control plane emits useful workflow events, but the consumers may live in a separate destination account. This module is the receiver-side composition point for operational automations such as Webex notifications or delayed review workers.
+
+## What It Manages
+
+- The destination relay module.
+- Optional Webex webhook receiver module.
+- Reader configuration for fetching the source webhook secret when cross-account wiring is enabled.
+- Outputs for the destination role and webhook metadata.
+
+## Operational Notes
+
+- Use event patterns to keep receivers narrow; broad webhook rules create noisy automations.
+- Destination permissions must match the source account and bus names.
+- Receiver Lambdas should be idempotent because EventBridge delivery can retry.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -10,7 +31,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 
 ## Modules
 

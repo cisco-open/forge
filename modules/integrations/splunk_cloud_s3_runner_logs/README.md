@@ -1,3 +1,24 @@
+# Splunk Cloud S3 Runner Logs
+
+This module streams runner log objects from S3 into Splunk Cloud through Kinesis and Firehose.
+
+## Why This Module Exists
+
+Forge archives job logs and operational logs because runners are destroyed after each job. This module moves those S3-backed records into Splunk Cloud so troubleshooting and audit queries can survive the runner lifecycle.
+
+## What It Manages
+
+- Kinesis stream and Firehose delivery stream to Splunk HEC.
+- S3 bucket notifications, SQS buffering, and DLQ handling.
+- A Lambda that transforms or forwards runner log events.
+- KMS keys, backup bucket, IAM roles, and CloudWatch logs.
+
+## Operational Notes
+
+- Splunk HEC endpoint and secret configuration must be correct before enabling delivery.
+- Use the backup bucket and DLQ when logs are missing from Splunk.
+- The S3 event path should match the job-log archiver bucket layout.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -11,7 +32,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 | <a name="provider_external"></a> [external](#provider\_external) | 2.4.0 |
 
 ## Modules

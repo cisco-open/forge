@@ -1,3 +1,24 @@
+# Splunk Observability AWS Integration Common
+
+This module creates the IAM and SignalFx/Splunk Observability objects for AWS metric ingestion.
+
+## Why This Module Exists
+
+Forge separates logs and metrics. This module wires CloudWatch metrics into Splunk Observability so operators can see capacity, Lambda, SQS, DynamoDB, EBS, and runner infrastructure behavior from the metrics side.
+
+## What It Manages
+
+- An AWS IAM role and policies for Splunk Observability integration.
+- SignalFx external and AWS integration resources.
+- Managed policy attachments required by the integration.
+- Secret lookup and a short wait for propagation.
+
+## Operational Notes
+
+- The integration regions should match where Forge infrastructure actually runs.
+- If metrics are missing, validate both AWS role trust and SignalFx integration state.
+- This is metrics plumbing; log field extraction lives in the Splunk Cloud configuration module.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -12,8 +33,8 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
-| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.2 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
+| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.3 |
 | <a name="provider_time"></a> [time](#provider\_time) | 0.14.0 |
 
 ## Modules

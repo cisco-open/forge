@@ -1,3 +1,24 @@
+# Splunk AWS Billing Export
+
+This module sends AWS Billing and Cost Management export data into Splunk-oriented processing pipelines.
+
+## Why This Module Exists
+
+Forge needs tenant-level cost visibility to make runner-size, warm-pool, and EC2-vs-Kubernetes decisions from data. Billing exports give the platform the raw cost feed needed for those dashboards and recommendations.
+
+## What It Manages
+
+- Billing Data Exports for service-level and resource-level cost data.
+- An encrypted S3 bucket for billing report delivery.
+- Lambda functions that process billing files.
+- S3 notifications, permissions, log groups, and optional Splunk secrets.
+
+## Operational Notes
+
+- Billing data is delayed by AWS, so dashboards should not be treated as real-time usage telemetry.
+- Resource tags and runner metadata determine how useful tenant attribution will be.
+- Keep S3 retention and access aligned with financial-data handling rules.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -14,7 +35,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 
 ## Modules
 

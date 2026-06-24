@@ -1,3 +1,23 @@
+# Teleport Tenant RBAC
+
+This module creates the Kubernetes RBAC objects that let Teleport users inspect a specific tenant namespace.
+
+## Why This Module Exists
+
+Tenant-scoped live debugging should not imply cluster-wide access. This module grants the impersonation and pod permissions needed for a tenant namespace while preserving the namespace boundary.
+
+## What It Manages
+
+- ClusterRole and ClusterRoleBinding for impersonation.
+- Namespace RoleBinding for pod access.
+- Bindings scoped by the tenant namespace input.
+
+## Operational Notes
+
+- Use this only with the parent Teleport module and the organization access process.
+- Keep namespace names aligned with Forge tenant names.
+- Expand permissions deliberately; this is an audited human-access path.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 

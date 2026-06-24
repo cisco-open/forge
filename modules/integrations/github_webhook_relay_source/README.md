@@ -54,6 +54,12 @@ curl -X POST "$(terraform output -raw webhook_endpoint)/webhook" \
   -d '{"hello":"world"}'
 ```
 
+## Forge Context
+
+Forge uses this relay pattern when GitHub webhook events need to cross account boundaries before they are consumed by operational automations. The source module is the public ingress edge: it validates the webhook secret, writes the event to a source EventBridge bus, and forwards only the configured event source to the destination bus.
+
+Operationally, this sits in the same control-plane path as runner scaling, job-log archival, and notification workflows. If a downstream automation misses events, verify the API Gateway/Lambda validation logs first, then the source EventBridge rule, and finally the destination account permissions.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -66,7 +72,7 @@ curl -X POST "$(terraform output -raw webhook_endpoint)/webhook" \
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 
 ## Modules
 

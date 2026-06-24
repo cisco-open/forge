@@ -1,3 +1,24 @@
+# Splunk Observability Billing Dashboard
+
+This module creates the billing dashboard for Forge costs in Splunk Observability.
+
+## Why This Module Exists
+
+Cost is one of the core Forge operating signals because runner choices involve trade-offs between latency, isolation, and spend. This dashboard helps compare tenant and service cost trends instead of guessing.
+
+## What It Manages
+
+- Charts for cost and net cost by service and tenant.
+- Top tenant/service cost lists.
+- Runner-related cost summaries.
+- Dashboard placement in the shared Forge O11y group.
+
+## Operational Notes
+
+- The dashboard is only as accurate as billing exports, tags, and tenant dimensions.
+- Expect billing data to lag behind live infrastructure state.
+- Use this when reviewing warm pools, DinD node pools, and tenant right-sizing.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -10,7 +31,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.2 |
+| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.3 |
 
 ## Modules
 

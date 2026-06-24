@@ -1,3 +1,24 @@
+# Splunk Cloud Shared Configuration
+
+This module manages Splunk Cloud saved objects, field extractions, transforms, and dashboards for Forge logs.
+
+## Why This Module Exists
+
+Forge runners are ephemeral, so logs are the durable evidence trail. This module turns raw CloudWatch and runner logs into searchable, tenant-aware Splunk data with dashboards that map symptoms to subsystems.
+
+## What It Manages
+
+- Forge Splunk dashboards for runner lifecycle, capacity, webhooks, job logs, trust failures, tenants, and troubleshooting.
+- Props and transforms for CloudWatch logs, runner logs, Kubernetes logs, Lambda logs, EC2 logs, and billing data.
+- Splunk provider configuration sourced from Secrets Manager.
+- Shared field extraction standards used by operators.
+
+## Operational Notes
+
+- Field names are an operational contract with runbooks and dashboards; change them carefully.
+- This module is log-search configuration, not metrics ingestion.
+- When a dashboard looks wrong, also check ingestion quality and source log fields before assuming the infrastructure failed.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -11,8 +32,8 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
-| <a name="provider_splunk"></a> [splunk](#provider\_splunk) | 1.5.1 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
+| <a name="provider_splunk"></a> [splunk](#provider\_splunk) | 1.5.3 |
 
 ## Modules
 

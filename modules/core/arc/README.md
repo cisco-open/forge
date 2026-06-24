@@ -1,3 +1,25 @@
+# ARC Core
+
+This module installs the core Actions Runner Controller resources for one Forge tenant on an EKS cluster.
+
+## Why This Module Exists
+
+In Forge, the Kubernetes lane turns GitHub Actions jobs into ephemeral pods. This module is the tenant-level orchestrator: it installs the controller, creates scale sets, and applies the Karpenter objects that give each tenant its own scheduling boundary.
+
+## What It Manages
+
+- The ARC scale set controller.
+- One ARC scale set per configured runner pool.
+- Tenant-scoped Karpenter EC2NodeClass and NodePool manifests.
+- A Kubernetes storage class used by runner volumes.
+- Outputs for runner role ARNs and subnet CIDR visibility.
+
+## Operational Notes
+
+- `migrate_arc_cluster` is the blue/green cutover switch; it should be true only during an intentional tenant migration.
+- The DinD path depends on tenant-specific node pools for blast-radius isolation.
+- Provider configuration resolves from the EKS cluster name, so changing the target cluster name repoints the in-cluster resources.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -14,7 +36,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 | <a name="provider_external"></a> [external](#provider\_external) | 2.4.0 |
 | <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | 3.2.0 |
 | <a name="provider_null"></a> [null](#provider\_null) | 3.3.0 |

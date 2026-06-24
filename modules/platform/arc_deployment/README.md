@@ -1,3 +1,24 @@
+# ARC Deployment Wrapper
+
+This module maps tenant runner configuration into the core ARC module.
+
+## Why This Module Exists
+
+Forge tenant configuration is written once, then expanded into platform modules. This wrapper is the tenant-facing ARC adapter: it translates runner specs, labels, images, resource limits, ECR access, and cluster migration flags into the lower-level Kubernetes resources.
+
+## What It Manages
+
+- A call into `modules/core/arc` for the tenant.
+- ARC controller settings derived from the tenant prefix and namespace.
+- Scale set definitions for each configured Kubernetes runner pool.
+- Runner IAM policy attachments and ECR registry wiring.
+
+## Operational Notes
+
+- This is the module to inspect when a tenant config value does not appear in the generated ARC resources.
+- The wrapper does not create the EKS cluster; it targets an existing cluster by name.
+- A tenant with no ARC runner specs will not create ARC scale sets.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 

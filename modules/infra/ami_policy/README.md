@@ -1,3 +1,24 @@
+# AMI Policy
+
+This module applies account-level guardrails around AMI and EBS lifecycle management for Forge runner images.
+
+## Why This Module Exists
+
+Forge runners are intentionally disposable, but the images behind them are long-lived platform assets. This module keeps the AWS account ready for encrypted runner volumes and automated AMI lifecycle cleanup so image hygiene does not become manual work.
+
+## What It Manages
+
+- Enables EBS encryption by default in the target region.
+- Creates the Data Lifecycle Manager role used by AMI lifecycle policies.
+- Defines lifecycle policy permissions for AMI and snapshot cleanup.
+- Applies the common Forge tags used for ownership and cost reporting.
+
+## Operational Notes
+
+- Use this in accounts that build, store, or operate runner AMIs.
+- Review lifecycle timing before applying it to an account that also hosts non-Forge AMIs.
+- Encryption-by-default is account and region scoped, so treat this module as a regional foundation step.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -10,7 +31,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 
 ## Modules
 

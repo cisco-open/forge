@@ -1,3 +1,25 @@
+# Splunk Observability Kubernetes Runner Dashboard
+
+This module creates Kubernetes pod and deployment charts for the ARC runner lane.
+
+## Why This Module Exists
+
+Kubernetes runner failures often show up as pending pods, restarts, resource pressure, or collector gaps. This dashboard provides the pod-level view that complements EKS and Karpenter logs.
+
+## What It Manages
+
+- Active, desired, available, and phase-based pod charts.
+- CPU, memory, network, and restart views.
+- Top pod lists for resource usage.
+- OTel collector pod visibility.
+- Dashboard placement in the shared Forge O11y group.
+
+## Operational Notes
+
+- Use this when ARC scale sets see demand but jobs do not start.
+- Pending pods usually require checking Karpenter, taints/tolerations, resource requests, and storage.
+- Collector health affects dashboard reliability, so treat no-data signals seriously.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -10,7 +32,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.2 |
+| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.3 |
 
 ## Modules
 

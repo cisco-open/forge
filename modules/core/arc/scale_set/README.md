@@ -1,3 +1,25 @@
+# ARC Runner Scale Set
+
+This module creates one GitHub Actions runner scale set for the Kubernetes/ARC lane.
+
+## Why This Module Exists
+
+Forge exposes Kubernetes runners through labels such as `k8s` and `dind`. A scale set is the concrete runtime behind one of those labels: ARC creates one ephemeral runner pod per job, with identity, hooks, limits, and optional DinD behavior defined here.
+
+## What It Manages
+
+- The `gha-runner-scale-set` Helm release.
+- Runner hook ConfigMaps for job-started and job-completed handling.
+- The runner IAM role, Kubernetes service account, and EKS Pod Identity association.
+- Kubernetes RBAC needed by the runner pod.
+- Scale set labels, container images, resources, and volumes.
+
+## Operational Notes
+
+- `scale_set_type` selects the pod template; keep it aligned with the supported templates such as `k8s` and `dind`.
+- DinD scale sets carry the strongest isolation expectations because Docker builds are the highest-risk runner workload.
+- CPU and memory requests are part of the scheduling contract; wrong units can leave pods pending.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -12,7 +34,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 | <a name="provider_helm"></a> [helm](#provider\_helm) | 3.2.0 |
 | <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | 3.2.0 |
 

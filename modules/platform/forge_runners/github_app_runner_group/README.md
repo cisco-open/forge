@@ -1,3 +1,24 @@
+# GitHub App Runner Group Registration
+
+This module keeps the GitHub App installation and runner group aligned with the tenant repository selection.
+
+## Why This Module Exists
+
+Runner groups are the GitHub-side boundary that keeps one tenant job from consuming another tenant runner. Forge reconciles that mapping automatically so onboarding repositories does not require manual GitHub UI work.
+
+## What It Manages
+
+- A scheduled Lambda for runner group registration/reconciliation.
+- CloudWatch logs and EventBridge schedule.
+- IAM permissions and GitHub App configuration needed by the Lambda.
+- Inputs for GHES/GitHub URL, organization, runner group, and repository selection.
+
+## Operational Notes
+
+- If jobs stay queued even though runners exist, check labels and runner-group registration together.
+- `repository_selection` must match the GitHub App installation policy: `all` or `selected`.
+- This module changes GitHub-side routing, so treat failures as tenant-impacting.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -10,7 +31,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 
 ## Modules
 

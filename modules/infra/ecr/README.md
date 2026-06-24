@@ -1,3 +1,23 @@
+# ECR Repositories
+
+This module creates and manages ECR repositories used by Forge operational images.
+
+## Why This Module Exists
+
+Forge uses images for runners, sidecars, Lambdas, and integration helpers. Central ECR repositories keep those artifacts under platform control and make lifecycle cleanup repeatable.
+
+## What It Manages
+
+- One or more ECR repositories from the `repositories` input.
+- Lifecycle policies for repository cleanup.
+- Repository names exported for downstream modules or pipelines.
+
+## Operational Notes
+
+- Repository names are part of the contract with image-build and runner configuration.
+- Lifecycle rules should match the release and rollback window used by the platform.
+- Cross-account pull access is handled elsewhere; this module creates the repositories themselves.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -10,7 +30,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 
 ## Modules
 

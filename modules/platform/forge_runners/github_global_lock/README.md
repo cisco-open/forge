@@ -1,3 +1,24 @@
+# GitHub Global Lock
+
+This module provides a DynamoDB-backed distributed lock for workflows that must not run concurrently.
+
+## Why This Module Exists
+
+Some CI/CD operations are safe only when serialized across repositories or workflow runs. Forge gives tenants a shared lock primitive and a janitor that clears stale locks when the owning run has already completed.
+
+## What It Manages
+
+- A DynamoDB lock table and policy.
+- A cleanup Lambda with scheduled EventBridge invocation.
+- GitHub App access used to inspect workflow-run status.
+- An output policy ARN that runner roles can attach for lock access.
+
+## Operational Notes
+
+- The cleanup Lambda is the self-healing path for abandoned locks.
+- DynamoDB TTL is a backstop; workflows should still release locks explicitly.
+- Changing lock key conventions requires workflow and cleanup logic to stay in sync.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -10,7 +31,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 
 ## Modules
 

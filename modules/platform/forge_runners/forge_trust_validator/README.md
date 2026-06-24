@@ -1,3 +1,25 @@
+# Forge Trust Validator
+
+This module proactively validates tenant IAM trust relationships used by Forge runners.
+
+## Why This Module Exists
+
+Most runner AWS-auth failures happen at the ownership boundary between Forge and the tenant account. The validator turns those failures into scheduled checks by testing whether Forge runner roles can assume tenant roles and tag sessions before a real workflow depends on them.
+
+## What It Manages
+
+- A preparer Lambda that injects temporary validation trust.
+- An SQS delay queue used to wait for IAM propagation.
+- A validator Lambda that tests `sts:AssumeRole` and session tagging.
+- CloudWatch schedules, log groups, IAM policies, and cleanup permissions.
+
+## Operational Notes
+
+- The delay is intentional because IAM trust changes are eventually consistent.
+- Cleanup is load-bearing: temporary trust must be removed even when validation fails.
+- A green `AssumeRole` check is not enough if `sts:TagSession` is missing.
+- Use this module when tenant role access is added or changed.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -10,7 +32,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 
 ## Modules
 

@@ -118,6 +118,12 @@ Then re-run Terraform apply so the updated `source_code_hash` triggers deploymen
 ## License
 See parent repository license.
 
+## Forge Context
+
+Forge relies on ephemeral runners, so the runner is often gone by the time someone needs to debug or audit a job. This module preserves the job log and the workflow job event as durable, KMS-encrypted S3 objects and gives the platform a queue-backed retry path for GitHub API or ingestion failures.
+
+The EventBridge -> dispatcher -> SQS -> archiver shape is intentional. It provides backpressure, retry, and DLQ handling so a temporary GitHub or network issue does not permanently drop audit evidence.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -130,7 +136,7 @@ See parent repository license.
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 
 ## Modules
 

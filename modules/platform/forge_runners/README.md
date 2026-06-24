@@ -1,3 +1,26 @@
+# Forge Runners Tenant Stack
+
+This is the umbrella tenant module for Forge GitHub Actions runners.
+
+## Why This Module Exists
+
+Forge is a multi-tenant CI platform built around ephemeral runners, short-lived identity, and centralized operations. This module composes the tenant stack: EC2 runners, ARC runners, GitHub App settings, runner group reconciliation, trust validation, log archival, webhook relay, and self-healing support utilities.
+
+## What It Manages
+
+- EC2 runner deployment and ARC runner deployment.
+- GitHub App secret material in SSM Parameter Store.
+- IAM policies that let runners assume tenant-approved roles and pull allowed ECR images.
+- Runner group registration, trust validation, global lock, job log archival, webhook relay, and DLQ redrive helpers.
+- AppRegistry application metadata for the tenant deployment.
+
+## Operational Notes
+
+- This is the best starting point when onboarding or debugging a tenant because it shows how the platform pieces compose.
+- The tenant `deployment_config` defines the GitHub App, runner group, repository selection, and IAM bridge.
+- The EC2 and ARC lanes can both be enabled for the same tenant; workflows choose by labels.
+- Changing GitHub App or runner-group settings can affect job routing immediately.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -16,7 +39,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 | <a name="provider_null"></a> [null](#provider\_null) | 3.3.0 |
 | <a name="provider_random"></a> [random](#provider\_random) | 3.9.0 |
 | <a name="provider_time"></a> [time](#provider\_time) | 0.14.0 |

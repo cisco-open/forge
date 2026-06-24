@@ -1,3 +1,24 @@
+# Forge Subscription Access
+
+This module prepares a tenant or subscription account so Forge runners can access the resources that tenant jobs require.
+
+## Why This Module Exists
+
+Forge keeps runner credentials short-lived. A runner starts with the identity attached by the platform, then assumes tenant-approved roles for actual workload access. This module creates the tenant-side role and supporting policies that make that model explicit.
+
+## What It Manages
+
+- IAM role trust for Forge runner principals.
+- Policies for tenant S3, Secrets Manager, Packer, and ECR access patterns.
+- ECR repository policy statements that allow runner pulls where configured.
+- Tags for tenant ownership and auditability.
+
+## Operational Notes
+
+- The tenant still owns what its role can do; this module only wires the Forge bridge.
+- Trust and `sts:TagSession` behavior should be validated with the Forge trust-validator after changes.
+- Keep this narrow when onboarding a tenant; broad tenant roles are harder to reason about later.
+
 <!-- BEGIN_TF_DOCS -->
 
 ## Requirements

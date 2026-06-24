@@ -1,3 +1,22 @@
+# AWS Opt-In Regions
+
+This module enables configured opt-in AWS regions for an account.
+
+## Why This Module Exists
+
+Forge can run tenants across regions, but AWS opt-in regions must be enabled before regional infrastructure can be planned or applied there. Making that step code-driven keeps account bootstrap repeatable.
+
+## What It Manages
+
+- AWS account region enablement for each entry in `opt_in_regions`.
+- Provider and tagging inputs needed by the account bootstrap flow.
+
+## Operational Notes
+
+- Region opt-in can take time to complete in AWS; plan downstream regional applies accordingly.
+- Use this only for regions that the organization has approved for Forge workloads.
+- This module does not create VPCs, subnets, or runners in the region.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -10,7 +29,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
 
 ## Modules
 
