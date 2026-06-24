@@ -27,6 +27,30 @@ def response(status_code: int, body: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def header_value(event: Dict[str, Any], header_name: str) -> str:
+    for key, value in (event.get('headers') or {}).items():
+        if key.lower() == header_name.lower():
+            return str(value)
+    return ''
+
+
+def request_metadata(event: Dict[str, Any]) -> Dict[str, Any]:
+    request_context = event.get('requestContext') or {}
+    http_context = request_context.get('http') or {}
+    token = (event.get('pathParameters') or {}).get('token') or ''
+
+    return {
+        'request_id': request_context.get('requestId') or '',
+        'route_key': request_context.get('routeKey') or '',
+        'method': http_context.get('method') or '',
+        'path': http_context.get('path') or '',
+        'source_ip': http_context.get('sourceIp') or '',
+        'user_agent': header_value(event, 'user-agent'),
+        'token_present': bool(token),
+        'token_length': len(token),
+    }
+
+
 def parse_body(event: Dict[str, Any]) -> Dict[str, Any]:
     raw_body = event.get('body') or ''
     if event.get('isBase64Encoded'):
@@ -227,6 +251,8 @@ def validate_request(event: Dict[str, Any]) -> None:
 
 
 def lambda_handler(event, _context):
+    request_meta = request_metadata(event)
+
     try:
         validate_request(event)
         payload = parse_body(event)
@@ -259,8 +285,16 @@ def lambda_handler(event, _context):
         return response(202, {'queued': queued, 'skipped': skipped})
 
     except PermissionError as err:
-        LOG.warning('request_rejected reason=%s', err)
+        LOG.warning(
+            'request_rejected reason=%s request=%s',
+            err,
+            json.dumps(request_meta, sort_keys=True),
+        )
         return response(403, {'message': str(err)})
     except Exception as err:
-        LOG.exception('dispatcher_failed error=%s', err)
+        LOG.exception(
+            'dispatcher_failed error=%s request=%s',
+            err,
+            json.dumps(request_meta, sort_keys=True),
+        )
         return response(500, {'message': str(err)})

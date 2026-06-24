@@ -59,6 +59,18 @@ AWS region as result values, and passes `github_delivery` from
 `github_delivery`. If `aws_region` is missing, the receiver tries to parse the
 region from the SQS queue URL.
 
+## Logs
+
+API Gateway access logs are written to `/aws/apigateway/<name_prefix>`. These
+logs include the request path, route key, status, integration status, response
+latency, and API Gateway error fields so rejected or unrouted requests can be
+found without a Lambda invocation.
+
+Receiver Lambda logs are written to `/aws/lambda/<name_prefix>`. Requests with a
+missing or invalid webhook token return HTTP 403 and are logged as
+`request_rejected` with request metadata such as source IP, method, path, route
+key, user agent, and token length. The token value is never logged.
+
 ## Example Module Call
 
 ```hcl
