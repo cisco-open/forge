@@ -52,11 +52,11 @@ DynamoDB item key in AWS.
 
 The alert query keeps the same core logic as the Forge dashboard query and adds
 `aws_region` to the result table so the worker can find the right tenant SSM
-parameters. It groups stuck jobs by workflow job ID, tenant, and AWS region, so
-one Splunk payload can carry results for different tenants without mixing their
-delivery IDs. It also extracts `delivery_ids` from `--delivery-id` in the
-dispatch log and drops results where that ID is missing. If `aws_region` is
-missing, the receiver tries to parse the region from the SQS queue URL.
+parameters. It groups stuck jobs by workflow job ID, keeps the Forge tenant and
+AWS region as result values, and extracts `dispatch_delivery_id` from
+`--delivery-id` in the dispatch log. The receiver normalizes that field into the
+`delivery_ids` payload used by the worker. If `aws_region` is missing, the
+receiver tries to parse the region from the SQS queue URL.
 
 ## Example Module Call
 

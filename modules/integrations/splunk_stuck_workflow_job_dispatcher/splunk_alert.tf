@@ -8,8 +8,6 @@ locals {
     | rex field=queued_url "https?://sqs[.-](?<queued_aws_region>[a-z0-9-]+)\.amazonaws\.com"
     | eval workflowJobId=coalesce('github.workflowJobId', dispatch_workflowJobId)
     | where isnotnull(workflowJobId)
-    | eval tenant_key=coalesce(forgecicd_tenant, "__missing_tenant__")
-    | eval aws_region_key=coalesce(aws_region, queued_aws_region, "__missing_region__")
     | eval is_webhook=if(forgecicd_log_type="webhook", 1, 0)
     | eval is_queued=if(forgecicd_log_type="webhook" AND 'github.status'="queued", 1, 0)
     | eval is_dispatch=if(searchmatch("Successfully dispatched job for"), 1, 0)
@@ -20,22 +18,22 @@ locals {
         min(_time) as first_seen
         max(_time) as last_seen
         latest(github.name) as job_name
+        latest(forgecicd_tenant) as forgecicd_tenant
         latest(github.repository) as repository
         latest(github.started_at) as started_at
         values(github.labels) as labels
-        values(dispatch_delivery_id) as delivery_ids
+        values(github.github-delivery) as github_delivery
+        values(dispatch_delivery_id) as dispatch_delivery_id
         values(queued_url) as queued_url
-      by workflowJobId tenant_key aws_region_key
-    | where total_events > 0
+        values(aws_region) as aws_region
+      by workflowJobId
     | where total_events = queued_count
     | where has_dispatch = 1
-    | where mvcount(delivery_ids) > 0
-    | where tenant_key != "__missing_tenant__"
-    | eval forgecicd_tenant=tenant_key, aws_region=if(aws_region_key="__missing_region__", null(), aws_region_key)
+    | where mvcount(dispatch_delivery_id) > 0
     | eval stuck_since=strftime(first_seen, "%Y-%m-%dT%H:%M:%S%Z"), stuck_minutes=round((now() - first_seen) / 60, 1)
     | where stuck_minutes > ${var.splunk_alert.stuck_minutes_threshold}
     | sort - stuck_minutes
-    | table workflowJobId job_name repository labels started_at stuck_since stuck_minutes queued_url delivery_ids forgecicd_tenant aws_region
+    | table workflowJobId job_name repository labels started_at stuck_since stuck_minutes queued_url github_delivery dispatch_delivery_id forgecicd_tenant aws_region
   EOT
 }
 
