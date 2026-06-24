@@ -26,7 +26,6 @@ locals {
       by workflowJobId
     | where total_events = queued_count
     | where has_dispatch = 1
-    | where mvcount(github_delivery) > 0
     | eval stuck_since=strftime(first_seen, "%Y-%m-%dT%H:%M:%S%Z"), stuck_minutes=round((now() - first_seen) / 60, 1)
     | where stuck_minutes > ${var.splunk_alert.stuck_minutes_threshold}
     | sort - stuck_minutes
