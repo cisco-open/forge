@@ -55,9 +55,9 @@ The alert query keeps the same core logic as the Forge dashboard query and adds
 `aws_region` to the result table so the worker can find the right tenant SSM
 parameters. It groups stuck jobs by workflow job ID, keeps the Forge tenant and
 AWS region as result values, and passes `github_delivery` from
-`github.github-delivery`. The receiver normalizes that field into the
-`delivery_ids` payload used by the worker. If `aws_region` is missing, the
-receiver tries to parse the region from the SQS queue URL.
+`github.github-delivery`. The receiver passes that field to the worker as
+`github_delivery`. If `aws_region` is missing, the receiver tries to parse the
+region from the SQS queue URL.
 
 ## Example Module Call
 

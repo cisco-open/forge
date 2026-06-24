@@ -145,14 +145,13 @@ def normalize_result(result: Dict[str, Any]) -> Dict[str, Any]:
     repository = first_present(result, 'repository', 'github.repository')
     tenant = first_present(result, 'forgecicd_tenant', 'tenant')
     region = parse_region(result)
-    delivery_ids = split_multivalue(first_present(
+    github_delivery = split_multivalue(first_present(
         result,
+        'github_delivery',
+        'github.github-delivery',
+        'github_deliveries',
         'delivery_ids',
         'delivery_id',
-        'github_delivery',
-        'github_deliveries',
-        'github.github-delivery',
-        'dispatch_delivery_id',
     ))
 
     normalized = {
@@ -160,7 +159,7 @@ def normalize_result(result: Dict[str, Any]) -> Dict[str, Any]:
         'repository': repository,
         'tenant': tenant,
         'region': region,
-        'delivery_ids': delivery_ids,
+        'github_delivery': github_delivery,
         'stuck_minutes': first_value(result.get('stuck_minutes')),
         'stuck_since': first_value(result.get('stuck_since')),
         'queued_url': first_value(result.get('queued_url')),
@@ -172,8 +171,8 @@ def normalize_result(result: Dict[str, Any]) -> Dict[str, Any]:
         for key in ('workflow_job_id', 'tenant', 'region')
         if not normalized.get(key)
     ]
-    if not delivery_ids:
-        missing.append('delivery_ids')
+    if not github_delivery:
+        missing.append('github_delivery')
     if missing:
         raise ValueError(
             f"Splunk result missing required fields: {', '.join(missing)}")
@@ -247,12 +246,12 @@ def lambda_handler(event, _context):
                 continue
 
             LOG.info(
-                'redelivery_work_queued key=%s repository=%s tenant=%s region=%s delivery_ids=%d',
+                'redelivery_work_queued key=%s repository=%s tenant=%s region=%s github_delivery=%d',
                 key,
                 work_payload.get('repository'),
                 work_payload.get('tenant'),
                 work_payload.get('region'),
-                len(work_payload.get('delivery_ids') or []),
+                len(work_payload.get('github_delivery') or []),
             )
             queued.append(
                 {'key': key, 'workflow_job_id': work_payload['workflow_job_id']})

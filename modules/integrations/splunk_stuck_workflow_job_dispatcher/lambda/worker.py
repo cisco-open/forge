@@ -518,9 +518,9 @@ def delivery_rows(
     installation_id: str = '',
 ) -> List[Dict[str, Any]]:
     delivery_ids, delivery_guids = normalize_delivery_references(
-        payload.get('delivery_ids') or [])
+        payload.get('github_delivery') or payload.get('delivery_ids') or [])
     if not delivery_ids and not delivery_guids:
-        raise ValueError('No delivery_ids provided by Splunk')
+        raise ValueError('No github_delivery provided by Splunk')
 
     rows = [delivery_row_from_id(delivery_id) for delivery_id in delivery_ids]
     if delivery_guids:
