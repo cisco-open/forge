@@ -171,15 +171,16 @@ locals {
                 latest(github.repository) as repository
                 latest(github.started_at) as started_at
                 values(github.labels) as labels
-                values(github.github-delivery) as github_deliveries
+                values(github.github-delivery) as github_delivery
                 values(queued_url) as queued_url
+                values(aws_region) as aws_region
               by workflowJobId
             | where total_events = queued_count
             | where has_dispatch = 1
             | eval stuck_since=strftime(first_seen, "%Y-%m-%dT%H:%M:%S%Z"), stuck_minutes=round((now() - first_seen) / 60, 1)
             | where stuck_minutes > 5
             | sort - stuck_minutes
-            | table workflowJobId job_name repository labels started_at stuck_since stuck_minutes queued_url github_deliveries forgecicd_tenant
+            | table workflowJobId job_name repository labels started_at stuck_since stuck_minutes queued_url github_delivery forgecicd_tenant aws_region
           EOT
           queryParameters = {
             earliest = "$global_time.earliest$"
