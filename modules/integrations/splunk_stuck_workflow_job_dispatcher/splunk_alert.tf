@@ -5,7 +5,6 @@ locals {
     index="${var.splunk_conf.index}" ((forgecicd_log_type=webhook github.status=*) OR ("Successfully dispatched job for"))
     | rex field=message "to the queue (?<queued_url>https?://\S+)\s-\sJob ID:\s(?<dispatch_workflowJobId>\d+)"
     | rex field=message "(?:^|\s)--delivery-id(?:=|\s+)(?<dispatch_delivery_id>\d+)"
-    | rex field=queued_url "https?://sqs[.-](?<queued_aws_region>[a-z0-9-]+)\.amazonaws\.com"
     | eval workflowJobId=coalesce('github.workflowJobId', dispatch_workflowJobId)
     | where isnotnull(workflowJobId)
     | eval is_webhook=if(forgecicd_log_type="webhook", 1, 0)
