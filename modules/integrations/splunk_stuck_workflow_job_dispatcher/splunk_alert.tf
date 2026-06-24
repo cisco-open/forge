@@ -33,30 +33,29 @@ locals {
   EOT
 }
 
-resource "splunk_saved_searches" "stuck_workflow_job_dispatcher" {
-  name        = var.splunk_alert.name
-  description = var.splunk_alert.description
-  search      = local.stuck_workflow_job_search
+resource "splunk_configs_conf" "stuck_workflow_job_dispatcher" {
+  name = "savedsearches/${var.splunk_alert.name}"
 
-  disabled      = var.splunk_alert.disabled
-  is_scheduled  = true
-  cron_schedule = var.splunk_alert.cron_schedule
-
-  dispatch_earliest_time = var.splunk_alert.dispatch_earliest_time
-  dispatch_latest_time   = var.splunk_alert.dispatch_latest_time
-
-  actions                  = "webhook"
-  action_webhook_param_url = local.splunk_webhook_url
-
-  alert_type            = "number of events"
-  alert_comparator      = "greater than"
-  alert_threshold       = "0"
-  alert_digest_mode     = false
-  alert_suppress        = true
-  alert_suppress_fields = "workflowJobId,forgecicd_tenant,aws_region"
-  alert_suppress_period = var.splunk_alert.suppress_period
-  alert_severity        = 4
-  alert_track           = "true"
+  variables = {
+    "description"              = var.splunk_alert.description
+    "search"                   = local.stuck_workflow_job_search
+    "disabled"                 = var.splunk_alert.disabled ? "1" : "0"
+    "is_scheduled"             = "1"
+    "cron_schedule"            = var.splunk_alert.cron_schedule
+    "dispatch.earliest_time"   = var.splunk_alert.dispatch_earliest_time
+    "dispatch.latest_time"     = var.splunk_alert.dispatch_latest_time
+    "actions"                  = "webhook"
+    "action.webhook.param.url" = local.splunk_webhook_url
+    "alert_type"               = "number of events"
+    "alert_comparator"         = "greater than"
+    "alert_threshold"          = "0"
+    "alert.digest_mode"        = "0"
+    "alert.suppress"           = "1"
+    "alert.suppress.fields"    = "workflowJobId,forgecicd_tenant,aws_region"
+    "alert.suppress.period"    = var.splunk_alert.suppress_period
+    "alert.severity"           = "4"
+    "alert.track"              = "1"
+  }
 
   acl {
     app     = var.splunk_conf.acl.app

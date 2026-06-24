@@ -26,5 +26,5 @@ output "dedupe_table_name" {
 
 output "saved_search_name" {
   description = "Splunk saved search alert name."
-  value       = splunk_saved_searches.stuck_workflow_job_dispatcher.name
+  value       = var.splunk_alert.name
 }
