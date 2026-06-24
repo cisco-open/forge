@@ -76,20 +76,24 @@ def parse_body(event: Dict[str, Any]) -> Dict[str, Any]:
     return json.loads(raw_body)
 
 
+def decode_results_value(value: Any) -> List[Dict[str, Any]]:
+    if isinstance(value, dict):
+        nested = decode_results_value(value.get('results'))
+        return nested or [value]
+    if isinstance(value, list):
+        return [item for item in value if isinstance(item, dict)]
+    if isinstance(value, str) and value.strip().startswith(('{', '[')):
+        parsed = json.loads(value)
+        return decode_results_value(parsed)
+
+    return []
+
+
 def extract_results(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
     for key in ('result', 'results'):
-        value = payload.get(key)
-        if isinstance(value, dict):
-            return [value]
-        if isinstance(value, list):
-            return [item for item in value if isinstance(item, dict)]
-        if isinstance(value, str) and value.strip().startswith(('{', '[')):
-            parsed = json.loads(value)
-            if isinstance(parsed, dict):
-                return [parsed]
-            if isinstance(parsed, list):
-                return [item for item in parsed if isinstance(item, dict)]
-
+        results = decode_results_value(payload.get(key))
+        if results:
+            return results
     return [payload] if payload else []
 
 

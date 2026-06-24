@@ -47,9 +47,11 @@ lookup when Splunk sends the `github.github-delivery` GUID.
 ## Splunk Alert
 
 The saved search runs every minute by default, searches the last 24 hours, and
-triggers per result. Duplicate alert actions are suppressed by
-`workflowJobId`, `forgecicd_tenant`, and `aws_region` in Splunk and by the
-DynamoDB item key in AWS.
+triggers once per scheduled run when stuck jobs exist. The search collapses all
+matching stuck jobs into one Splunk webhook row with a JSON `results` array, and
+the receiver queues one DynamoDB work item per nested result. Duplicate alert
+actions are suppressed by Splunk for the configured suppression window, and
+duplicate jobs are suppressed by the DynamoDB item key in AWS.
 
 The alert query keeps the same core logic as the Forge dashboard query and adds
 `aws_region` to the result table so the worker can find the right tenant SSM

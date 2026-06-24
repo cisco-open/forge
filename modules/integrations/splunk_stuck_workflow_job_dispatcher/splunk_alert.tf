@@ -29,7 +29,11 @@ locals {
     | eval stuck_since=strftime(first_seen, "%Y-%m-%dT%H:%M:%S%Z"), stuck_minutes=round((now() - first_seen) / 60, 1)
     | where stuck_minutes > ${var.splunk_alert.stuck_minutes_threshold}
     | sort - stuck_minutes
-    | table workflowJobId job_name repository labels started_at stuck_since stuck_minutes queued_url github_delivery forgecicd_tenant aws_region
+    | eval splunk_batch_result=json_object("workflowJobId", workflowJobId, "job_name", job_name, "repository", repository, "labels", labels, "started_at", started_at, "stuck_since", stuck_since, "stuck_minutes", stuck_minutes, "queued_url", queued_url, "github_delivery", github_delivery, "forgecicd_tenant", forgecicd_tenant, "aws_region", aws_region)
+    | stats count as result_count list(splunk_batch_result) as splunk_batch_results
+    | where result_count > 0
+    | eval results=mv_to_json_array(splunk_batch_results, true())
+    | table result_count results
   EOT
 }
 
@@ -50,9 +54,9 @@ resource "splunk_configs_conf" "stuck_workflow_job_dispatcher" {
     "alert_type"               = "number of events"
     "alert_comparator"         = "greater than"
     "alert_threshold"          = "0"
-    "alert.digest_mode"        = "0"
+    "alert.digest_mode"        = "1"
     "alert.suppress"           = "1"
-    "alert.suppress.fields"    = "workflowJobId,forgecicd_tenant,aws_region"
+    "alert.suppress.fields"    = ""
     "alert.suppress.period"    = var.splunk_alert.suppress_period
     "alert.severity"           = "4"
     "alert.track"              = "1"
