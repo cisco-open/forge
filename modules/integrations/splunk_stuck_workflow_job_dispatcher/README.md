@@ -36,12 +36,13 @@ For each stuck job, the worker:
    - `/forge/<tenant>-<region-code>-sl/github_app_client_id`
    - `/forge/<tenant>-<region-code>-sl/github_app_id`
 4. Creates a GitHub App JWT in Lambda.
-5. Redelivers the numeric `delivery_ids` parsed by Splunk from the dispatch
-   log `--delivery-id` argument.
+5. Redelivers the deliveries from `github.github-delivery`. Numeric values are
+   used directly; GUID values are resolved to numeric delivery IDs through the
+   GitHub App deliveries list API before the redelivery attempt is sent.
 
-The worker does not list GitHub deliveries or resolve delivery GUIDs. Splunk
-must pass the numeric delivery ID required by
-`POST /app/hook/deliveries/{delivery_id}/attempts`.
+The GitHub redelivery API still requires the numeric delivery ID in
+`POST /app/hook/deliveries/{delivery_id}/attempts`; the worker performs that
+lookup when Splunk sends the `github.github-delivery` GUID.
 
 ## Splunk Alert
 
@@ -53,8 +54,8 @@ DynamoDB item key in AWS.
 The alert query keeps the same core logic as the Forge dashboard query and adds
 `aws_region` to the result table so the worker can find the right tenant SSM
 parameters. It groups stuck jobs by workflow job ID, keeps the Forge tenant and
-AWS region as result values, and extracts `dispatch_delivery_id` from
-`--delivery-id` in the dispatch log. The receiver normalizes that field into the
+AWS region as result values, and passes `github_delivery` from
+`github.github-delivery`. The receiver normalizes that field into the
 `delivery_ids` payload used by the worker. If `aws_region` is missing, the
 receiver tries to parse the region from the SQS queue URL.
 

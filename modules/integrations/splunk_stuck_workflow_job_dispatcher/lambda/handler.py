@@ -149,6 +149,9 @@ def normalize_result(result: Dict[str, Any]) -> Dict[str, Any]:
         result,
         'delivery_ids',
         'delivery_id',
+        'github_delivery',
+        'github_deliveries',
+        'github.github-delivery',
         'dispatch_delivery_id',
     ))
 

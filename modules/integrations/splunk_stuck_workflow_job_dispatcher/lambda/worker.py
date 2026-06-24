@@ -22,6 +22,12 @@ dynamodb = boto3.client('dynamodb')
 deserializer = TypeDeserializer()
 tenant_configs_cache: List[Dict[str, Any]] | None = None
 
+DELIVERY_GUID_RE = re.compile(
+    r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+    re.IGNORECASE,
+)
+MAX_DELIVERIES = 5000
+PER_PAGE = 100
 SHA256_DIGESTINFO_PREFIX = bytes.fromhex(
     '3031300d060960864801650304020105000420')
 
@@ -304,6 +310,15 @@ def get_parameter(ssm_client, name: str) -> str:
     return normalize_parameter_value(response['Parameter']['Value'])
 
 
+def get_optional_parameter(ssm_client, name: str) -> str:
+    try:
+        return get_parameter(ssm_client, name)
+    except ClientError as err:
+        if err.response.get('Error', {}).get('Code') == 'ParameterNotFound':
+            return ''
+        raise
+
+
 def load_github_app_credentials(payload: Dict[str, Any]) -> Dict[str, Any]:
     tenant = payload['tenant']
     region = payload['region']
@@ -316,6 +331,8 @@ def load_github_app_credentials(payload: Dict[str, Any]) -> Dict[str, Any]:
     client_id = get_parameter(
         ssm_client, f"{parameter_base}/github_app_client_id")
     app_id = get_parameter(ssm_client, f"{parameter_base}/github_app_id")
+    installation_id = get_optional_parameter(
+        ssm_client, f"{parameter_base}/github_app_installation_id")
     issuer = client_id or app_id
     if not issuer:
         raise ValueError(
@@ -335,45 +352,187 @@ def load_github_app_credentials(payload: Dict[str, Any]) -> Dict[str, Any]:
         'private_key': parse_rsa_private_key(raw_key),
         'github_api_url': tenant_config['github_api_url'],
         'github_api_version': tenant_config['github_api_version'],
+        'installation_id': installation_id,
     }
 
 
-def normalize_delivery_ids(values: Iterable[Any]) -> List[str]:
+def normalize_delivery_references(
+    values: Iterable[Any],
+) -> Tuple[List[str], List[str]]:
     delivery_ids: List[str] = []
-    seen = set()
+    delivery_guids: List[str] = []
+    seen_ids = set()
+    seen_guids = set()
 
     for value in values:
-        delivery_id = str(value).strip()
-        if not delivery_id or delivery_id in seen:
+        delivery_reference = str(value).strip()
+        if not delivery_reference:
             continue
-        seen.add(delivery_id)
 
-        if re.fullmatch(r'\d+', delivery_id):
-            delivery_ids.append(delivery_id)
-        else:
-            raise ValueError(f"Invalid numeric delivery ID: {delivery_id}")
+        if re.fullmatch(r'\d+', delivery_reference):
+            if delivery_reference in seen_ids:
+                continue
+            seen_ids.add(delivery_reference)
+            delivery_ids.append(delivery_reference)
+            continue
 
-    return delivery_ids
+        if DELIVERY_GUID_RE.fullmatch(delivery_reference):
+            delivery_guid = delivery_reference.lower()
+            if delivery_guid in seen_guids:
+                continue
+            seen_guids.add(delivery_guid)
+            delivery_guids.append(delivery_guid)
+            continue
+
+        raise ValueError(f"Invalid delivery ID/GUID: {delivery_reference}")
+
+    return delivery_ids, delivery_guids
 
 
-def delivery_rows(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
-    delivery_ids = normalize_delivery_ids(payload.get('delivery_ids') or [])
-    if not delivery_ids:
+def delivery_row_from_id(delivery_id: str) -> Dict[str, Any]:
+    return {
+        'id': delivery_id,
+        'guid': '-',
+        'event': 'explicit-id',
+        'action': '-',
+        'delivered_at': '-',
+        'status_code': '-',
+        'status': '-',
+        'repository_id': '-',
+    }
+
+
+def delivery_row_from_github_delivery(
+    delivery: Dict[str, Any],
+) -> Dict[str, Any]:
+    delivery_id = str(delivery.get('id') or '').strip()
+    if not re.fullmatch(r'\d+', delivery_id):
+        raise ValueError(
+            f"Resolved GitHub delivery has invalid numeric ID: {delivery_id}")
+
+    return {
+        'id': delivery_id,
+        'guid': str(delivery.get('guid') or '-'),
+        'event': str(delivery.get('event') or '-'),
+        'action': str(delivery.get('action') or '-'),
+        'delivered_at': str(delivery.get('delivered_at') or '-'),
+        'status_code': str(delivery.get('status_code') or '-'),
+        'status': str(delivery.get('status') or '-'),
+        'repository_id': str(delivery.get('repository_id') or '-'),
+    }
+
+
+def next_cursor_from_headers(headers: Dict[str, str]) -> str:
+    link = headers.get('link') or ''
+    for part in link.split(','):
+        if 'rel="next"' not in part:
+            continue
+        match = re.search(r'[?&]cursor=([^&>]+)', part)
+        if match:
+            return match.group(1)
+    return ''
+
+
+def resolve_delivery_guid_rows(
+    jwt: str,
+    delivery_guids: List[str],
+    installation_id: str,
+    api_url: str | None = None,
+    api_version: str | None = None,
+) -> List[Dict[str, Any]]:
+    remaining_guids = set(delivery_guids)
+    rows: List[Dict[str, Any]] = []
+    path = f"/app/hook/deliveries?per_page={PER_PAGE}"
+    scanned = 0
+    pages = 0
+
+    while remaining_guids and scanned < MAX_DELIVERIES:
+        status, headers, body = github_request(
+            jwt,
+            'GET',
+            path,
+            api_url=api_url,
+            api_version=api_version,
+        )
+        if status != 200:
+            error_body = body.decode('utf-8', 'replace')
+            raise RuntimeError(
+                f"GitHub delivery lookup failed HTTP {status}: {error_body}"
+            )
+
+        deliveries = json.loads(body.decode('utf-8'))
+        if not isinstance(deliveries, list):
+            raise ValueError(
+                'GitHub delivery lookup returned a non-list payload')
+
+        pages += 1
+        delivery_page = deliveries[:max(MAX_DELIVERIES - scanned, 0)]
+        scanned += len(delivery_page)
+
+        for delivery in delivery_page:
+            if not isinstance(delivery, dict):
+                continue
+            delivery_guid = str(delivery.get('guid') or '').lower()
+            if delivery_guid not in remaining_guids:
+                continue
+            delivery_installation_id = str(
+                delivery.get('installation_id') or '')
+            if installation_id and delivery_installation_id != installation_id:
+                continue
+
+            rows.append(delivery_row_from_github_delivery(delivery))
+            remaining_guids.remove(delivery_guid)
+
+        if not deliveries or len(delivery_page) < len(deliveries):
+            break
+
+        next_cursor = next_cursor_from_headers(headers)
+        if not next_cursor:
+            break
+        path = (
+            f"/app/hook/deliveries?per_page={PER_PAGE}"
+            f"&cursor={next_cursor}"
+        )
+
+    LOG.info(
+        'resolved_delivery_guids requested=%d resolved=%d scanned=%d pages=%d',
+        len(delivery_guids),
+        len(delivery_guids) - len(remaining_guids),
+        scanned,
+        pages,
+    )
+    if remaining_guids:
+        raise ValueError(
+            'GitHub delivery GUIDs not found in recent deliveries: '
+            f"{', '.join(sorted(remaining_guids))}"
+        )
+
+    return rows
+
+
+def delivery_rows(
+    payload: Dict[str, Any],
+    jwt: str,
+    api_url: str | None = None,
+    api_version: str | None = None,
+    installation_id: str = '',
+) -> List[Dict[str, Any]]:
+    delivery_ids, delivery_guids = normalize_delivery_references(
+        payload.get('delivery_ids') or [])
+    if not delivery_ids and not delivery_guids:
         raise ValueError('No delivery_ids provided by Splunk')
 
-    return [
-        {
-            'id': delivery_id,
-            'guid': '-',
-            'event': 'explicit-id',
-            'action': '-',
-            'delivered_at': '-',
-            'status_code': '-',
-            'status': '-',
-            'repository_id': '-',
-        }
-        for delivery_id in delivery_ids
-    ]
+    rows = [delivery_row_from_id(delivery_id) for delivery_id in delivery_ids]
+    if delivery_guids:
+        rows.extend(resolve_delivery_guid_rows(
+            jwt,
+            delivery_guids,
+            installation_id,
+            api_url,
+            api_version,
+        ))
+
+    return rows
 
 
 def format_event_action(row: Dict[str, Any]) -> str:
@@ -479,12 +638,18 @@ def complete_work(key: str, status: str, result: Dict[str, Any]) -> None:
 
 
 def process_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
-    rows = delivery_rows(payload)
     credentials = load_github_app_credentials(payload)
     jwt = create_github_app_jwt(
         credentials['issuer'], credentials['private_key'])
     api_url = credentials['github_api_url']
     api_version = credentials['github_api_version']
+    rows = delivery_rows(
+        payload,
+        jwt,
+        api_url,
+        api_version,
+        credentials.get('installation_id') or '',
+    )
 
     return process_rows(jwt, payload, rows, api_url, api_version)
 
