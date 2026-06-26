@@ -14,3 +14,4 @@ Forge is a platform for secure, ephemeral GitHub Actions runners on AWS with mul
 - [Tenant Usage Guide](tenant-usage/index.md)
 - [Secrets Reference](./configurations/secrets.md)
 - [Module Dependency Guide](./configurations/dependency.md)
+- [Forge Operations Patterns](./operations-patterns/README.md)
