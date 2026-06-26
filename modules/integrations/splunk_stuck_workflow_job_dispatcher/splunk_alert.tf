@@ -4,10 +4,26 @@ locals {
   stuck_workflow_job_search = <<-EOT
     index="${var.splunk_conf.index}" ((forgecicd_log_type=webhook github.status=*) OR ("Successfully dispatched job for"))
     | rex field=message "to the queue (?<queued_url>https?://\S+)\s-\sJob ID:\s(?<dispatch_workflowJobId>\d+)"
-    | eval workflowJobId=coalesce('github.workflowJobId', dispatch_workflowJobId)
+    | spath path=github.workflowJobId output=github_workflow_job_id
+    | spath path=github.workflowJobUrl output=workflow_job_url
+    | spath path=github.runId output=run_id
+    | spath path=github.runAttempt output=run_attempt
+    | spath path=github.runUrl output=run_url
+    | spath path=github.workflowName output=workflow_name
+    | spath path=github.repository output=github_repository
+    | spath path=github.name output=job_name
+    | spath path=github.status output=status
+    | spath path=github.created_at output=created_at
+    | spath path=github.started_at output=started_at
+    | spath path=github.labels{} output=github_labels
+    | spath path=github.github-delivery output=github_delivery
+    | spath path=github.headBranch output=head_branch
+    | spath path=github.headSha output=head_sha
+    | eval workflowJobId=coalesce(github_workflow_job_id, 'github.workflowJobId', dispatch_workflowJobId)
     | where isnotnull(workflowJobId)
+    | eval repository=coalesce(github_repository, 'github.repository')
     | eval is_webhook=if(forgecicd_log_type="webhook", 1, 0)
-    | eval is_queued=if(forgecicd_log_type="webhook" AND 'github.status'="queued", 1, 0)
+    | eval is_queued=if(forgecicd_log_type="webhook" AND status="queued", 1, 0)
     | eval is_dispatch=if(searchmatch("Successfully dispatched job for"), 1, 0)
     | stats
         count(eval(is_webhook=1)) as total_events
@@ -15,21 +31,29 @@ locals {
         max(is_dispatch) as has_dispatch
         min(_time) as first_seen
         max(_time) as last_seen
-        latest(github.name) as job_name
+        latest(job_name) as job_name
         latest(forgecicd_tenant) as forgecicd_tenant
-        latest(github.repository) as repository
-        latest(github.started_at) as started_at
-        values(github.labels) as labels
-        values(github.github-delivery) as github_delivery
-        values(queued_url) as queued_url
-        values(aws_region) as aws_region
+        latest(repository) as repository
+        latest(workflow_job_url) as workflow_job_url
+        latest(run_id) as run_id
+        latest(run_attempt) as run_attempt
+        latest(run_url) as run_url
+        latest(workflow_name) as workflow_name
+        latest(head_branch) as head_branch
+        latest(head_sha) as head_sha
+        latest(created_at) as created_at
+        latest(started_at) as started_at
+        values(github_labels) as labels
+        values(github_delivery) as github_delivery
+        latest(queued_url) as queued_url
+        latest(aws_region) as aws_region
       by workflowJobId
     | where total_events = queued_count
     | where has_dispatch = 1
     | eval stuck_since=strftime(first_seen, "%Y-%m-%dT%H:%M:%S%Z"), stuck_minutes=round((now() - first_seen) / 60, 1)
     | where stuck_minutes > ${var.splunk_alert.stuck_minutes_threshold}
     | sort - stuck_minutes
-    | eval splunk_batch_result=json_object("workflowJobId", workflowJobId, "job_name", job_name, "repository", repository, "labels", labels, "started_at", started_at, "stuck_since", stuck_since, "stuck_minutes", stuck_minutes, "queued_url", queued_url, "github_delivery", github_delivery, "forgecicd_tenant", forgecicd_tenant, "aws_region", aws_region)
+    | eval splunk_batch_result=json_object("workflowJobId", workflowJobId, "job_name", job_name, "repository", repository, "workflow_job_url", workflow_job_url, "run_id", run_id, "run_attempt", run_attempt, "run_url", run_url, "workflow_name", workflow_name, "runner_labels", labels, "head_sha", head_sha, "head_branch", head_branch, "created_at", created_at, "started_at", started_at, "stuck_since", stuck_since, "stuck_minutes", stuck_minutes, "queued_url", queued_url, "github_delivery", github_delivery, "forgecicd_tenant", forgecicd_tenant, "aws_region", aws_region)
     | stats count as result_count list(splunk_batch_result) as splunk_batch_results
     | where result_count > 0
     | eval results=mv_to_json_array(splunk_batch_results, true())

@@ -268,7 +268,7 @@ def load_tenant_configs() -> List[Dict[str, Any]]:
 
 def resolve_tenant_config(payload: Dict[str, Any]) -> Dict[str, str]:
     tenant = payload['tenant']
-    aws_region = payload['region']
+    aws_region = payload['aws_region']
     tenant_configs = load_tenant_configs()
     matches = []
 
@@ -294,12 +294,12 @@ def resolve_tenant_config(payload: Dict[str, Any]) -> Dict[str, str]:
     if not matches:
         raise ValueError(
             'No tenant deployment prefix configured for '
-            f"tenant={tenant} region={aws_region}"
+            f"tenant={tenant} aws_region={aws_region}"
         )
     if len(matches) > 1:
         raise ValueError(
             'Ambiguous tenant deployment prefix configuration for '
-            f"tenant={tenant} region={aws_region}"
+            f"tenant={tenant} aws_region={aws_region}"
         )
 
     return matches[0]
@@ -321,10 +321,10 @@ def get_optional_parameter(ssm_client, name: str) -> str:
 
 def load_github_app_credentials(payload: Dict[str, Any]) -> Dict[str, Any]:
     tenant = payload['tenant']
-    region = payload['region']
+    aws_region = payload['aws_region']
     tenant_config = resolve_tenant_config(payload)
     deployment_prefix = tenant_config['deployment_prefix']
-    ssm_client = boto3.client('ssm', region_name=region)
+    ssm_client = boto3.client('ssm', region_name=aws_region)
     parameter_base = f"/forge/{deployment_prefix}"
 
     raw_key = get_parameter(ssm_client, f"{parameter_base}/github_app_key")
@@ -339,9 +339,9 @@ def load_github_app_credentials(payload: Dict[str, Any]) -> Dict[str, Any]:
             f"Neither GitHub App client ID nor app ID exists for {deployment_prefix}")
 
     LOG.info(
-        'loaded_github_app_credentials tenant=%s region=%s deployment_prefix=%s github_mode=%s github_api_url=%s',
+        'loaded_github_app_credentials tenant=%s aws_region=%s deployment_prefix=%s github_mode=%s github_api_url=%s',
         tenant,
-        region,
+        aws_region,
         deployment_prefix,
         'saas' if tenant_config['github_api_url'].rstrip(
             '/') == 'https://api.github.com' else 'ghes',
@@ -359,7 +359,7 @@ def load_github_app_credentials(payload: Dict[str, Any]) -> Dict[str, Any]:
 def normalize_delivery_references(
     values: Iterable[Any],
 ) -> Tuple[List[str], List[str]]:
-    delivery_ids: List[str] = []
+    numeric_delivery_ids: List[str] = []
     delivery_guids: List[str] = []
     seen_ids = set()
     seen_guids = set()
@@ -373,7 +373,7 @@ def normalize_delivery_references(
             if delivery_reference in seen_ids:
                 continue
             seen_ids.add(delivery_reference)
-            delivery_ids.append(delivery_reference)
+            numeric_delivery_ids.append(delivery_reference)
             continue
 
         if DELIVERY_GUID_RE.fullmatch(delivery_reference):
@@ -386,7 +386,7 @@ def normalize_delivery_references(
 
         raise ValueError(f"Invalid delivery ID/GUID: {delivery_reference}")
 
-    return delivery_ids, delivery_guids
+    return numeric_delivery_ids, delivery_guids
 
 
 def delivery_row_from_id(delivery_id: str) -> Dict[str, Any]:
@@ -517,12 +517,15 @@ def delivery_rows(
     api_version: str | None = None,
     installation_id: str = '',
 ) -> List[Dict[str, Any]]:
-    delivery_ids, delivery_guids = normalize_delivery_references(
-        payload.get('github_delivery') or payload.get('delivery_ids') or [])
-    if not delivery_ids and not delivery_guids:
+    numeric_delivery_ids, delivery_guids = normalize_delivery_references(
+        payload.get('github_delivery') or [])
+    if not numeric_delivery_ids and not delivery_guids:
         raise ValueError('No github_delivery provided by Splunk')
 
-    rows = [delivery_row_from_id(delivery_id) for delivery_id in delivery_ids]
+    rows = [
+        delivery_row_from_id(delivery_id)
+        for delivery_id in numeric_delivery_ids
+    ]
     if delivery_guids:
         rows.extend(resolve_delivery_guid_rows(
             jwt,
@@ -569,6 +572,7 @@ def process_rows(
     api_version: str | None = None,
 ) -> Dict[str, Any]:
     tenant = payload['tenant']
+    runner_labels = payload.get('runner_labels') or []
     succeeded = 0
 
     for index, row in enumerate(rows):
@@ -586,8 +590,13 @@ def process_rows(
         )
 
         if index == 0:
-            LOG.info('redelivery_preflight tenant=%s delivery_id=%s',
-                     tenant, row.get('id'))
+            LOG.info(
+                'redelivery_preflight tenant=%s delivery_id=%s workflow_job_id=%s runner_labels=%s',
+                tenant,
+                row.get('id'),
+                payload.get('workflow_job_id'),
+                ','.join(runner_labels),
+            )
         redeliver_delivery(jwt, row, api_url, api_version)
 
         succeeded += 1
@@ -597,8 +606,9 @@ def process_rows(
         'candidates': len(rows),
         'redelivered': succeeded,
         'tenant': tenant,
-        'region': payload['region'],
+        'aws_region': payload['aws_region'],
         'workflow_job_id': payload['workflow_job_id'],
+        'runner_labels': runner_labels,
     }
 
 

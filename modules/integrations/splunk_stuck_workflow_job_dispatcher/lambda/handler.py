@@ -97,26 +97,6 @@ def extract_results(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
     return [payload] if payload else []
 
 
-def first_value(value: Any) -> str:
-    if value is None:
-        return ''
-    if isinstance(value, list):
-        for item in value:
-            selected = first_value(item)
-            if selected:
-                return selected
-        return ''
-    return str(value).strip()
-
-
-def first_present(result: Dict[str, Any], *keys: str) -> str:
-    for key in keys:
-        value = first_value(result.get(key))
-        if value:
-            return value
-    return ''
-
-
 def split_multivalue(value: Any) -> List[str]:
     if value is None:
         return []
@@ -149,56 +129,42 @@ def dedupe_preserving_order(values: Iterable[str]) -> List[str]:
     return result
 
 
-def parse_region(result: Dict[str, Any]) -> str:
-    explicit = first_present(result, 'aws_region', 'region')
-    if explicit:
-        return explicit
-
-    queued_url = first_value(result.get('queued_url'))
-    match = re.search(
-        r'https?://sqs[.-]([a-z0-9-]+)\.amazonaws\.com', queued_url)
-    if match:
-        return match.group(1)
-
-    return ''
-
-
 def normalize_result(result: Dict[str, Any]) -> Dict[str, Any]:
-    workflow_job_id = first_present(
-        result,
-        'workflowJobId',
-        'workflow_job_id',
-        'github.workflowJobId',
-    )
-    repository = first_present(result, 'repository', 'github.repository')
-    tenant = first_present(result, 'forgecicd_tenant', 'tenant')
-    region = parse_region(result)
-    github_delivery = split_multivalue(first_present(
-        result,
-        'github_delivery',
-        'github.github-delivery',
-        'github_deliveries',
-        'delivery_ids',
-        'delivery_id',
-    ))
+    workflow_job_id = result.get('workflowJobId')
+    repository = result.get('repository')
+    tenant = result.get('forgecicd_tenant')
+    aws_region = result.get('aws_region')
+    github_delivery = split_multivalue(result.get('github_delivery'))
+    runner_labels = split_multivalue(result.get('runner_labels'))
 
     normalized = {
         'workflow_job_id': workflow_job_id,
         'repository': repository,
         'tenant': tenant,
-        'region': region,
+        'aws_region': aws_region,
         'github_delivery': github_delivery,
-        'stuck_minutes': first_value(result.get('stuck_minutes')),
-        'stuck_since': first_value(result.get('stuck_since')),
-        'queued_url': first_value(result.get('queued_url')),
-        'job_name': first_value(result.get('job_name')),
+        'stuck_minutes': result.get('stuck_minutes'),
+        'stuck_since': result.get('stuck_since'),
+        'queued_url': result.get('queued_url'),
+        'job_name': result.get('job_name'),
+        'workflow_job_url': result.get('workflow_job_url'),
+        'run_id': result.get('run_id'),
+        'run_attempt': result.get('run_attempt'),
+        'run_url': result.get('run_url'),
+        'workflow_name': result.get('workflow_name'),
+        'runner_labels': runner_labels,
+        'head_sha': result.get('head_sha'),
+        'head_branch': result.get('head_branch'),
+        'created_at': result.get('created_at'),
+        'started_at': result.get('started_at'),
     }
 
-    missing = [
-        key
-        for key in ('workflow_job_id', 'tenant', 'region')
-        if not normalized.get(key)
-    ]
+    required_fields = {
+        'workflowJobId': workflow_job_id,
+        'forgecicd_tenant': tenant,
+        'aws_region': aws_region,
+    }
+    missing = [key for key, value in required_fields.items() if not value]
     if not github_delivery:
         missing.append('github_delivery')
     if missing:
@@ -210,9 +176,9 @@ def normalize_result(result: Dict[str, Any]) -> Dict[str, Any]:
 
 def dedupe_key(payload: Dict[str, Any]) -> str:
     tenant = payload.get('tenant') or 'unknown'
-    region = payload.get('region') or 'unknown'
+    aws_region = payload.get('aws_region') or 'unknown'
     repository = payload.get('repository') or 'unknown'
-    return f"{tenant}#{region}#{repository}#{payload['workflow_job_id']}"
+    return f"{tenant}#{aws_region}#{repository}#{payload['workflow_job_id']}"
 
 
 def put_pending_work_once(key: str, payload: Dict[str, Any]) -> bool:
@@ -276,15 +242,20 @@ def lambda_handler(event, _context):
                 continue
 
             LOG.info(
-                'redelivery_work_queued key=%s repository=%s tenant=%s region=%s github_delivery=%d',
+                'redelivery_work_queued key=%s repository=%s tenant=%s aws_region=%s github_delivery=%d runner_labels=%s',
                 key,
                 work_payload.get('repository'),
                 work_payload.get('tenant'),
-                work_payload.get('region'),
+                work_payload.get('aws_region'),
                 len(work_payload.get('github_delivery') or []),
+                ','.join(work_payload.get('runner_labels') or []),
             )
             queued.append(
-                {'key': key, 'workflow_job_id': work_payload['workflow_job_id']})
+                {
+                    'key': key,
+                    'workflow_job_id': work_payload['workflow_job_id'],
+                    'runner_labels': work_payload.get('runner_labels') or [],
+                })
 
         return response(202, {'queued': queued, 'skipped': skipped})
 

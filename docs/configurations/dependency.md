@@ -31,6 +31,51 @@ ______________________________________________________________________
 | `modules/platform/ec2_deployment` | Internal (uses `terraform-aws-github-runner`)                                 | Deploys EC2-based ephemeral GitHub Actions runners.                                    |
 | `modules/platform/arc_deployment` | Internal (wraps `core/arc`)                                                   | Deploys EKS-based GitHub runners via ARC.                                              |
 
+### Local `terraform-aws-github-runner` source override
+
+OpenTofu 1.11+ can evaluate variables in module `source` fields, but this repo
+keeps the committed source literal so tooling such as `terraform-docs` can still
+parse the module and Terraform callers continue to work. The Forge tenant
+Terragrunt root generates an override file inside `.terragrunt-cache` so the
+nested `ec2_deployment` module sees a literal source value during `init`.
+
+```bash
+export GITHUB_RUNNER_MODULE_SOURCE="/Users/me/src/terraform-aws-github-runner/modules/multi-runner"
+terragrunt init -upgrade
+```
+
+The value can be any Terraform module source address, including a fork and
+branch:
+
+```bash
+export GITHUB_RUNNER_MODULE_SOURCE="git::https://github.com/me/terraform-aws-github-runner.git//modules/multi-runner?ref=my-branch"
+terragrunt init -upgrade
+```
+
+The Forge tenant Terragrunt example already includes the required `generate`
+block. For a custom Terragrunt root, add the same pattern:
+
+```hcl
+locals {
+  github_runner_module_source = get_env("GITHUB_RUNNER_MODULE_SOURCE", "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=v7.8.0")
+}
+
+generate "github_runner_source_override" {
+  path      = "../ec2_deployment/runner_source_override.tf"
+  if_exists = "overwrite_terragrunt"
+  contents  = <<EOF
+module "runners" {
+  source = ${jsonencode(local.github_runner_module_source)}
+}
+EOF
+}
+```
+
+Unset `GITHUB_RUNNER_MODULE_SOURCE` and rerun `terragrunt init -upgrade` to
+return to the pinned source in the module. The Lambda zip download remains
+controlled separately by `download_lambdas.sh`; use the existing `USE_CACHE` and
+`CACHE_PATH` flow when testing local Lambda artifacts.
+
 ______________________________________________________________________
 
 ## Core ARC Module

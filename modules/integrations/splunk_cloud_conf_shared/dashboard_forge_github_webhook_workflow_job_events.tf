@@ -31,6 +31,22 @@ locals {
         title = "Repository"
         type  = "input.text"
       }
+      input_workflow = {
+        options = {
+          defaultValue = "*"
+          token        = "workflow"
+        }
+        title = "Workflow"
+        type  = "input.text"
+      }
+      input_branch = {
+        options = {
+          defaultValue = "*"
+          token        = "branch"
+        }
+        title = "Head Branch"
+        type  = "input.text"
+      }
     }
     defaults = {
       dataSources = {
@@ -67,6 +83,18 @@ locals {
         showLastUpdated = true
         showProgressBar = false
         title           = "EC2 Queued Jobs > 5 Minutes"
+        type            = "splunk.table"
+      }
+      workflow_branch_summary_table = {
+        dataSources = {
+          primary = "workflow_branch_summary_search"
+        }
+        options = {
+          count = 30
+        }
+        showLastUpdated = true
+        showProgressBar = false
+        title           = "Workflow and Branch Activity"
         type            = "splunk.table"
       }
       k8s_queued_jobs_table = {
@@ -130,14 +158,56 @@ locals {
             | spath path=github.action output=action
             | spath path=github.status output=status
             | spath path=github.conclusion output=conclusion
+            | spath path=github.workflowName output=workflow_name
+            | spath path=github.headBranch output=head_branch
             | where github_event="workflow_job"
             | where "$tenant$"="*" OR forgecicd_tenant="$tenant$"
             | where "$repository$"="*" OR like(repository, "%$repository$%")
+            | where "$workflow$"="*" OR like(workflow_name, "%$workflow$%")
+            | where "$branch$"="*" OR like(head_branch, "%$branch$%")
             | eval failed=if(status="completed" AND conclusion="failure", 1, 0)
             | eval canceled=if(status="completed" AND (conclusion="cancelled" OR conclusion="canceled"), 1, 0)
             | stats sum(failed) as failed_jobs sum(canceled) as canceled_jobs count as workflow_jobs by forgecicd_tenant
             | where failed_jobs>0 OR canceled_jobs>0
             | sort - failed_jobs - canceled_jobs
+          EOT
+          queryParameters = {
+            earliest = "$global_time.earliest$"
+            latest   = "$global_time.latest$"
+          }
+        }
+        type = "ds.search"
+      }
+      workflow_branch_summary_search = {
+        name = "Workflow and branch activity"
+        options = {
+          enableSmartSources = true
+          query              = <<-EOT
+            index="${var.splunk_conf.index}" forgecicd_log_type="webhook" "Github event"
+            | spath path=github.github-event output=github_event
+            | spath path=github.repository output=repository
+            | spath path=github.action output=action
+            | spath path=github.status output=status
+            | spath path=github.conclusion output=conclusion
+            | spath path=github.workflowJobId output=workflow_job_id
+            | spath path=github.workflowName output=workflow_name
+            | spath path=github.labels{} output=labels
+            | spath path=github.headBranch output=head_branch
+            | spath path=github.headSha output=head_sha
+            | where github_event="workflow_job"
+            | where "$tenant$"="*" OR forgecicd_tenant="$tenant$"
+            | where "$repository$"="*" OR like(repository, "%$repository$%")
+            | where "$workflow$"="*" OR like(workflow_name, "%$workflow$%")
+            | where "$branch$"="*" OR like(head_branch, "%$branch$%")
+            | eval queued=if(action="queued", 1, 0)
+            | eval in_progress=if(action="in_progress", 1, 0)
+            | eval completed=if(action="completed", 1, 0)
+            | eval failures=if(status="completed" AND conclusion="failure", 1, 0)
+            | eval canceled=if(status="completed" AND (conclusion="cancelled" OR conclusion="canceled"), 1, 0)
+            | stats count as events dc(workflow_job_id) as jobs sum(queued) as queued sum(in_progress) as in_progress sum(completed) as completed sum(failures) as failures sum(canceled) as canceled values(labels) as labels latest(head_sha) as head_sha latest(_time) as last_time by forgecicd_tenant repository workflow_name head_branch
+            | eval last_seen=strftime(last_time, "%Y-%m-%dT%H:%M:%S%Z")
+            | table forgecicd_tenant repository workflow_name head_branch head_sha labels events jobs queued in_progress completed failures canceled last_seen
+            | sort - failures - queued - events
           EOT
           queryParameters = {
             earliest = "$global_time.earliest$"
@@ -153,12 +223,30 @@ locals {
           query              = <<-EOT
             index="${var.splunk_conf.index}" ((forgecicd_log_type=webhook github.status=*) OR ("Successfully dispatched job for"))
             | rex field=message "to the queue (?<queued_url>https?://\S+)\s-\sJob ID:\s(?<dispatch_workflowJobId>\d+)"
-            | eval workflowJobId=coalesce('github.workflowJobId', dispatch_workflowJobId)
+            | spath path=github.workflowJobId output=github_workflow_job_id
+            | spath path=github.workflowJobUrl output=workflow_job_url
+            | spath path=github.runId output=run_id
+            | spath path=github.runAttempt output=run_attempt
+            | spath path=github.runUrl output=run_url
+            | spath path=github.workflowName output=workflow_name
+            | spath path=github.repository output=github_repository
+            | spath path=github.name output=job_name
+            | spath path=github.status output=status
+            | spath path=github.created_at output=created_at
+            | spath path=github.started_at output=started_at
+            | spath path=github.labels{} output=github_labels
+            | spath path=github.github-delivery output=github_delivery
+            | spath path=github.headBranch output=head_branch
+            | spath path=github.headSha output=head_sha
+            | eval workflowJobId=coalesce(github_workflow_job_id, 'github.workflowJobId', dispatch_workflowJobId)
             | where isnotnull(workflowJobId)
             | where "$tenant$"="*" OR forgecicd_tenant="$tenant$"
-            | where "$repository$"="*" OR like('github.repository', "%$repository$%") OR like(queued_url, "%$repository$%")
+            | eval repository=coalesce(github_repository, 'github.repository')
+            | where "$repository$"="*" OR like(repository, "%$repository$%") OR like(queued_url, "%$repository$%")
+            | where "$workflow$"="*" OR like(workflow_name, "%$workflow$%")
+            | where "$branch$"="*" OR like(head_branch, "%$branch$%")
             | eval is_webhook=if(forgecicd_log_type="webhook", 1, 0)
-            | eval is_queued=if(forgecicd_log_type="webhook" AND 'github.status'="queued", 1, 0)
+            | eval is_queued=if(forgecicd_log_type="webhook" AND status="queued", 1, 0)
             | eval is_dispatch=if(searchmatch("Successfully dispatched job for"), 1, 0)
             | stats
                 count(eval(is_webhook=1)) as total_events
@@ -166,12 +254,20 @@ locals {
                 max(is_dispatch) as has_dispatch
                 min(_time) as first_seen
                 max(_time) as last_seen
-                latest(github.name) as job_name
+                latest(job_name) as job_name
                 latest(forgecicd_tenant) as forgecicd_tenant
-                latest(github.repository) as repository
-                latest(github.started_at) as started_at
-                values(github.labels) as labels
-                values(github.github-delivery) as github_delivery
+                latest(repository) as repository
+                latest(workflow_job_url) as workflow_job_url
+                latest(run_id) as run_id
+                latest(run_attempt) as run_attempt
+                latest(run_url) as run_url
+                latest(workflow_name) as workflow_name
+                latest(head_branch) as head_branch
+                latest(head_sha) as head_sha
+                latest(created_at) as created_at
+                latest(started_at) as started_at
+                values(github_labels) as labels
+                values(github_delivery) as github_delivery
                 values(queued_url) as queued_url
                 values(aws_region) as aws_region
               by workflowJobId
@@ -180,7 +276,7 @@ locals {
             | eval stuck_since=strftime(first_seen, "%Y-%m-%dT%H:%M:%S%Z"), stuck_minutes=round((now() - first_seen) / 60, 1)
             | where stuck_minutes > 5
             | sort - stuck_minutes
-            | table workflowJobId job_name repository labels started_at stuck_since stuck_minutes queued_url github_delivery forgecicd_tenant aws_region
+            | table workflowJobId job_name repository workflow_name head_branch head_sha labels workflow_job_url run_id run_attempt run_url created_at started_at stuck_since stuck_minutes queued_url github_delivery forgecicd_tenant aws_region
           EOT
           queryParameters = {
             earliest = "$global_time.earliest$"
@@ -196,13 +292,30 @@ locals {
           query              = <<-EOT
             index="${var.splunk_conf.index}" ((forgecicd_log_type=webhook github.status=*) OR ("Received event contains runner labels" "Job ID:"))
             | rex field=message "Received event contains runner labels '(?<runner_labels>[^']+)' from '(?<warning_repo>[^']+)'.*Job ID:\s(?<warning_workflowJobId>\d+)"
-            | eval workflowJobId=coalesce('github.workflowJobId', warning_workflowJobId)
+            | spath path=github.workflowJobId output=github_workflow_job_id
+            | spath path=github.workflowJobUrl output=workflow_job_url
+            | spath path=github.runId output=run_id
+            | spath path=github.runAttempt output=run_attempt
+            | spath path=github.runUrl output=run_url
+            | spath path=github.workflowName output=workflow_name
+            | spath path=github.repository output=github_repository
+            | spath path=github.name output=job_name
+            | spath path=github.status output=status
+            | spath path=github.created_at output=created_at
+            | spath path=github.started_at output=started_at
+            | spath path=github.labels{} output=github_labels
+            | spath path=github.github-delivery output=github_delivery
+            | spath path=github.headBranch output=head_branch
+            | spath path=github.headSha output=head_sha
+            | eval workflowJobId=coalesce(github_workflow_job_id, 'github.workflowJobId', warning_workflowJobId)
             | where isnotnull(workflowJobId)
             | where "$tenant$"="*" OR forgecicd_tenant="$tenant$"
-            | eval repository=coalesce('github.repository', warning_repo)
+            | eval repository=coalesce(github_repository, 'github.repository', warning_repo)
             | where "$repository$"="*" OR like(repository, "%$repository$%")
+            | where "$workflow$"="*" OR like(workflow_name, "%$workflow$%")
+            | where "$branch$"="*" OR like(head_branch, "%$branch$%")
             | eval is_webhook=if(forgecicd_log_type="webhook", 1, 0)
-            | eval is_queued=if(forgecicd_log_type="webhook" AND 'github.status'="queued", 1, 0)
+            | eval is_queued=if(forgecicd_log_type="webhook" AND status="queued", 1, 0)
             | eval has_runner_label_warning=if(searchmatch("Received event contains runner labels"), 1, 0)
             | stats
                 count(eval(is_webhook=1)) as total_events
@@ -210,12 +323,20 @@ locals {
                 max(has_runner_label_warning) as has_runner_label_warning
                 min(_time) as first_seen
                 max(_time) as last_seen
-                latest(github.name) as job_name
+                latest(job_name) as job_name
                 latest(forgecicd_tenant) as forgecicd_tenant
-                latest(github.repository) as repository
-                latest(github.started_at) as started_at
-                values(github.labels) as github_labels
-                values(github.github-delivery) as github_deliveries
+                latest(repository) as repository
+                latest(workflow_job_url) as workflow_job_url
+                latest(run_id) as run_id
+                latest(run_attempt) as run_attempt
+                latest(run_url) as run_url
+                latest(workflow_name) as workflow_name
+                latest(head_branch) as head_branch
+                latest(head_sha) as head_sha
+                latest(created_at) as created_at
+                latest(started_at) as started_at
+                values(github_labels) as github_labels
+                values(github_delivery) as github_deliveries
                 values(runner_labels) as runner_labels
                 values(warning_repo) as warning_repo
               by workflowJobId
@@ -225,7 +346,7 @@ locals {
             | where stuck_minutes > 5
             | eval labels=coalesce(mvjoin(runner_labels, ", "), mvjoin(github_labels, ", "))
             | sort - stuck_minutes
-            | table workflowJobId job_name repository warning_repo labels started_at stuck_since stuck_minutes github_deliveries forgecicd_tenant
+            | table workflowJobId job_name repository warning_repo workflow_name head_branch head_sha labels workflow_job_url run_id run_attempt run_url created_at started_at stuck_since stuck_minutes github_deliveries forgecicd_tenant
           EOT
           queryParameters = {
             earliest = "$global_time.earliest$"
@@ -247,16 +368,27 @@ locals {
             | spath path=github.conclusion output=conclusion
             | spath path=github.name output=job
             | spath path=github.workflowJobId output=workflow_job_id
+            | spath path=github.workflowJobUrl output=workflow_job_url
+            | spath path=github.runId output=run_id
+            | spath path=github.runAttempt output=run_attempt
+            | spath path=github.runUrl output=run_url
+            | spath path=github.workflowName output=workflow_name
+            | spath path=github.labels{} output=labels
+            | spath path=github.headSha output=head_sha
+            | spath path=github.headBranch output=head_branch
+            | spath path=github.created_at output=created_at
             | spath path=github.started_at output=started_at
             | spath path=github.completed_at output=completed_at
             | spath path=github.github-delivery output=delivery_id
             | where github_event="workflow_job" AND status="completed" AND conclusion="failure"
             | where "$tenant$"="*" OR forgecicd_tenant="$tenant$"
             | where "$repository$"="*" OR like(repository, "%$repository$%")
+            | where "$workflow$"="*" OR like(workflow_name, "%$workflow$%")
+            | where "$branch$"="*" OR like(head_branch, "%$branch$%")
             | eval started_epoch=strptime(started_at, "%Y-%m-%dT%H:%M:%SZ")
             | eval completed_epoch=strptime(completed_at, "%Y-%m-%dT%H:%M:%SZ")
             | eval duration=if(isnotnull(completed_epoch) AND isnotnull(started_epoch), tostring(completed_epoch-started_epoch, "duration"), null())
-            | table _time forgecicd_tenant repository job workflow_job_id conclusion started_at completed_at duration delivery_id xray_trace_id message
+            | table _time forgecicd_tenant repository workflow_name head_branch head_sha labels job workflow_job_id workflow_job_url run_id run_attempt run_url conclusion created_at started_at completed_at duration delivery_id xray_trace_id message
             | sort - _time
           EOT
           queryParameters = {
@@ -279,16 +411,27 @@ locals {
             | spath path=github.conclusion output=conclusion
             | spath path=github.name output=job
             | spath path=github.workflowJobId output=workflow_job_id
+            | spath path=github.workflowJobUrl output=workflow_job_url
+            | spath path=github.runId output=run_id
+            | spath path=github.runAttempt output=run_attempt
+            | spath path=github.runUrl output=run_url
+            | spath path=github.workflowName output=workflow_name
+            | spath path=github.labels{} output=labels
+            | spath path=github.headSha output=head_sha
+            | spath path=github.headBranch output=head_branch
+            | spath path=github.created_at output=created_at
             | spath path=github.started_at output=started_at
             | spath path=github.completed_at output=completed_at
             | spath path=github.github-delivery output=delivery_id
             | where github_event="workflow_job" AND status="completed" AND conclusion="cancelled"
             | where "$tenant$"="*" OR forgecicd_tenant="$tenant$"
             | where "$repository$"="*" OR like(repository, "%$repository$%")
+            | where "$workflow$"="*" OR like(workflow_name, "%$workflow$%")
+            | where "$branch$"="*" OR like(head_branch, "%$branch$%")
             | eval started_epoch=strptime(started_at, "%Y-%m-%dT%H:%M:%SZ")
             | eval completed_epoch=strptime(completed_at, "%Y-%m-%dT%H:%M:%SZ")
             | eval duration=if(isnotnull(completed_epoch) AND isnotnull(started_epoch), tostring(completed_epoch-started_epoch, "duration"), null())
-            | table _time forgecicd_tenant repository job workflow_job_id conclusion started_at completed_at duration delivery_id xray_trace_id message
+            | table _time forgecicd_tenant repository workflow_name head_branch head_sha labels job workflow_job_id workflow_job_url run_id run_attempt run_url conclusion created_at started_at completed_at duration delivery_id xray_trace_id message
             | sort - _time
           EOT
           queryParameters = {
@@ -311,6 +454,15 @@ locals {
             | spath path=github.conclusion output=conclusion
             | spath path=github.name output=job
             | spath path=github.workflowJobId output=workflow_job_id
+            | spath path=github.workflowJobUrl output=workflow_job_url
+            | spath path=github.runId output=run_id
+            | spath path=github.runAttempt output=run_attempt
+            | spath path=github.runUrl output=run_url
+            | spath path=github.workflowName output=workflow_name
+            | spath path=github.labels{} output=labels
+            | spath path=github.headSha output=head_sha
+            | spath path=github.headBranch output=head_branch
+            | spath path=github.created_at output=created_at
             | spath path=github.started_at output=started_at
             | spath path=github.completed_at output=completed_at
             | spath path=github.github-delivery output=delivery_id
@@ -319,12 +471,14 @@ locals {
             | where github_event="workflow_job"
             | where "$tenant$"="*" OR forgecicd_tenant="$tenant$"
             | where "$repository$"="*" OR like(repository, "%$repository$%")
+            | where "$workflow$"="*" OR like(workflow_name, "%$workflow$%")
+            | where "$branch$"="*" OR like(head_branch, "%$branch$%")
             | eval aws_region=coalesce(aws_region, region, Region)
             | eval aws_request_id='aws-request-id'
             | eval started_epoch=strptime(started_at, "%Y-%m-%dT%H:%M:%SZ")
             | eval completed_epoch=strptime(completed_at, "%Y-%m-%dT%H:%M:%SZ")
             | eval duration=if(isnotnull(completed_epoch) AND isnotnull(started_epoch), tostring(completed_epoch-started_epoch, "duration"), null())
-            | table _time timestamp forgecicd_tenant forgecicd_region_alias forgecicd_vpc_alias aws_region forgecicd_log_type repository github_event action status conclusion job workflow_job_id started_at completed_at duration delivery_id hook_id installation_target_id aws_request_id xray_trace_id message
+            | table _time timestamp forgecicd_tenant forgecicd_region_alias forgecicd_vpc_alias aws_region forgecicd_log_type repository workflow_name head_branch head_sha labels github_event action status conclusion job workflow_job_id workflow_job_url run_id run_attempt run_url created_at started_at completed_at duration delivery_id hook_id installation_target_id aws_request_id xray_trace_id message
             | sort - _time
           EOT
           queryParameters = {
@@ -339,7 +493,9 @@ locals {
       globalInputs = [
         "input_global_time",
         "input_tenant",
-        "input_repository"
+        "input_repository",
+        "input_workflow",
+        "input_branch"
       ]
       layoutDefinitions = {
         layout = {
@@ -378,12 +534,22 @@ locals {
               type = "block"
             },
             {
+              item = "workflow_branch_summary_table"
+              position = {
+                h = 340
+                w = 1200
+                x = 0
+                y = 600
+              }
+              type = "block"
+            },
+            {
               item = "failed_jobs_table"
               position = {
                 h = 360
                 w = 600
                 x = 0
-                y = 600
+                y = 940
               }
               type = "block"
             },
@@ -393,7 +559,7 @@ locals {
                 h = 360
                 w = 600
                 x = 600
-                y = 600
+                y = 940
               }
               type = "block"
             },
@@ -403,7 +569,7 @@ locals {
                 h = 620
                 w = 1200
                 x = 0
-                y = 960
+                y = 1300
               }
               type = "block"
             }
