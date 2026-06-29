@@ -39,6 +39,7 @@ __pycache__/
 .coverage
 coverage.xml
 .venv/
+.python-version
 
 # Local-only improvement kit (not for the public repo)
 CLAUDE.md

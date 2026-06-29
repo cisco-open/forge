@@ -127,9 +127,11 @@
             ]
         },
         {
+            "description": "Pre-commit hooks - pin to commit SHA for security",
             "matchManagers": [
                 "pre-commit"
             ],
+            "pinDigests": true,
             "groupName": "Pre-commit hooks",
             "addLabels": [
                 "pre-commit"
