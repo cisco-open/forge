@@ -1,0 +1,101 @@
+---
+# yamllint disable rule:comments
+# yamllint disable rule:truthy
+name: IaC Policy
+
+on:
+  pull_request:
+    branches:
+      - main
+      - renovatebot
+    paths:
+      - modules/**/*.tf
+      - examples/**/*.tf
+      - policy/**
+      - .github/workflows/iac-policy.yml
+  push:
+    branches:
+      - main
+    paths:
+      - modules/**/*.tf
+      - examples/**/*.tf
+      - policy/**
+      - .github/workflows/iac-policy.yml
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  opa-policy:
+    name: OPA/conftest tenant-isolation gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      - name: Checkout Repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Install conftest
+        env:
+          CONFTEST_VERSION: 0.56.0
+        run: |
+          curl -fsSL -o conftest.tar.gz \
+            "https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/conftest_${CONFTEST_VERSION}_Linux_x86_64.tar.gz"
+          tar xzf conftest.tar.gz conftest
+          sudo install conftest /usr/local/bin/conftest
+          conftest --version
+
+      - name: Verify policy logic (hard gate)
+        run: conftest verify --policy policy/opa
+
+  checkov:
+    name: Checkov IaC scan (informational)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write # upload SARIF to code scanning
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      - name: Checkout Repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        with:
+          python-version: '3.12'
+
+      - name: Run Checkov (soft-fail, informational)
+        # Installed via pip + pinned (Renovate-managed) rather than a 3rd-party
+        # action SHA. Starts informational so existing PRs are not blocked;
+        # findings surface in the Security tab. Flip --soft-fail off after
+        # triage (register follow-up).
+        run: |
+          pip install "checkov==3.2.334"
+          checkov --directory modules/ --framework terraform \
+            --skip-path '.*/\.terraform/.*' \
+            --soft-fail \
+            --output cli --output sarif --output-file-path console,.
+
+      - name: Upload Checkov SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
+        with:
+          sarif_file: results.sarif
