@@ -31,3 +31,16 @@ providers
 artifacts
 
 package
+
+# Python test artifacts (tests/ — lambda unit tests, Phase 2)
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+coverage.xml
+.venv/
+
+# Local-only improvement kit (not for the public repo)
+CLAUDE.md
+docs-improvement/
+scaffolds-improvement/

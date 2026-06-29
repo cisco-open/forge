@@ -1,0 +1,17 @@
+---
+# MiniStack for Forge smoke tests. No auth token, no account.
+#   docker compose up -d
+# Pin to a real tag for reproducibility (check Docker Hub for current versions),
+# e.g. ministackorg/ministack:1.1.0 - :latest shown here for convenience.
+services:
+  ministack:
+    # Pinned for reproducibility; override with MINISTACK_IMAGE. Confirm/bump the
+    # tag against Docker Hub before first run.
+    image: ${MINISTACK_IMAGE:-ministackorg/ministack:1.1.0}
+    container_name: forge-ministack
+    ports:
+      - 127.0.0.1:4566:4566
+    volumes:
+      # Needed only for the lambda_exec smoke test (MiniStack spawns a container
+      # per function via the host Docker socket). Safe to drop for plumbing-only.
+      - /var/run/docker.sock:/var/run/docker.sock

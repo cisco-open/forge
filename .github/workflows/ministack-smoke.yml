@@ -1,0 +1,97 @@
+---
+# yamllint disable rule:comments
+# yamllint disable rule:truthy
+name: MiniStack Smoke
+
+on:
+  workflow_dispatch: {}
+  pull_request:
+    branches:
+      - main
+      - renovatebot
+    paths:
+      - modules/**/lambda/**
+      - tests/smoke/**
+      - .github/workflows/ministack-smoke.yml
+  push:
+    branches:
+      - main
+    paths:
+      - modules/**/lambda/**
+      - tests/smoke/**
+      - .github/workflows/ministack-smoke.yml
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: MiniStack smoke + real-handler exec
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    env:
+      AWS_ENDPOINT_URL: http://localhost:4566
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      # Fail (don't skip) if MiniStack is down, so the job can't pass vacuously.
+      FORGE_REQUIRE_MINISTACK: '1'
+      MINISTACK_IMAGE: ministackorg/ministack:1.1.0
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      - name: Checkout Repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        with:
+          python-version: '3.12'
+
+      - name: Install deps
+        working-directory: tests/smoke
+        run: pip install -r requirements-dev.txt
+
+      - name: Start MiniStack
+        working-directory: tests/smoke
+        run: docker compose up -d
+
+      - name: Wait for readiness
+        run: |
+          python - <<'PY'
+          import time, boto3
+          for _ in range(45):
+              try:
+                  boto3.client("sts", endpoint_url="http://localhost:4566",
+                               region_name="us-east-1",
+                               aws_access_key_id="test",
+                               aws_secret_access_key="test").get_caller_identity()
+                  print("MiniStack ready"); break
+              except Exception:
+                  time.sleep(2)
+          else:
+              raise SystemExit("MiniStack did not become ready")
+          PY
+
+      - name: Smoke plumbing tests
+        working-directory: tests/smoke
+        run: pytest -m smoke -q
+
+      - name: Real-handler lambda execution
+        working-directory: tests/smoke
+        run: pytest -m lambda_exec -q
+
+      - name: MiniStack logs (on failure)
+        if: failure()
+        working-directory: tests/smoke
+        run: docker compose logs --tail 200
