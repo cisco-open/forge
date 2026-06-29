@@ -1,12 +1,7 @@
 locals {
   # Templatized userdata (cloud-init) file.
-  user_data_prefix                   = "${path.module}/template_files"
-  userdata_template_post_install     = "${local.user_data_prefix}/post_install.tftpl"
-  runner_template_hook_job_started   = "${local.user_data_prefix}/hook_job_started.tftpl"
-  runner_template_hook_job_completed = "${local.user_data_prefix}/hook_job_completed.tftpl"
-
-  runner_hook_job_started   = file(local.runner_template_hook_job_started)
-  runner_hook_job_completed = file(local.runner_template_hook_job_completed)
+  user_data_prefix               = "${path.module}/template_files"
+  userdata_template_post_install = "${local.user_data_prefix}/post_install.tftpl"
 
 }
 
@@ -129,8 +124,8 @@ module "runners" {
             ecr_registries = var.tenant_configs.ecr_registries
           }
         )
-        runner_hook_job_started           = local.runner_hook_job_started
-        runner_hook_job_completed         = local.runner_hook_job_completed
+        runner_hook_job_started           = file("${local.user_data_prefix}/hook_job_started_${val["runner_os"]}.tftpl")
+        runner_hook_job_completed         = file("${local.user_data_prefix}/hook_job_completed_${val["runner_os"]}.tftpl")
         enable_runner_detailed_monitoring = true
         runner_run_as                     = val["runner_user"]
         block_device_mappings             = val["block_device_mappings"]
