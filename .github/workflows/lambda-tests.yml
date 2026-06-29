@@ -1,0 +1,68 @@
+---
+# yamllint disable rule:comments
+# yamllint disable rule:truthy
+name: Lambda Unit Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+      - renovatebot
+    paths:
+      - modules/**/lambda/**
+      - tests/**
+      - .github/workflows/lambda-tests.yml
+  push:
+    branches:
+      - main
+    paths:
+      - modules/**/lambda/**
+      - tests/**
+      - .github/workflows/lambda-tests.yml
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    name: Lambda unit tests + coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      - name: Checkout Repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        with:
+          # Match the lambda runtime (python3.12) so imports/behaviour parity.
+          python-version: '3.12'
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r tests/requirements-dev.txt
+
+      - name: Run unit tests
+        working-directory: tests
+        run: python -m pytest -q
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: lambda-coverage-xml
+          path: tests/coverage.xml
+          if-no-files-found: ignore
