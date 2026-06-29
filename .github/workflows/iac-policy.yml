@@ -84,18 +84,22 @@ jobs:
 
       - name: Run Checkov (soft-fail, informational)
         # Installed via pip + pinned (Renovate-managed) rather than a 3rd-party
-        # action SHA. Starts informational so existing PRs are not blocked;
-        # findings surface in the Security tab. Flip --soft-fail off after
-        # triage (register follow-up).
+        # action SHA. Informational: never blocks the PR (continue-on-error +
+        # --soft-fail); findings surface in the Security tab. Flip --soft-fail
+        # off after triage (register follow-up).
+        # NOTE: --output-file-path takes the SARIF FILENAME (not a dir) in this
+        # checkov version; writing to '.' raises IsADirectoryError.
+        continue-on-error: true
         run: |
           pip install "checkov==3.2.334"
           checkov --directory modules/ --framework terraform \
             --skip-path '.*/\.terraform/.*' \
             --soft-fail \
-            --output cli --output sarif --output-file-path console,.
+            --output cli --output sarif --output-file-path console,results.sarif
 
       - name: Upload Checkov SARIF
         if: always()
+        continue-on-error: true
         uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
         with:
           sarif_file: results.sarif

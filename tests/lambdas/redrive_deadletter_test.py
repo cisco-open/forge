@@ -55,6 +55,14 @@ def test_empty_map_is_noop(monkeypatch):
 
 def test_redrive_starts_move_task_per_mapping(monkeypatch, sqs):
     mod = load_handler_module('redrive_deadletter')
+    # moto 5.x does not implement start_message_move_task; stub it so we can
+    # assert the handler calls it correctly (the live path is covered by the
+    # MiniStack/LocalStack smoke suite).
+    calls = []
+    monkeypatch.setattr(
+        mod.sqs, 'start_message_move_task',
+        lambda **kw: calls.append(kw) or {'TaskHandle': 'task-123'},
+    )
     sqs_map = {
         'jobs': {'main': sqs['main_arn'], 'dlq': sqs['dlq_arn']},
     }
@@ -64,7 +72,7 @@ def test_redrive_starts_move_task_per_mapping(monkeypatch, sqs):
     assert len(result['results']) == 1
     entry = result['results'][0]
     assert entry['key'] == 'jobs'
-    # Either a task started, or moto returned a structured error — never a
-    # silent success with no attempt.
-    assert entry['status'] in {'started', 'error'}
+    assert entry['status'] == 'started'
     assert entry['dlq'] == sqs['dlq_arn']
+    # Handler must move FROM the DLQ (SourceArn = the dead-letter queue).
+    assert calls and calls[0].get('SourceArn') == sqs['dlq_arn']

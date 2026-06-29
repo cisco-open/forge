@@ -39,9 +39,11 @@ jobs:
       AWS_DEFAULT_REGION: us-east-1
       AWS_ACCESS_KEY_ID: test
       AWS_SECRET_ACCESS_KEY: test
-      # Fail (don't skip) if MiniStack is down, so the job can't pass vacuously.
+      # Fail (don't skip) if the emulator is down, so the job can't pass vacuously.
       FORGE_REQUIRE_MINISTACK: '1'
-      MINISTACK_IMAGE: ministackorg/ministack:1.1.0
+      # Real emulator = LocalStack Community (token-free); "MiniStack" was the
+      # kit placeholder. Pin a specific tag for reproducibility if desired.
+      MINISTACK_IMAGE: localstack/localstack:latest
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
