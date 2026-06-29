@@ -5,13 +5,13 @@
 # Why these versions of jwt/requests/cryptography: the lambdas import them from
 # the public Klayers layers at runtime (see docs-improvement/phase1-audit-register.md
 # A4). Installing them here lets tests import handlers "as the runtime does".
-pytest==8.3.4
+pytest==9.0.3
 pytest-cov==6.0.0
 moto[all]==5.0.28
 boto3==1.35.90
 botocore==1.35.90
 # Runtime libs provided by Klayers in production (job_log_archiver et al.):
-PyJWT==2.10.1
-requests==2.32.3
-cryptography==44.0.0
+PyJWT==2.13.0
+requests==2.33.0
+cryptography==48.0.1
 responses==0.25.3
