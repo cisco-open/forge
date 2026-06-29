@@ -16,6 +16,20 @@ ${pre_install}
 
 Set-Location C:\actions-runner
 
+%{ if hook_job_started != "" }
+@'
+${hook_job_started}
+'@ | Set-Content -Path 'C:\actions-runner\hook_job_started.ps1' -Encoding utf8
+Add-Content -Path 'C:\actions-runner\.env' -Value 'ACTIONS_RUNNER_HOOK_JOB_STARTED=C:\actions-runner\hook_job_started.ps1'
+%{ endif }
+
+%{ if hook_job_completed != "" }
+@'
+${hook_job_completed}
+'@ | Set-Content -Path 'C:\actions-runner\hook_job_completed.ps1' -Encoding utf8
+Add-Content -Path 'C:\actions-runner\.env' -Value 'ACTIONS_RUNNER_HOOK_JOB_COMPLETED=C:\actions-runner\hook_job_completed.ps1'
+%{ endif }
+
 ${start_runner}
 
 Stop-Transcript
