@@ -41,9 +41,9 @@ jobs:
       AWS_SECRET_ACCESS_KEY: test
       # Fail (don't skip) if the emulator is down, so the job can't pass vacuously.
       FORGE_REQUIRE_MINISTACK: '1'
-      # Real emulator = LocalStack Community (token-free); "MiniStack" was the
-      # kit placeholder. Pin a specific tag for reproducibility if desired.
-      MINISTACK_IMAGE: localstack/localstack:latest
+      # MiniStack: a token-free, LocalStack-compatible emulator on :4566. The
+      # '-full' image bundles Lambda, needed by the real-handler exec test.
+      MINISTACK_IMAGE: ministackorg/ministack:1.3.69-full
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
@@ -56,7 +56,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
         with:
           python-version: '3.12'
 
