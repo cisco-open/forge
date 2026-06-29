@@ -72,4 +72,8 @@ resource "helm_release" "splunk_otel_collector" {
   force_update    = true
   cleanup_on_fail = true
   timeout         = 1200
+
+  depends_on = [
+    resource.aws_eks_pod_identity_association.eks_pod_identity
+  ]
 }
