@@ -1,35 +1,5 @@
-moved {
-  from = splunk_configs_conf.stuck_workflow_job_dispatcher_extractions["delivery_attempt"]
-  to   = splunk_configs_conf.stuck_workflow_job_dispatcher_delivery_attempt
-}
-
-moved {
-  from = splunk_configs_conf.stuck_workflow_job_dispatcher_extractions["generic_fields"]
-  to   = splunk_configs_conf.stuck_workflow_job_dispatcher_generic_fields
-}
-
-moved {
-  from = splunk_configs_conf.stuck_workflow_job_dispatcher_extractions["key_fields"]
-  to   = splunk_configs_conf.stuck_workflow_job_dispatcher_key_fields
-}
-
-moved {
-  from = splunk_configs_conf.stuck_workflow_job_dispatcher_extractions["receiver_source"]
-  to   = splunk_configs_conf.stuck_workflow_job_dispatcher_receiver_source
-}
-
-moved {
-  from = splunk_configs_conf.stuck_workflow_job_dispatcher_extractions["runner_group"]
-  to   = splunk_configs_conf.stuck_workflow_job_dispatcher_runner_group
-}
-
-moved {
-  from = splunk_configs_conf.stuck_workflow_job_dispatcher_extractions["worker_source"]
-  to   = splunk_configs_conf.stuck_workflow_job_dispatcher_worker_source
-}
-
-resource "splunk_configs_conf" "stuck_workflow_job_dispatcher_delivery_attempt" {
-  name = "transforms/stuck_workflow_job_dispatcher_delivery_attempt"
+resource "splunk_configs_conf" "forgecicd_stuck_workflow_job_dispatcher_delivery_attempt" {
+  name = "transforms/forgecicd_stuck_workflow_job_dispatcher_delivery_attempt"
 
   variables = {
     REGEX      = "delivery_id=([^\\s]+)\\s+guid=([^\\s]+)\\s+event=([^\\s]+)\\s+delivered_at=([^\\s]+)\\s+status=([^\\s]+)\\s+status_code=([^\\s]+)\\s+repository_id=([^\\s]+)"
@@ -62,8 +32,8 @@ resource "splunk_configs_conf" "stuck_workflow_job_dispatcher_delivery_attempt" 
   }
 }
 
-resource "splunk_configs_conf" "stuck_workflow_job_dispatcher_generic_fields" {
-  name = "transforms/stuck_workflow_job_dispatcher_generic_fields"
+resource "splunk_configs_conf" "forgecicd_stuck_workflow_job_dispatcher_generic_fields" {
+  name = "transforms/forgecicd_stuck_workflow_job_dispatcher_generic_fields"
 
   variables = {
     REGEX        = "(?=.*(?:redelivery_work_|splunk_webhook_skip|runner_lookup_failed|request_rejected|dispatcher_failed|worker_skip|runner_group))(?:^|\\s)(reason|repository|tenant|aws_region|workflow_job_id|workflow_job_url|runner|instance_id|state|delivery_id|guid|event|status|status_code)=([^\\s]+)"
@@ -97,8 +67,8 @@ resource "splunk_configs_conf" "stuck_workflow_job_dispatcher_generic_fields" {
   }
 }
 
-resource "splunk_configs_conf" "stuck_workflow_job_dispatcher_key_fields" {
-  name = "transforms/stuck_workflow_job_dispatcher_key_fields"
+resource "splunk_configs_conf" "forgecicd_stuck_workflow_job_dispatcher_key_fields" {
+  name = "transforms/forgecicd_stuck_workflow_job_dispatcher_key_fields"
 
   variables = {
     REGEX      = "(?=.*(?:redelivery_work_|splunk_webhook_skip|runner_lookup_failed|dispatcher_failed|redelivery_preflight|redelivery_execute|redelivery_work_completed|redelivery_work_failed|worker_skip))key=([^#\\s]+)#([^#\\s]+)#([^#\\s]+)#([^\\s]+)"
@@ -131,11 +101,11 @@ resource "splunk_configs_conf" "stuck_workflow_job_dispatcher_key_fields" {
   }
 }
 
-resource "splunk_configs_conf" "stuck_workflow_job_dispatcher_receiver_source" {
-  name = "transforms/stuck_workflow_job_dispatcher_receiver_source"
+resource "splunk_configs_conf" "forgecicd_stuck_workflow_job_dispatcher_receiver_source" {
+  name = "transforms/forgecicd_stuck_workflow_job_dispatcher_receiver_source"
 
   variables = {
-    REGEX      = "([^:]+):\\/aws\\/lambda\\/(${var.name_prefix}):"
+    REGEX      = "([^:]+):\\/aws\\/lambda\\/(${var.stuck_workflow_job_dispatcher_name_prefix}):"
     FORMAT     = "aws_region::$1 stuck_dispatcher_lambda::$2 stuck_dispatcher_component::receiver"
     SOURCE_KEY = "source"
     CLEAN_KEYS = "0"
@@ -165,8 +135,8 @@ resource "splunk_configs_conf" "stuck_workflow_job_dispatcher_receiver_source" {
   }
 }
 
-resource "splunk_configs_conf" "stuck_workflow_job_dispatcher_runner_group" {
-  name = "transforms/stuck_workflow_job_dispatcher_runner_group"
+resource "splunk_configs_conf" "forgecicd_stuck_workflow_job_dispatcher_runner_group" {
+  name = "transforms/forgecicd_stuck_workflow_job_dispatcher_runner_group"
 
   variables = {
     REGEX      = "runner_group\\s+queue=([^\\s]+)\\s+runner=([^\\s]+)\\s+stuck=([0-9]+)\\s+instances=([0-9]+)\\s+executed=([0-9]+)\\s+free=([0-9]+)\\s+skip=([0-9]+)"
@@ -199,11 +169,11 @@ resource "splunk_configs_conf" "stuck_workflow_job_dispatcher_runner_group" {
   }
 }
 
-resource "splunk_configs_conf" "stuck_workflow_job_dispatcher_worker_source" {
-  name = "transforms/stuck_workflow_job_dispatcher_worker_source"
+resource "splunk_configs_conf" "forgecicd_stuck_workflow_job_dispatcher_worker_source" {
+  name = "transforms/forgecicd_stuck_workflow_job_dispatcher_worker_source"
 
   variables = {
-    REGEX      = "([^:]+):\\/aws\\/lambda\\/(${var.name_prefix}-worker):"
+    REGEX      = "([^:]+):\\/aws\\/lambda\\/(${var.stuck_workflow_job_dispatcher_name_prefix}-worker):"
     FORMAT     = "aws_region::$1 stuck_dispatcher_lambda::$2 stuck_dispatcher_component::worker"
     SOURCE_KEY = "source"
     CLEAN_KEYS = "0"

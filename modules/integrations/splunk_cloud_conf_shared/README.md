@@ -8,7 +8,7 @@ Forge runners are ephemeral, so logs are the durable evidence trail. This module
 
 ## What It Manages
 
-- Forge Splunk dashboards for runner lifecycle, capacity, webhooks, job logs, trust failures, tenants, and troubleshooting.
+- Forge Splunk dashboards for runner lifecycle, capacity, webhooks, job logs, trust failures, tenants, troubleshooting, and stuck workflow job redelivery.
 - Props and transforms for CloudWatch logs, runner logs, Kubernetes logs, Lambda logs, EC2 logs, and billing data.
 - Splunk provider configuration sourced from Secrets Manager.
 - Shared field extraction standards used by operators.
@@ -32,7 +32,7 @@ Forge runners are ephemeral, so logs are the durable evidence trail. This module
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.52.0 |
 | <a name="provider_splunk"></a> [splunk](#provider\_splunk) | 1.5.3 |
 
 ## Modules
@@ -85,6 +85,12 @@ No modules.
 | [splunk_configs_conf.forgecicd_runner_logs_logs](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_runner_logs_tenant_fields_event](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_runner_logs_tenant_fields_logs](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
+| [splunk_configs_conf.forgecicd_stuck_workflow_job_dispatcher_delivery_attempt](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
+| [splunk_configs_conf.forgecicd_stuck_workflow_job_dispatcher_generic_fields](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
+| [splunk_configs_conf.forgecicd_stuck_workflow_job_dispatcher_key_fields](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
+| [splunk_configs_conf.forgecicd_stuck_workflow_job_dispatcher_receiver_source](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
+| [splunk_configs_conf.forgecicd_stuck_workflow_job_dispatcher_runner_group](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
+| [splunk_configs_conf.forgecicd_stuck_workflow_job_dispatcher_worker_source](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_trust_validation](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_data_ui_views.forge_arc_dind_runner_lifecycle](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
 | [splunk_data_ui_views.forge_arc_k8s_runner_lifecycle](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
@@ -99,6 +105,8 @@ No modules.
 | [splunk_data_ui_views.forge_troubleshooting](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
 | [splunk_data_ui_views.forge_trust_failures](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
 | [splunk_data_ui_views.forge_webhook_job_log_pipeline](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
+| [splunk_data_ui_views.stuck_workflow_job_dispatcher_debug](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
+| [splunk_data_ui_views.stuck_workflow_job_dispatcher_health](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
 | [aws_secretsmanager_secret.secrets](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/secretsmanager_secret) | data source |
 | [aws_secretsmanager_secret_version.secrets](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/secretsmanager_secret_version) | data source |
 
@@ -110,6 +118,7 @@ No modules.
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | Assuming single region for now. | `string` | n/a | yes |
 | <a name="input_default_tags"></a> [default\_tags](#input\_default\_tags) | A map of tags to apply to resources. | `map(string)` | n/a | yes |
 | <a name="input_splunk_conf"></a> [splunk\_conf](#input\_splunk\_conf) | n/a | <pre>object({<br/>    splunk_cloud = string<br/>    acl = object({<br/>      app     = string<br/>      owner   = string<br/>      sharing = string<br/>      read    = list(string)<br/>      write   = list(string)<br/>    })<br/>    index        = string<br/>    tenant_names = list(string)<br/>  })</pre> | n/a | yes |
+| <a name="input_stuck_workflow_job_dispatcher_name_prefix"></a> [stuck\_workflow\_job\_dispatcher\_name\_prefix](#input\_stuck\_workflow\_job\_dispatcher\_name\_prefix) | Lambda name prefix used by the stuck workflow job dispatcher dashboards and source transforms. | `string` | `"forge-stuck-workflow-job-dispatcher"` | no |
 
 ## Outputs
 

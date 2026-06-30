@@ -3,33 +3,39 @@ resource "splunk_configs_conf" "forgecicd_cloudwatchlogs" {
   name = "props/aws:cloudwatchlogs"
 
   variables = {
-    "REPORT-forgecicd_cloudwatchlogs_lambda_tenant_fields"        = "forgecicd_cloudwatchlogs_lambda_tenant_fields"
-    "REPORT-forgecicd_cloudwatchlogs_global_lambda_tenant_fields" = "forgecicd_cloudwatchlogs_global_lambda_tenant_fields"
-    "REPORT-forgecicd_extra_lambda_tenant_fields"                 = "forgecicd_extra_lambda_tenant_fields"
-    "REPORT-forgecicd_trust_validation"                           = "forgecicd_trust_validation"
-    "REPORT-forgecicd_extra_lambda_ec2_tenant_fields"             = "forgecicd_extra_lambda_ec2_tenant_fields"
-    "REPORT-forgecicd_eks_control_plane_fields"                   = "forgecicd_eks_control_plane_fields"
-    "EVAL-github_action"                                          = "'github.action'"
-    "EVAL-github_completed_at"                                    = "'github.completed_at'"
-    "EVAL-github_conclusion"                                      = "'github.conclusion'"
-    "EVAL-github_created_at"                                      = "'github.created_at'"
-    "EVAL-github_delivery"                                        = "'github.github-delivery'"
-    "EVAL-github_event"                                           = "'github.github-event'"
-    "EVAL-github_head_branch"                                     = "'github.headBranch'"
-    "EVAL-github_head_sha"                                        = "'github.headSha'"
-    "EVAL-github_hook_id"                                         = "'github.github-hook-id'"
-    "EVAL-github_hook_installation_target_id"                     = "'github.github-hook-installation-target-id'"
-    "EVAL-github_job_name"                                        = "'github.name'"
-    "EVAL-github_labels"                                          = "mvjoin('github.labels', \", \")"
-    "EVAL-github_repository"                                      = "'github.repository'"
-    "EVAL-github_run_attempt"                                     = "'github.runAttempt'"
-    "EVAL-github_run_id"                                          = "'github.runId'"
-    "EVAL-github_run_url"                                         = "'github.runUrl'"
-    "EVAL-github_started_at"                                      = "'github.started_at'"
-    "EVAL-github_status"                                          = "'github.status'"
-    "EVAL-github_workflow_job_id"                                 = "'github.workflowJobId'"
-    "EVAL-github_workflow_job_url"                                = "'github.workflowJobUrl'"
-    "EVAL-github_workflow_name"                                   = "'github.workflowName'"
+    "REPORT-forgecicd_cloudwatchlogs_lambda_tenant_fields"            = "forgecicd_cloudwatchlogs_lambda_tenant_fields"
+    "REPORT-forgecicd_cloudwatchlogs_global_lambda_tenant_fields"     = "forgecicd_cloudwatchlogs_global_lambda_tenant_fields"
+    "REPORT-forgecicd_extra_lambda_tenant_fields"                     = "forgecicd_extra_lambda_tenant_fields"
+    "REPORT-forgecicd_trust_validation"                               = "forgecicd_trust_validation"
+    "REPORT-forgecicd_extra_lambda_ec2_tenant_fields"                 = "forgecicd_extra_lambda_ec2_tenant_fields"
+    "REPORT-forgecicd_eks_control_plane_fields"                       = "forgecicd_eks_control_plane_fields"
+    "REPORT-forgecicd_stuck_workflow_job_dispatcher_delivery_attempt" = "forgecicd_stuck_workflow_job_dispatcher_delivery_attempt"
+    "REPORT-forgecicd_stuck_workflow_job_dispatcher_generic_fields"   = "forgecicd_stuck_workflow_job_dispatcher_generic_fields"
+    "REPORT-forgecicd_stuck_workflow_job_dispatcher_key_fields"       = "forgecicd_stuck_workflow_job_dispatcher_key_fields"
+    "REPORT-forgecicd_stuck_workflow_job_dispatcher_receiver_source"  = "forgecicd_stuck_workflow_job_dispatcher_receiver_source"
+    "REPORT-forgecicd_stuck_workflow_job_dispatcher_runner_group"     = "forgecicd_stuck_workflow_job_dispatcher_runner_group"
+    "REPORT-forgecicd_stuck_workflow_job_dispatcher_worker_source"    = "forgecicd_stuck_workflow_job_dispatcher_worker_source"
+    "EVAL-github_action"                                              = "'github.action'"
+    "EVAL-github_completed_at"                                        = "'github.completed_at'"
+    "EVAL-github_conclusion"                                          = "'github.conclusion'"
+    "EVAL-github_created_at"                                          = "'github.created_at'"
+    "EVAL-github_delivery"                                            = "'github.github-delivery'"
+    "EVAL-github_event"                                               = "'github.github-event'"
+    "EVAL-github_head_branch"                                         = "'github.headBranch'"
+    "EVAL-github_head_sha"                                            = "'github.headSha'"
+    "EVAL-github_hook_id"                                             = "'github.github-hook-id'"
+    "EVAL-github_hook_installation_target_id"                         = "'github.github-hook-installation-target-id'"
+    "EVAL-github_job_name"                                            = "'github.name'"
+    "EVAL-github_labels"                                              = "mvjoin('github.labels', \", \")"
+    "EVAL-github_repository"                                          = "'github.repository'"
+    "EVAL-github_run_attempt"                                         = "'github.runAttempt'"
+    "EVAL-github_run_id"                                              = "'github.runId'"
+    "EVAL-github_run_url"                                             = "'github.runUrl'"
+    "EVAL-github_started_at"                                          = "'github.started_at'"
+    "EVAL-github_status"                                              = "'github.status'"
+    "EVAL-github_workflow_job_id"                                     = "'github.workflowJobId'"
+    "EVAL-github_workflow_job_url"                                    = "'github.workflowJobUrl'"
+    "EVAL-github_workflow_name"                                       = "'github.workflowName'"
   }
 
   acl {
@@ -64,12 +70,6 @@ resource "splunk_configs_conf" "forgecicd_cloudwatchlogs" {
       variables["MUST_BREAK_AFTER"],
       variables["MUST_NOT_BREAK_AFTER"],
       variables["MUST_NOT_BREAK_BEFORE"],
-      variables["REPORT-stuck_workflow_job_dispatcher_delivery_attempt"],
-      variables["REPORT-stuck_workflow_job_dispatcher_generic_fields"],
-      variables["REPORT-stuck_workflow_job_dispatcher_key_fields"],
-      variables["REPORT-stuck_workflow_job_dispatcher_receiver_source"],
-      variables["REPORT-stuck_workflow_job_dispatcher_runner_group"],
-      variables["REPORT-stuck_workflow_job_dispatcher_worker_source"],
       variables["SEGMENTATION"],
       variables["SEGMENTATION-all"],
       variables["SEGMENTATION-inner"],
@@ -94,6 +94,12 @@ resource "splunk_configs_conf" "forgecicd_cloudwatchlogs" {
     splunk_configs_conf.forgecicd_extra_lambda_tenant_fields,
     splunk_configs_conf.forgecicd_extra_lambda_ec2_tenant_fields,
     splunk_configs_conf.forgecicd_trust_validation,
-    splunk_configs_conf.forgecicd_eks_control_plane_fields
+    splunk_configs_conf.forgecicd_eks_control_plane_fields,
+    splunk_configs_conf.forgecicd_stuck_workflow_job_dispatcher_delivery_attempt,
+    splunk_configs_conf.forgecicd_stuck_workflow_job_dispatcher_generic_fields,
+    splunk_configs_conf.forgecicd_stuck_workflow_job_dispatcher_key_fields,
+    splunk_configs_conf.forgecicd_stuck_workflow_job_dispatcher_receiver_source,
+    splunk_configs_conf.forgecicd_stuck_workflow_job_dispatcher_runner_group,
+    splunk_configs_conf.forgecicd_stuck_workflow_job_dispatcher_worker_source
   ]
 }

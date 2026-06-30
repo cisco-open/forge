@@ -27,3 +27,9 @@ variable "splunk_conf" {
     tenant_names = list(string)
   })
 }
+
+variable "stuck_workflow_job_dispatcher_name_prefix" {
+  type        = string
+  description = "Lambda name prefix used by the stuck workflow job dispatcher dashboards and source transforms."
+  default     = "forge-stuck-workflow-job-dispatcher"
+}

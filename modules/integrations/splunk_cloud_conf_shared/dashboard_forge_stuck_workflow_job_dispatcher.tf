@@ -3,22 +3,22 @@ locals {
   stuck_workflow_job_dispatcher_debug_dashboard_name  = "forge_stuck_workflow_job_dispatcher_debug"
 
   stuck_workflow_job_dispatcher_health_definition = templatefile(
-    "${path.module}/template_files/splunk_stuck_workflow_job_dispatcher_health.json.tftpl",
+    "${path.module}/template_files/forge_stuck_workflow_job_dispatcher_health.json.tftpl",
     {
-      receiver_lambda_name = var.name_prefix,
+      receiver_lambda_name = var.stuck_workflow_job_dispatcher_name_prefix,
       splunk_index         = var.splunk_conf.index,
       tenants              = sort(var.splunk_conf.tenant_names),
-      worker_lambda_name   = "${var.name_prefix}-worker"
+      worker_lambda_name   = "${var.stuck_workflow_job_dispatcher_name_prefix}-worker"
     }
   )
 
   stuck_workflow_job_dispatcher_debug_definition = templatefile(
-    "${path.module}/template_files/splunk_stuck_workflow_job_dispatcher_debug.json.tftpl",
+    "${path.module}/template_files/forge_stuck_workflow_job_dispatcher_debug.json.tftpl",
     {
-      receiver_lambda_name = var.name_prefix,
+      receiver_lambda_name = var.stuck_workflow_job_dispatcher_name_prefix,
       splunk_index         = var.splunk_conf.index,
       tenants              = sort(var.splunk_conf.tenant_names),
-      worker_lambda_name   = "${var.name_prefix}-worker"
+      worker_lambda_name   = "${var.stuck_workflow_job_dispatcher_name_prefix}-worker"
     }
   )
 

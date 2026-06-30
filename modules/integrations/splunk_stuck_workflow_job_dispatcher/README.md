@@ -78,14 +78,13 @@ missing or invalid webhook token return HTTP 403 and are logged as
 `request_rejected` with request metadata such as source IP, method, path, route
 key, user agent, and token length. The token value is never logged.
 
-The module creates static Splunk transform definitions for dispatcher fields
-such as `stuck_dispatcher_tenant`, `stuck_dispatcher_repository`,
-`stuck_dispatcher_workflow_job_id`, and runner capacity counters. It also links
-those transforms from `props/aws:cloudwatchlogs` while ignoring the shared
-`REPORT-*` and `EVAL-*` fields owned by `splunk_cloud_conf_shared`; the shared
-module ignores the dispatcher report keys in the same stanza. The included
-dashboards also parse dispatcher fields inline with `rex`, so they keep working
-before those transforms are visible in Splunk search.
+The shared `splunk_cloud_conf_shared` module owns the dispatcher Splunk
+transforms, dashboards, and `props/aws:cloudwatchlogs` report bindings. Those
+shared assets extract dispatcher fields such as `stuck_dispatcher_tenant`,
+`stuck_dispatcher_repository`, `stuck_dispatcher_workflow_job_id`, and runner
+capacity counters. The dashboards also parse dispatcher fields inline with
+`rex`, so they keep working before those transforms are visible in Splunk
+search.
 
 ## Example Module Call
 
@@ -166,15 +165,6 @@ The tenant mapping is stored in SSM chunks because large multi-tenant configurat
 | [aws_ssm_parameter.tenant_configs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
 | [random_password.webhook_token](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
 | [splunk_configs_conf.stuck_workflow_job_dispatcher](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
-| [splunk_configs_conf.stuck_workflow_job_dispatcher_cloudwatchlogs_props](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
-| [splunk_configs_conf.stuck_workflow_job_dispatcher_delivery_attempt](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
-| [splunk_configs_conf.stuck_workflow_job_dispatcher_generic_fields](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
-| [splunk_configs_conf.stuck_workflow_job_dispatcher_key_fields](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
-| [splunk_configs_conf.stuck_workflow_job_dispatcher_receiver_source](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
-| [splunk_configs_conf.stuck_workflow_job_dispatcher_runner_group](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
-| [splunk_configs_conf.stuck_workflow_job_dispatcher_worker_source](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
-| [splunk_data_ui_views.stuck_workflow_job_dispatcher_debug](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
-| [splunk_data_ui_views.stuck_workflow_job_dispatcher_health](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_iam_policy_document.dispatcher](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.worker](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
@@ -203,8 +193,6 @@ The tenant mapping is stored in SSM chunks because large multi-tenant configurat
 | ---- | ----------- |
 | <a name="output_api_endpoint"></a> [api\_endpoint](#output\_api\_endpoint) | Base HTTP API endpoint for the Splunk alert webhook receiver. |
 | <a name="output_api_log_group_name"></a> [api\_log\_group\_name](#output\_api\_log\_group\_name) | CloudWatch log group containing API Gateway HTTP API access logs. |
-| <a name="output_dashboard_name"></a> [dashboard\_name](#output\_dashboard\_name) | Splunk Dashboard Studio view name for dispatcher health. |
-| <a name="output_debug_dashboard_name"></a> [debug\_dashboard\_name](#output\_debug\_dashboard\_name) | Splunk Dashboard Studio view name for dispatcher debug logs. |
 | <a name="output_dedupe_table_name"></a> [dedupe\_table\_name](#output\_dedupe\_table\_name) | DynamoDB table used to suppress duplicate dispatches. |
 | <a name="output_receiver_lambda_function_arn"></a> [receiver\_lambda\_function\_arn](#output\_receiver\_lambda\_function\_arn) | Splunk webhook receiver Lambda ARN. |
 | <a name="output_receiver_lambda_log_group_name"></a> [receiver\_lambda\_log\_group\_name](#output\_receiver\_lambda\_log\_group\_name) | CloudWatch log group containing Splunk webhook receiver Lambda logs. |
