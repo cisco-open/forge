@@ -41,7 +41,7 @@ resource "splunk_configs_conf" "forgecicd_stuck_workflow_job_dispatcher_generic_
     SOURCE_KEY   = "_raw"
     CLEAN_KEYS   = "0"
     MV_ADD       = "1"
-    REPEAT_MATCH = "true"
+    REPEAT_MATCH = "1"
   }
 
   acl {
