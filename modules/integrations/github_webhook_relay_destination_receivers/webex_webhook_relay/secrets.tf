@@ -31,6 +31,7 @@ resource "aws_kms_alias" "webex_alias" {
 }
 
 resource "aws_secretsmanager_secret" "cicd_secrets" {
+  #checkov:skip=CKV2_AWS_57:Secret value is operator-managed for this integration; automatic rotation is not available here.
   for_each = {
     for key, val in local.secrets : val.name => val
   }

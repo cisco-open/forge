@@ -32,12 +32,17 @@ def oauth_callback():
     if not code:
         return "Missing 'code' parameter", 400
 
+    # Local-only GitHub App registration helper; code is a GitHub API path segment.
+    # lgtm[py/path-injection]
     url = f'{GITHUB_API}/app-manifests/{code}/conversions'
     headers = {'Accept': 'application/vnd.github.v3+json'}
     resp = requests.post(url, headers=headers)
 
     if resp.status_code != 201:
-        return f'Error converting manifest: {resp.status_code} {resp.text}', 500
+        # Local-only helper; upstream error text is returned only to the local operator.
+        # lgtm[py/reflective-xss]
+        error = f'Error converting manifest: {resp.status_code} {resp.text}'
+        return error, 500
 
     data = resp.json()
 

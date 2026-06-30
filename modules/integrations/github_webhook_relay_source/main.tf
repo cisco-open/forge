@@ -29,6 +29,7 @@ resource "aws_apigatewayv2_integration" "lambda" {
 }
 
 resource "aws_apigatewayv2_route" "post_hook" {
+  #checkov:skip=CKV_AWS_309:Public GitHub webhook route validates the HMAC signature in the Lambda integration.
   api_id    = aws_apigatewayv2_api.webhook.id
   route_key = "POST /webhook"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"

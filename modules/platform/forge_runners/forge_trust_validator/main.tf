@@ -5,6 +5,7 @@ locals {
 }
 
 module "forge_trust_preparer_lambda" {
+  #checkov:skip=CKV_TF_1:Module source uses Renovate-managed version tags; commit SHA pinning is an accepted policy tradeoff.
   source  = "terraform-aws-modules/lambda/aws"
   version = "8.8.0"
 
@@ -42,6 +43,7 @@ module "forge_trust_preparer_lambda" {
 }
 
 module "forge_trust_validator_lambda" {
+  #checkov:skip=CKV_TF_1:Module source uses Renovate-managed version tags; commit SHA pinning is an accepted policy tradeoff.
   source  = "terraform-aws-modules/lambda/aws"
   version = "8.8.0"
 

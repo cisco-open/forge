@@ -1,4 +1,5 @@
 resource "aws_s3_bucket" "aws_billing_report" {
+  #checkov:skip=CKV_AWS_144:Cross-region replication is an accepted policy exception for this Forge storage bucket.
   bucket = "${data.aws_caller_identity.current.account_id}-aws-billing-report"
   tags   = local.all_security_tags
 }

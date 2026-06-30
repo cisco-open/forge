@@ -6,6 +6,7 @@ resource "aws_cloudwatch_log_group" "webex" {
 }
 
 module "webex" {
+  #checkov:skip=CKV_TF_1:Module source uses Renovate-managed version tags; commit SHA pinning is an accepted policy tradeoff.
   source  = "terraform-aws-modules/lambda/aws"
   version = "8.8.0"
 

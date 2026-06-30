@@ -54,6 +54,13 @@ resource "aws_iam_role" "cloudformation_execution_role" {
 }
 
 data "aws_iam_policy_document" "execution_role_policy" {
+  #checkov:skip=CKV2_AWS_40:CloudFormation StackSet execution role intentionally needs broad IAM permissions to deploy tenant-managed stacks.
+  #checkov:skip=CKV_AWS_107:CloudFormation StackSet execution role intentionally needs broad permissions to deploy tenant-managed stacks.
+  #checkov:skip=CKV_AWS_108:CloudFormation StackSet execution role intentionally needs broad permissions to deploy tenant-managed stacks.
+  #checkov:skip=CKV_AWS_109:CloudFormation StackSet execution role intentionally needs broad permissions to deploy tenant-managed stacks.
+  #checkov:skip=CKV_AWS_110:CloudFormation StackSet execution role intentionally needs broad permissions to deploy tenant-managed stacks.
+  #checkov:skip=CKV_AWS_111:CloudFormation StackSet execution role intentionally needs broad permissions to deploy tenant-managed stacks.
+  #checkov:skip=CKV_AWS_356:CloudFormation StackSet execution role intentionally needs wildcard resources to deploy tenant-managed stacks.
   statement {
     effect = "Allow"
     actions = [

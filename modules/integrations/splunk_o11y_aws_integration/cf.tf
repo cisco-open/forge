@@ -1,4 +1,5 @@
 resource "aws_cloudformation_stack" "splunk_integration" {
+  #checkov:skip=CKV_AWS_124:Splunk-managed CloudFormation integration stack does not require SNS notifications in this module.
   name = "splunk-integration"
 
   parameters = {

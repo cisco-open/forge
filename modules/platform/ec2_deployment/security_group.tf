@@ -1,5 +1,6 @@
 # Allow the lambda to egress to any destination via any protocol.
 resource "aws_security_group" "gh_runner_lambda_egress" {
+  #checkov:skip=CKV2_AWS_5:Security group is attached through the terraform-aws-github-runner lambda_security_group_ids module input.
   name   = "${var.runner_configs.prefix}-gh-runner-lambda-egress-all"
   vpc_id = var.network_configs.lambda_vpc_id
 

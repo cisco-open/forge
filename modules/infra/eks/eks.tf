@@ -1,4 +1,5 @@
 module "ebs_csi_irsa_role" {
+  #checkov:skip=CKV_TF_1:Module source uses Renovate-managed version tags; commit SHA pinning is an accepted policy tradeoff.
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts"
   version = "6.6.1"
 
@@ -16,6 +17,7 @@ module "ebs_csi_irsa_role" {
 }
 
 module "eks" {
+  #checkov:skip=CKV_TF_1:Module source uses Renovate-managed version tags; commit SHA pinning is an accepted policy tradeoff.
   source  = "terraform-aws-modules/eks/aws"
   version = "21.24.0"
 

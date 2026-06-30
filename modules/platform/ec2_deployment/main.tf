@@ -34,6 +34,7 @@ data "external" "download_lambdas" {
 
 
 module "runners" {
+  #checkov:skip=CKV_TF_1:Module source uses Renovate-managed version tags; commit SHA pinning is an accepted policy tradeoff.
   source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=v7.8.0"
 
   aws_region = var.aws_region

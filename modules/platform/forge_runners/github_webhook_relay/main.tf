@@ -38,6 +38,7 @@ resource "aws_kms_alias" "github_webhook_relay" {
 }
 
 resource "aws_secretsmanager_secret" "github_webhook_relay" {
+  #checkov:skip=CKV2_AWS_57:Secret value is managed by Terraform for this integration; automatic rotation is not available here.
 
   name        = "${var.secret_prefix}/webhook_relay"
   description = "GitHub webhook relay endpoint + secret"

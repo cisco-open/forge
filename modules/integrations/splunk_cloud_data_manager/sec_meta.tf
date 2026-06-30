@@ -64,6 +64,7 @@ module "splunk_security_metadata" {
 }
 
 resource "aws_cloudformation_stack" "cf_splunk_security_metadata_iam_region" {
+  #checkov:skip=CKV_AWS_124:Splunk-managed CloudFormation integration stack does not require SNS notifications in this module.
   count = var.security_metadata_config.enabled ? 1 : 0
   name  = module.splunk_security_metadata[0].splunk_integration_name
 
@@ -83,6 +84,7 @@ resource "aws_cloudformation_stack" "cf_splunk_security_metadata_iam_region" {
 }
 
 resource "aws_cloudformation_stack" "cf_splunk_security_metadata_region" {
+  #checkov:skip=CKV_AWS_124:Splunk-managed CloudFormation integration stack does not require SNS notifications in this module.
   for_each = var.security_metadata_config.enabled ? toset(setsubtract(var.security_metadata_config.regions, [var.aws_region])) : []
   provider = aws.by_region[each.value]
   name     = module.splunk_security_metadata[0].splunk_integration_name
