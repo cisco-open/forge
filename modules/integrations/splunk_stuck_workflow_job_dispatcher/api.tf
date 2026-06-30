@@ -18,6 +18,7 @@ resource "aws_apigatewayv2_integration" "dispatcher" {
 }
 
 resource "aws_apigatewayv2_route" "splunk_webhook" {
+  #checkov:skip=CKV_AWS_309:Public Splunk webhook route validates the generated path token in the Lambda integration.
   api_id    = aws_apigatewayv2_api.splunk.id
   route_key = "POST /splunk/{token}"
   target    = "integrations/${aws_apigatewayv2_integration.dispatcher.id}"

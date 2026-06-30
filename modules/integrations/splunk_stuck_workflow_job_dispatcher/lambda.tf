@@ -6,6 +6,7 @@ resource "aws_cloudwatch_log_group" "dispatcher" {
 }
 
 module "dispatcher" {
+  #checkov:skip=CKV_TF_1:Module source uses Renovate-managed version tags; commit SHA pinning is an accepted policy tradeoff.
   source  = "terraform-aws-modules/lambda/aws"
   version = "8.8.0"
 
@@ -50,6 +51,15 @@ data "aws_iam_policy_document" "dispatcher" {
     ]
     resources = [aws_dynamodb_table.dedupe.arn]
   }
+
+  statement {
+    sid    = "DescribeRunnerInstances"
+    effect = "Allow"
+    actions = [
+      "ec2:DescribeInstances",
+    ]
+    resources = ["*"]
+  }
 }
 
 resource "aws_cloudwatch_log_group" "worker" {
@@ -60,6 +70,7 @@ resource "aws_cloudwatch_log_group" "worker" {
 }
 
 module "worker" {
+  #checkov:skip=CKV_TF_1:Module source uses Renovate-managed version tags; commit SHA pinning is an accepted policy tradeoff.
   source  = "terraform-aws-modules/lambda/aws"
   version = "8.8.0"
 
