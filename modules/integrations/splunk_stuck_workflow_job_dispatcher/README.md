@@ -80,11 +80,12 @@ key, user agent, and token length. The token value is never logged.
 
 The module creates static Splunk transform definitions for dispatcher fields
 such as `stuck_dispatcher_tenant`, `stuck_dispatcher_repository`,
-`stuck_dispatcher_workflow_job_id`, and runner capacity counters. It does not
-manage shared CloudWatch `props` stanzas, so it will not remove report
-definitions owned by `splunk_cloud_conf_shared`. The included dashboards also
-parse dispatcher fields inline with `rex`, so they keep working before those
-transforms are attached to a sourcetype.
+`stuck_dispatcher_workflow_job_id`, and runner capacity counters. It also links
+those transforms from `props/aws:cloudwatchlogs` while ignoring the shared
+`REPORT-*` and `EVAL-*` fields owned by `splunk_cloud_conf_shared`; the shared
+module ignores the dispatcher report keys in the same stanza. The included
+dashboards also parse dispatcher fields inline with `rex`, so they keep working
+before those transforms are visible in Splunk search.
 
 ## Example Module Call
 
@@ -165,6 +166,7 @@ The tenant mapping is stored in SSM chunks because large multi-tenant configurat
 | [aws_ssm_parameter.tenant_configs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
 | [random_password.webhook_token](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
 | [splunk_configs_conf.stuck_workflow_job_dispatcher](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
+| [splunk_configs_conf.stuck_workflow_job_dispatcher_cloudwatchlogs_props](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.stuck_workflow_job_dispatcher_delivery_attempt](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.stuck_workflow_job_dispatcher_generic_fields](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.stuck_workflow_job_dispatcher_key_fields](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
