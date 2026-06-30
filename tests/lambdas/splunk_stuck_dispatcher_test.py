@@ -108,10 +108,10 @@ def _splunk_result(*, workflow_job_id, repository='acme/app',
             f'https://sqs.{region}.amazonaws.com/123456789012/{queue_name}'
         ),
         'workflow_job_url': workflow_job_url,
-        'runner_labels': 'self-hosted',
+        'runner_labels': ['env:ops-prod', 'self-hosted', 'type:small', 'x64'],
         'job_name': 'build',
-        'run_id': '1',
-        'run_attempt': '1',
+        'run_id': 1,
+        'run_attempt': 1,
         'workflow_name': 'ci',
     }
 
@@ -187,6 +187,72 @@ def test_normalize_result_raises_when_required_fields_missing(monkeypatch):
     msg = str(exc.value)
     assert 'queued_url' in msg
     assert 'github_delivery' in msg
+
+
+def test_process_results_classifies_and_queues_without_lambda_wrapper(
+    monkeypatch,
+):
+    mod = _load_handler(monkeypatch)
+    executed_url = 'https://github.com/acme/app/actions/runs/9/job/900'
+    queued_writes = []
+
+    def _find_runner_instances(region, runner_name):
+        assert region == AWS_REGION
+        assert runner_name == 'acgw-usw2-sl-small-action-runner'
+        return [
+            {
+                'instance_id': 'i-executed',
+                'state': 'terminated',
+                'workflow_job_url': executed_url,
+            },
+            {
+                'instance_id': 'i-free',
+                'state': 'running',
+                'workflow_job_url': '',
+            },
+        ]
+
+    def _put_pending_work_once(key, payload):
+        queued_writes.append((key, payload))
+        return True
+
+    monkeypatch.setattr(mod, 'find_runner_instances', _find_runner_instances)
+    monkeypatch.setattr(mod, 'put_pending_work_once', _put_pending_work_once)
+
+    result = mod.process_results([
+        _splunk_result(workflow_job_id=900, workflow_job_url=executed_url),
+        _splunk_result(
+            workflow_job_id=901,
+            workflow_job_url='https://github.com/acme/app/actions/runs/9/job/901',
+        ),
+        _splunk_result(
+            workflow_job_id=902,
+            workflow_job_url='https://github.com/acme/app/actions/runs/9/job/902',
+        ),
+    ])
+
+    assert result['skipped'] == [
+        {
+            'key': 'acgw#us-west-2#acme/app#900',
+            'reason': 'job_executed',
+            'workflow_job_url': executed_url,
+            'instance_id': 'i-executed',
+            'state': 'terminated',
+        },
+        {
+            'key': 'acgw#us-west-2#acme/app#901',
+            'reason': 'free_runner',
+            'runner_name': 'acgw-usw2-sl-small-action-runner',
+            'instance_id': 'i-free',
+            'state': 'running',
+        },
+    ]
+    assert result['queued'] == [{
+        'key': 'acgw#us-west-2#acme/app#902',
+        'workflow_job_id': 902,
+        'runner_labels': ['env:ops-prod', 'self-hosted', 'type:small', 'x64'],
+    }]
+    assert queued_writes[0][0] == 'acgw#us-west-2#acme/app#902'
 
 
 # --------------------------------------------------------------------------- #
