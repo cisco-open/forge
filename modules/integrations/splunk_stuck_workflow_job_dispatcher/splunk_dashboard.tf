@@ -3,7 +3,7 @@ locals {
   stuck_workflow_job_dispatcher_debug_dashboard_name  = "forge_stuck_workflow_job_dispatcher_debug"
 
   stuck_workflow_job_dispatcher_health_definition = templatefile(
-    "${path.module}/template_files/stuck_workflow_job_dispatcher_health.json.tftpl",
+    "${path.module}/template_files/splunk_stuck_workflow_job_dispatcher_health.json.tftpl",
     {
       receiver_lambda_name = var.name_prefix,
       splunk_index         = var.splunk_conf.index,
@@ -13,7 +13,7 @@ locals {
   )
 
   stuck_workflow_job_dispatcher_debug_definition = templatefile(
-    "${path.module}/template_files/stuck_workflow_job_dispatcher_debug.json.tftpl",
+    "${path.module}/template_files/splunk_stuck_workflow_job_dispatcher_debug.json.tftpl",
     {
       receiver_lambda_name = var.name_prefix,
       splunk_index         = var.splunk_conf.index,

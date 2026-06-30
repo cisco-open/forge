@@ -78,9 +78,13 @@ missing or invalid webhook token return HTTP 403 and are logged as
 `request_rejected` with request metadata such as source IP, method, path, route
 key, user agent, and token length. The token value is never logged.
 
-The included dashboards parse dispatcher fields inline with `rex` so they can be
-used without taking ownership of shared Splunk `props` or `transforms`
-configuration.
+The module creates static Splunk transform definitions for dispatcher fields
+such as `stuck_dispatcher_tenant`, `stuck_dispatcher_repository`,
+`stuck_dispatcher_workflow_job_id`, and runner capacity counters. It does not
+manage shared CloudWatch `props` stanzas, so it will not remove report
+definitions owned by `splunk_cloud_conf_shared`. The included dashboards also
+parse dispatcher fields inline with `rex`, so they keep working before those
+transforms are attached to a sourcetype.
 
 ## Example Module Call
 
@@ -161,6 +165,12 @@ The tenant mapping is stored in SSM chunks because large multi-tenant configurat
 | [aws_ssm_parameter.tenant_configs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
 | [random_password.webhook_token](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
 | [splunk_configs_conf.stuck_workflow_job_dispatcher](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
+| [splunk_configs_conf.stuck_workflow_job_dispatcher_delivery_attempt](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
+| [splunk_configs_conf.stuck_workflow_job_dispatcher_generic_fields](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
+| [splunk_configs_conf.stuck_workflow_job_dispatcher_key_fields](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
+| [splunk_configs_conf.stuck_workflow_job_dispatcher_receiver_source](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
+| [splunk_configs_conf.stuck_workflow_job_dispatcher_runner_group](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
+| [splunk_configs_conf.stuck_workflow_job_dispatcher_worker_source](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_data_ui_views.stuck_workflow_job_dispatcher_debug](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
 | [splunk_data_ui_views.stuck_workflow_job_dispatcher_health](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
