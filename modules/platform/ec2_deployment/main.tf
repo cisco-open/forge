@@ -51,6 +51,7 @@ locals {
 }
 
 resource "aws_ssm_parameter" "hook_job_started" {
+  #checkov:skip=CKV2_AWS_34:Hook payload is executable helper code, not a secret; write access is controlled by Terraform/IAM.
   for_each = local.hook_ssm_oses
   name     = "/forge/${var.runner_configs.prefix}/runner-hooks/${each.key}/job-started"
   type     = "String" # gzip+base64 payload, not a secret; Standard tier (free).
@@ -59,6 +60,7 @@ resource "aws_ssm_parameter" "hook_job_started" {
 }
 
 resource "aws_ssm_parameter" "hook_job_completed" {
+  #checkov:skip=CKV2_AWS_34:Hook payload is executable helper code, not a secret; write access is controlled by Terraform/IAM.
   for_each = local.hook_ssm_oses
   name     = "/forge/${var.runner_configs.prefix}/runner-hooks/${each.key}/job-completed"
   type     = "String"
