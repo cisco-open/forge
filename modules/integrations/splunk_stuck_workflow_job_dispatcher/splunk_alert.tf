@@ -118,6 +118,7 @@ resource "splunk_configs_conf" "stuck_workflow_job_dispatcher" {
       variables["action.summary_index.force_realtime_schedule"],
       variables["action.summary_index.inline"],
       variables["action.summary_index.track_alert"],
+      variables["action.webhook.enable_allowlist"],
       variables["action.victorops.param.enable_recovery"],
       variables["action.victorops.param.message_type"],
       variables["alert.expires"],
