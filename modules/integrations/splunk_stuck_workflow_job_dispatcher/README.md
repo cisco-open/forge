@@ -78,6 +78,15 @@ missing or invalid webhook token return HTTP 403 and are logged as
 `request_rejected` with request metadata such as source IP, method, path, route
 key, user agent, and token length. The token value is never logged.
 
+The module creates Splunk transform definitions for the receiver and worker log
+fields used by the dashboards, including `stuck_dispatcher_tenant`,
+`stuck_dispatcher_repository`, `stuck_dispatcher_workflow_job_id`,
+`stuck_dispatcher_delivery_id`, and runner capacity counters. By default it does
+not attach those transforms to `props/aws:cloudwatchlogs` because many
+deployments manage CloudWatch log props from the shared Splunk configuration
+module. Set `splunk_log_extractions.manage_cloudwatchlogs_props = true` only
+when this module should own those props stanzas.
+
 ## Example Module Call
 
 ```hcl
@@ -129,7 +138,7 @@ The tenant mapping is stored in SSM chunks because large multi-tenant configurat
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.52.0 |
 | <a name="provider_random"></a> [random](#provider\_random) | 3.9.0 |
 | <a name="provider_splunk"></a> [splunk](#provider\_splunk) | 1.5.3 |
 
@@ -157,6 +166,10 @@ The tenant mapping is stored in SSM chunks because large multi-tenant configurat
 | [aws_ssm_parameter.tenant_configs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
 | [random_password.webhook_token](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
 | [splunk_configs_conf.stuck_workflow_job_dispatcher](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
+| [splunk_configs_conf.stuck_workflow_job_dispatcher_cloudwatchlogs_props](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
+| [splunk_configs_conf.stuck_workflow_job_dispatcher_extractions](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
+| [splunk_data_ui_views.stuck_workflow_job_dispatcher_debug](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
+| [splunk_data_ui_views.stuck_workflow_job_dispatcher_health](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_iam_policy_document.dispatcher](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.worker](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
@@ -177,6 +190,7 @@ The tenant mapping is stored in SSM chunks because large multi-tenant configurat
 | <a name="input_redelivery_config"></a> [redelivery\_config](#input\_redelivery\_config) | GitHub App webhook redelivery behavior.<br/><br/>Nested attributes:<br/>- tenant\_configs: Tenant-specific GitHub Enterprise and deployment prefix mappings.<br/>- tenant\_configs.tenant: Forge tenant name from Splunk logs.<br/>- tenant\_configs.github\_api\_version: Optional GitHub API version header; defaults to 2022-11-28.<br/>- tenant\_configs.gh\_config: GitHub deployment settings for the tenant.<br/>- tenant\_configs.gh\_config.ghes\_url: GitHub Enterprise Server base URL; empty string selects github.com.<br/>- tenant\_configs.prefixes: AWS region-specific deployment prefix mappings for the tenant.<br/>- tenant\_configs.prefixes.aws\_region: AWS region where the tenant GitHub App SSM parameters are stored.<br/>- tenant\_configs.prefixes.deployment\_prefix: SSM prefix under /forge/<deployment\_prefix>/ for GitHub App credentials. | <pre>object({<br/>    tenant_configs = optional(list(object({<br/>      tenant             = string<br/>      github_api_version = optional(string)<br/>      gh_config = object({<br/>        ghes_url = string<br/>      })<br/>      prefixes = list(object({<br/>        aws_region        = string<br/>        deployment_prefix = string<br/>      }))<br/>    })), [])<br/>  })</pre> | `{}` | no |
 | <a name="input_splunk_alert"></a> [splunk\_alert](#input\_splunk\_alert) | Splunk saved-search alert configuration.<br/><br/>Nested attributes:<br/>- name: Splunk saved-search name.<br/>- description: Splunk saved-search description.<br/>- disabled: Whether to create the saved search in a disabled state.<br/>- cron\_schedule: Cron schedule for evaluating the saved search.<br/>- dispatch\_earliest\_time: Earliest Splunk search time for each alert run.<br/>- dispatch\_latest\_time: Latest Splunk search time for each alert run.<br/>- stuck\_minutes\_threshold: Minimum queued duration before redelivery is triggered.<br/>- suppress\_period: Splunk alert suppression window for duplicate stuck-job results. | <pre>object({<br/>    name                    = optional(string, "Forge stuck workflow_job dispatcher")<br/>    description             = optional(string, "Queues GitHub App webhook redelivery when Forge workflow_job queued events stay stuck after dispatch.")<br/>    disabled                = optional(bool, false)<br/>    cron_schedule           = optional(string, "*/1 * * * *")<br/>    dispatch_earliest_time  = optional(string, "-24h")<br/>    dispatch_latest_time    = optional(string, "now")<br/>    stuck_minutes_threshold = optional(number, 5)<br/>    suppress_period         = optional(string, "30m")<br/>  })</pre> | `{}` | no |
 | <a name="input_splunk_conf"></a> [splunk\_conf](#input\_splunk\_conf) | Splunk Cloud connection, ACL, and Forge index settings.<br/><br/>Nested attributes:<br/>- splunk\_cloud: Splunk Cloud host name used by the Splunk provider.<br/>- acl: Access control settings for the saved search.<br/>- acl.app: Splunk app that owns the saved search.<br/>- acl.owner: Splunk owner for the saved search.<br/>- acl.sharing: Splunk sharing scope for the saved search ACL.<br/>- acl.read: Splunk roles allowed to read the saved search.<br/>- acl.write: Splunk roles allowed to update the saved search.<br/>- index: Splunk index containing Forge CICD webhook and dispatch logs.<br/>- tenant\_names: Optional tenant allow-list retained for compatibility with shared Splunk configuration. | <pre>object({<br/>    splunk_cloud = string<br/>    acl = object({<br/>      app     = string<br/>      owner   = string<br/>      sharing = string<br/>      read    = list(string)<br/>      write   = list(string)<br/>    })<br/>    index        = string<br/>    tenant_names = optional(list(string), [])<br/>  })</pre> | n/a | yes |
+| <a name="input_splunk_log_extractions"></a> [splunk\_log\_extractions](#input\_splunk\_log\_extractions) | Splunk search-time field extraction behavior for dispatcher CloudWatch logs.<br/><br/>The module always creates the transform definitions. Set<br/>manage\_cloudwatchlogs\_props=true only when this module should also attach<br/>those transforms to CloudWatch log sourcetypes. Leave it false when a shared<br/>Splunk configuration module already owns props/aws:cloudwatchlogs or<br/>props/aws:cloudwatchlogs:forgecicd.<br/><br/>Nested attributes:<br/>- manage\_cloudwatchlogs\_props: Whether to manage props stanzas for the listed sourcetypes.<br/>- sourcetypes: CloudWatch log sourcetypes that should receive the dispatcher extraction reports. | <pre>object({<br/>    manage_cloudwatchlogs_props = optional(bool, false)<br/>    sourcetypes = optional(list(string), [<br/>      "aws:cloudwatchlogs",<br/>      "aws:cloudwatchlogs:forgecicd",<br/>    ])<br/>  })</pre> | `{}` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to apply to resources. | `map(string)` | n/a | yes |
 
 ## Outputs
@@ -185,6 +199,8 @@ The tenant mapping is stored in SSM chunks because large multi-tenant configurat
 | ---- | ----------- |
 | <a name="output_api_endpoint"></a> [api\_endpoint](#output\_api\_endpoint) | Base HTTP API endpoint for the Splunk alert webhook receiver. |
 | <a name="output_api_log_group_name"></a> [api\_log\_group\_name](#output\_api\_log\_group\_name) | CloudWatch log group containing API Gateway HTTP API access logs. |
+| <a name="output_dashboard_name"></a> [dashboard\_name](#output\_dashboard\_name) | Splunk Dashboard Studio view name for dispatcher health. |
+| <a name="output_debug_dashboard_name"></a> [debug\_dashboard\_name](#output\_debug\_dashboard\_name) | Splunk Dashboard Studio view name for dispatcher debug logs. |
 | <a name="output_dedupe_table_name"></a> [dedupe\_table\_name](#output\_dedupe\_table\_name) | DynamoDB table used to suppress duplicate dispatches. |
 | <a name="output_receiver_lambda_function_arn"></a> [receiver\_lambda\_function\_arn](#output\_receiver\_lambda\_function\_arn) | Splunk webhook receiver Lambda ARN. |
 | <a name="output_receiver_lambda_log_group_name"></a> [receiver\_lambda\_log\_group\_name](#output\_receiver\_lambda\_log\_group\_name) | CloudWatch log group containing Splunk webhook receiver Lambda logs. |

@@ -43,3 +43,13 @@ output "saved_search_name" {
   description = "Splunk saved search alert name."
   value       = var.splunk_alert.name
 }
+
+output "dashboard_name" {
+  description = "Splunk Dashboard Studio view name for dispatcher health."
+  value       = local.stuck_workflow_job_dispatcher_health_dashboard_name
+}
+
+output "debug_dashboard_name" {
+  description = "Splunk Dashboard Studio view name for dispatcher debug logs."
+  value       = local.stuck_workflow_job_dispatcher_debug_dashboard_name
+}

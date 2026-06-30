@@ -122,6 +122,30 @@ variable "splunk_alert" {
   default     = {}
 }
 
+variable "splunk_log_extractions" {
+  type = object({
+    manage_cloudwatchlogs_props = optional(bool, false)
+    sourcetypes = optional(list(string), [
+      "aws:cloudwatchlogs",
+      "aws:cloudwatchlogs:forgecicd",
+    ])
+  })
+  description = <<-EOT
+    Splunk search-time field extraction behavior for dispatcher CloudWatch logs.
+
+    The module always creates the transform definitions. Set
+    manage_cloudwatchlogs_props=true only when this module should also attach
+    those transforms to CloudWatch log sourcetypes. Leave it false when a shared
+    Splunk configuration module already owns props/aws:cloudwatchlogs or
+    props/aws:cloudwatchlogs:forgecicd.
+
+    Nested attributes:
+    - manage_cloudwatchlogs_props: Whether to manage props stanzas for the listed sourcetypes.
+    - sourcetypes: CloudWatch log sourcetypes that should receive the dispatcher extraction reports.
+  EOT
+  default     = {}
+}
+
 variable "dedupe_ttl_seconds" {
   type        = number
   description = "Seconds to suppress duplicate redelivery work for the same workflow job."

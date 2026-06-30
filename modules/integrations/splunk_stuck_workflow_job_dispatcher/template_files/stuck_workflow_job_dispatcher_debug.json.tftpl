@@ -1,0 +1,297 @@
+{
+    "applicationProperties": {
+        "collapseNavigation": true,
+        "hideEdit": false,
+        "hideExport": false,
+        "hideOpenInSearch": false
+    },
+    "dataSources": {
+        "delivery_attempts_search": {
+            "name": "GitHub delivery attempts",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" (sourcetype=\"aws:cloudwatchlogs:forgecicd\" OR sourcetype=\"aws:cloudwatchlogs\") source=\"*:/aws/lambda/${worker_lambda_name}:*\" \"redelivery_execute\"\n| rex field=_raw \"tenant=(?<tenant>[^ ]+)\"\n| rex field=_raw \"delivery_id=(?<delivery_id>[^ ]+)\"\n| rex field=_raw \"guid=(?<guid>[^ ]+)\"\n| rex field=_raw \"event=(?<github_event>[^ ]+)\"\n| rex field=_raw \"delivered_at=(?<delivered_at>[^ ]+)\"\n| rex field=_raw \"status=(?<github_status>[^ ]+)\"\n| rex field=_raw \"status_code=(?<github_status_code>[^ ]+)\"\n| rex field=_raw \"repository_id=(?<repository_id>[^ ]+)\"\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| stats count as attempts latest(_time) as last_time by tenant delivery_id guid github_event delivered_at github_status github_status_code repository_id\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - last_time\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "failure_samples_search": {
+            "name": "Failure samples",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" (sourcetype=\"aws:cloudwatchlogs:forgecicd\" OR sourcetype=\"aws:cloudwatchlogs\") (source=\"*:/aws/lambda/${receiver_lambda_name}:*\" OR source=\"*:/aws/lambda/${worker_lambda_name}:*\")\n(\"dispatcher_failed\" OR \"request_rejected\" OR \"runner_lookup_failed\" OR \"redelivery_work_failed\" OR \"[ERROR]\" OR Traceback OR AccessDenied OR UnauthorizedOperation)\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=_raw \"key=(?<key>[^ ]+)\"\n| rex field=_raw \"reason=(?<reason>[^ ]+)\"\n| rex field=key \"^(?<key_tenant>[^#]+)#(?<key_aws_region>[^#]+)#(?<repository>.+)#(?<workflow_job_id>[^#]+)$\"\n| eval tenant=coalesce(key_tenant, forgecicd_tenant, \"unknown\")\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$repository$\"=\"*\" OR like(repository, \"%$repository$%\")\n| where \"$workflow_job_id$\"=\"*\" OR workflow_job_id=\"$workflow_job_id$\"\n| eval sample=substr(replace(_raw,\"\\n.*$\",\"\"),1,650)\n| table _time lambda_name tenant repository workflow_job_id reason sample\n| sort - _time\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "job_lifecycle_search": {
+            "name": "End-to-end redelivery lifecycle",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" (sourcetype=\"aws:cloudwatchlogs:forgecicd\" OR sourcetype=\"aws:cloudwatchlogs\") (source=\"*:/aws/lambda/${receiver_lambda_name}:*\" OR source=\"*:/aws/lambda/${worker_lambda_name}:*\")\n(\"redelivery_work_queued\" OR \"splunk_webhook_skip\" OR \"redelivery_preflight\" OR \"redelivery_execute\" OR \"redelivery_work_completed\" OR \"redelivery_work_failed\" OR \"worker_skip\")\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=_raw \"key=(?<key>[^ ]+)\"\n| rex field=_raw \"reason=(?<reason>[^ ]+)\"\n| rex field=_raw \"delivery_id=(?<delivery_id>[^ ]+)\"\n| rex field=_raw \"workflow_job_id=(?<logged_workflow_job_id>[^ ]+)\"\n| rex field=key \"^(?<key_tenant>[^#]+)#(?<key_aws_region>[^#]+)#(?<key_repository>.+)#(?<key_workflow_job_id>[^#]+)$\"\n| eval tenant=coalesce(key_tenant, forgecicd_tenant, \"unknown\")\n| eval repository=key_repository\n| eval workflow_job_id=coalesce(logged_workflow_job_id, key_workflow_job_id)\n| eval stage=case(\n    match(_raw,\"redelivery_work_queued\"), \"receiver_queued\",\n    match(_raw,\"splunk_webhook_skip\"), \"receiver_skip_\" . coalesce(reason,\"unknown\"),\n    match(_raw,\"redelivery_preflight\"), \"worker_preflight\",\n    match(_raw,\"redelivery_execute\"), \"worker_execute\",\n    match(_raw,\"redelivery_work_completed\"), \"worker_completed\",\n    match(_raw,\"redelivery_work_failed\"), \"worker_failed\",\n    match(_raw,\"worker_skip\"), \"worker_skip\",\n    true(), \"other\")\n| where isnotnull(workflow_job_id)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$repository$\"=\"*\" OR like(repository, \"%$repository$%\")\n| where \"$workflow_job_id$\"=\"*\" OR workflow_job_id=\"$workflow_job_id$\"\n| stats earliest(_time) as first_time latest(_time) as last_time values(stage) as stages dc(delivery_id) as deliveries count as events by key tenant repository workflow_job_id\n| eval status=case(\n    mvfind(stages,\"worker_failed\")>=0, \"failed\",\n    mvfind(stages,\"worker_completed\")>=0, \"completed\",\n    mvfind(stages,\"receiver_queued\")>=0, \"queued\",\n    mvfind(stages,\"receiver_skip_job_executed\")>=0, \"already_executed\",\n    mvfind(stages,\"receiver_skip_free_runner\")>=0, \"waiting_for_free_runner\",\n    mvfind(stages,\"receiver_skip_duplicate\")>=0, \"duplicate_suppressed\",\n    true(), \"other\")\n| eval first_seen=strftime(first_time,\"%Y-%m-%d %H:%M:%S\"), last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - last_time\n| table status tenant repository workflow_job_id deliveries events stages first_seen last_seen key\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "latest_samples_search": {
+            "name": "Latest dispatcher log samples",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" (sourcetype=\"aws:cloudwatchlogs:forgecicd\" OR sourcetype=\"aws:cloudwatchlogs\") (source=\"*:/aws/lambda/${receiver_lambda_name}:*\" OR source=\"*:/aws/lambda/${worker_lambda_name}:*\")\n(\"redelivery_work_queued\" OR \"splunk_webhook_skip\" OR \"runner_group\" OR \"runner_lookup_failed\" OR \"request_rejected\" OR \"dispatcher_failed\" OR \"redelivery_work_completed\" OR \"redelivery_work_failed\" OR \"redelivery_execute\" OR \"redelivery_preflight\" OR \"worker_skip\")\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=_raw \"key=(?<key>[^ ]+)\"\n| rex field=_raw \"repository=(?<logged_repository>[^ ]+)\"\n| rex field=_raw \"tenant=(?<logged_tenant>[^ ]+)\"\n| rex field=_raw \"workflow_job_id=(?<logged_workflow_job_id>[^ ]+)\"\n| rex field=key \"^(?<key_tenant>[^#]+)#(?<key_aws_region>[^#]+)#(?<key_repository>.+)#(?<key_workflow_job_id>[^#]+)$\"\n| eval tenant=coalesce(logged_tenant, key_tenant, forgecicd_tenant, \"unknown\")\n| eval repository=coalesce(logged_repository, key_repository)\n| eval workflow_job_id=coalesce(logged_workflow_job_id, key_workflow_job_id)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$repository$\"=\"*\" OR like(repository, \"%$repository$%\")\n| where \"$workflow_job_id$\"=\"*\" OR workflow_job_id=\"$workflow_job_id$\"\n| eval sample=substr(replace(_raw,\"\\n.*$\",\"\"),1,650)\n| table _time lambda_name tenant repository workflow_job_id sample\n| sort - _time\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "receiver_decision_detail_search": {
+            "name": "Receiver decision detail",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" (sourcetype=\"aws:cloudwatchlogs:forgecicd\" OR sourcetype=\"aws:cloudwatchlogs\") source=\"*:/aws/lambda/${receiver_lambda_name}:*\"\n(\"redelivery_work_queued\" OR \"splunk_webhook_skip\" OR \"runner_lookup_failed\" OR \"request_rejected\" OR \"dispatcher_failed\")\n| rex field=_raw \"key=(?<key>[^ ]+)\"\n| rex field=_raw \"reason=(?<reason>[^ ]+)\"\n| rex field=_raw \"repository=(?<logged_repository>[^ ]+)\"\n| rex field=_raw \"tenant=(?<logged_tenant>[^ ]+)\"\n| rex field=_raw \"aws_region=(?<logged_aws_region>[^ ]+)\"\n| rex field=_raw \"runner=(?<runner_name>[^ ]+)\"\n| rex field=_raw \"instance_id=(?<instance_id>[^ ]+)\"\n| rex field=_raw \"state=(?<instance_state>[^ ]+)\"\n| rex field=key \"^(?<key_tenant>[^#]+)#(?<key_aws_region>[^#]+)#(?<key_repository>.+)#(?<workflow_job_id>[^#]+)$\"\n| eval tenant=coalesce(logged_tenant, key_tenant, forgecicd_tenant, \"unknown\")\n| eval aws_region=coalesce(logged_aws_region, key_aws_region)\n| eval repository=coalesce(logged_repository, key_repository)\n| eval decision=case(\n    match(_raw,\"redelivery_work_queued\"), \"queued\",\n    match(_raw,\"splunk_webhook_skip\"), \"skip_\" . coalesce(reason,\"unknown\"),\n    match(_raw,\"runner_lookup_failed\"), \"runner_lookup_failed\",\n    match(_raw,\"request_rejected\"), \"request_rejected\",\n    match(_raw,\"dispatcher_failed\"), \"dispatcher_failed\",\n    true(), \"other\")\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$repository$\"=\"*\" OR like(repository, \"%$repository$%\")\n| where \"$workflow_job_id$\"=\"*\" OR workflow_job_id=\"$workflow_job_id$\"\n| table _time decision tenant aws_region repository workflow_job_id runner_name instance_id instance_state key\n| sort - _time\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "runner_group_summary_search": {
+            "name": "Runner group capacity decisions",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" (sourcetype=\"aws:cloudwatchlogs:forgecicd\" OR sourcetype=\"aws:cloudwatchlogs\") source=\"*:/aws/lambda/${receiver_lambda_name}:*\" \"runner_group\"\n| rex field=_raw \"queue=(?<queue_name>[^ ]+)\"\n| rex field=_raw \"runner=(?<runner_name>[^ ]+)\"\n| rex field=_raw \"stuck=(?<stuck>[0-9]+) instances=(?<instances>[0-9]+) executed=(?<executed>[0-9]+) free=(?<free>[0-9]+) skip=(?<skip>[0-9]+)\"\n| eval stuck=tonumber(stuck), instances=tonumber(instances), executed=tonumber(executed), free=tonumber(free), skip=tonumber(skip)\n| stats sum(stuck) as stuck_jobs sum(executed) as already_executed sum(free) as free_runners sum(skip) as skipped_for_free_runner max(instances) as latest_instances latest(_time) as last_time by queue_name runner_name\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - stuck_jobs\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        }
+    },
+    "defaults": {
+        "dataSources": {
+            "ds.search": {
+                "options": {
+                    "queryParameters": {
+                        "earliest": "$global_time.earliest$",
+                        "latest": "$global_time.latest$"
+                    }
+                }
+            }
+        }
+    },
+    "description": "Per-key lifecycle, runner capacity decisions, delivery attempts, and raw samples for stuck workflow_job redelivery.",
+    "inputs": {
+        "input_global_time": {
+            "options": {
+                "defaultValue": "-24h@h,now",
+                "token": "global_time"
+            },
+            "title": "Global Time Range",
+            "type": "input.timerange"
+        },
+        "input_repository": {
+            "options": {
+                "defaultValue": "*",
+                "token": "repository"
+            },
+            "title": "Repository Contains",
+            "type": "input.text"
+        },
+        "input_tenant": {
+            "options": {
+                "defaultValue": "*",
+                "items": ${jsonencode(
+                    concat(
+                        [{ label = "All", value = "*" }],
+                        [for tenant in tenants : { label = tenant, value = tenant }]
+                    )
+                )},
+                "token": "tenant"
+            },
+            "title": "Forge Tenant",
+            "type": "input.dropdown"
+        },
+        "input_workflow_job_id": {
+            "options": {
+                "defaultValue": "*",
+                "token": "workflow_job_id"
+            },
+            "title": "Workflow Job ID",
+            "type": "input.text"
+        }
+    },
+    "layout": {
+        "globalInputs": [
+            "input_global_time",
+            "input_tenant",
+            "input_repository",
+            "input_workflow_job_id"
+        ],
+        "layoutDefinitions": {
+            "layout": {
+                "options": {
+                    "gutterSize": 9
+                },
+                "structure": [
+                    {
+                        "item": "job_lifecycle_table",
+                        "position": {
+                            "h": 410,
+                            "w": 1200,
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "receiver_decision_detail_table",
+                        "position": {
+                            "h": 360,
+                            "w": 600,
+                            "x": 0,
+                            "y": 410
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "runner_group_summary_table",
+                        "position": {
+                            "h": 360,
+                            "w": 600,
+                            "x": 600,
+                            "y": 410
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "delivery_attempts_table",
+                        "position": {
+                            "h": 360,
+                            "w": 600,
+                            "x": 0,
+                            "y": 770
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "failure_samples_table",
+                        "position": {
+                            "h": 360,
+                            "w": 600,
+                            "x": 600,
+                            "y": 770
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "latest_samples_table",
+                        "position": {
+                            "h": 420,
+                            "w": 1200,
+                            "x": 0,
+                            "y": 1130
+                        },
+                        "type": "block"
+                    }
+                ],
+                "type": "grid"
+            }
+        },
+        "options": {},
+        "tabs": {
+            "items": [
+                {
+                    "label": "Debug",
+                    "layoutId": "layout"
+                }
+            ]
+        }
+    },
+    "title": "Forge Stuck Workflow Job Dispatcher Debug",
+    "visualizations": {
+        "delivery_attempts_table": {
+            "dataSources": {
+                "primary": "delivery_attempts_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "GitHub Delivery Attempts",
+            "type": "splunk.table"
+        },
+        "failure_samples_table": {
+            "dataSources": {
+                "primary": "failure_samples_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Failure Samples",
+            "type": "splunk.table"
+        },
+        "job_lifecycle_table": {
+            "dataSources": {
+                "primary": "job_lifecycle_search"
+            },
+            "options": {
+                "count": 80
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "End-to-End Redelivery Lifecycle",
+            "type": "splunk.table"
+        },
+        "latest_samples_table": {
+            "dataSources": {
+                "primary": "latest_samples_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Latest Log Samples",
+            "type": "splunk.table"
+        },
+        "receiver_decision_detail_table": {
+            "dataSources": {
+                "primary": "receiver_decision_detail_search"
+            },
+            "options": {
+                "count": 80
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Receiver Decision Detail",
+            "type": "splunk.table"
+        },
+        "runner_group_summary_table": {
+            "dataSources": {
+                "primary": "runner_group_summary_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Runner Group Capacity Decisions",
+            "type": "splunk.table"
+        }
+    }
+}

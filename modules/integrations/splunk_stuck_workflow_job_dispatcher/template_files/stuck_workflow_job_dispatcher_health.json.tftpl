@@ -1,0 +1,284 @@
+{
+    "applicationProperties": {
+        "collapseNavigation": true,
+        "hideEdit": false,
+        "hideExport": false,
+        "hideOpenInSearch": false
+    },
+    "dataSources": {
+        "alert_quality_search": {
+            "name": "Alert quality",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" (sourcetype=\"aws:cloudwatchlogs:forgecicd\" OR sourcetype=\"aws:cloudwatchlogs\") source=\"*:/aws/lambda/${receiver_lambda_name}:*\"\n(\"redelivery_work_queued\" OR \"splunk_webhook_skip\" OR \"dispatcher_failed\")\n| rex field=_raw \"reason=(?<reason>[^ ]+)\"\n| rex field=_raw \"key=(?<key>[^ ]+)\"\n| rex field=key \"^(?<key_tenant>[^#]+)#(?<key_aws_region>[^#]+)#(?<key_repository>.+)#(?<workflow_job_id>[^#]+)$\"\n| eval tenant=coalesce(key_tenant, forgecicd_tenant, \"unknown\")\n| eval signal=case(\n    match(_raw,\"redelivery_work_queued\"), \"queued_for_redelivery\",\n    match(_raw,\"dispatcher_failed\"), \"dispatcher_failed\",\n    match(_raw,\"splunk_webhook_skip\") AND reason=\"duplicate\", \"duplicate_suppressed\",\n    match(_raw,\"splunk_webhook_skip\") AND reason=\"no_results\", \"empty_alert_batch\",\n    match(_raw,\"splunk_webhook_skip\") AND reason=\"free_runner\", \"free_runner_available\",\n    match(_raw,\"splunk_webhook_skip\") AND reason=\"job_executed\", \"already_executed\",\n    match(_raw,\"splunk_webhook_skip\"), \"other_skip\",\n    true(), \"other\")\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| stats count as events dc(workflow_job_id) as jobs latest(_time) as last_time by signal tenant\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "decision_trend_search": {
+            "name": "Receiver decision trend",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" (sourcetype=\"aws:cloudwatchlogs:forgecicd\" OR sourcetype=\"aws:cloudwatchlogs\") source=\"*:/aws/lambda/${receiver_lambda_name}:*\"\n(\"redelivery_work_queued\" OR \"splunk_webhook_skip\" OR \"runner_lookup_failed\" OR \"request_rejected\" OR \"dispatcher_failed\")\n| rex field=_raw \"key=(?<key>[^ ]+)\"\n| rex field=_raw \"reason=(?<reason>[^ ]+)\"\n| rex field=key \"^(?<key_tenant>[^#]+)#(?<key_aws_region>[^#]+)#(?<repository>.+)#(?<workflow_job_id>[^#]+)$\"\n| eval tenant=coalesce(key_tenant, forgecicd_tenant, \"unknown\")\n| eval decision=case(\n    match(_raw,\"redelivery_work_queued\"), \"queued\",\n    match(_raw,\"splunk_webhook_skip\"), \"skip_\" . coalesce(reason,\"unknown\"),\n    match(_raw,\"runner_lookup_failed\"), \"runner_lookup_failed\",\n    match(_raw,\"request_rejected\"), \"request_rejected\",\n    match(_raw,\"dispatcher_failed\"), \"dispatcher_failed\",\n    true(), \"other\")\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$repository$\"=\"*\" OR like(repository, \"%$repository$%\")\n| timechart span=15m count by decision limit=12\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "failure_summary_search": {
+            "name": "Failure summary",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" (sourcetype=\"aws:cloudwatchlogs:forgecicd\" OR sourcetype=\"aws:cloudwatchlogs\") (source=\"*:/aws/lambda/${receiver_lambda_name}:*\" OR source=\"*:/aws/lambda/${worker_lambda_name}:*\")\n(\"dispatcher_failed\" OR \"request_rejected\" OR \"runner_lookup_failed\" OR \"redelivery_work_failed\" OR \"[ERROR]\" OR Traceback OR AccessDenied OR UnauthorizedOperation)\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=_raw \"key=(?<key>[^ ]+)\"\n| rex field=_raw \"reason=(?<reason>[^ ]+)\"\n| rex field=key \"^(?<key_tenant>[^#]+)#(?<key_aws_region>[^#]+)#(?<repository>.+)#(?<workflow_job_id>[^#]+)$\"\n| eval tenant=coalesce(key_tenant, forgecicd_tenant, \"unknown\")\n| eval category=case(\n    match(_raw,\"dispatcher_failed\"), \"dispatcher_failed\",\n    match(_raw,\"request_rejected\"), \"request_rejected\",\n    match(_raw,\"runner_lookup_failed\"), \"runner_lookup_failed\",\n    match(_raw,\"redelivery_work_failed\"), \"redelivery_work_failed\",\n    match(_raw,\"AccessDenied|UnauthorizedOperation\"), \"aws_access_denied\",\n    match(_raw,\"Traceback|\\\\[ERROR\\\\]\"), \"lambda_error\",\n    true(), \"other\")\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$repository$\"=\"*\" OR like(repository, \"%$repository$%\")\n| stats count as events dc(workflow_job_id) as jobs latest(_time) as last_time by category lambda_name tenant repository reason\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "hotspots_search": {
+            "name": "Tenant and repository hot spots",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" (sourcetype=\"aws:cloudwatchlogs:forgecicd\" OR sourcetype=\"aws:cloudwatchlogs\") (source=\"*:/aws/lambda/${receiver_lambda_name}:*\" OR source=\"*:/aws/lambda/${worker_lambda_name}:*\")\n(\"redelivery_work_queued\" OR \"splunk_webhook_skip\" OR \"redelivery_work_completed\" OR \"redelivery_work_failed\")\n| rex field=_raw \"key=(?<key>[^ ]+)\"\n| rex field=_raw \"reason=(?<reason>[^ ]+)\"\n| rex field=_raw \"repository=(?<logged_repository>[^ ]+)\"\n| rex field=_raw \"tenant=(?<logged_tenant>[^ ]+)\"\n| rex field=key \"^(?<key_tenant>[^#]+)#(?<key_aws_region>[^#]+)#(?<key_repository>.+)#(?<workflow_job_id>[^#]+)$\"\n| eval tenant=coalesce(logged_tenant, key_tenant, forgecicd_tenant, \"unknown\")\n| eval repository=coalesce(logged_repository, key_repository, \"unknown\")\n| eval queued=if(match(_raw,\"redelivery_work_queued\"), 1, 0)\n| eval completed=if(match(_raw,\"redelivery_work_completed\"), 1, 0)\n| eval failed=if(match(_raw,\"redelivery_work_failed\"), 1, 0)\n| eval skipped=if(match(_raw,\"splunk_webhook_skip\"), 1, 0)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$repository$\"=\"*\" OR like(repository, \"%$repository$%\")\n| stats sum(queued) as queued sum(completed) as completed sum(failed) as failed sum(skipped) as skipped dc(workflow_job_id) as jobs latest(_time) as last_time by tenant repository\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - failed - queued - skipped\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "worker_outcome_summary_search": {
+            "name": "Worker outcome summary",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" (sourcetype=\"aws:cloudwatchlogs:forgecicd\" OR sourcetype=\"aws:cloudwatchlogs\") source=\"*:/aws/lambda/${worker_lambda_name}:*\"\n(\"redelivery_work_completed\" OR \"redelivery_work_failed\" OR \"redelivery_execute\" OR \"redelivery_preflight\" OR \"worker_skip\")\n| rex field=_raw \"key=(?<key>[^ ]+)\"\n| rex field=_raw \"tenant=(?<logged_tenant>[^ ]+)\"\n| rex field=_raw \"delivery_id=(?<delivery_id>[^ ]+)\"\n| rex field=_raw \"event=(?<github_event>[^ ]+)\"\n| rex field=_raw \"status=(?<github_status>[^ ]+)\"\n| rex field=_raw \"status_code=(?<github_status_code>[^ ]+)\"\n| rex field=key \"^(?<key_tenant>[^#]+)#(?<key_aws_region>[^#]+)#(?<repository>.+)#(?<workflow_job_id>[^#]+)$\"\n| eval tenant=coalesce(logged_tenant, key_tenant, forgecicd_tenant, \"unknown\")\n| eval outcome=case(\n    match(_raw,\"redelivery_work_completed\"), \"completed\",\n    match(_raw,\"redelivery_work_failed\"), \"failed\",\n    match(_raw,\"redelivery_execute\"), \"execute\",\n    match(_raw,\"redelivery_preflight\"), \"preflight\",\n    match(_raw,\"worker_skip\"), \"worker_skip\",\n    true(), \"other\")\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$repository$\"=\"*\" OR like(repository, \"%$repository$%\")\n| stats count as events dc(workflow_job_id) as jobs dc(delivery_id) as deliveries latest(_time) as last_time by outcome tenant repository github_event github_status github_status_code\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "worker_outcome_trend_search": {
+            "name": "Worker outcome trend",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" (sourcetype=\"aws:cloudwatchlogs:forgecicd\" OR sourcetype=\"aws:cloudwatchlogs\") source=\"*:/aws/lambda/${worker_lambda_name}:*\"\n(\"redelivery_work_completed\" OR \"redelivery_work_failed\" OR \"redelivery_execute\" OR \"redelivery_preflight\" OR \"worker_skip\")\n| rex field=_raw \"key=(?<key>[^ ]+)\"\n| rex field=key \"^(?<key_tenant>[^#]+)#(?<key_aws_region>[^#]+)#(?<repository>.+)#(?<workflow_job_id>[^#]+)$\"\n| eval tenant=coalesce(key_tenant, forgecicd_tenant, \"unknown\")\n| eval outcome=case(\n    match(_raw,\"redelivery_work_completed\"), \"completed\",\n    match(_raw,\"redelivery_work_failed\"), \"failed\",\n    match(_raw,\"redelivery_execute\"), \"execute\",\n    match(_raw,\"redelivery_preflight\"), \"preflight\",\n    match(_raw,\"worker_skip\"), \"worker_skip\",\n    true(), \"other\")\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$repository$\"=\"*\" OR like(repository, \"%$repository$%\")\n| timechart span=15m count by outcome limit=10\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        }
+    },
+    "defaults": {
+        "dataSources": {
+            "ds.search": {
+                "options": {
+                    "queryParameters": {
+                        "earliest": "$global_time.earliest$",
+                        "latest": "$global_time.latest$"
+                    }
+                }
+            }
+        }
+    },
+    "description": "Health, alert quality, redelivery outcomes, and hot spots for stuck workflow_job redelivery.",
+    "inputs": {
+        "input_global_time": {
+            "options": {
+                "defaultValue": "-24h@h,now",
+                "token": "global_time"
+            },
+            "title": "Global Time Range",
+            "type": "input.timerange"
+        },
+        "input_repository": {
+            "options": {
+                "defaultValue": "*",
+                "token": "repository"
+            },
+            "title": "Repository Contains",
+            "type": "input.text"
+        },
+        "input_tenant": {
+            "options": {
+                "defaultValue": "*",
+                "items": ${jsonencode(
+                    concat(
+                        [{ label = "All", value = "*" }],
+                        [for tenant in tenants : { label = tenant, value = tenant }]
+                    )
+                )},
+                "token": "tenant"
+            },
+            "title": "Forge Tenant",
+            "type": "input.dropdown"
+        }
+    },
+    "layout": {
+        "globalInputs": [
+            "input_global_time",
+            "input_tenant",
+            "input_repository"
+        ],
+        "layoutDefinitions": {
+            "layout": {
+                "options": {
+                    "gutterSize": 9
+                },
+                "structure": [
+                    {
+                        "item": "alert_quality_table",
+                        "position": {
+                            "h": 330,
+                            "w": 600,
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "decision_trend_chart",
+                        "position": {
+                            "h": 330,
+                            "w": 600,
+                            "x": 600,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "worker_outcome_summary_table",
+                        "position": {
+                            "h": 360,
+                            "w": 600,
+                            "x": 0,
+                            "y": 330
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "worker_outcome_trend_chart",
+                        "position": {
+                            "h": 360,
+                            "w": 600,
+                            "x": 600,
+                            "y": 330
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "hotspots_table",
+                        "position": {
+                            "h": 390,
+                            "w": 600,
+                            "x": 0,
+                            "y": 690
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "failure_summary_table",
+                        "position": {
+                            "h": 390,
+                            "w": 600,
+                            "x": 600,
+                            "y": 690
+                        },
+                        "type": "block"
+                    }
+                ],
+                "type": "grid"
+            }
+        },
+        "options": {},
+        "tabs": {
+            "items": [
+                {
+                    "label": "Health",
+                    "layoutId": "layout"
+                }
+            ]
+        }
+    },
+    "title": "Forge Stuck Workflow Job Dispatcher Health",
+    "visualizations": {
+        "alert_quality_table": {
+            "dataSources": {
+                "primary": "alert_quality_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Alert Quality and Receiver Decisions",
+            "type": "splunk.table"
+        },
+        "decision_trend_chart": {
+            "dataSources": {
+                "primary": "decision_trend_search"
+            },
+            "options": {},
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Receiver Decision Trend",
+            "type": "splunk.line"
+        },
+        "failure_summary_table": {
+            "dataSources": {
+                "primary": "failure_summary_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Failures and Warnings",
+            "type": "splunk.table"
+        },
+        "hotspots_table": {
+            "dataSources": {
+                "primary": "hotspots_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Tenant and Repository Hot Spots",
+            "type": "splunk.table"
+        },
+        "worker_outcome_summary_table": {
+            "dataSources": {
+                "primary": "worker_outcome_summary_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Worker Outcomes",
+            "type": "splunk.table"
+        },
+        "worker_outcome_trend_chart": {
+            "dataSources": {
+                "primary": "worker_outcome_trend_search"
+            },
+            "options": {},
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Worker Outcome Trend",
+            "type": "splunk.line"
+        }
+    }
+}
