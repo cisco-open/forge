@@ -364,6 +364,9 @@ def normalize_delivery_references(
     seen_ids = set()
     seen_guids = set()
 
+    if isinstance(values, str):
+        values = [values]
+
     for value in values:
         delivery_reference = str(value).strip()
         if not delivery_reference:

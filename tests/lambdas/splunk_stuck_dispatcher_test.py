@@ -58,6 +58,16 @@ def _load_handler(monkeypatch):
     return importlib.import_module('handler')
 
 
+def _load_worker(monkeypatch):
+    """Import the worker Lambda with its lambda/ dir on sys.path."""
+    src = str(LAMBDA_DIR)
+    if src not in sys.path:
+        sys.path.insert(0, src)
+    monkeypatch.setenv('DEDUPE_TABLE', DEDUPE_TABLE)
+    sys.modules.pop('worker', None)
+    return importlib.import_module('worker')
+
+
 def _create_dedupe_table(boto3_mod):
     ddb = boto3_mod.client('dynamodb', region_name=AWS_REGION)
     ddb.create_table(
@@ -187,6 +197,16 @@ def test_normalize_result_raises_when_required_fields_missing(monkeypatch):
     msg = str(exc.value)
     assert 'queued_url' in msg
     assert 'github_delivery' in msg
+
+
+def test_worker_normalizes_scalar_github_delivery_as_single_reference(
+    monkeypatch,
+):
+    mod = _load_worker(monkeypatch)
+    guid = 'f1234567-89ab-4cde-8123-456789abcdef'
+
+    assert mod.normalize_delivery_references(guid) == ([], [guid])
+    assert mod.normalize_delivery_references('123456') == (['123456'], [])
 
 
 def test_process_results_classifies_and_queues_without_lambda_wrapper(
