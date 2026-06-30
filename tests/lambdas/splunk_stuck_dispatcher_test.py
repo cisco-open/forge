@@ -346,6 +346,38 @@ def test_terminated_runner_does_not_count_as_free(monkeypatch, aws):
     assert body['skipped'] == []
 
 
+def test_terminated_runner_with_matching_url_skips_as_executed(monkeypatch, aws):
+    """Even when terminated, an EC2 tagged with the job's workflow_job_url
+    means the runner already picked up the job. Do not retrigger redelivery
+    and do not write to DynamoDB.
+    """
+    import boto3
+    ec2 = boto3.client('ec2', region_name=AWS_REGION)
+    _create_dedupe_table(boto3)
+    job_url = 'https://github.com/acme/app/actions/runs/5/job/550'
+    _run_runner_instance(
+        ec2,
+        runner_name='acgw-usw2-sl-small-action-runner',
+        workflow_job_url=job_url,
+        state='terminated',
+    )
+    mod = _load_handler(monkeypatch)
+    event = _apigw_event([
+        _splunk_result(workflow_job_id=550, workflow_job_url=job_url)
+    ])
+    resp = mod.lambda_handler(event, None)
+    body = json.loads(resp['body'])
+    assert body['queued'] == []
+    assert len(body['skipped']) == 1
+    assert body['skipped'][0]['reason'] == 'job_executed'
+    assert body['skipped'][0]['state'] == 'terminated'
+
+    # Confirm nothing was written to the dedupe / work table.
+    ddb = boto3.client('dynamodb', region_name=AWS_REGION)
+    scan = ddb.scan(TableName=DEDUPE_TABLE)
+    assert scan['Count'] == 0
+
+
 def test_different_queues_dont_share_free_runner_budget(monkeypatch, aws):
     """A free runner for queue A must not absorb a stuck job from queue B."""
     import boto3
