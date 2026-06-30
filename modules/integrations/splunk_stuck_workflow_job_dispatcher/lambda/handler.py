@@ -163,10 +163,16 @@ def decode_results_value(value: Any) -> List[Dict[str, Any]]:
 
 
 def extract_results(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
+    saw_results_key = False
     for key in ('result', 'results'):
+        if key not in payload:
+            continue
+        saw_results_key = True
         results = decode_results_value(payload.get(key))
         if results:
             return results
+    if saw_results_key:
+        return []
     return [payload] if payload else []
 
 
