@@ -16,12 +16,21 @@ ${pre_install}
 
 Set-Location C:\actions-runner
 
-# NOTE: job lifecycle hooks are intentionally NOT inlined here. The PowerShell
-# hook scripts pushed user_data past EC2's 16 KB limit
-# (InvalidUserData.Malformed). Deliver them out-of-band instead (e.g. bake into
-# the AMI or pull from SSM Parameter Store at boot) and set
-# ACTIONS_RUNNER_HOOK_JOB_STARTED/COMPLETED in C:\actions-runner\.env. See osx
-# user_data for the inline pattern that fits within the limit.
+# Install the job-hook wrappers. Each wrapper fetches the real (large) hook from
+# SSM, decompresses it, and runs it at job time — keeping user_data small.
+%{ if hook_job_started != "" }
+@'
+${hook_job_started}
+'@ | Set-Content -Path 'C:\actions-runner\hook_job_started.ps1' -Encoding utf8
+Add-Content -Path 'C:\actions-runner\.env' -Value 'ACTIONS_RUNNER_HOOK_JOB_STARTED=C:\actions-runner\hook_job_started.ps1'
+%{ endif }
+
+%{ if hook_job_completed != "" }
+@'
+${hook_job_completed}
+'@ | Set-Content -Path 'C:\actions-runner\hook_job_completed.ps1' -Encoding utf8
+Add-Content -Path 'C:\actions-runner\.env' -Value 'ACTIONS_RUNNER_HOOK_JOB_COMPLETED=C:\actions-runner\hook_job_completed.ps1'
+%{ endif }
 
 ${start_runner}
 

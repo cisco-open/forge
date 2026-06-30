@@ -32,6 +32,59 @@ data "external" "download_lambdas" {
   program = ["bash", "${path.module}/scripts/download_lambdas.sh", "/tmp/${var.runner_configs.prefix}/", "v7.8.0", "github-aws-runners/terraform-aws-github-runner"]
 }
 
+# ---------------------------------------------------------------------------
+# Runner job-lifecycle hooks for osx/windows.
+#
+# Their hook scripts are too large to inline into EC2 user_data (16 KB limit,
+# InvalidUserData.Malformed). We gzip+base64 them into SSM (Standard tier, free
+# — the encoded payload is ~2 KB, well under the 4 KB Standard limit) and the
+# instance fetches+decompresses them at boot. Linux hooks are small enough to
+# inline and are handled directly in user_data_linux.tftpl.
+# ---------------------------------------------------------------------------
+locals {
+  # Every runner OS delivers its (large) hook scripts via SSM; at job time the
+  # runner runs a small wrapper (hook_job_<event>_<os>.tftpl) that fetches the
+  # param, decompresses it, and execs the real hook (hooks/job_<event>_<os>).
+  hook_ssm_oses = toset([
+    for key, val in var.runner_configs.runner_specs : val["runner_os"]
+  ])
+}
+
+resource "aws_ssm_parameter" "hook_job_started" {
+  for_each = local.hook_ssm_oses
+  name     = "/forge/${var.runner_configs.prefix}/runner-hooks/${each.key}/job-started"
+  type     = "String" # gzip+base64 payload, not a secret; Standard tier (free).
+  value    = base64gzip(file("${local.user_data_prefix}/hooks/job_started_${each.key}"))
+  tags     = var.tenant_configs.tags
+}
+
+resource "aws_ssm_parameter" "hook_job_completed" {
+  for_each = local.hook_ssm_oses
+  name     = "/forge/${var.runner_configs.prefix}/runner-hooks/${each.key}/job-completed"
+  type     = "String"
+  value    = base64gzip(file("${local.user_data_prefix}/hooks/job_completed_${each.key}"))
+  tags     = var.tenant_configs.tags
+}
+
+data "aws_iam_policy_document" "runner_hooks_ssm_read" {
+  statement {
+    sid     = "ReadRunnerHookParameters"
+    effect  = "Allow"
+    actions = ["ssm:GetParameter"]
+    resources = concat(
+      [for p in aws_ssm_parameter.hook_job_started : p.arn],
+      [for p in aws_ssm_parameter.hook_job_completed : p.arn],
+    )
+  }
+}
+
+resource "aws_iam_policy" "runner_hooks_ssm_read" {
+  name        = "${var.runner_configs.prefix}-runner-hooks-ssm-read"
+  description = "Allow runners to read their gzip'd job-hook scripts from SSM."
+  policy      = data.aws_iam_policy_document.runner_hooks_ssm_read.json
+  tags        = var.tenant_configs.tags
+}
+
 
 module "runners" {
   source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=v7.8.0"
@@ -124,8 +177,24 @@ module "runners" {
             ecr_registries = var.tenant_configs.ecr_registries
           }
         )
-        runner_hook_job_started           = file("${local.user_data_prefix}/hook_job_started_${val["runner_os"]}.tftpl")
-        runner_hook_job_completed         = file("${local.user_data_prefix}/hook_job_completed_${val["runner_os"]}.tftpl")
+        # The real hook scripts live (gzip+base64) in SSM; the runner hook is a
+        # small wrapper that fetches+decompresses+runs them at job time. The
+        # wrapper is small enough to inline in user_data. See hooks/ for the real
+        # scripts and hook_job_*_<os>.tftpl for the wrappers.
+        runner_hook_job_started = templatefile(
+          "${local.user_data_prefix}/hook_job_started_${val["runner_os"]}.tftpl",
+          {
+            param_name = aws_ssm_parameter.hook_job_started[val["runner_os"]].name
+            region     = var.aws_region
+          }
+        )
+        runner_hook_job_completed = templatefile(
+          "${local.user_data_prefix}/hook_job_completed_${val["runner_os"]}.tftpl",
+          {
+            param_name = aws_ssm_parameter.hook_job_completed[val["runner_os"]].name
+            region     = var.aws_region
+          }
+        )
         enable_runner_detailed_monitoring = true
         runner_run_as                     = val["runner_user"]
         block_device_mappings             = val["block_device_mappings"]
@@ -181,7 +250,8 @@ module "runners" {
           var.runner_configs.runner_iam_role_managed_policy_arns,
           [
             aws_iam_policy.ec2_tags.arn,
-          ]
+            aws_iam_policy.runner_hooks_ssm_read.arn,
+          ],
         )
         vpc_id                          = val["vpc_id"]
         subnet_ids                      = val["subnet_ids"]

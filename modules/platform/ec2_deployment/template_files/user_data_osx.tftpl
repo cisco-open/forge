@@ -24,10 +24,20 @@ fi
 
 cd /opt/actions-runner
 
-# NOTE: job lifecycle hooks are intentionally NOT inlined here. The hook scripts
-# pushed user_data past EC2's 16 KB limit (InvalidUserData.Malformed). Deliver
-# them out-of-band instead (bake into the AMI or pull from SSM Parameter Store at
-# boot) and set ACTIONS_RUNNER_HOOK_JOB_STARTED/COMPLETED in
-# /opt/actions-runner/.env.
+# Install the job-hook wrappers. Each wrapper fetches the real (large) hook from
+# SSM, decompresses it, and runs it at job time — keeping user_data small.
+%{ if hook_job_started != "" }
+cat >/opt/actions-runner/hook_job_started.sh <<'EOF'
+${hook_job_started}
+EOF
+echo ACTIONS_RUNNER_HOOK_JOB_STARTED=/opt/actions-runner/hook_job_started.sh | tee -a /opt/actions-runner/.env
+%{ endif }
+
+%{ if hook_job_completed != "" }
+cat >/opt/actions-runner/hook_job_completed.sh <<'EOF'
+${hook_job_completed}
+EOF
+echo ACTIONS_RUNNER_HOOK_JOB_COMPLETED=/opt/actions-runner/hook_job_completed.sh | tee -a /opt/actions-runner/.env
+%{ endif }
 
 ${start_runner}
