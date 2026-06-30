@@ -274,7 +274,7 @@ locals {
             | where total_events = queued_count
             | where has_dispatch = 1
             | eval stuck_since=strftime(first_seen, "%Y-%m-%dT%H:%M:%S%Z"), stuck_minutes=round((now() - first_seen) / 60, 1)
-            | where stuck_minutes > 5
+            | where stuck_minutes > 5 AND stuck_minutes <= 1440
             | sort - stuck_minutes
             | table workflowJobId job_name repository workflow_name head_branch head_sha labels workflow_job_url run_id run_attempt run_url created_at started_at stuck_since stuck_minutes queued_url github_delivery forgecicd_tenant aws_region
           EOT
@@ -343,7 +343,7 @@ locals {
             | where total_events = queued_count
             | where has_runner_label_warning = 1
             | eval stuck_since=strftime(first_seen, "%Y-%m-%dT%H:%M:%S%Z"), stuck_minutes=round((now() - first_seen) / 60, 1)
-            | where stuck_minutes > 5
+            | where stuck_minutes > 5 AND stuck_minutes <= 1440
             | eval labels=coalesce(mvjoin(runner_labels, ", "), mvjoin(github_labels, ", "))
             | sort - stuck_minutes
             | table workflowJobId job_name repository warning_repo workflow_name head_branch head_sha labels workflow_job_url run_id run_attempt run_url created_at started_at stuck_since stuck_minutes github_deliveries forgecicd_tenant
