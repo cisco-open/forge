@@ -1,5 +1,5 @@
 $scriptRoot = if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }
-$logFile = Join-Path $scriptRoot 'hook.log'
+$logFile = Join-Path $scriptRoot 'hook_completed.log'
 
 function Get-EnvValue {
     param([string]$Name)
@@ -22,6 +22,45 @@ function Get-GitHubEvent {
         return Get-Content -LiteralPath $eventPath -Raw | ConvertFrom-Json
     } catch {
         return @{}
+    }
+}
+
+function Write-HookLogEntry {
+    param(
+        [string]$Path,
+        [object]$Entry
+    )
+
+    $line = ($Entry | ConvertTo-Json -Compress -Depth 100) + [Environment]::NewLine
+    $encoding = New-Object System.Text.UTF8Encoding -ArgumentList $false
+
+    for ($attempt = 1; $attempt -le 10; $attempt++) {
+        $stream = $null
+        $writer = $null
+
+        try {
+            $stream = [System.IO.File]::Open(
+                $Path,
+                [System.IO.FileMode]::Append,
+                [System.IO.FileAccess]::Write,
+                [System.IO.FileShare]::ReadWrite
+            )
+            $writer = New-Object System.IO.StreamWriter -ArgumentList $stream, $encoding
+            $writer.Write($line)
+            return
+        } catch [System.IO.IOException] {
+            if ($attempt -eq 10) {
+                throw
+            }
+
+            Start-Sleep -Milliseconds ([Math]::Min(1000, 100 * $attempt))
+        } finally {
+            if ($writer) {
+                $writer.Dispose()
+            } elseif ($stream) {
+                $stream.Dispose()
+            }
+        }
     }
 }
 
@@ -105,8 +144,12 @@ $entry = [ordered]@{
     GITHUB_EVENT               = (Get-GitHubEvent)
 }
 
-$entry | ConvertTo-Json -Compress -Depth 100 | Add-Content -Path $logFile -Encoding UTF8
-Write-Output "GitHub Actions environment variables exported to $logFile"
+try {
+    Write-HookLogEntry -Path $logFile -Entry $entry
+    Write-Output "GitHub Actions environment variables exported to $logFile"
+} catch {
+    Write-Output "Unable to write GitHub Actions environment variables to $($logFile): $($_.Exception.Message)"
+}
 
 Remove-Item Env:AWS_ACCESS_KEY_ID -ErrorAction SilentlyContinue
 Remove-Item Env:AWS_SECRET_ACCESS_KEY -ErrorAction SilentlyContinue

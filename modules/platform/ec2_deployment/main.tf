@@ -231,7 +231,7 @@ module "runners" {
             {
               "log_group_name" : "forge-logs",
               "prefix_log_group" : true,
-              "file_path" : val["runner_os"] == "windows" ? "C:/Users/Administrator/AppData/Local/Temp/hook.log" : "/home/${val["runner_user"]}/hook.log",
+              "file_path" : val["runner_os"] == "windows" ? "C:/Users/Administrator/AppData/Local/Temp/hook_*.log" : "/home/${val["runner_user"]}/hook.log",
               "log_stream_name" : "{instance_id}/hook"
             },
           ],
