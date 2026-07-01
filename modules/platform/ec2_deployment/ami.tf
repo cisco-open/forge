@@ -3,6 +3,8 @@ data "aws_ssm_parameter" "ami_id" {
 
   name            = each.value
   with_decryption = true
+
+  depends_on = [module.runners]
 }
 
 data "aws_ami" "runner_ami" {
@@ -13,4 +15,6 @@ data "aws_ami" "runner_ami" {
     name   = "image-id"
     values = [data.aws_ssm_parameter.ami_id[each.key].value]
   }
+
+  depends_on = [module.runners]
 }
