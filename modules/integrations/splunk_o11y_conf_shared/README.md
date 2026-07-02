@@ -4,12 +4,12 @@ This module creates the shared Splunk Observability dashboard group, dashboards,
 
 ## Why This Module Exists
 
-Forge operators need dashboards that connect capacity, cost, and health signals to concrete subsystems. This module builds the metrics-side views for EC2 runners, Kubernetes runners, Lambda, SQS, DynamoDB, EBS, billing, and platform impact.
+Forge operators need dashboards that connect capacity, cost, and health signals to concrete subsystems. This module builds the metrics-side views for EC2 runners, Kubernetes runners, Lambda, SQS, DynamoDB, EBS, billing, OpenCost, and platform impact.
 
 ## What It Manages
 
 - A Forge dashboard group in Splunk Observability.
-- Dashboard modules for EC2, Kubernetes, Lambda, SQS, DynamoDB, EBS, billing, and Forge impact.
+- Dashboard modules for EC2, Kubernetes, Lambda, SQS, DynamoDB, EBS, billing, OpenCost, and Forge impact.
 - Kubernetes detector modules and notification wiring.
 - Dynamic variables that let dashboards filter by tenant and environment.
 
@@ -44,6 +44,7 @@ Forge operators need dashboards that connect capacity, cost, and health signals 
 | <a name="module_dashboard_ebs"></a> [dashboard\_ebs](#module\_dashboard\_ebs) | ./dashboards/ebs | n/a |
 | <a name="module_dashboard_forge_impact"></a> [dashboard\_forge\_impact](#module\_dashboard\_forge\_impact) | ./dashboards/forge_impact | n/a |
 | <a name="module_dashboard_lambda"></a> [dashboard\_lambda](#module\_dashboard\_lambda) | ./dashboards/lambda | n/a |
+| <a name="module_dashboard_opencost"></a> [dashboard\_opencost](#module\_dashboard\_opencost) | ./dashboards/opencost | n/a |
 | <a name="module_dashboard_runner_ec2"></a> [dashboard\_runner\_ec2](#module\_dashboard\_runner\_ec2) | ./dashboards/runner_ec2 | n/a |
 | <a name="module_dashboard_runner_k8s"></a> [dashboard\_runner\_k8s](#module\_dashboard\_runner\_k8s) | ./dashboards/runner_k8s | n/a |
 | <a name="module_dashboard_sqs"></a> [dashboard\_sqs](#module\_dashboard\_sqs) | ./dashboards/sqs | n/a |

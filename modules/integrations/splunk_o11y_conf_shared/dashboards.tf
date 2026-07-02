@@ -96,6 +96,17 @@ module "dashboard_forge_impact" {
 }
 
 # Cost and usage
+module "dashboard_opencost" {
+  source = "./dashboards/opencost"
+
+  providers = {
+    signalfx = signalfx
+  }
+
+  tenant_names    = var.dashboard_variables.runner_k8s.tenant_names
+  dashboard_group = signalfx_dashboard_group.forgecicd.id
+}
+
 module "dashboard_billing" {
   source = "./dashboards/billing"
 
