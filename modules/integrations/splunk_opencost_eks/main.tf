@@ -124,26 +124,32 @@ resource "helm_release" "opencost" {
     {
       name  = "podAnnotations.prometheus\\.io/scrape"
       value = "true"
+      type  = "string"
     },
     {
       name  = "podAnnotations.prometheus\\.io/path"
       value = "/metrics"
+      type  = "string"
     },
     {
       name  = "podAnnotations.prometheus\\.io/port"
       value = "9003"
+      type  = "string"
     },
     {
       name  = "service.annotations.prometheus\\.io/scrape"
       value = "true"
+      type  = "string"
     },
     {
       name  = "service.annotations.prometheus\\.io/path"
       value = "/metrics"
+      type  = "string"
     },
     {
       name  = "service.annotations.prometheus\\.io/port"
       value = "9003"
+      type  = "string"
     }
   ]
 
