@@ -103,8 +103,9 @@ module "dashboard_opencost" {
     signalfx = signalfx
   }
 
-  tenant_names    = var.dashboard_variables.runner_k8s.tenant_names
-  dashboard_group = signalfx_dashboard_group.forgecicd.id
+  tenant_names      = var.dashboard_variables.runner_k8s.tenant_names
+  dynamic_variables = var.dashboard_variables.runner_k8s.dynamic_variables
+  dashboard_group   = signalfx_dashboard_group.forgecicd.id
 }
 
 module "dashboard_billing" {

@@ -17,6 +17,7 @@ Forge operators need a Kubernetes-side cost view for ARC tenant namespaces. This
 ## Operational Notes
 
 - Tenant scope uses the OpenCost `namespace` metric label and the Forge K8S tenant namespace list.
+- Cluster scope uses the OpenCost `cluster_id` metric label and the Forge K8S cluster suggestions.
 - This estimates Kubernetes compute allocation cost from OpenCost metrics; it is not an AWS invoice or CUR-backed bill.
 
 <!-- BEGIN_TF_DOCS -->
@@ -31,7 +32,7 @@ Forge operators need a Kubernetes-side cost view for ARC tenant namespaces. This
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | < 10.0.0 |
+| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.3 |
 
 ## Modules
 
@@ -54,6 +55,7 @@ No modules.
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_dashboard_group"></a> [dashboard\_group](#input\_dashboard\_group) | Dashboard group name for organizing dashboards. | `string` | n/a | yes |
+| <a name="input_dynamic_variables"></a> [dynamic\_variables](#input\_dynamic\_variables) | Additional dynamic variable definitions for deriving dashboard filters. | <pre>list(object({<br/>    property               = string<br/>    alias                  = string<br/>    description            = string<br/>    values                 = list(string)<br/>    value_required         = bool<br/>    values_suggested       = list(string)<br/>    restricted_suggestions = bool<br/>  }))</pre> | `[]` | no |
 | <a name="input_tenant_names"></a> [tenant\_names](#input\_tenant\_names) | Tenant namespaces used to scope OpenCost allocation metrics. | `list(string)` | n/a | yes |
 
 ## Outputs

@@ -2,6 +2,11 @@ locals {
   opencost_tenant_namespace_filter = length(var.tenant_names) > 0 ? join(" or ", [
     for namespace in sort(var.tenant_names) : "filter('namespace', '${namespace}')"
   ]) : "filter('namespace', '*')"
+  opencost_cluster_variables = [
+    for var_def in var.dynamic_variables : var_def
+    if var_def.property == "k8s.cluster.name"
+  ]
+  opencost_cluster_variable = length(local.opencost_cluster_variables) > 0 ? local.opencost_cluster_variables[0] : null
 }
 
 resource "signalfx_list_chart" "tenant_hourly_compute_cost" {
@@ -230,6 +235,16 @@ resource "signalfx_dashboard" "opencost" {
     value_required         = false
     values_suggested       = sort(var.tenant_names)
     restricted_suggestions = true
+  }
+
+  variable {
+    property               = "cluster_id"
+    alias                  = "Forge Cluster"
+    description            = ""
+    values                 = local.opencost_cluster_variable == null ? [] : local.opencost_cluster_variable.values
+    value_required         = local.opencost_cluster_variable == null ? false : local.opencost_cluster_variable.value_required
+    values_suggested       = local.opencost_cluster_variable == null ? [] : local.opencost_cluster_variable.values_suggested
+    restricted_suggestions = local.opencost_cluster_variable == null ? false : local.opencost_cluster_variable.restricted_suggestions
   }
 
   chart {
