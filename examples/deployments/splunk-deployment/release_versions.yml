@@ -33,6 +33,11 @@ spec:
         repo: git@github.com:cisco-open/forge.git
         module_path: modules/integrations/splunk_otel_eks
         ref: main
+      splunk_opencost_eks:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/integrations/splunk_opencost_eks
+        ref: main
       splunk_secrets:
         local_path: ../forge
         repo: git@github.com:cisco-open/forge.git

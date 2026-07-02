@@ -54,8 +54,9 @@ inputs = {
   aws_region  = local.region
 
   # Splunk OTel EKS Configuration
-  cluster_name          = local.eks_settings_data.locals.cluster_name
-  splunk_otel_collector = local.eks_settings_data.locals.splunk_otel_collector
+  cluster_name                     = local.eks_settings_data.locals.cluster_name
+  splunk_otel_collector            = local.eks_settings_data.locals.splunk_otel_collector
+  prometheus_autodiscovery_enabled = true
 
   # Misc
   tags         = local.tags

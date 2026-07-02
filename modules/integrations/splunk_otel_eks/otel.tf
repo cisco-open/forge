@@ -81,6 +81,10 @@ resource "helm_release" "splunk_otel_collector" {
       value = var.splunk_otel_collector.discovery
     },
     {
+      name  = "autodetect.prometheus"
+      value = var.prometheus_autodiscovery_enabled
+    },
+    {
       name  = "tolerations[0].operator"
       value = "Exists"
     }

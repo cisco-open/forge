@@ -28,6 +28,12 @@ variable "splunk_otel_collector" {
   })
 }
 
+variable "prometheus_autodiscovery_enabled" {
+  type        = bool
+  description = "Enable Splunk OTel annotation-based Prometheus autodiscovery for pods and services such as OpenCost."
+  default     = false
+}
+
 variable "tags" {
   type        = map(string)
   description = "A map of tags to apply to resources."
