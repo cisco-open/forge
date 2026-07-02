@@ -222,6 +222,16 @@ resource "signalfx_dashboard" "opencost" {
 
   time_range = "-24h"
 
+  variable {
+    property               = "namespace"
+    alias                  = "ForgeCICD Tenant Name"
+    description            = ""
+    values                 = []
+    value_required         = false
+    values_suggested       = sort(var.tenant_names)
+    restricted_suggestions = true
+  }
+
   chart {
     chart_id = signalfx_list_chart.tenant_hourly_compute_cost.id
     row      = 0
