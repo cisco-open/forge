@@ -1,5 +1,5 @@
 resource "signalfx_dashboard_group" "forgecicd" {
-  name        = "ForgeCICD Dashboards"
+  name        = var.dashboard_group_name
   description = ""
   teams       = [var.team]
 
