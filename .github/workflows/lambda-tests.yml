@@ -57,12 +57,103 @@ jobs:
 
       - name: Run unit tests
         working-directory: tests
-        run: python -m pytest -q
+        run: python -m pytest -q --junitxml=pytest-results.xml
+
+      - name: Write unit test summary
+        if: always()
+        working-directory: tests
+        run: |
+          python - <<'PY'
+          import os
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          summary_path = Path(os.environ['GITHUB_STEP_SUMMARY'])
+          lines = ['## Lambda unit tests', '']
+
+          junit_path = Path('pytest-results.xml')
+          if junit_path.exists():
+              root = ET.parse(junit_path).getroot()
+              suites = [root] if root.tag == 'testsuite' else root.findall('testsuite')
+              tests = sum(int(suite.get('tests', 0)) for suite in suites)
+              failures = sum(int(suite.get('failures', 0)) for suite in suites)
+              errors = sum(int(suite.get('errors', 0)) for suite in suites)
+              skipped = sum(int(suite.get('skipped', 0)) for suite in suites)
+              duration = sum(float(suite.get('time', 0.0)) for suite in suites)
+              passed = tests - failures - errors - skipped
+              result = 'passed' if failures == 0 and errors == 0 else 'failed'
+
+              lines.extend([
+                  f'**Result:** {result}',
+                  '',
+                  '| Metric | Count |',
+                  '| --- | ---: |',
+                  f'| Passed | {passed} |',
+                  f'| Failed | {failures} |',
+                  f'| Errors | {errors} |',
+                  f'| Skipped | {skipped} |',
+                  f'| Total | {tests} |',
+                  f'| Duration | {duration:.2f}s |',
+                  '',
+              ])
+          else:
+              lines.extend([
+                  '**Result:** pytest results were not generated.',
+                  '',
+              ])
+
+          coverage_path = Path('coverage.xml')
+          if coverage_path.exists():
+              root = ET.parse(coverage_path).getroot()
+              line_rate = float(root.get('line-rate', 0.0)) * 100
+              lines_covered = int(root.get('lines-covered', 0))
+              lines_valid = int(root.get('lines-valid', 0))
+              lines.extend([
+                  f'**Coverage:** {line_rate:.2f}% ({lines_covered}/{lines_valid} lines)',
+                  '',
+                  '### Lowest-covered Lambda files',
+                  '',
+                  '| File | Coverage | Missed lines |',
+                  '| --- | ---: | ---: |',
+              ])
+
+              files = []
+              for class_node in root.findall('.//class'):
+                  filename = class_node.get('filename', '')
+                  if '/modules/' in filename:
+                      display_filename = 'modules/' + filename.split('/modules/', 1)[1]
+                  else:
+                      display_filename = filename
+                  if not display_filename.startswith('modules/') or '/lambda/' not in display_filename:
+                      continue
+                  line_nodes = class_node.findall('lines/line')
+                  valid = len(line_nodes)
+                  if valid == 0:
+                      continue
+                  covered = sum(1 for line in line_nodes if int(line.get('hits', 0)) > 0)
+                  rate = covered / valid
+                  files.append((rate, valid - covered, display_filename))
+
+              for rate, missed, filename in sorted(files)[:8]:
+                  lines.append(f'| `{filename}` | {rate * 100:.2f}% | {missed} |')
+              lines.append('')
+          else:
+              lines.extend([
+                  '**Coverage:** coverage.xml was not generated.',
+                  '',
+              ])
+
+          with summary_path.open('a', encoding='utf-8') as summary:
+              summary.write('\n'.join(lines))
+              summary.write('\n')
+          PY
 
       - name: Upload coverage
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: lambda-coverage-xml
-          path: tests/coverage.xml
+          name: lambda-test-results
+          path: |
+            tests/coverage.xml
+            tests/pytest-results.xml
           if-no-files-found: ignore

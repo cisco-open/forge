@@ -38,6 +38,7 @@ __pycache__/
 .pytest_cache/
 .coverage
 coverage.xml
+pytest-results.xml
 .venv/
 .python-version
 
