@@ -39,6 +39,7 @@ data "aws_iam_policy_document" "secrets_access_for_forge_runners" {
 # Permissions needed for Packer builds. See:
 # <https://developer.hashicorp.com/packer/plugins/builders/amazon>.
 data "aws_iam_policy_document" "packer_support_for_forge_runners" {
+  #checkov:skip=CKV_AWS_110:Tenant Packer builds intentionally use Forge-hosted runners to build AMIs in tenant accounts; runner workloads do not use this path directly.
   statement {
     effect = "Allow"
     actions = [
