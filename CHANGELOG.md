@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.12.0](https://github.com/cisco-open/forge/compare/v3.11.0...v3.12.0) (2026-07-03)
+
+
+### Features
+
+* **splunk-o11y:** add Forge impact dynamic variables ([#389](https://github.com/cisco-open/forge/issues/389)) ([ee1bb79](https://github.com/cisco-open/forge/commit/ee1bb792b644c754af515895ac683e260da18e77))
+
 ## [3.11.0](https://github.com/cisco-open/forge/compare/v3.10.0...v3.11.0) (2026-07-03)
 
 
