@@ -92,6 +92,7 @@ data "aws_iam_policy_document" "splunk_s3_runner_logs_lambda" {
 }
 
 resource "aws_cloudwatch_log_group" "splunk_s3_runner_logs_lambda" {
+  #checkov:skip=CKV_AWS_338:CloudWatch retention is intentionally operator-defined; teams may keep short CloudWatch windows when exporting logs to Splunk or Loki.
   name              = "/aws/lambda/${local.prefix_lambda}-lambda-${var.aws_region}"
   retention_in_days = var.logging_retention_in_days
   tags              = var.tags

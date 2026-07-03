@@ -53,6 +53,7 @@ resource "aws_apigatewayv2_stage" "default" {
 }
 
 resource "aws_cloudwatch_log_group" "api" {
+  #checkov:skip=CKV_AWS_338:CloudWatch retention is intentionally operator-defined; teams may keep short CloudWatch windows when exporting logs to Splunk or Loki.
   name              = "/aws/apigateway/${var.name_prefix}"
   retention_in_days = var.logging_retention_in_days
   tags              = local.all_security_tags

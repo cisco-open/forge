@@ -1,4 +1,5 @@
 resource "aws_cloudwatch_log_group" "dispatcher" {
+  #checkov:skip=CKV_AWS_338:CloudWatch retention is intentionally operator-defined; teams may keep short CloudWatch windows when exporting logs to Splunk or Loki.
   name              = "/aws/lambda/${var.name_prefix}"
   retention_in_days = var.logging_retention_in_days
   tags              = local.all_security_tags
@@ -63,6 +64,7 @@ data "aws_iam_policy_document" "dispatcher" {
 }
 
 resource "aws_cloudwatch_log_group" "worker" {
+  #checkov:skip=CKV_AWS_338:CloudWatch retention is intentionally operator-defined; teams may keep short CloudWatch windows when exporting logs to Splunk or Loki.
   name              = "/aws/lambda/${var.name_prefix}-worker"
   retention_in_days = var.logging_retention_in_days
   tags              = local.all_security_tags

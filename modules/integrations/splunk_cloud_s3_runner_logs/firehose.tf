@@ -112,6 +112,7 @@ resource "aws_kinesis_firehose_delivery_stream" "splunk_firehose" {
 
 # CloudWatch Log Group for Firehose delivery diagnostics
 resource "aws_cloudwatch_log_group" "firehose_splunk" {
+  #checkov:skip=CKV_AWS_338:CloudWatch retention is intentionally operator-defined; teams may keep short CloudWatch windows when exporting logs to Splunk or Loki.
   name              = "/aws/kinesisfirehose/${local.prefix_firehose}-${var.aws_region}"
   retention_in_days = var.logging_retention_in_days
   kms_key_id        = aws_kms_key.splunk_s3_runner_logs.arn
