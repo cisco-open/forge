@@ -1,9 +1,7 @@
 """Secret/payload hygiene in logs (register P0-6).
 
-validate_signature logs the entire event at INFO (line 20) and the expected
-HMAC digest on mismatch (lines 28-29). The full webhook body and an HMAC oracle
-should never land in CloudWatch. Intended behavior is encoded here; the current
-code violates it, so these are xfail with the finding ID.
+The full webhook body and an HMAC oracle should never land in CloudWatch.
+These tests pin that logging boundary.
 """
 
 from __future__ import annotations
@@ -31,10 +29,6 @@ def _invoke(monkeypatch, bus_name, secret_env, event):
         return None
 
 
-@pytest.mark.xfail(
-    reason='P0-6: handler logs the full event (incl. body) at INFO.',
-    strict=False,
-)
 def test_request_body_is_not_logged(
     monkeypatch, event_bus, webhook_secret, captured_logs
 ):
@@ -47,16 +41,12 @@ def test_request_body_is_not_logged(
     _invoke(
         monkeypatch,
         event_bus['name'],
-        {'GITHUB_SECRET': webhook_secret.decode()},
+        {'WEBHOOK_SECRET': webhook_secret.decode()},
         event,
     )
     assert _BODY_MARKER not in captured_logs.text
 
 
-@pytest.mark.xfail(
-    reason='P0-6: handler logs the expected HMAC digest on mismatch (oracle).',
-    strict=False,
-)
 def test_expected_digest_is_not_logged_on_mismatch(
     monkeypatch, event_bus, webhook_secret, captured_logs
 ):
@@ -66,7 +56,7 @@ def test_expected_digest_is_not_logged_on_mismatch(
     _invoke(
         monkeypatch,
         event_bus['name'],
-        {'GITHUB_SECRET': webhook_secret.decode()},
+        {'WEBHOOK_SECRET': webhook_secret.decode()},
         event,
     )
     assert expected not in captured_logs.text

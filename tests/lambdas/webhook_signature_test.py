@@ -7,10 +7,7 @@ The relay lambda must only forward payloads GitHub actually signed. A bypass
 here lets an attacker inject events onto the EventBridge bus that downstream
 consumers (job-log archival, etc.) act on (register P0-1/P0-2, threat-model).
 
-These tests encode INTENDED behavior. Where the current code is known to be
-wrong they are marked xfail with the finding ID, so CI stays green while the
-bug stays visible — and flips to a real pass the moment the bug is fixed. Per
-the operating contract we DO NOT change an assertion to match a bug.
+These tests encode the intended security behavior and must pass.
 
 Handler contract used here:
   * accept  -> returns {"statusCode": 200, ...}
@@ -44,8 +41,7 @@ def _invoke(monkeypatch, bus_name, *, secret_env, event):
 
 
 # --------------------------------------------------------------------------- #
-# Behaviour when the secret env var the CODE reads (GITHUB_SECRET) is set.
-# These exercise the comparison logic directly.
+# Behaviour when the deployed secret env var (WEBHOOK_SECRET) is set.
 # --------------------------------------------------------------------------- #
 def test_valid_signature_is_accepted(monkeypatch, event_bus, webhook_secret):
     body = webhook_body()
@@ -54,7 +50,7 @@ def test_valid_signature_is_accepted(monkeypatch, event_bus, webhook_secret):
     resp = _invoke(
         monkeypatch,
         event_bus['name'],
-        secret_env={'GITHUB_SECRET': webhook_secret.decode()},
+        secret_env={'WEBHOOK_SECRET': webhook_secret.decode()},
         event=event,
     )
     assert resp['statusCode'] == 200
@@ -66,7 +62,7 @@ def test_missing_signature_is_rejected(monkeypatch, event_bus, webhook_secret):
         _invoke(
             monkeypatch,
             event_bus['name'],
-            secret_env={'GITHUB_SECRET': webhook_secret.decode()},
+            secret_env={'WEBHOOK_SECRET': webhook_secret.decode()},
             event=event,
         )
 
@@ -80,7 +76,7 @@ def test_tampered_body_is_rejected(monkeypatch, event_bus, webhook_secret):
         _invoke(
             monkeypatch,
             event_bus['name'],
-            secret_env={'GITHUB_SECRET': webhook_secret.decode()},
+            secret_env={'WEBHOOK_SECRET': webhook_secret.decode()},
             event=event,
         )
 
@@ -92,7 +88,7 @@ def test_wrong_secret_is_rejected(monkeypatch, event_bus, webhook_secret):
         _invoke(
             monkeypatch,
             event_bus['name'],
-            secret_env={'GITHUB_SECRET': webhook_secret.decode()},
+            secret_env={'WEBHOOK_SECRET': webhook_secret.decode()},
             event=event,
         )
 
@@ -106,23 +102,14 @@ def test_legacy_sha1_only_is_rejected(monkeypatch, event_bus, webhook_secret):
         _invoke(
             monkeypatch,
             event_bus['name'],
-            secret_env={'GITHUB_SECRET': webhook_secret.decode()},
+            secret_env={'WEBHOOK_SECRET': webhook_secret.decode()},
             event=event,
         )
 
 
 # --------------------------------------------------------------------------- #
-# P0-1: the handler must validate against the secret env var TERRAFORM sets.
-# Terraform sets WEBHOOK_SECRET (lambda.tf:22); the code reads GITHUB_SECRET.
-# So in production SECRET is always empty and unsigned webhooks are accepted.
-# Intended: with the deploy-time secret configured, a forged request is rejected.
+# The handler must validate against the secret env var Terraform sets.
 # --------------------------------------------------------------------------- #
-@pytest.mark.xfail(
-    reason='P0-1: handler reads GITHUB_SECRET but Terraform sets WEBHOOK_SECRET '
-    '-> signature validation is disabled in prod (fail-open). Do NOT fix the '
-    'env name until the relay secret provenance is confirmed (register §D).',
-    strict=False,
-)
 def test_forged_request_rejected_when_deploytime_secret_set(
     monkeypatch, event_bus, webhook_secret
 ):
@@ -139,17 +126,9 @@ def test_forged_request_rejected_when_deploytime_secret_set(
 
 
 # --------------------------------------------------------------------------- #
-# P0-2: comparison must be constant-time and structurally correct. The current
-# code does `signature.endswith(digest)`, which (a) is not constant-time and
-# (b) accepts ANY string ending in the hex digest and never checks the
-# `sha256=` scheme. A correct handler rejects a malformed/prefixed signature.
+# Comparison must be constant-time and structurally correct. A malformed or
+# prefixed signature must be rejected even when it ends in the correct digest.
 # --------------------------------------------------------------------------- #
-@pytest.mark.xfail(
-    reason='P0-2: handler uses signature.endswith(digest) (not constant-time; '
-    'accepts garbage-prefixed digests; no sha256= scheme check). Fix to '
-    "hmac.compare_digest(f'sha256={digest}', signature).",
-    strict=False,
-)
 @pytest.mark.parametrize('prefix', ['', 'garbage', 'sha1=', 'sha256= '])
 def test_malformed_signature_is_rejected(
     monkeypatch, event_bus, webhook_secret, prefix
@@ -162,21 +141,15 @@ def test_malformed_signature_is_rejected(
         _invoke(
             monkeypatch,
             event_bus['name'],
-            secret_env={'GITHUB_SECRET': webhook_secret.decode()},
+            secret_env={'WEBHOOK_SECRET': webhook_secret.decode()},
             event=event,
         )
 
 
 # --------------------------------------------------------------------------- #
-# A5 item 5: under API Gateway v2 payload format 2.0 header keys are lowercased.
-# The handler reads "X-Hub-Signature-256" (mixed case). With a real lowercase
-# header a correct handler still validates and accepts a properly signed body.
+# Under API Gateway v2 payload format 2.0 header keys are lowercased. A real
+# lowercase header must still validate and accept a properly signed body.
 # --------------------------------------------------------------------------- #
-@pytest.mark.xfail(
-    reason='A5: handler reads mixed-case header names; API GW v2 payload 2.0 '
-    'lowercases them. Read headers case-insensitively.',
-    strict=False,
-)
 def test_valid_signature_with_lowercase_headers_is_accepted(
     monkeypatch, event_bus, webhook_secret
 ):
@@ -186,7 +159,7 @@ def test_valid_signature_with_lowercase_headers_is_accepted(
     resp = _invoke(
         monkeypatch,
         event_bus['name'],
-        secret_env={'GITHUB_SECRET': webhook_secret.decode()},
+        secret_env={'WEBHOOK_SECRET': webhook_secret.decode()},
         event=event,
     )
     assert resp['statusCode'] == 200

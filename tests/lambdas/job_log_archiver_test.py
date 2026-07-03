@@ -168,6 +168,41 @@ def test_metadata_sidecar_contains_flat_fields(monkeypatch, s3_kms, ssm):
         assert tags['metadata_key'] == metadata_key
 
 
+def test_metadata_flattening_sanitizes_names_and_truncates_values(
+    monkeypatch, aws
+):
+    mod = load_handler_module('job_log_archiver')
+    long_value = 'x' * (mod.MAX_METADATA_VALUE_LENGTH + 10)
+
+    fields = mod._flatten_metadata_fields({
+        'repository': {'full-name': 'acme/app'},
+        'workflow_job': {
+            'steps': [{'name': 'Set up job'}],
+            'long value': long_value,
+        },
+        'ignored_none': None,
+        'ignored_object': object(),
+    })
+
+    assert fields['repository_full_name'] == 'acme/app'
+    assert fields['workflow_job_steps_count'] == 1
+    assert fields['workflow_job_steps_0_name'] == 'Set up job'
+    assert fields['workflow_job_long_value'] == (
+        'x' * mod.MAX_METADATA_VALUE_LENGTH
+    )
+    assert 'ignored_none' not in fields
+    assert 'ignored_object' not in fields
+
+
+def test_metadata_flattening_stops_at_field_limit(monkeypatch, aws):
+    mod = load_handler_module('job_log_archiver')
+    monkeypatch.setattr(mod, 'MAX_METADATA_FIELDS', 2)
+
+    fields = mod._flatten_metadata_fields({'a': 1, 'b': 2, 'c': 3})
+
+    assert fields == {'a': 1, 'b': 2}
+
+
 def test_skipped_jobs_are_not_archived(monkeypatch, s3_kms, ssm):
     alpha = s3_kms['buckets']['alpha']
     mod = _load_archiver(monkeypatch, s3_kms, ssm, bucket=alpha)
@@ -181,12 +216,6 @@ def test_skipped_jobs_are_not_archived(monkeypatch, s3_kms, ssm):
     assert s3_kms['s3'].list_objects_v2(Bucket=alpha).get('Contents', []) == []
 
 
-@pytest.mark.xfail(
-    reason="P0-5: archiver's outer except logs but does not re-raise, so SQS "
-    'deletes the message and the DLQ never fires (silent log loss). Fix: '
-    're-raise on unhandled error.',
-    strict=False,
-)
 def test_archival_failure_propagates_for_sqs_retry(monkeypatch, s3_kms, ssm):
     alpha = s3_kms['buckets']['alpha']
     mod = _load_archiver(monkeypatch, s3_kms, ssm, bucket=alpha)

@@ -324,3 +324,4 @@ def lambda_handler(event: Dict[str, Any], _context: Any) -> Dict[str, Any]:  # p
     except Exception as e:
         LOG.exception(
             'Unhandled exception in job_log_archiver lambda. Error: %s', str(e))
+        raise

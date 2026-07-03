@@ -102,7 +102,7 @@ def parse_tags(val):
         return val
     elif isinstance(val, str):
         try:
-            return json.loads(val)
+            return parse_tags(json.loads(val))
         except json.JSONDecodeError:
             return {}
     return {}
