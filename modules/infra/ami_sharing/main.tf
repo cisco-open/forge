@@ -29,6 +29,7 @@ locals {
 }
 
 resource "aws_ami_launch_permission" "share_amis" {
+  #checkov:skip=CKV_AWS_205:AMI sharing is an ops helper for managing platform build artifacts and is limited to explicit account IDs from var.account_ids.
   for_each = { for pair in local.ami_account_pairs : "${pair.ami_id}-${pair.account}" => pair }
 
   image_id   = each.value.ami_id

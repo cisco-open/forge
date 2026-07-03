@@ -1,6 +1,7 @@
 resource "aws_s3_bucket" "gh_logs" {
   #checkov:skip=CKV_AWS_144:Cross-region replication is intentionally omitted because it is not needed for this bucket's use case.
   #checkov:skip=CKV_AWS_18:S3 server access logging is an accepted policy exception for this Forge storage bucket; audit needs are handled outside S3 access logs.
+  #checkov:skip=CKV2_AWS_62:Job log bucket is written and read by the logging workflow; no S3 event notification consumer is required.
   bucket = "${var.prefix}-forge-gh-logs-${data.aws_caller_identity.current.account_id}"
   tags   = var.tags
 }

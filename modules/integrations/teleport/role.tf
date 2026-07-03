@@ -1,4 +1,5 @@
 data "aws_iam_policy_document" "eks_policy" {
+  #checkov:skip=CKV_AWS_356:Teleport needs account-wide EKS cluster discovery; eks:ListClusters cannot be scoped to a single cluster ARN.
   statement {
     sid    = "EKSListPolicy"
     effect = "Allow"

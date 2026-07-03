@@ -1,4 +1,6 @@
 data "aws_iam_policy_document" "splunk_integration" {
+  #checkov:skip=CKV_AWS_111:Splunk Observability integration follows the vendor-required account inventory and metric-stream permission model.
+  #checkov:skip=CKV_AWS_356:Splunk Observability integration follows the vendor-required account inventory and metric-stream permission model.
   statement {
     effect = "Allow"
     actions = [
@@ -102,6 +104,8 @@ data "aws_iam_policy_document" "splunk_integration" {
 }
 
 data "aws_iam_policy_document" "splunk_managed_policy" {
+  #checkov:skip=CKV_AWS_111:Splunk Observability integration follows the vendor-required account inventory and metric-stream permission model.
+  #checkov:skip=CKV_AWS_356:Splunk Observability integration follows the vendor-required account inventory and metric-stream permission model.
   statement {
     effect = "Allow"
     actions = [

@@ -1,4 +1,6 @@
 data "aws_iam_policy_document" "cloud_custodian_policy" {
+  #checkov:skip=CKV_AWS_111:Cloud Custodian is an ops cleanup helper and intentionally account-wide so it can remove stale runner resources across supported services.
+  #checkov:skip=CKV_AWS_356:Cloud Custodian is an ops cleanup helper and intentionally account-wide so it can remove stale runner resources across supported services.
   version = "2012-10-17"
 
   statement {

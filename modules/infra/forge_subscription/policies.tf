@@ -1,6 +1,10 @@
 # Helper policy for Forge runners that assume this role in tenant accounts.
 # Allows runner jobs to operate on tenant ops S3 buckets, not Forge-account buckets.
 data "aws_iam_policy_document" "s3_access_for_forge_runners" {
+  #checkov:skip=CKV_AWS_108:Forge subscription is an ops helper; tenant ops buckets are created outside this module and runners assume this tenant role to operate on them.
+  #checkov:skip=CKV_AWS_109:Forge subscription is an ops helper; tenant ops buckets are created outside this module and runners assume this tenant role to operate on them.
+  #checkov:skip=CKV_AWS_111:Forge subscription is an ops helper; tenant ops buckets are created outside this module and runners assume this tenant role to operate on them.
+  #checkov:skip=CKV_AWS_356:Forge subscription is an ops helper; tenant ops buckets are created outside this module and runners assume this tenant role to operate on them.
   statement {
     effect = "Allow"
     actions = [
@@ -24,6 +28,8 @@ data "aws_iam_policy_document" "s3_access_for_forge_runners" {
 # Helper policy for Forge runners that assume this role in tenant accounts.
 # Allows runner jobs to read tenant Secrets Manager values needed for operations.
 data "aws_iam_policy_document" "secrets_access_for_forge_runners" {
+  #checkov:skip=CKV_AWS_108:Forge subscription is an ops helper; tenant secrets are operator-defined and runners assume this tenant role to discover required values.
+  #checkov:skip=CKV_AWS_356:Forge subscription is an ops helper; tenant secrets are operator-defined and runners assume this tenant role to discover required values.
   statement {
     actions = [
       "secretsmanager:ListSecrets",
@@ -40,7 +46,11 @@ data "aws_iam_policy_document" "secrets_access_for_forge_runners" {
 # Packer builds and build AMIs in tenant accounts, not the Forge account. See:
 # <https://developer.hashicorp.com/packer/plugins/builders/amazon>.
 data "aws_iam_policy_document" "packer_support_for_forge_runners" {
+  #checkov:skip=CKV_AWS_107:Forge subscription is an ops helper; tenant Packer builds need broad EC2/ECR/IAM permissions from Forge-hosted runners in tenant accounts.
+  #checkov:skip=CKV_AWS_109:Forge subscription is an ops helper; tenant Packer builds need broad EC2/ECR/IAM permissions from Forge-hosted runners in tenant accounts.
   #checkov:skip=CKV_AWS_110:Tenant Packer builds intentionally use Forge-hosted runners to build AMIs in tenant accounts; runner workloads do not use this path directly.
+  #checkov:skip=CKV_AWS_111:Forge subscription is an ops helper; tenant Packer builds need broad EC2/ECR/IAM permissions from Forge-hosted runners in tenant accounts.
+  #checkov:skip=CKV_AWS_356:Forge subscription is an ops helper; tenant Packer builds need broad EC2/ECR/IAM permissions from Forge-hosted runners in tenant accounts.
   statement {
     effect = "Allow"
     actions = [

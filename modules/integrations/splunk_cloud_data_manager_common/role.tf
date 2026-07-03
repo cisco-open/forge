@@ -1,4 +1,5 @@
 data "aws_iam_policy_document" "splunk_dm_policy" {
+  #checkov:skip=CKV_AWS_356:Splunk Cloud Data Manager requires account-wide read and list discovery across supported AWS services.
   statement {
     effect = "Allow"
     actions = [

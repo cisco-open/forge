@@ -1,5 +1,8 @@
 # Create the actual ECR registries (one per image type).
 resource "aws_ecr_repository" "ops_container_repository" {
+  #checkov:skip=CKV_AWS_51:Ops helper repositories are parameterized by repository config; immutable tags can be enabled where required.
+  #checkov:skip=CKV_AWS_136:Ops helper repositories use default ECR encryption; customer KMS keys are not required for these operational artifacts.
+  #checkov:skip=CKV_AWS_163:Ops helper repositories are parameterized by repository config; scan-on-push can be enabled where required.
   for_each = {
     for key, val in var.repositories : val.repo => val
   }

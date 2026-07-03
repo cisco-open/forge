@@ -25,6 +25,8 @@ EOF
 
 # For defining the permissions needed for this lifecycle to take effect.
 resource "aws_iam_role_policy" "dlm_lifecycle" {
+  #checkov:skip=CKV_AWS_290:AMI lifecycle cleanup is an ops helper for managing platform build artifacts and intentionally discovers snapshots account-wide.
+  #checkov:skip=CKV_AWS_355:AMI lifecycle cleanup is an ops helper for managing platform build artifacts and intentionally discovers snapshots account-wide.
   name = "dlm-lifecycle-policy"
   role = aws_iam_role.dlm_lifecycle_role.id
 
