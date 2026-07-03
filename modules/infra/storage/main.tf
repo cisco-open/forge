@@ -2,7 +2,7 @@
 # Long-term storage (i.e. release builds and SBOMs we need to retain long-term
 # for stability and auditing purposes).
 resource "aws_s3_bucket" "s3_long_term" {
-  #checkov:skip=CKV_AWS_144:Cross-region replication is an accepted policy exception for this Forge storage bucket.
+  #checkov:skip=CKV_AWS_144:Cross-region replication is intentionally omitted because it is not needed for this bucket's use case.
   bucket = "${data.aws_caller_identity.current.account_id}-long-term-storage"
   tags   = local.all_security_tags
 }
@@ -48,7 +48,7 @@ resource "aws_s3_bucket_public_access_block" "s3_long_term" {
 # Short-term storage (i.e. temporary/feature-branch builds, core dumps, and
 # other artifacts we aren't obligated to retain long-term).
 resource "aws_s3_bucket" "s3_short_term" {
-  #checkov:skip=CKV_AWS_144:Cross-region replication is an accepted policy exception for this Forge storage bucket.
+  #checkov:skip=CKV_AWS_144:Cross-region replication is intentionally omitted because it is not needed for this bucket's use case.
   bucket = "${data.aws_caller_identity.current.account_id}-short-term-storage"
   tags   = local.all_security_tags
 }

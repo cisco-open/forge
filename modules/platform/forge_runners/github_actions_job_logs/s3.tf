@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "gh_logs" {
-  #checkov:skip=CKV_AWS_144:Cross-region replication is an accepted policy exception for this Forge storage bucket.
+  #checkov:skip=CKV_AWS_144:Cross-region replication is intentionally omitted because it is not needed for this bucket's use case.
   bucket = "${var.prefix}-forge-gh-logs-${data.aws_caller_identity.current.account_id}"
   tags   = var.tags
 }
