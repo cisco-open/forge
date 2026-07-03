@@ -12,6 +12,6 @@ boto3==1.35.90
 botocore==1.35.90
 # Runtime libs provided by Klayers in production (job_log_archiver et al.):
 PyJWT==2.13.0
-requests==2.33.0
+requests==2.34.2
 cryptography==48.0.1
 responses==0.25.3
