@@ -6,12 +6,12 @@
 # the public Klayers layers at runtime (see docs-improvement/phase1-audit-register.md
 # A4). Installing them here lets tests import handlers "as the runtime does".
 pytest==9.1.1
-pytest-cov==6.0.0
-moto[all]==5.0.28
-boto3==1.35.90
-botocore==1.35.90
+pytest-cov==7.1.0
+moto[all]==5.2.2
+boto3==1.43.36
+botocore==1.43.36
 # Runtime libs provided by Klayers in production (job_log_archiver et al.):
 PyJWT==2.13.0
 requests==2.34.2
-cryptography==48.0.1
+cryptography==49.0.0
 responses==0.26.1
