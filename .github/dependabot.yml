@@ -5,6 +5,8 @@ updates:
     directory: /
     schedule:
       interval: daily
+    cooldown:
+      default-days: 7
     labels:
       - dependencies
       - github-actions
@@ -13,6 +15,8 @@ updates:
     directory: /
     schedule:
       interval: daily
+    cooldown:
+      default-days: 7
     labels:
       - dependencies
       - python
@@ -21,6 +25,8 @@ updates:
     directory: /modules
     schedule:
       interval: daily
+    cooldown:
+      default-days: 7
     labels:
       - dependencies
       - terraform
@@ -29,6 +35,8 @@ updates:
     directory: /examples/deployments
     schedule:
       interval: daily
+    cooldown:
+      default-days: 7
     labels:
       - dependencies
       - terraform
@@ -37,6 +45,8 @@ updates:
     directory: /.docker
     schedule:
       interval: daily
+    cooldown:
+      default-days: 7
     labels:
       - dependencies
       - docker

@@ -17,19 +17,26 @@ on:
       - main
 
 permissions:
-  contents: read
+  contents: read # Required to checkout and lint the repository.
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   run-pre-commit:
+    name: Run pre-commit
     runs-on: ubuntu-latest
     timeout-minutes: 60
     container:
-      image: ghcr.io/${{ github.repository }}-pre-commit:main
+      image: ghcr.io/cisco-open/forge-pre-commit:main@sha256:5b67305d0ca440bb13f20525667ee62111d5d5a8d6665920f4bb4e0207e32b81
 
     if: github.event.pull_request.user.login != 'dependabot[bot]'
     steps:
       - name: Checkout Repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Cache Pre-commit
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

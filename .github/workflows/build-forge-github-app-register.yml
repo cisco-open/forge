@@ -24,6 +24,12 @@ on:
       - .docker/forge-github-app-register/**
       - .github/workflows/build-forge-github-app-register.yml
 
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 env:
   PLATFORMS: linux/amd64
   REGISTRY: ghcr.io
@@ -34,12 +40,14 @@ jobs:
     name: Build and push Docker image
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      packages: write
+      contents: read # Required to checkout the repository.
+      packages: write # Required to publish container images to GHCR.
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
