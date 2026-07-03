@@ -1,0 +1,336 @@
+{
+    "applicationProperties": {
+        "collapseNavigation": true,
+        "hideEdit": false,
+        "hideExport": false,
+        "hideOpenInSearch": false
+    },
+    "dataSources": {
+        "api_warning_summary_search": {
+            "name": "GitHub and SQS API warnings",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" ((message=\"GitHub API request retry attempt\" OR message=\"GitHub API request failed after retries\" OR message=\"GitHub rate limit: SecondaryRateLimit detected for request*\" OR message=\"Queue URL not found, skipping publishing message to SQS.\" OR message=\"Error publishing message to SQS.\") OR (module=\"auth\" (level=\"WARN\" OR level=\"ERROR\" OR level=\"warn\" OR level=\"error\")) OR (module=\"sqs\" (level=\"WARN\" OR level=\"ERROR\" OR level=\"warn\" OR level=\"error\")))\n| eval tenant=coalesce(forgecicd_tenant,\"unknown\"), request_id=coalesce('aws-request-id',aws_request_id)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$environment$\"=\"*\" OR like(environment,\"%$environment$%\")\n| where \"$service$\"=\"*\" OR like(service,\"%$service$%\")\n| eval signal=case(\n    message=\"GitHub API request retry attempt\", \"github_api_retry\",\n    match(message,\"GitHub API request failed after retries\"), \"github_api_failed_after_retries\",\n    match(message,\"GitHub rate limit: SecondaryRateLimit\"), \"github_secondary_rate_limit\",\n    message=\"Queue URL not found, skipping publishing message to SQS.\", \"sqs_queue_url_missing\",\n    message=\"Error publishing message to SQS.\", \"sqs_publish_failed\",\n    true(), \"other_api_warning\")\n| where \"$signal$\"=\"*\" OR like(signal,\"%$signal$%\")\n| stats count as events dc(request_id) as lambda_invocations dc(environment) as environments values(service) as services min(_time) as first_time max(_time) as last_time by tenant forgecicd_log_type module level signal\n| eval first_seen=strftime(first_time,\"%Y-%m-%d %H:%M:%S\"), last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "pool_activity_search": {
+            "name": "Pool top-up activity",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" forgecicd_log_type=\"pool\" (\"Checking current pool size\" OR \"The pool will be topped up\" OR \"Pool will not be topped up\" OR \"Capping pool top-up\" OR \"is still booting and counted as part of the pool\" OR \"Created instance(s)\" OR \"No instances created\" OR \"RunInstances failed\" OR \"Create fleet failed\")\n| eval tenant=coalesce(forgecicd_tenant,\"unknown\"), request_id=coalesce('aws-request-id',aws_request_id)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$environment$\"=\"*\" OR like(environment,\"%$environment$%\")\n| where \"$service$\"=\"*\" OR like(service,\"%$service$%\")\n| rex field=message \"pool of size: (?<target_pool_size>\\d+)\"\n| rex field=message \"topped up with (?<top_up>\\d+) runners\"\n| rex field=message \"Found (?<idle_runners>\\d+) managed idle runners\"\n| rex field=message \"Capping pool top-up from (?<cap_from>\\d+) to (?<cap_to>\\d+) to respect the maximum of (?<maximum_runners>\\d+) runners\"\n| eval target_pool_size=tonumber(target_pool_size), top_up=tonumber(top_up), idle_runners=tonumber(idle_runners), cap_from=tonumber(cap_from), cap_to=tonumber(cap_to), maximum_runners=tonumber(maximum_runners)\n| eval signal=case(\n    match(message,\"Checking current pool size\"), \"pool_check\",\n    match(message,\"Capping pool top-up\"), \"pool_topup_capped\",\n    match(message,\"The pool will be topped up\"), \"pool_topup\",\n    match(message,\"Pool will not be topped up\"), \"pool_idle_sufficient\",\n    match(message,\"is still booting and counted as part of the pool\"), \"pool_booting_counted\",\n    match(message,\"Created instance\\(s\\)\"), \"pool_instance_created\",\n    match(message,\"No instances created|RunInstances failed|Create fleet failed\"), \"pool_create_failed\",\n    true(), \"other_pool\")\n| where \"$signal$\"=\"*\" OR like(signal,\"%$signal$%\")\n| stats count as events dc(request_id) as lambda_invocations sum(top_up) as requested_top_up max(target_pool_size) as max_target_pool_size avg(idle_runners) as avg_idle_runners max(idle_runners) as max_idle_runners max(cap_from) as max_cap_from min(cap_to) as min_cap_to max(maximum_runners) as max_configured_runners min(_time) as first_time max(_time) as last_time by tenant environment service signal module level\n| eval avg_idle_runners=round(avg_idle_runners,2), first_seen=strftime(first_time,\"%Y-%m-%d %H:%M:%S\"), last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "pool_topup_trend_search": {
+            "name": "Pool top-up trend",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" forgecicd_log_type=\"pool\" (\"The pool will be topped up\" OR \"Pool will not be topped up\" OR \"Capping pool top-up\" OR \"Created instance(s)\" OR \"No instances created\")\n| eval tenant=coalesce(forgecicd_tenant,\"unknown\")\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$environment$\"=\"*\" OR like(environment,\"%$environment$%\")\n| where \"$service$\"=\"*\" OR like(service,\"%$service$%\")\n| eval signal=case(\n    match(message,\"Capping pool top-up\"), \"pool_topup_capped\",\n    match(message,\"The pool will be topped up\"), \"pool_topup\",\n    match(message,\"Pool will not be topped up\"), \"pool_idle_sufficient\",\n    match(message,\"Created instance\\(s\\)\"), \"pool_instance_created\",\n    match(message,\"No instances created\"), \"pool_create_failed\",\n    true(), \"other_pool\")\n| where \"$signal$\"=\"*\" OR like(signal,\"%$signal$%\")\n| timechart span=15m count by signal limit=12\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "scale_down_cleanup_search": {
+            "name": "Scale-down cleanup signals",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" forgecicd_log_type=\"scale-down\" (\"cannot be de-registered\" OR \"is terminated and GitHub runner is de-registered\" OR \"Failed to de-register\" OR \"tagged as orphan\" OR \"untagged as orphan\" OR \"Terminating orphan runner\" OR \"Failed to terminate orphan runner\" OR \"Failure during orphan termination processing\" OR \"Terminating all non busy runners\" OR \"will be kept idle\")\n| eval tenant=coalesce(forgecicd_tenant,\"unknown\"), request_id=coalesce('aws-request-id',aws_request_id)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$environment$\"=\"*\" OR like(environment,\"%$environment$%\")\n| where \"$service$\"=\"*\" OR like(service,\"%$service$%\")\n| rex field=message \"Runner '(?<instance_id>i-[0-9a-f]+)'\"\n| rex field=message \"AWS runner instance '(?<aws_instance_id>i-[0-9a-f]+)'\"\n| rex field=message \"Orphan runner '(?<orphan_instance_id>i-[0-9a-f]+)'\"\n| eval ec2_instance_id=coalesce(instance_id,aws_instance_id,orphan_instance_id)\n| eval signal=case(\n    match(message,\"cannot be de-registered, because it is still busy\"), \"runner_busy_not_deregistered\",\n    match(message,\"cannot be de-registered\\. Error\"), \"runner_deregister_error\",\n    match(message,\"Failed to de-register\"), \"runner_deregister_failed\",\n    match(message,\"is terminated and GitHub runner is de-registered\"), \"runner_deregistered_terminated\",\n    match(message,\"will be kept idle\"), \"runner_kept_idle\",\n    match(message,\"Terminating all non busy runners\"), \"terminating_non_busy\",\n    match(message,\"Failed to tag runner .* as orphan\"), \"orphan_tag_failed\",\n    match(message,\"Failed to un-tag runner .* as orphan\"), \"orphan_untag_failed\",\n    match(message,\"tagged as orphan\"), \"orphan_tagged\",\n    match(message,\"untagged as orphan\"), \"orphan_untagged\",\n    match(message,\"Failed to terminate orphan runner\"), \"orphan_terminate_failed\",\n    match(message,\"Terminating orphan runner\"), \"orphan_terminating\",\n    match(message,\"Failure during orphan termination processing\"), \"orphan_processing_failed\",\n    true(), \"other_cleanup\")\n| where \"$signal$\"=\"*\" OR like(signal,\"%$signal$%\")\n| stats count as events dc(request_id) as lambda_invocations dc(ec2_instance_id) as instances values(service) as services min(_time) as first_time max(_time) as last_time by tenant environment signal module level\n| eval duration_minutes=round((last_time-first_time)/60,1), first_seen=strftime(first_time,\"%Y-%m-%d %H:%M:%S\"), last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| eval pattern=case(events>=100 AND duration_minutes>=60,\"persistent\", events>=20,\"repeating\", events>=5,\"burst\", true(),\"single\")\n| sort - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "scale_down_cleanup_trend_search": {
+            "name": "Scale-down cleanup trend",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" forgecicd_log_type=\"scale-down\" (\"cannot be de-registered\" OR \"is terminated and GitHub runner is de-registered\" OR \"Failed to de-register\" OR \"tagged as orphan\" OR \"untagged as orphan\" OR \"Terminating orphan runner\" OR \"Failed to terminate orphan runner\" OR \"Failure during orphan termination processing\" OR \"Terminating all non busy runners\" OR \"will be kept idle\")\n| eval tenant=coalesce(forgecicd_tenant,\"unknown\")\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$environment$\"=\"*\" OR like(environment,\"%$environment$%\")\n| where \"$service$\"=\"*\" OR like(service,\"%$service$%\")\n| eval signal=case(\n    match(message,\"cannot be de-registered, because it is still busy\"), \"runner_busy_not_deregistered\",\n    match(message,\"cannot be de-registered\\. Error\"), \"runner_deregister_error\",\n    match(message,\"Failed to de-register\"), \"runner_deregister_failed\",\n    match(message,\"is terminated and GitHub runner is de-registered\"), \"runner_deregistered_terminated\",\n    match(message,\"will be kept idle\"), \"runner_kept_idle\",\n    match(message,\"Terminating all non busy runners\"), \"terminating_non_busy\",\n    match(message,\"Failed to tag runner .* as orphan\"), \"orphan_tag_failed\",\n    match(message,\"Failed to un-tag runner .* as orphan\"), \"orphan_untag_failed\",\n    match(message,\"tagged as orphan\"), \"orphan_tagged\",\n    match(message,\"untagged as orphan\"), \"orphan_untagged\",\n    match(message,\"Failed to terminate orphan runner\"), \"orphan_terminate_failed\",\n    match(message,\"Terminating orphan runner\"), \"orphan_terminating\",\n    match(message,\"Failure during orphan termination processing\"), \"orphan_processing_failed\",\n    true(), \"other_cleanup\")\n| where \"$signal$\"=\"*\" OR like(signal,\"%$signal$%\")\n| timechart span=15m count by signal limit=12\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "scale_up_registration_search": {
+            "name": "Scale-up registration and post-launch signals",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" forgecicd_log_type=\"scale-up\" (\"Failed to create JIT config\" OR \"Some runners failed to be created\" OR \"Terminating instances that failed to get configured\" OR \"Failed to terminate instance\" OR \"GitHub runner label EC2 tags were truncated\" OR \"No runner will be created, job is not queued\" OR \"No runners will be created for this group\" OR \"maximum number of runners reached\" OR \"Invalid SSM_PARAMETER_STORE_TAGS format\" OR \"SSM Parameter\" OR \"Failed to mark runner\" OR \"Event is not supported in combination with ephemeral runners\" OR \"Repository does not belong to a GitHub organization\")\n| eval tenant=coalesce(forgecicd_tenant,\"unknown\"), request_id=coalesce('aws-request-id',aws_request_id)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$environment$\"=\"*\" OR like(environment,\"%$environment$%\")\n| where \"$service$\"=\"*\" OR like(service,\"%$service$%\")\n| eval signal=case(\n    message=\"Failed to create JIT config for instance, continuing with remaining instances\", \"jit_instance_failed\",\n    message=\"Failed to create JIT config for some instances\", \"jit_batch_failed\",\n    message=\"Some runners failed to be created, rejecting some messages so the requests are retried\", \"partial_create_retry\",\n    message=\"Terminating instances that failed to get configured\", \"terminate_unconfigured\",\n    message=\"Failed to terminate instance\", \"terminate_failed\",\n    match(message,\"Failed to mark runner .* with GitHub runner metadata\"), \"metadata_mark_failed\",\n    message=\"GitHub runner label EC2 tags were truncated to avoid exceeding EC2 tag limits.\", \"label_tags_truncated\",\n    message=\"No runner will be created, job is not queued.\", \"job_not_queued\",\n    message=\"No runners will be created for this group, no valid messages found.\", \"no_valid_messages\",\n    message=\"Not all runners will be created for this group, maximum number of runners reached.\", \"max_runners_reached\",\n    message=\"Invalid SSM_PARAMETER_STORE_TAGS format\", \"invalid_ssm_tags\",\n    match(message,\"SSM Parameter .* for Runner group .* does not exist\"), \"runner_group_ssm_missing\",\n    match(message,\"Event is not supported in combination with ephemeral runners\"), \"unsupported_ephemeral_event\",\n    match(message,\"Repository does not belong to a GitHub organization\"), \"unsupported_repo_owner\",\n    true(), \"other_scale_up\")\n| where signal!=\"other_scale_up\"\n| where \"$signal$\"=\"*\" OR like(signal,\"%$signal$%\")\n| stats count as events dc(request_id) as lambda_invocations dc(environment) as environments values(service) as services min(_time) as first_time max(_time) as last_time by tenant environment signal module level\n| eval duration_minutes=round((last_time-first_time)/60,1), first_seen=strftime(first_time,\"%Y-%m-%d %H:%M:%S\"), last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| eval pattern=case(events>=100 AND duration_minutes>=60,\"persistent\", events>=20,\"repeating\", events>=5,\"burst\", true(),\"single\")\n| sort - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "scale_up_registration_trend_search": {
+            "name": "Scale-up registration trend",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" forgecicd_log_type=\"scale-up\" (\"Failed to create JIT config\" OR \"Some runners failed to be created\" OR \"Terminating instances that failed to get configured\" OR \"Failed to terminate instance\" OR \"GitHub runner label EC2 tags were truncated\" OR \"No runner will be created, job is not queued\" OR \"No runners will be created for this group\" OR \"maximum number of runners reached\" OR \"Invalid SSM_PARAMETER_STORE_TAGS format\" OR \"SSM Parameter\" OR \"Failed to mark runner\" OR \"Event is not supported in combination with ephemeral runners\" OR \"Repository does not belong to a GitHub organization\")\n| eval tenant=coalesce(forgecicd_tenant,\"unknown\")\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$environment$\"=\"*\" OR like(environment,\"%$environment$%\")\n| where \"$service$\"=\"*\" OR like(service,\"%$service$%\")\n| eval signal=case(\n    message=\"Failed to create JIT config for instance, continuing with remaining instances\", \"jit_instance_failed\",\n    message=\"Failed to create JIT config for some instances\", \"jit_batch_failed\",\n    message=\"Some runners failed to be created, rejecting some messages so the requests are retried\", \"partial_create_retry\",\n    message=\"Terminating instances that failed to get configured\", \"terminate_unconfigured\",\n    message=\"Failed to terminate instance\", \"terminate_failed\",\n    match(message,\"Failed to mark runner .* with GitHub runner metadata\"), \"metadata_mark_failed\",\n    message=\"GitHub runner label EC2 tags were truncated to avoid exceeding EC2 tag limits.\", \"label_tags_truncated\",\n    message=\"No runner will be created, job is not queued.\", \"job_not_queued\",\n    message=\"No runners will be created for this group, no valid messages found.\", \"no_valid_messages\",\n    message=\"Not all runners will be created for this group, maximum number of runners reached.\", \"max_runners_reached\",\n    message=\"Invalid SSM_PARAMETER_STORE_TAGS format\", \"invalid_ssm_tags\",\n    match(message,\"SSM Parameter .* for Runner group .* does not exist\"), \"runner_group_ssm_missing\",\n    match(message,\"Event is not supported in combination with ephemeral runners\"), \"unsupported_ephemeral_event\",\n    match(message,\"Repository does not belong to a GitHub organization\"), \"unsupported_repo_owner\",\n    true(), \"other_scale_up\")\n| where signal!=\"other_scale_up\"\n| where \"$signal$\"=\"*\" OR like(signal,\"%$signal$%\")\n| timechart span=15m count by signal limit=12\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        }
+    },
+    "defaults": {
+        "dataSources": {
+            "ds.search": {
+                "options": {
+                    "queryParameters": {
+                        "earliest": "$global_time.earliest$",
+                        "latest": "$global_time.latest$"
+                    }
+                }
+            }
+        }
+    },
+    "description": "Runner control-plane signals from scale-up registration, pool top-up, scale-down cleanup, GitHub API retry, and SQS publish logs.",
+    "inputs": {
+        "input_environment": {
+            "options": {
+                "defaultValue": "*",
+                "token": "environment"
+            },
+            "title": "Environment Contains",
+            "type": "input.text"
+        },
+        "input_global_time": {
+            "options": {
+                "defaultValue": "-24h@h,now",
+                "token": "global_time"
+            },
+            "title": "Global Time Range",
+            "type": "input.timerange"
+        },
+        "input_service": {
+            "options": {
+                "defaultValue": "*",
+                "token": "service"
+            },
+            "title": "Service Contains",
+            "type": "input.text"
+        },
+        "input_signal": {
+            "options": {
+                "defaultValue": "*",
+                "token": "signal"
+            },
+            "title": "Signal Contains",
+            "type": "input.text"
+        },
+        "input_tenant": {
+            "context": {},
+            "dataSources": {},
+            "options": {
+                "defaultValue": "*",
+                "items": ${jsonencode(
+                    concat(
+                        [{ label = "All", value = "*" }],
+                        [for tenant in tenants : { label = tenant, value = tenant }]
+                    )
+                )},
+                "token": "tenant"
+            },
+            "title": "Forge Tenant",
+            "type": "input.dropdown"
+        }
+    },
+    "layout": {
+        "globalInputs": [
+            "input_global_time",
+            "input_tenant",
+            "input_environment",
+            "input_service",
+            "input_signal"
+        ],
+        "layoutDefinitions": {
+            "layout": {
+                "options": {
+                    "gutterSize": 9
+                },
+                "structure": [
+                    {
+                        "item": "scale_up_registration_table",
+                        "position": {
+                            "h": 380,
+                            "w": 700,
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "scale_up_registration_trend_chart",
+                        "position": {
+                            "h": 380,
+                            "w": 500,
+                            "x": 700,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "pool_activity_table",
+                        "position": {
+                            "h": 380,
+                            "w": 700,
+                            "x": 0,
+                            "y": 380
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "pool_topup_trend_chart",
+                        "position": {
+                            "h": 380,
+                            "w": 500,
+                            "x": 700,
+                            "y": 380
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "scale_down_cleanup_table",
+                        "position": {
+                            "h": 400,
+                            "w": 700,
+                            "x": 0,
+                            "y": 760
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "scale_down_cleanup_trend_chart",
+                        "position": {
+                            "h": 400,
+                            "w": 500,
+                            "x": 700,
+                            "y": 760
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "api_warning_summary_table",
+                        "position": {
+                            "h": 360,
+                            "w": 1200,
+                            "x": 0,
+                            "y": 1160
+                        },
+                        "type": "block"
+                    }
+                ],
+                "type": "grid"
+            }
+        },
+        "options": {},
+        "tabs": {
+            "items": [
+                {
+                    "label": "Control Plane Health",
+                    "layoutId": "layout"
+                }
+            ]
+        }
+    },
+    "title": "Forge Runner Control Plane Health",
+    "visualizations": {
+        "api_warning_summary_table": {
+            "dataSources": {
+                "primary": "api_warning_summary_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "GitHub and SQS API Warnings",
+            "type": "splunk.table"
+        },
+        "pool_activity_table": {
+            "dataSources": {
+                "primary": "pool_activity_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Pool Top-Up Activity",
+            "type": "splunk.table"
+        },
+        "pool_topup_trend_chart": {
+            "dataSources": {
+                "primary": "pool_topup_trend_search"
+            },
+            "options": {},
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Pool Top-Up Trend",
+            "type": "splunk.line"
+        },
+        "scale_down_cleanup_table": {
+            "dataSources": {
+                "primary": "scale_down_cleanup_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Scale-Down Cleanup Signals",
+            "type": "splunk.table"
+        },
+        "scale_down_cleanup_trend_chart": {
+            "dataSources": {
+                "primary": "scale_down_cleanup_trend_search"
+            },
+            "options": {},
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Scale-Down Cleanup Trend",
+            "type": "splunk.line"
+        },
+        "scale_up_registration_table": {
+            "dataSources": {
+                "primary": "scale_up_registration_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Scale-Up Registration and Post-Launch Signals",
+            "type": "splunk.table"
+        },
+        "scale_up_registration_trend_chart": {
+            "dataSources": {
+                "primary": "scale_up_registration_trend_search"
+            },
+            "options": {},
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Scale-Up Registration Trend",
+            "type": "splunk.line"
+        }
+    }
+}

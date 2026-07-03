@@ -103,6 +103,8 @@ No modules.
 | [splunk_data_ui_views.forge_kubernetes_storage_and_network](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
 | [splunk_data_ui_views.forge_lambda_operations](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
 | [splunk_data_ui_views.forge_runner_capacity](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
+| [splunk_data_ui_views.forge_runner_control_plane_health](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
+| [splunk_data_ui_views.forge_runner_dispatcher_rejections](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
 | [splunk_data_ui_views.forge_tenant_logs](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
 | [splunk_data_ui_views.forge_troubleshooting](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
 | [splunk_data_ui_views.forge_trust_failures](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
