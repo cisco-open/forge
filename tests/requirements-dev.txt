@@ -14,4 +14,4 @@ botocore==1.35.90
 PyJWT==2.13.0
 requests==2.33.0
 cryptography==48.0.1
-responses==0.25.3
+responses==0.26.1
