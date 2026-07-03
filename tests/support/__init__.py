@@ -21,6 +21,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import importlib
+import importlib.util
 import json
 import sys
 from pathlib import Path
@@ -53,8 +54,18 @@ LAMBDA_DIRS: dict[str, str] = {
     'splunk_s3_runner_logs': (
         'modules/integrations/splunk_cloud_s3_runner_logs/lambda'
     ),
+    'sec_meta_ec2_tags': (
+        'modules/integrations/splunk_cloud_data_manager/'
+        'sec_meta_ec2_tags/lambda'
+    ),
     'redrive_deadletter': (
         'modules/platform/forge_runners/redrive_deadletter/lambda'
+    ),
+    'github_app_runner_group': (
+        'modules/platform/forge_runners/github_app_runner_group/lambda'
+    ),
+    'github_clean_global_lock': (
+        'modules/platform/forge_runners/github_global_lock/lambda'
     ),
     'trust_common': (
         'modules/platform/forge_runners/forge_trust_validator/lambda'
@@ -65,6 +76,23 @@ LAMBDA_DIRS: dict[str, str] = {
     'trust_validator': (
         'modules/platform/forge_runners/forge_trust_validator/lambda'
     ),
+    'webex_webhook_relay': (
+        'modules/integrations/github_webhook_relay_destination_receivers/'
+        'webex_webhook_relay/lambda'
+    ),
+    'ec2_update_runner_ssm_ami': (
+        'modules/platform/ec2_deployment/ec2_update_runner_ssm_ami/lambda'
+    ),
+    'ec2_update_runner_tags': (
+        'modules/platform/ec2_deployment/ec2_update_runner_tags/lambda'
+    ),
+}
+
+LAMBDA_MODULE_FILES: dict[str, str] = {
+    # This receiver's Lambda handler is "handler.lambda_handler", but the test
+    # suite uses the module's integration name to avoid colliding with other
+    # first-party files named handler.py.
+    'webex_webhook_relay': 'handler.py',
 }
 
 
@@ -93,6 +121,20 @@ def load_handler_module(module_name: str) -> ModuleType:
         sys.path.insert(0, src_str)
     # Force a fresh import so module-level env reads reflect current os.environ.
     sys.modules.pop(module_name, None)
+    module_file = LAMBDA_MODULE_FILES.get(module_name)
+    if module_file:
+        spec = importlib.util.spec_from_file_location(
+            module_name,
+            src / module_file,
+        )
+        if spec is None or spec.loader is None:
+            raise ImportError(
+                f"Cannot load {module_name!r} from {module_file}"
+            )
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        spec.loader.exec_module(module)
+        return module
     return importlib.import_module(module_name)
 
 

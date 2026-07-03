@@ -37,10 +37,17 @@ def test_klayers_provided_dep_is_importable(dep):
         'validate_signature',
         'job_log_dispatcher',
         'job_log_archiver',
+        'splunk_s3_runner_logs',
+        'sec_meta_ec2_tags',
         'redrive_deadletter',
+        'github_app_runner_group',
+        'github_clean_global_lock',
         'trust_common',
         'trust_preparer',
         'trust_validator',
+        'webex_webhook_relay',
+        'ec2_update_runner_ssm_ami',
+        'ec2_update_runner_tags',
     ],
 )
 def test_handler_module_imports(module_name, monkeypatch, aws):
@@ -54,6 +61,8 @@ def test_handler_module_imports(module_name, monkeypatch, aws):
         'KMS_KEY_ARN',
         'GITHUB_API',
         'SQS_MAP',
+        'KINESIS_STREAM_NAME',
+        'WEBHOOK_SECRET',
     ):
         monkeypatch.setenv(var, 'placeholder')
     assert load_handler_module(module_name) is not None
