@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.12.1](https://github.com/cisco-open/forge/compare/v3.12.0...v3.12.1) (2026-07-03)
+
+
+### Bug Fixes
+
+* **ci:** remediate zizmor alerts ([#392](https://github.com/cisco-open/forge/issues/392)) ([953403a](https://github.com/cisco-open/forge/commit/953403adec549b8b9632bb2227a7d92fb5896ea7))
+
 ## [3.12.0](https://github.com/cisco-open/forge/compare/v3.11.0...v3.12.0) (2026-07-03)
 
 
