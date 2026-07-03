@@ -14,6 +14,8 @@ Marked `lambda_exec` (needs Docker; excluded from the fast `-m smoke` run). Run:
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import io
 import json
 import time
@@ -46,6 +48,7 @@ def test_real_validate_signature_publishes_to_eventbridge(client):
     lam = client('lambda')
     bus = 'forge-smoke-webhook-bus'
     fn = 'forge-smoke-validate-signature'
+    secret = 'forge-smoke-webhook-secret'
 
     events.create_event_bus(Name=bus)
     try:
@@ -56,7 +59,13 @@ def test_real_validate_signature_publishes_to_eventbridge(client):
             Handler='validate_signature.lambda_handler',
             Code={'ZipFile': _zip_handler()},
             Timeout=30,
-            Environment={'Variables': {'EVENT_BUS': bus, 'LOG_LEVEL': 'INFO'}},
+            Environment={
+                'Variables': {
+                    'EVENT_BUS': bus,
+                    'LOG_LEVEL': 'INFO',
+                    'WEBHOOK_SECRET': secret,
+                }
+            },
         )
     except ClientError as e:
         if e.response['Error']['Code'] != 'ResourceConflictException':
@@ -68,12 +77,17 @@ def test_real_validate_signature_publishes_to_eventbridge(client):
             break
         time.sleep(1)
 
-    # Real API Gateway v2 proxy shape. No GITHUB_SECRET set -> handler forwards
-    # (this is exactly the prod fail-open path documented as P0-1; here it lets
-    # us assert the publish plumbing works without a signing secret).
+    # Real API Gateway v2 proxy shape with the same SHA-256 signature GitHub
+    # sends for signed webhooks.
+    body = json.dumps({'action': 'queued'})
+    digest = hmac.new(secret.encode(), body.encode(),
+                      hashlib.sha256).hexdigest()
     event = {
-        'headers': {'X-GitHub-Event': 'workflow_job'},
-        'body': json.dumps({'action': 'queued'}),
+        'headers': {
+            'X-GitHub-Event': 'workflow_job',
+            'X-Hub-Signature-256': f'sha256={digest}',
+        },
+        'body': body,
         'isBase64Encoded': False,
     }
     resp = lam.invoke(FunctionName=fn, Payload=json.dumps(event).encode())
