@@ -1,5 +1,6 @@
 resource "aws_s3_bucket" "firehose_backup" {
   #checkov:skip=CKV_AWS_144:Cross-region replication is intentionally omitted because it is not needed for this bucket's use case.
+  #checkov:skip=CKV_AWS_18:S3 server access logging is an accepted policy exception for this Forge storage bucket; audit needs are handled outside S3 access logs.
   bucket = "splunk-s3-runner-logs-failed-${data.aws_caller_identity.current.account_id}-${var.aws_region}"
   tags   = var.tags
 }
