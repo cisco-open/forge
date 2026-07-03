@@ -7,7 +7,7 @@ pinned by ARN version (job_log_archiver.tf:21-24, github_global_lock/main.tf:93-
 These tests catch the classic "passes for the wrong reason" failure: a handler
 that imports a dep the runtime won't actually have. They assert:
   * the Klayers-provided deps are importable (tests must install the same set —
-    tests/requirements-dev.txt);
+    pyproject.toml's lambda-tests dependency group);
   * each first-party handler module imports cleanly (no syntax/dep surprise).
 """
 

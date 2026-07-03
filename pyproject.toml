@@ -1,0 +1,17 @@
+[dependency-groups]
+# Dev/test deps for ForgeMT first-party Lambda unit tests.
+# Pinned deliberately; CI installs these exact versions. Bump via Renovate like
+# the rest of the repo.
+lambda-tests = [
+    "pytest==9.1.1",
+    "pytest-cov==7.1.0",
+    "moto[all]==5.2.2",
+    "boto3==1.43.36",
+    "botocore==1.43.36",
+    # Runtime libs provided by Klayers in production. Installing them here lets
+    # tests import handlers the same way the Lambda runtime does.
+    "PyJWT==2.13.0",
+    "requests==2.34.2",
+    "cryptography==49.0.0",
+    "responses==0.26.1",
+]

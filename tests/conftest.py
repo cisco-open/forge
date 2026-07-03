@@ -41,12 +41,12 @@ AWS_REGION = 'us-west-2'
 AWS_ACCOUNT = '123456789012'
 
 # Skip the whole AWS-dependent suite cleanly when boto3/moto aren't installed
-# (the Cowork VM has no PyPI access). CI installs tests/requirements-dev.txt and
-# runs everything.
+# (the Cowork VM has no PyPI access). CI installs the pyproject.toml
+# lambda-tests dependency group and runs everything.
 requires_aws = pytest.mark.skipif(
     not _HAVE_AWS_TEST_DEPS,
-    reason='boto3/moto not installed; run in CI or `pip install -r '
-    'tests/requirements-dev.txt`',
+    reason='boto3/moto not installed; run in CI or `pip install --group '
+    'lambda-tests`',
 )
 
 
