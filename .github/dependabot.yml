@@ -7,6 +7,10 @@ updates:
       interval: daily
     cooldown:
       default-days: 7
+    groups:
+      github-actions-dependencies:
+        patterns:
+          - '*'
     labels:
       - dependencies
       - github-actions
@@ -17,6 +21,10 @@ updates:
       interval: daily
     cooldown:
       default-days: 7
+    groups:
+      python-dependencies:
+        patterns:
+          - '*'
     labels:
       - dependencies
       - python
@@ -27,6 +35,10 @@ updates:
       interval: daily
     cooldown:
       default-days: 7
+    groups:
+      terraform-modules-dependencies:
+        patterns:
+          - '*'
     labels:
       - dependencies
       - terraform
@@ -37,6 +49,10 @@ updates:
       interval: daily
     cooldown:
       default-days: 7
+    groups:
+      terraform-examples-dependencies:
+        patterns:
+          - '*'
     labels:
       - dependencies
       - terraform
@@ -47,6 +63,10 @@ updates:
       interval: daily
     cooldown:
       default-days: 7
+    groups:
+      docker-dependencies:
+        patterns:
+          - '*'
     labels:
       - dependencies
       - docker
