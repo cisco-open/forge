@@ -1,0 +1,318 @@
+{
+    "applicationProperties": {
+        "collapseNavigation": true,
+        "hideEdit": false,
+        "hideExport": false,
+        "hideOpenInSearch": false
+    },
+    "dataSources": {
+        "run_instances_error_trend_search": {
+            "name": "RunInstances error trend",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" forgecicd_log_type=\"scale-up\" message=\"RunInstances failed with a scale error, ScaleError will be thrown to trigger retry.\"\n| eval tenant=coalesce(forgecicd_tenant,\"unknown\")\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$region$\"=\"*\" OR region=\"$region$\"\n| where \"$environment$\"=\"*\" OR like(environment,\"%$environment$%\")\n| eval request_id=coalesce('aws-request-id',aws_request_id)\n| spath path=error.name output=error_name\n| spath path=error.Code output=error_code_outer\n| spath path=error.Error.Code output=error_code_inner\n| eval error_code=coalesce(error_name,errorName,error_code_outer,error_code_inner)\n| where isnotnull(error_code)\n| where \"$error_code$\"=\"*\" OR error_code=\"$error_code$\"\n| bin _time span=5m\n| stats dc(request_id) as failed_requests by _time error_code\n| timechart span=5m sum(failed_requests) as failed_requests by error_code limit=15\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "run_instances_summary_search": {
+            "name": "RunInstances summary",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" forgecicd_log_type=\"scale-up\" message=\"RunInstances failed with a scale error, ScaleError will be thrown to trigger retry.\"\n| eval tenant=coalesce(forgecicd_tenant,\"unknown\")\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$region$\"=\"*\" OR region=\"$region$\"\n| where \"$environment$\"=\"*\" OR like(environment,\"%$environment$%\")\n| eval request_id=coalesce('aws-request-id',aws_request_id), function_name=coalesce('function-name',function_name)\n| spath path=error.name output=error_name\n| spath path=error.Code output=error_code_outer\n| spath path=error.Error.Code output=error_code_inner\n| spath path=error.message output=error_message_outer\n| spath path=error.Error.Message output=error_message_inner\n| spath path=runner.n_events output=runner_events\n| spath path=runner.type output=runner_type\n| eval error_code=coalesce(error_name,errorName,error_code_outer,error_code_inner)\n| eval error_message=coalesce(error_message_outer,error_message_inner)\n| where isnotnull(error_code)\n| where \"$error_code$\"=\"*\" OR error_code=\"$error_code$\"\n| eval error_family=case(\n    match(error_code,\"(?i)host|capacity|unfulfillable|addresses\"), \"capacity\",\n    match(error_code,\"(?i)limit|quota|throttl|requestlimit\"), \"quota_or_rate\",\n    match(error_code,\"(?i)unauthorized|accessdenied\"), \"permissions\",\n    true(), \"other\")\n| stats dc(request_id) as failed_requests count as events values(error_message) as error_messages values(function_name) as functions values(service) as services values(runner_type) as runner_types values(runner_events) as runner_events min(_time) as first_time max(_time) as last_time by tenant region environment error_family error_code\n| eval duration_minutes=round((last_time-first_time)/60,1), first_seen=strftime(first_time,\"%Y-%m-%d %H:%M:%S\"), last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| eval pattern=case(failed_requests>=20 AND duration_minutes>=30,\"persistent\", failed_requests>=5,\"repeating\", failed_requests>1,\"burst\", true(),\"single\")\n| fields tenant region environment error_family error_code pattern failed_requests events duration_minutes first_seen last_seen functions services runner_types runner_events error_messages\n| sort - failed_requests - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "recurrence_windows_search": {
+            "name": "Recurrence windows",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" forgecicd_log_type=\"scale-up\" message=\"RunInstances failed with a scale error, ScaleError will be thrown to trigger retry.\"\n| eval tenant=coalesce(forgecicd_tenant,\"unknown\")\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$region$\"=\"*\" OR region=\"$region$\"\n| where \"$environment$\"=\"*\" OR like(environment,\"%$environment$%\")\n| eval request_id=coalesce('aws-request-id',aws_request_id)\n| spath path=error.name output=error_name\n| spath path=error.Code output=error_code_outer\n| spath path=error.Error.Code output=error_code_inner\n| eval error_code=coalesce(error_name,errorName,error_code_outer,error_code_inner)\n| where isnotnull(error_code)\n| where \"$error_code$\"=\"*\" OR error_code=\"$error_code$\"\n| bin _time span=15m\n| stats dc(request_id) as failed_requests count as events by _time tenant region environment error_code\n| stats sum(failed_requests) as failed_requests sum(events) as events count(eval(failed_requests>0)) as active_15m_windows max(failed_requests) as peak_requests_per_window min(_time) as first_time max(_time) as last_time by tenant region environment error_code\n| eval duration_minutes=round((last_time-first_time)/60,1), first_seen=strftime(first_time,\"%Y-%m-%d %H:%M:%S\"), last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| eval pattern=case(active_15m_windows>=4 AND duration_minutes>=45,\"persistent\", active_15m_windows>=2,\"repeating\", failed_requests>=5,\"burst\", true(),\"single_window\")\n| fields tenant region environment error_code pattern active_15m_windows failed_requests peak_requests_per_window events duration_minutes first_seen last_seen\n| sort - active_15m_windows - failed_requests\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "run_instances_retry_pressure_search": {
+            "name": "RunInstances retry pressure",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" forgecicd_log_type=\"scale-up\" (message=\"RunInstances failed with a scale error, ScaleError will be thrown to trigger retry.\" OR (\"ScaleError\" \"A retry will be attempted via SQS.\"))\n| eval tenant=coalesce(forgecicd_tenant,\"unknown\")\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$region$\"=\"*\" OR region=\"$region$\"\n| where \"$environment$\"=\"*\" OR like(environment,\"%$environment$%\")\n| eval request_id=coalesce('aws-request-id',aws_request_id)\n| eval run_instances_failure=if(message=\"RunInstances failed with a scale error, ScaleError will be thrown to trigger retry.\",1,0)\n| eval retry_logged=if(match(message,\"A retry will be attempted via SQS\"),1,0)\n| eval failed_instances=tonumber('error.failedInstanceCount')\n| stats max(run_instances_failure) as run_instances_failure max(retry_logged) as retry_logged values(failed_instances) as failed_instance_counts latest(_time) as last_time by tenant region environment request_id\n| where run_instances_failure=1\n| stats count as run_instances_requests sum(retry_logged) as retry_events sum(failed_instance_counts) as failed_instances max(last_time) as last_time by tenant region environment\n| eval failed_instances=coalesce(failed_instances,0), last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - run_instances_requests\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "run_instances_drilldown_search": {
+            "name": "RunInstances request drilldown",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" forgecicd_log_type=\"scale-up\" message=\"RunInstances failed with a scale error, ScaleError will be thrown to trigger retry.\"\n| eval tenant=coalesce(forgecicd_tenant,\"unknown\")\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$region$\"=\"*\" OR region=\"$region$\"\n| where \"$environment$\"=\"*\" OR like(environment,\"%$environment$%\")\n| eval request_id=coalesce('aws-request-id',aws_request_id), function_name=coalesce('function-name',function_name)\n| spath path=error.name output=error_name\n| spath path=error.Code output=error_code_outer\n| spath path=error.Error.Code output=error_code_inner\n| spath path=error.message output=error_message_outer\n| spath path=error.Error.Message output=error_message_inner\n| spath path=error.$metadata.requestId output=ec2_request_id\n| spath path=error.$metadata.httpStatusCode output=http_status\n| spath path=runner.n_events output=runner_events\n| spath path=runner.type output=runner_type\n| eval error_code=coalesce(error_name,errorName,error_code_outer,error_code_inner)\n| eval error_message=coalesce(error_message_outer,error_message_inner)\n| where isnotnull(error_code)\n| where \"$error_code$\"=\"*\" OR error_code=\"$error_code$\"\n| eval request_seen=strftime(_time,\"%Y-%m-%d %H:%M:%S\")\n| table request_seen tenant region environment request_id ec2_request_id http_status error_code error_message function_name service runner_type runner_events\n| sort - request_seen\n| head 200\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        }
+    },
+    "defaults": {
+        "dataSources": {
+            "ds.search": {
+                "options": {
+                    "queryParameters": {
+                        "earliest": "$global_time.earliest$",
+                        "latest": "$global_time.latest$"
+                    }
+                }
+            }
+        }
+    },
+    "description": "EC2 non-fleet RunInstances scale-up failures, including dedicated-host mac runner capacity errors.",
+    "inputs": {
+        "input_error_code": {
+            "options": {
+                "defaultValue": "*",
+                "items": [
+                    {
+                        "label": "All",
+                        "value": "*"
+                    },
+                    {
+                        "label": "Invalid AMI",
+                        "value": "InvalidAMIID.NotFound"
+                    },
+                    {
+                        "label": "Unfulfillable Capacity",
+                        "value": "UnfulfillableCapacity"
+                    },
+                    {
+                        "label": "Target Capacity Limit",
+                        "value": "TargetCapacityLimitExceededException"
+                    },
+                    {
+                        "label": "Request Limit",
+                        "value": "RequestLimitExceeded"
+                    },
+                    {
+                        "label": "Resource Limit",
+                        "value": "ResourceLimitExceeded"
+                    },
+                    {
+                        "label": "Insufficient Instance Capacity",
+                        "value": "InsufficientInstanceCapacity"
+                    },
+                    {
+                        "label": "Insufficient Free Addresses",
+                        "value": "InsufficientFreeAddressesInSubnet"
+                    },
+                    {
+                        "label": "Insufficient Capacity On Host",
+                        "value": "InsufficientCapacityOnHost"
+                    },
+                    {
+                        "label": "Insufficient Host Capacity",
+                        "value": "InsufficientHostCapacity"
+                    },
+                    {
+                        "label": "Unauthorized",
+                        "value": "UnauthorizedOperation"
+                    }
+                ],
+                "token": "error_code"
+            },
+            "title": "AWS Error Code",
+            "type": "input.dropdown"
+        },
+        "input_environment": {
+            "options": {
+                "defaultValue": "*",
+                "token": "environment"
+            },
+            "title": "Environment Contains",
+            "type": "input.text"
+        },
+        "input_global_time": {
+            "options": {
+                "defaultValue": "-24h@h,now",
+                "token": "global_time"
+            },
+            "title": "Global Time Range",
+            "type": "input.timerange"
+        },
+        "input_region": {
+            "options": {
+                "defaultValue": "*",
+                "token": "region"
+            },
+            "title": "AWS Region",
+            "type": "input.text"
+        },
+        "input_tenant": {
+            "context": {},
+            "dataSources": {},
+            "options": {
+                "defaultValue": "*",
+                "items": ${jsonencode(
+                    concat(
+                        [{ label = "All", value = "*" }],
+                        [for tenant in tenants : { label = tenant, value = tenant }]
+                    )
+                )},
+                "token": "tenant"
+            },
+            "title": "Forge Tenant",
+            "type": "input.dropdown"
+        }
+    },
+    "layout": {
+        "globalInputs": [
+            "input_global_time",
+            "input_tenant",
+            "input_region",
+            "input_environment",
+            "input_error_code"
+        ],
+        "layoutDefinitions": {
+            "layout": {
+                "options": {
+                    "gutterSize": 9
+                },
+                "structure": [
+                    {
+                        "item": "run_instances_error_trend_chart",
+                        "position": {
+                            "h": 360,
+                            "w": 760,
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "run_instances_retry_pressure_table",
+                        "position": {
+                            "h": 360,
+                            "w": 440,
+                            "x": 760,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "run_instances_summary_table",
+                        "position": {
+                            "h": 390,
+                            "w": 1200,
+                            "x": 0,
+                            "y": 360
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "recurrence_windows_table",
+                        "position": {
+                            "h": 360,
+                            "w": 1200,
+                            "x": 0,
+                            "y": 750
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "run_instances_drilldown_table",
+                        "position": {
+                            "h": 500,
+                            "w": 1200,
+                            "x": 0,
+                            "y": 1110
+                        },
+                        "type": "block"
+                    }
+                ],
+                "type": "grid"
+            }
+        },
+        "options": {},
+        "tabs": {
+            "items": [
+                {
+                    "label": "RunInstances",
+                    "layoutId": "layout"
+                }
+            ]
+        }
+    },
+    "title": "Forge EC2 RunInstances Scale-Up Failures",
+    "visualizations": {
+        "recurrence_windows_table": {
+            "dataSources": {
+                "primary": "recurrence_windows_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Temporary vs Repeating RunInstances Failure Windows",
+            "type": "splunk.table"
+        },
+        "run_instances_drilldown_table": {
+            "dataSources": {
+                "primary": "run_instances_drilldown_search"
+            },
+            "options": {
+                "count": 100
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Recent RunInstances Request Drilldown",
+            "type": "splunk.table"
+        },
+        "run_instances_error_trend_chart": {
+            "dataSources": {
+                "primary": "run_instances_error_trend_search"
+            },
+            "options": {},
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Failed RunInstances Requests by Error Code",
+            "type": "splunk.line"
+        },
+        "run_instances_retry_pressure_table": {
+            "dataSources": {
+                "primary": "run_instances_retry_pressure_search"
+            },
+            "options": {
+                "count": 20
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "SQS Retry Pressure for RunInstances",
+            "type": "splunk.table"
+        },
+        "run_instances_summary_table": {
+            "dataSources": {
+                "primary": "run_instances_summary_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "RunInstances Tenant Error Summary",
+            "type": "splunk.table"
+        }
+    }
+}

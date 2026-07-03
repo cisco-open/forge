@@ -95,6 +95,8 @@ No modules.
 | [splunk_data_ui_views.forge_arc_dind_runner_lifecycle](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
 | [splunk_data_ui_views.forge_arc_k8s_runner_lifecycle](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
 | [splunk_data_ui_views.forge_ci_job_details](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
+| [splunk_data_ui_views.forge_ec2_fleet_scale_up_failures](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
+| [splunk_data_ui_views.forge_ec2_run_instances_scale_up_failures](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
 | [splunk_data_ui_views.forge_ec2_runner_lifecycle](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
 | [splunk_data_ui_views.forge_github_webhook_workflow_job_events](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
 | [splunk_data_ui_views.forge_ingestion_quality](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
