@@ -5,10 +5,18 @@ resource "splunk_configs_conf" "forgecicd_cloudwatchlogs" {
   variables = {
     "REPORT-forgecicd_cloudwatchlogs_lambda_tenant_fields"            = "forgecicd_cloudwatchlogs_lambda_tenant_fields"
     "REPORT-forgecicd_cloudwatchlogs_global_lambda_tenant_fields"     = "forgecicd_cloudwatchlogs_global_lambda_tenant_fields"
+    "REPORT-forgecicd_dispatch_to_runner_rejection_fields"            = "forgecicd_dispatch_to_runner_rejection_fields"
     "REPORT-forgecicd_extra_lambda_tenant_fields"                     = "forgecicd_extra_lambda_tenant_fields"
     "REPORT-forgecicd_trust_validation"                               = "forgecicd_trust_validation"
     "REPORT-forgecicd_extra_lambda_ec2_tenant_fields"                 = "forgecicd_extra_lambda_ec2_tenant_fields"
     "REPORT-forgecicd_eks_control_plane_fields"                       = "forgecicd_eks_control_plane_fields"
+    "REPORT-forgecicd_pool_idle_runners"                              = "forgecicd_pool_idle_runners"
+    "REPORT-forgecicd_pool_target_size"                               = "forgecicd_pool_target_size"
+    "REPORT-forgecicd_pool_top_up"                                    = "forgecicd_pool_top_up"
+    "REPORT-forgecicd_pool_top_up_cap"                                = "forgecicd_pool_top_up_cap"
+    "REPORT-forgecicd_scale_down_aws_runner_instance_id"              = "forgecicd_scale_down_aws_runner_instance_id"
+    "REPORT-forgecicd_scale_down_orphan_runner_instance_id"           = "forgecicd_scale_down_orphan_runner_instance_id"
+    "REPORT-forgecicd_scale_down_runner_instance_id"                  = "forgecicd_scale_down_runner_instance_id"
     "REPORT-forgecicd_stuck_workflow_job_dispatcher_delivery_attempt" = "forgecicd_stuck_workflow_job_dispatcher_delivery_attempt"
     "REPORT-forgecicd_stuck_workflow_job_dispatcher_generic_fields"   = "forgecicd_stuck_workflow_job_dispatcher_generic_fields"
     "REPORT-forgecicd_stuck_workflow_job_dispatcher_key_fields"       = "forgecicd_stuck_workflow_job_dispatcher_key_fields"
@@ -91,10 +99,18 @@ resource "splunk_configs_conf" "forgecicd_cloudwatchlogs" {
   depends_on = [
     splunk_configs_conf.forgecicd_cloudwatchlogs_lambda_tenant_fields,
     splunk_configs_conf.forgecicd_cloudwatchlogs_global_lambda_tenant_fields,
+    splunk_configs_conf.forgecicd_dispatch_to_runner_rejection_fields,
     splunk_configs_conf.forgecicd_extra_lambda_tenant_fields,
     splunk_configs_conf.forgecicd_extra_lambda_ec2_tenant_fields,
     splunk_configs_conf.forgecicd_trust_validation,
     splunk_configs_conf.forgecicd_eks_control_plane_fields,
+    splunk_configs_conf.forgecicd_pool_idle_runners,
+    splunk_configs_conf.forgecicd_pool_target_size,
+    splunk_configs_conf.forgecicd_pool_top_up,
+    splunk_configs_conf.forgecicd_pool_top_up_cap,
+    splunk_configs_conf.forgecicd_scale_down_aws_runner_instance_id,
+    splunk_configs_conf.forgecicd_scale_down_orphan_runner_instance_id,
+    splunk_configs_conf.forgecicd_scale_down_runner_instance_id,
     splunk_configs_conf.forgecicd_stuck_workflow_job_dispatcher_delivery_attempt,
     splunk_configs_conf.forgecicd_stuck_workflow_job_dispatcher_generic_fields,
     splunk_configs_conf.forgecicd_stuck_workflow_job_dispatcher_key_fields,
