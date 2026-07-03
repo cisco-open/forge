@@ -12,14 +12,6 @@ resource "helm_release" "managed_prometheus" {
       value = false
     },
     {
-      name  = "kube-state-metrics.enabled"
-      value = false
-    },
-    {
-      name  = "prometheus-node-exporter.enabled"
-      value = false
-    },
-    {
       name  = "prometheus-pushgateway.enabled"
       value = false
     },
@@ -30,6 +22,23 @@ resource "helm_release" "managed_prometheus" {
     {
       name  = "server.service.servicePort"
       value = 80
+    },
+    {
+      name  = "extraScrapeConfigs"
+      value = <<-EOT
+      - job_name: opencost
+        honor_labels: true
+        scrape_interval: 1m
+        scrape_timeout: 10s
+        metrics_path: /metrics
+        scheme: http
+        dns_sd_configs:
+          - names:
+              - opencost.opencost
+            type: A
+            port: 9003
+      EOT
+      type  = "string"
     }
   ]
 
