@@ -358,6 +358,21 @@ resource "signalfx_dashboard" "forge_impact" {
     ]
   }
 
+  dynamic "variable" {
+    for_each = var.dynamic_variables
+    iterator = var_def
+
+    content {
+      property               = var_def.value.property
+      alias                  = var_def.value.alias
+      description            = var_def.value.description
+      values                 = var_def.value.values
+      value_required         = var_def.value.value_required
+      values_suggested       = var_def.value.values_suggested
+      restricted_suggestions = var_def.value.restricted_suggestions
+    }
+  }
+
   chart {
     chart_id = signalfx_list_chart.active_ec2_runners_by_tenant.id
     row      = 0
