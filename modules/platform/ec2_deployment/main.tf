@@ -31,7 +31,7 @@ data "aws_subnet" "runner_subnet" {
 }
 
 data "external" "download_lambdas" {
-  program = ["bash", "${path.module}/scripts/download_lambdas.sh", "/tmp/${var.runner_configs.prefix}/", "v7.8.0", "github-aws-runners/terraform-aws-github-runner"]
+  program = ["bash", "${path.module}/scripts/download_lambdas.sh", "/tmp/${var.runner_configs.prefix}/", "v7.9.0", "github-aws-runners/terraform-aws-github-runner"]
 }
 
 # ---------------------------------------------------------------------------
@@ -92,7 +92,7 @@ resource "aws_iam_policy" "runner_hooks_ssm_read" {
 
 module "runners" {
   #checkov:skip=CKV_TF_1:Module source uses Renovate-managed version tags; commit SHA pinning is an accepted policy tradeoff.
-  source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=v7.8.0"
+  source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=v7.9.0"
 
   aws_region = var.aws_region
 
