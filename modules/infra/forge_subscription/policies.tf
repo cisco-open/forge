@@ -1,4 +1,5 @@
-# Policy for allowing EC2 instances R/W access to a subset of specific S3 buckets.
+# Helper policy for Forge runners that assume this role in tenant accounts.
+# Allows runner jobs to operate on tenant ops S3 buckets, not Forge-account buckets.
 data "aws_iam_policy_document" "s3_access_for_forge_runners" {
   statement {
     effect = "Allow"
@@ -20,9 +21,8 @@ data "aws_iam_policy_document" "s3_access_for_forge_runners" {
   }
 }
 
-# Policy for allowing EC2 instances R/O access to a subset of Secrets Manager secrets.
-# These are mainly for supplying certain short-lived run-time credentials to
-# EC2 instances so that cloud-init can fully bootstrap the instance.
+# Helper policy for Forge runners that assume this role in tenant accounts.
+# Allows runner jobs to read tenant Secrets Manager values needed for operations.
 data "aws_iam_policy_document" "secrets_access_for_forge_runners" {
   statement {
     actions = [
@@ -36,7 +36,8 @@ data "aws_iam_policy_document" "secrets_access_for_forge_runners" {
   }
 }
 
-# Permissions needed for Packer builds. See:
+# Helper permissions for Forge runners that assume this role to run tenant
+# Packer builds and build AMIs in tenant accounts, not the Forge account. See:
 # <https://developer.hashicorp.com/packer/plugins/builders/amazon>.
 data "aws_iam_policy_document" "packer_support_for_forge_runners" {
   statement {
