@@ -58,7 +58,7 @@ module "splunk_cloudwatch" {
 }
 
 resource "aws_cloudformation_stack" "cf_splunk_cloudwatch_iam_region" {
-  #checkov:skip=CKV_AWS_124:Splunk-managed CloudFormation integration stack does not require SNS notifications in this module.
+  #checkov:skip=CKV_AWS_124:Splunk-managed CloudFormation template is provided by a trusted entity; SNS notifications are not required for this module.
   count = var.cloudwatch_log_groups_config.enabled ? 1 : 0
   name  = module.splunk_cloudwatch[0].splunk_integration_name
 
@@ -78,7 +78,7 @@ resource "aws_cloudformation_stack" "cf_splunk_cloudwatch_iam_region" {
 }
 
 resource "aws_cloudformation_stack" "cf_splunk_cloudwatch_region" {
-  #checkov:skip=CKV_AWS_124:Splunk-managed CloudFormation integration stack does not require SNS notifications in this module.
+  #checkov:skip=CKV_AWS_124:Splunk-managed CloudFormation template is provided by a trusted entity; SNS notifications are not required for this module.
   for_each = var.cloudwatch_log_groups_config.enabled ? toset(setsubtract(var.cloudwatch_log_groups_config.regions, [var.aws_region])) : []
   provider = aws.by_region[each.value]
   name     = module.splunk_cloudwatch[0].splunk_integration_name
