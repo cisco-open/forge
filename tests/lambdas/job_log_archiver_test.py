@@ -111,6 +111,63 @@ def test_log_object_is_kms_encrypted(monkeypatch, s3_kms, ssm):
     assert head.get('ServerSideEncryption') == 'aws:kms'
 
 
+def test_metadata_sidecar_contains_flat_fields(monkeypatch, s3_kms, ssm):
+    alpha = s3_kms['buckets']['alpha']
+    mod = _load_archiver(monkeypatch, s3_kms, ssm, bucket=alpha)
+    monkeypatch.setattr(mod, '_download_job_logs',
+                        lambda *a, **k: b'log-bytes')
+
+    evt = _completed_event()
+    body = json.loads(evt['Records'][0]['body'])
+    body['detail']['repository'] = {
+        'full_name': 'acme/app',
+        'owner': {'login': 'acme', 'type': 'Organization'},
+        'custom_properties': {'business-unit': 'Cloudsec'},
+    }
+    body['detail']['workflow_job']['steps'] = [
+        {
+            'name': 'Set up job',
+            'status': 'completed',
+            'conclusion': 'success',
+            'number': 1,
+        },
+        {
+            'name': 'Run tests',
+            'status': 'completed',
+            'conclusion': 'success',
+            'number': 2,
+        },
+    ]
+    evt['Records'][0]['body'] = json.dumps(body)
+
+    result = mod.lambda_handler(evt, None)
+
+    s3 = s3_kms['s3']
+    metadata_key = result['metadata_key']
+    assert metadata_key == 'acme/app/99/1/4242.fields'
+    raw = s3.get_object(Bucket=alpha, Key=metadata_key)['Body'].read()
+    payload = json.loads(raw)
+
+    fields = payload['fields']
+    assert payload['source_log_key'] == 'acme/app/99/1/4242.log'
+    assert payload['source_event_key'] == 'acme/app/99/1/4242.json'
+    assert fields['action'] == 'completed'
+    assert fields['workflow_job_id'] == 4242
+    assert fields['workflow_job_run_id'] == 99
+    assert fields['workflow_job_steps_count'] == 2
+    assert fields['workflow_job_steps_0_name'] == 'Set up job'
+    assert fields['workflow_job_steps_1_name'] == 'Run tests'
+    assert fields['repository_owner_login'] == 'acme'
+    assert fields['repository_custom_properties_business_unit'] == 'Cloudsec'
+
+    for key in ('acme/app/99/1/4242.log', 'acme/app/99/1/4242.json'):
+        tags = {
+            tag['Key']: tag['Value']
+            for tag in s3.get_object_tagging(Bucket=alpha, Key=key)['TagSet']
+        }
+        assert tags['metadata_key'] == metadata_key
+
+
 def test_skipped_jobs_are_not_archived(monkeypatch, s3_kms, ssm):
     alpha = s3_kms['buckets']['alpha']
     mod = _load_archiver(monkeypatch, s3_kms, ssm, bucket=alpha)

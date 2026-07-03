@@ -4,9 +4,10 @@ import os
 import re
 import time
 from datetime import datetime, timezone
-from typing import Iterable
+from typing import Any, Iterable
 
 import boto3
+from botocore.exceptions import ClientError
 
 LOG = logging.getLogger()
 level_str = os.environ.get('LOG_LEVEL', 'INFO').upper()
@@ -29,6 +30,8 @@ MAX_BATCH_BYTES = min(MAX_BATCH_BYTES, 4500000)
 ACCOUNT_ID = sts_client.get_caller_identity()['Account']
 
 TIMESTAMP_RE = re.compile(r'^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)')
+METADATA_SUFFIX = '.fields'
+METADATA_TAG_KEY = 'metadata_key'
 
 
 def lambda_handler(event, _context):
@@ -81,6 +84,8 @@ def lambda_handler(event, _context):
                 LOG.warning(
                     'tag_fetch_failed bucket=%s key=%s err=%s', bucket, key, tag_err)
 
+            metadata_fields = load_metadata_fields(bucket, key, tags)
+
             # Decide ingestion strategy based on file type.
             if key.endswith('.json'):
                 # Treat entire JSON file as a single event line.
@@ -88,7 +93,8 @@ def lambda_handler(event, _context):
                     obj = s3_client.get_object(Bucket=bucket, Key=key)
                     raw = obj['Body'].read()
                     text = raw.decode('utf-8', errors='replace')
-                    shipped = ship_lines_to_kinesis([text], bucket, key, tags)
+                    shipped = ship_lines_to_kinesis(
+                        [text], bucket, key, tags, metadata_fields)
                     LOG.info(
                         'json_object_ingested bucket=%s key=%s size=%d', bucket, key, len(raw))
                 except Exception as json_err:  # pragma: no cover
@@ -98,7 +104,8 @@ def lambda_handler(event, _context):
             elif key.endswith('.log'):
                 # Line-by-line streaming for log files.
                 line_iter = stream_s3_object_lines(bucket, key)
-                shipped = ship_lines_to_kinesis(line_iter, bucket, key, tags)
+                shipped = ship_lines_to_kinesis(
+                    line_iter, bucket, key, tags, metadata_fields)
             else:
                 LOG.info('unsupported_object_skip bucket=%s key=%s', bucket, key)
                 continue
@@ -129,6 +136,69 @@ def stream_s3_object_lines(bucket: str, key: str) -> Iterable[str]:
         yield buffer
 
 
+def metadata_key_for_object(key: str, tags: dict[str, str] | None = None) -> str:
+    if tags:
+        metadata_key = tags.get(METADATA_TAG_KEY)
+        if metadata_key:
+            return metadata_key
+
+    if key.endswith('.json'):
+        return f"{key[:-5]}{METADATA_SUFFIX}"
+    if key.endswith('.log'):
+        return f"{key[:-4]}{METADATA_SUFFIX}"
+    return f"{key}{METADATA_SUFFIX}"
+
+
+def normalize_metadata_fields(raw_fields: Any) -> dict[str, Any]:
+    if not isinstance(raw_fields, dict):
+        return {}
+
+    fields: dict[str, Any] = {}
+    for key, value in raw_fields.items():
+        if not isinstance(key, str) or not key:
+            continue
+        if isinstance(value, (str, int, float, bool)):
+            fields[key] = value
+    return fields
+
+
+def load_metadata_fields(
+    bucket: str,
+    key: str,
+    tags: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    metadata_key = metadata_key_for_object(key, tags)
+    try:
+        obj = s3_client.get_object(Bucket=bucket, Key=metadata_key)
+        raw = obj['Body'].read()
+    except ClientError as err:
+        code = err.response.get('Error', {}).get('Code')
+        if code in ('NoSuchKey', '404', 'NotFound'):
+            LOG.info('metadata_sidecar_missing bucket=%s key=%s metadata_key=%s',
+                     bucket, key, metadata_key)
+        else:
+            LOG.warning('metadata_sidecar_fetch_failed bucket=%s key=%s metadata_key=%s err=%s',
+                        bucket, key, metadata_key, err)
+        return {}
+    except Exception as err:  # pragma: no cover
+        LOG.warning('metadata_sidecar_fetch_failed bucket=%s key=%s metadata_key=%s err=%s',
+                    bucket, key, metadata_key, err)
+        return {}
+
+    try:
+        payload = json.loads(raw.decode('utf-8', errors='replace'))
+    except json.JSONDecodeError as err:
+        LOG.warning('metadata_sidecar_invalid_json bucket=%s key=%s metadata_key=%s err=%s',
+                    bucket, key, metadata_key, err)
+        return {}
+
+    fields = normalize_metadata_fields(payload.get(
+        'fields') if isinstance(payload, dict) else None)
+    LOG.debug('metadata_sidecar_fields bucket=%s key=%s metadata_key=%s field_count=%d',
+              bucket, key, metadata_key, len(fields))
+    return fields
+
+
 def extract_ts(line: str, last_ts: str | float | None) -> float:
     """
     Extract timestamp from a log line.
@@ -155,13 +225,21 @@ def extract_ts(line: str, last_ts: str | float | None) -> float:
     return round(time.time(), 3)
 
 
-def wrap_line(line: str, ts: float, bucket: str, key: str, tags: dict[str, str]) -> str:
+def wrap_line(
+    line: str,
+    ts: float,
+    bucket: str,
+    key: str,
+    tags: dict[str, str],
+    metadata_fields: dict[str, Any] | None = None,
+) -> str:
     """
     Wrap a log line with metadata for Splunk/Kinesis ingestion.
     Timestamp is passed in from outside.
     """
     base_fields = {
         'AccountId': ACCOUNT_ID,
+        **(metadata_fields or {}),
         **tags,
     }
     event = {
@@ -178,7 +256,13 @@ def wrap_line(line: str, ts: float, bucket: str, key: str, tags: dict[str, str])
     return json.dumps(event) + '\n'
 
 
-def ship_lines_to_kinesis(lines: Iterable[str], bucket: str, key: str, tags: dict[str, str]) -> int:
+def ship_lines_to_kinesis(
+    lines: Iterable[str],
+    bucket: str,
+    key: str,
+    tags: dict[str, str],
+    metadata_fields: dict[str, Any] | None = None,
+) -> int:
     """Batch lines into PutRecords requests respecting count & size limits."""
     buffer: list[tuple[bytes, int]] = []  # (data_bytes, length)
     total_shipped = 0
@@ -226,7 +310,8 @@ def ship_lines_to_kinesis(lines: Iterable[str], bucket: str, key: str, tags: dic
             continue
         ts = extract_ts(line, last_ts)
         last_ts = ts
-        payload = wrap_line(line, ts, bucket, key, tags).encode('utf-8')
+        payload = wrap_line(
+            line, ts, bucket, key, tags, metadata_fields).encode('utf-8')
         payload_len = len(payload)
         if payload_len > 1000000:  # Guard insanely long lines
             LOG.warning('line_too_large_skip size=%d', payload_len)

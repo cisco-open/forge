@@ -18,6 +18,7 @@ Forge archives job logs and operational logs because runners are destroyed after
 - Splunk HEC endpoint and secret configuration must be correct before enabling delivery.
 - Use the backup bucket and DLQ when logs are missing from Splunk.
 - The S3 event path should match the job-log archiver bucket layout.
+- When a `.log` or `.json` object has a `metadata_key` S3 tag, the Lambda reads that sidecar object and merges its flattened GitHub workflow job fields with the S3 object tags before sending events to Splunk.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements

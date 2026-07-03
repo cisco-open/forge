@@ -2,6 +2,7 @@ import base64
 import json
 import logging
 import os
+import re
 import time
 from typing import Any, Dict, Tuple
 from urllib.parse import quote
@@ -21,6 +22,12 @@ S3 = boto3.client('s3')
 MAX_S3_TAGS = 10
 GITHUB_RETRY_ATTEMPTS = 3
 GITHUB_RETRY_DELAY = 2
+METADATA_SUFFIX = '.fields'
+METADATA_TAG_KEY = 'metadata_key'
+MAX_METADATA_FIELDS = 500
+MAX_METADATA_LIST_ITEMS = 100
+MAX_METADATA_VALUE_LENGTH = 1024
+FIELD_NAME_RE = re.compile(r'[^A-Za-z0-9_]+')
 
 
 def _get_secret_value(parameter_name: str) -> str:
@@ -136,10 +143,15 @@ def _github_auth(secret_app_id: str, secret_private_key: str, secret_installatio
     return _get_installation_token(installation_id, jwt_token, api_base)
 
 
-def _keys(repo_full_name: str, run_id: Any, run_attempt: Any, job_id: Any) -> Tuple[str, str, str]:
+def _keys(repo_full_name: str, run_id: Any, run_attempt: Any, job_id: Any) -> Tuple[str, str, str, str]:
     run_attempt = run_attempt or 1
     base_path = f"{repo_full_name}/{run_id}/{run_attempt}/{job_id}"
-    return base_path, f"{base_path}.log", f"{base_path}.json"
+    return (
+        base_path,
+        f"{base_path}.log",
+        f"{base_path}.json",
+        f"{base_path}{METADATA_SUFFIX}",
+    )
 
 
 def _tags(wf: Dict[str, Any]) -> Dict[str, str]:
@@ -151,6 +163,77 @@ def _tags(wf: Dict[str, Any]) -> Dict[str, str]:
         'created_at': str(wf.get('created_at') or ''),
         'started_at': str(wf.get('started_at') or ''),
         'completed_at': str(wf.get('completed_at') or ''),
+    }
+
+
+def _field_name(path: Tuple[Any, ...]) -> str:
+    parts = []
+    for part in path:
+        clean = FIELD_NAME_RE.sub('_', str(part)).strip('_').lower()
+        if clean:
+            parts.append(clean)
+    return '_'.join(parts)
+
+
+def _add_metadata_field(
+    fields: Dict[str, Any],
+    path: Tuple[Any, ...],
+    value: Any,
+) -> None:
+    if value is None or len(fields) >= MAX_METADATA_FIELDS:
+        return
+
+    name = _field_name(path)
+    if not name or name in fields:
+        return
+
+    if isinstance(value, str):
+        fields[name] = value[:MAX_METADATA_VALUE_LENGTH]
+    elif isinstance(value, bool):
+        fields[name] = value
+    elif isinstance(value, (int, float)):
+        fields[name] = value
+
+
+def _flatten_metadata_fields(
+    value: Any,
+    path: Tuple[Any, ...] = (),
+    fields: Dict[str, Any] | None = None,
+) -> Dict[str, Any]:
+    if fields is None:
+        fields = {}
+    if len(fields) >= MAX_METADATA_FIELDS:
+        return fields
+
+    if isinstance(value, dict):
+        for key, child in value.items():
+            _flatten_metadata_fields(child, path + (key,), fields)
+            if len(fields) >= MAX_METADATA_FIELDS:
+                break
+    elif isinstance(value, list):
+        _add_metadata_field(fields, path + ('count',), len(value))
+        for idx, child in enumerate(value[:MAX_METADATA_LIST_ITEMS]):
+            _flatten_metadata_fields(child, path + (idx,), fields)
+            if len(fields) >= MAX_METADATA_FIELDS:
+                break
+    else:
+        _add_metadata_field(fields, path, value)
+
+    return fields
+
+
+def _metadata_payload(
+    detail: Dict[str, Any],
+    log_key: str,
+    event_key: str,
+) -> Dict[str, Any]:
+    fields = _flatten_metadata_fields(detail)
+    return {
+        'schema_version': 1,
+        'source_log_key': log_key,
+        'source_event_key': event_key,
+        'fields': fields,
+        'field_count': len(fields),
     }
 
 
@@ -205,16 +288,23 @@ def lambda_handler(event: Dict[str, Any], _context: Any) -> Dict[str, Any]:  # p
             install_token = _github_auth(
                 env['SECRET_NAME_APP_ID'], env['SECRET_NAME_PRIVATE_KEY'], env['SECRET_NAME_INSTALLATION_ID'], env['GITHUB_API']
             )
-            _, log_key, event_key = _keys(
+            _, log_key, event_key, metadata_key = _keys(
                 repo_full_name, run_id, run_attempt, job_id)
             obj_tags = _tags(workflow_job)
+            data_obj_tags = {
+                **obj_tags,
+                METADATA_TAG_KEY: metadata_key,
+            }
             body = _download_job_logs(owner, repo, int(
                 job_id), install_token, env['GITHUB_API'])
+            _put_json_object(env['BUCKET_NAME'], metadata_key,
+                             _metadata_payload(detail, log_key, event_key),
+                             env['KMS_KEY_ARN'], obj_tags)
             _put_log_object(env['BUCKET_NAME'], log_key, body,
-                            env['KMS_KEY_ARN'], obj_tags)
+                            env['KMS_KEY_ARN'], data_obj_tags)
             size = len(body)
             _put_json_object(env['BUCKET_NAME'], event_key,
-                             detail, env['KMS_KEY_ARN'], obj_tags)
+                             detail, env['KMS_KEY_ARN'], data_obj_tags)
 
             return {
                 'status': 'ok',
@@ -225,6 +315,7 @@ def lambda_handler(event: Dict[str, Any], _context: Any) -> Dict[str, Any]:  # p
                 'repository': repo_full_name,
                 'log_key': log_key,
                 'event_key': event_key,
+                'metadata_key': metadata_key,
                 'size': size
             }
         except Exception as e:

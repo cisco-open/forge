@@ -50,6 +50,9 @@ LAMBDA_DIRS: dict[str, str] = {
         'modules/platform/forge_runners/github_actions_job_logs/lambda/'
         'job_log_archiver'
     ),
+    'splunk_s3_runner_logs': (
+        'modules/integrations/splunk_cloud_s3_runner_logs/lambda'
+    ),
     'redrive_deadletter': (
         'modules/platform/forge_runners/redrive_deadletter/lambda'
     ),
