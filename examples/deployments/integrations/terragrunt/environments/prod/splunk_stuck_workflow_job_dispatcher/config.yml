@@ -1,0 +1,25 @@
+---
+name_prefix: forge-stuck-workflow-job-dispatcher
+logging_retention_in_days: 3
+log_level: INFO
+splunk_conf:
+  splunk_cloud: example-org.splunkcloud.com
+  tenant_names: [acme]
+  acl:
+    app: search
+    owner: forge-generic-user
+    sharing: global
+    read: ["*"]
+    write: [forge-generic-user-role]
+  index: forge-index
+redelivery_config:
+  tenant_configs:
+    - tenant: acme
+      gh_config:
+        ghes_url: ""
+      prefixes:
+        - aws_region: eu-west-1
+          deployment_prefix: acme
+splunk_alert:
+  disabled: true
+dedupe_ttl_seconds: 1800

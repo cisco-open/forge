@@ -1,6 +1,6 @@
 # ARC Deployment Wrapper
 
-This module maps tenant runner configuration into the core ARC module.
+This module maps tenant runner configuration into the platform ARC module.
 
 ## Why This Module Exists
 
@@ -8,7 +8,7 @@ Forge tenant configuration is written once, then expanded into platform modules.
 
 ## What It Manages
 
-- A call into `modules/core/arc` for the tenant.
+- A call into `modules/platform/arc` for the tenant.
 - ARC controller settings derived from the tenant prefix and namespace.
 - Scale set definitions for each configured Kubernetes runner pool.
 - Runner IAM policy attachments and ECR registry wiring.
@@ -34,7 +34,7 @@ No providers.
 
 | Name | Source | Version |
 | ---- | ------ | ------- |
-| <a name="module_arc"></a> [arc](#module\_arc) | ../../core/arc | n/a |
+| <a name="module_arc"></a> [arc](#module\_arc) | ../arc | n/a |
 
 ## Resources
 

@@ -28,9 +28,9 @@ variable "secret_prefix" {
 
 variable "github_webhook_relay" {
   description = <<-EOT
-  Configuration for the (optional) webhook relay source module.
-  If enabled=true we provision the API Gateway + source EventBridge forwarding rule.
-  destination_event_bus_name must already exist or be created in the destination account (or via the destination submodule run there).
+  Configuration for the optional tenant GitHub webhook relay source.
+  If enabled=true, Forge provisions the API Gateway, validation Lambda, source EventBridge bus, and forwarding rule.
+  destination_event_bus_name must already exist or be created in the destination account with the destination integration module.
   EOT
   type = object({
     enabled                     = bool

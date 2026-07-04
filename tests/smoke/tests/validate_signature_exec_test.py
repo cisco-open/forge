@@ -1,7 +1,7 @@
 """Real-handler MiniStack smoke test (Docker; host/CI only).
 
 Deploys the ACTUAL webhook relay handler
-(modules/integrations/github_webhook_relay_source/lambda/validate_signature.py)
+(modules/platform/forge_runners/github_webhook_relay/source/lambda/validate_signature.py)
 into MiniStack and exercises the webhook -> EventBridge plumbing end-to-end.
 
 This is the integration counterpart to the moto unit tests: the unit tests pin
@@ -30,7 +30,7 @@ pytestmark = pytest.mark.lambda_exec
 # Real handler source, relative to repo root (tests/smoke/tests -> parents[3]).
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 HANDLER_FILE = _REPO_ROOT / (
-    'modules/integrations/github_webhook_relay_source/lambda/'
+    'modules/platform/forge_runners/github_webhook_relay/source/lambda/'
     'validate_signature.py'
 )
 EVENT_BUS = 'forge-smoke-webhook-bus'

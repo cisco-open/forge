@@ -41,7 +41,7 @@ def repo_root() -> Path:
 # itself is the import root at runtime (handler = "<module>.lambda_handler").
 LAMBDA_DIRS: dict[str, str] = {
     'validate_signature': (
-        'modules/integrations/github_webhook_relay_source/lambda'
+        'modules/platform/forge_runners/github_webhook_relay/source/lambda'
     ),
     'job_log_dispatcher': (
         'modules/platform/forge_runners/github_actions_job_logs/lambda/'

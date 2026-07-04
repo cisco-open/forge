@@ -1,0 +1,85 @@
+---
+api_version: v1
+product: Forge
+version: v1.0.0
+metadata:
+  use_local_repos: true
+spec:
+  # Versions of our IaC/Terraform modules.
+  iac:
+    modules:
+      github_webhook_relay_destination:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/integrations/github_webhook_relay_destination
+        ref: main
+      github_webhook_relay_destination_receivers:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/integrations/github_webhook_relay_destination_receivers
+        ref: main
+      splunk_aws_billing:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/integrations/splunk_aws_billing
+        ref: main
+      splunk_cloud_conf_shared:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/integrations/splunk_cloud_conf_shared
+        ref: main
+      splunk_cloud_data_manager_common:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/integrations/splunk_cloud_data_manager_common
+        ref: main
+      splunk_cloud_data_manager:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/integrations/splunk_cloud_data_manager
+        ref: main
+      splunk_o11y_aws_integration_common:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/integrations/splunk_o11y_aws_integration_common
+        ref: main
+      splunk_o11y_aws_integration:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/integrations/splunk_o11y_aws_integration
+        ref: main
+      splunk_o11y_conf_shared:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/integrations/splunk_o11y_conf_shared
+        ref: main
+      splunk_otel_eks:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/integrations/splunk_otel_eks
+        ref: main
+      splunk_opencost_eks:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/integrations/splunk_opencost_eks
+        ref: main
+      splunk_secrets:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/integrations/splunk_secrets
+        ref: main
+      splunk_cloud_s3_runner_logs:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/integrations/splunk_cloud_s3_runner_logs
+        ref: main
+      splunk_stuck_workflow_job_dispatcher:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/integrations/splunk_stuck_workflow_job_dispatcher
+        ref: main
+      teleport:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/integrations/teleport
+        ref: main

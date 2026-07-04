@@ -4,7 +4,7 @@ resource "random_id" "github_webhook_relay_source_secret" {
 
 module "github_webhook_relay_source" {
 
-  source = "../../../integrations/github_webhook_relay_source"
+  source = "./source"
 
   name_prefix           = "${var.prefix}-github-webhook-relay"
   source_event_bus_name = "${var.prefix}-webhook-relay-source"

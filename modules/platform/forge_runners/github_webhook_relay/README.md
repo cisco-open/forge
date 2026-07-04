@@ -1,6 +1,8 @@
-# GitHub Webhook Relay Source Secret
+# GitHub Webhook Relay
 
-This module prepares the source-side secret and optional relay source for forwarding GitHub webhook events across accounts.
+This module prepares the source-side GitHub webhook relay for a Forge tenant.
+It owns the public webhook ingress, source EventBridge bus, generated webhook
+secret, and the reader role used by an approved destination account.
 
 ## Why This Module Exists
 
@@ -8,16 +10,19 @@ Forge integrations often need GitHub workflow events in an account that is not t
 
 ## What It Manages
 
-- A generated webhook relay secret stored in Secrets Manager with KMS encryption.
+- A generated webhook relay secret stored in Secrets Manager with KMS
+  encryption.
+- The source API Gateway, validation Lambda, source EventBridge bus, and
+  forwarding rule.
 - A reader role that can expose the source secret to an approved destination account.
-- Optional composition of the `github_webhook_relay_source` module.
 - Outputs for the secret ARN, reader role ARN, and region.
 
 ## Operational Notes
 
 - The relay secret protects the public webhook ingress path; rotate intentionally.
 - Cross-account readers should be limited to the destination receiver account and role.
-- This module is source-side plumbing; destination receivers are configured in the integrations modules.
+- This module is source-side platform plumbing; destination buses and receivers
+  are configured in the integrations modules.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -32,14 +37,14 @@ Forge integrations often need GitHub workflow events in an account that is not t
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
-| <a name="provider_random"></a> [random](#provider\_random) | 3.9.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 6.47 |
+| <a name="provider_random"></a> [random](#provider\_random) | >= 3.6 |
 
 ## Modules
 
 | Name | Source | Version |
 | ---- | ------ | ------- |
-| <a name="module_github_webhook_relay_source"></a> [github\_webhook\_relay\_source](#module\_github\_webhook\_relay\_source) | ../../../integrations/github_webhook_relay_source | n/a |
+| <a name="module_github_webhook_relay_source"></a> [github\_webhook\_relay\_source](#module\_github\_webhook\_relay\_source) | ./source | n/a |
 
 ## Resources
 
@@ -60,7 +65,7 @@ Forge integrations often need GitHub workflow events in an account that is not t
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
-| <a name="input_github_webhook_relay"></a> [github\_webhook\_relay](#input\_github\_webhook\_relay) | Configuration for the (optional) webhook relay source module.<br/>If enabled=true we provision the API Gateway + source EventBridge forwarding rule.<br/>destination\_event\_bus\_name must already exist or be created in the destination account (or via the destination submodule run there). | <pre>object({<br/>    enabled                     = bool<br/>    destination_account_id      = optional(string)<br/>    destination_event_bus_name  = optional(string)<br/>    destination_region          = optional(string)<br/>    destination_reader_role_arn = optional(string)<br/>  })</pre> | <pre>{<br/>  "destination_account_id": "",<br/>  "destination_event_bus_name": "",<br/>  "destination_reader_role_arn": "",<br/>  "destination_region": "",<br/>  "enabled": false<br/>}</pre> | no |
+| <a name="input_github_webhook_relay"></a> [github\_webhook\_relay](#input\_github\_webhook\_relay) | Configuration for the optional tenant GitHub webhook relay source.<br/>If enabled=true, Forge provisions the API Gateway, validation Lambda, source EventBridge bus, and forwarding rule.<br/>destination\_event\_bus\_name must already exist or be created in the destination account with the destination integration module. | <pre>object({<br/>    enabled                     = bool<br/>    destination_account_id      = optional(string)<br/>    destination_event_bus_name  = optional(string)<br/>    destination_region          = optional(string)<br/>    destination_reader_role_arn = optional(string)<br/>  })</pre> | <pre>{<br/>  "destination_account_id": "",<br/>  "destination_event_bus_name": "",<br/>  "destination_reader_role_arn": "",<br/>  "destination_region": "",<br/>  "enabled": false<br/>}</pre> | no |
 | <a name="input_log_level"></a> [log\_level](#input\_log\_level) | Log level for application logging (e.g., INFO, DEBUG, WARN, ERROR) | `string` | `"INFO"` | no |
 | <a name="input_logging_retention_in_days"></a> [logging\_retention\_in\_days](#input\_logging\_retention\_in\_days) | Retention in days for CloudWatch Log Group for the Lambdas. | `number` | `30` | no |
 | <a name="input_prefix"></a> [prefix](#input\_prefix) | Prefix for all resources | `string` | n/a | yes |

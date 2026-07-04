@@ -32,7 +32,7 @@ locals {
   git_prefix      = "git::file://"
   module_base     = local.use_local_repos ? "${local.git_prefix}${get_repo_root()}/${local.module_root["local_path"]}" : local.module_root["repo"]
   module_version  = local.module_root["ref"]
-  module_ref      = "${local.module_base}//modules/${local.module_name}?ref=${local.module_version}"
+  module_ref      = local.use_local_repos ? "${local.module_base}//${local.module_root["module_path"]}" : "${local.module_base}//${local.module_root["module_path"]}?ref=${local.module_version}"
 }
 
 # Construct the terraform.source attribute using the source_base.

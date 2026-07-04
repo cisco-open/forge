@@ -1,6 +1,6 @@
 """Webhook signature validation — the security boundary at the front door.
 
-Target: modules/integrations/github_webhook_relay_source/lambda/validate_signature.py
+Target: modules/platform/forge_runners/github_webhook_relay/source/lambda/validate_signature.py
 (real handler, driven end-to-end under moto EventBridge).
 
 The relay lambda must only forward payloads GitHub actually signed. A bypass

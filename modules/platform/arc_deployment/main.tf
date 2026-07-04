@@ -1,7 +1,7 @@
 
 
 module "arc" {
-  source = "../../core/arc"
+  source = "../arc"
 
   aws_profile = var.aws_profile
   aws_region  = var.aws_region
