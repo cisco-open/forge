@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 from conftest import requires_aws
 from support import load_handler_module
 
 pytestmark = requires_aws
+FIXTURES_DIR = Path(__file__).with_name('fixtures')
 
 
 def _load_splunk(monkeypatch):
@@ -58,6 +60,34 @@ def test_load_metadata_fields_reads_sidecar(monkeypatch, s3_kms):
         'repository_full_name': 'acme/app',
         'workflow_job_conclusion': 'success',
     }
+
+
+def test_load_metadata_fields_reads_github_metadata_file_shape(
+    monkeypatch, s3_kms
+):
+    mod = _load_splunk(monkeypatch)
+    bucket = s3_kms['buckets']['alpha']
+    s3 = s3_kms['s3']
+    metadata_key = 'metadata/987654321.fields'
+    fixture_path = FIXTURES_DIR / 'splunk_s3_runner_logs_metadata_sidecar.json'
+    payload = json.loads(fixture_path.read_text(encoding='utf-8'))
+
+    s3.put_object(
+        Bucket=bucket,
+        Key=metadata_key,
+        Body=fixture_path.read_bytes(),
+    )
+
+    fields = mod.load_metadata_fields(
+        bucket,
+        payload['source_log_key'],
+        {'metadata_key': metadata_key},
+    )
+
+    assert fields == payload['fields']
+    assert len(fields) == payload['field_count']
+    assert 'source_log_key' not in fields
+    assert 'source_event_key' not in fields
 
 
 def test_load_metadata_fields_missing_sidecar_is_empty(monkeypatch, s3_kms):
