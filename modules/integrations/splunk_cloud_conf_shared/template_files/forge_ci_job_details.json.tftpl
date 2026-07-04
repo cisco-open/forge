@@ -1,6 +1,6 @@
 {
     "title": "Forge CI Job Details",
-    "description": "Shows recent Forge GitHub Actions job executions with repository, runner, label, queue, and duration details.",
+    "description": "Shows recent Forge GitHub Actions job executions with repository, runner, label, queue, job duration, and workflow run duration details.",
     "inputs": {
         "input_global_time": {
             "options": {
@@ -186,6 +186,32 @@
             "title": "Runner Type Usage by Time Window",
             "type": "splunk.line"
         },
+        "workflow_run_duration_chart": {
+            "containerOptions": {},
+            "dataSources": {
+                "primary": "workflow_run_duration_window_search"
+            },
+            "eventHandlers": [],
+            "options": {},
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Average Workflow Run Duration by Time Window",
+            "type": "splunk.line"
+        },
+        "workflow_run_duration_table": {
+            "containerOptions": {},
+            "dataSources": {
+                "primary": "workflow_run_duration_summary_search"
+            },
+            "eventHandlers": [],
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Workflow Run Duration by Workflow",
+            "type": "splunk.table"
+        },
         "runner_type_workflow_windows_table": {
             "containerOptions": {},
             "dataSources": {
@@ -278,6 +304,30 @@
             },
             "type": "ds.search"
         },
+        "workflow_run_duration_window_search": {
+            "name": "Average workflow run duration by time window",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" forgecicd_log_type=\"runner-job-event\"\n| eval ci_result=coalesce('workflow_job.conclusion', \"unknown\")\n| eval repository='repository.full_name'\n| eval workflow_run_name=coalesce('workflow_job.workflow_name', 'workflow_job.name')\n| eval workflow_run_id='workflow_job.run_id'\n| eval workflow_run_attempt=coalesce('workflow_job.run_attempt', 1)\n| eval created_at='workflow_job.created_at'\n| eval completed_at='workflow_job.completed_at'\n| eval runner_group='workflow_job.runner_group_name'\n| eval runner_name='workflow_job.runner_name'\n| where \"$tenant$\"=\"*\" OR forgecicd_tenant=\"$tenant$\"\n| where \"$repository$\"=\"*\" OR like(repository, \"%$repository$%\")\n| where \"$runner_group$\"=\"*\" OR like(runner_group, \"%$runner_group$%\")\n| where \"$instance_id$\"=\"*\" OR like(forgecicd_instance_id, \"%$instance_id$%\") OR like(runner_name, \"%$instance_id$%\")\n| eval created_epoch=strptime(created_at, \"%Y-%m-%dT%H:%M:%SZ\")\n| eval completed_epoch=strptime(completed_at, \"%Y-%m-%dT%H:%M:%SZ\")\n| where isnotnull(workflow_run_id) AND isnotnull(created_epoch) AND isnotnull(completed_epoch)\n| stats min(created_epoch) as run_created_epoch max(completed_epoch) as run_completed_epoch values(ci_result) as ci_results by forgecicd_tenant repository workflow_run_name workflow_run_id workflow_run_attempt\n| eval workflow_duration_sec=run_completed_epoch-run_created_epoch\n| where workflow_duration_sec>=0\n| where \"$result$\"=\"*\" OR ci_results=\"$result$\"\n| eval _time=run_created_epoch, workflow_duration_min=workflow_duration_sec/60\n| timechart span=$window_span$ avg(workflow_duration_min) as avg_workflow_minutes by forgecicd_tenant limit=20",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "workflow_run_duration_summary_search": {
+            "name": "Workflow run duration by workflow",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" forgecicd_log_type=\"runner-job-event\"\n| eval ci_result=coalesce('workflow_job.conclusion', \"unknown\")\n| eval repository='repository.full_name'\n| eval workflow_run_name=coalesce('workflow_job.workflow_name', 'workflow_job.name')\n| eval workflow_run_id='workflow_job.run_id'\n| eval workflow_run_attempt=coalesce('workflow_job.run_attempt', 1)\n| eval created_at='workflow_job.created_at'\n| eval completed_at='workflow_job.completed_at'\n| eval runner_group='workflow_job.runner_group_name'\n| eval runner_name='workflow_job.runner_name'\n| eval runner_type=coalesce(forgecicd_type, \"unknown\")\n| where \"$tenant$\"=\"*\" OR forgecicd_tenant=\"$tenant$\"\n| where \"$repository$\"=\"*\" OR like(repository, \"%$repository$%\")\n| where \"$runner_group$\"=\"*\" OR like(runner_group, \"%$runner_group$%\")\n| where \"$instance_id$\"=\"*\" OR like(forgecicd_instance_id, \"%$instance_id$%\") OR like(runner_name, \"%$instance_id$%\")\n| eval created_epoch=strptime(created_at, \"%Y-%m-%dT%H:%M:%SZ\")\n| eval completed_epoch=strptime(completed_at, \"%Y-%m-%dT%H:%M:%SZ\")\n| where isnotnull(workflow_run_id) AND isnotnull(created_epoch) AND isnotnull(completed_epoch)\n| stats min(created_epoch) as run_created_epoch max(completed_epoch) as run_completed_epoch count as jobs values(ci_result) as ci_results values(runner_type) as runner_types by forgecicd_tenant repository workflow_run_name workflow_run_id workflow_run_attempt\n| eval workflow_duration_sec=run_completed_epoch-run_created_epoch\n| where workflow_duration_sec>=0\n| where \"$result$\"=\"*\" OR ci_results=\"$result$\"\n| stats count as workflow_runs sum(jobs) as jobs avg(workflow_duration_sec) as avg_workflow_sec perc95(workflow_duration_sec) as p95_workflow_sec max(workflow_duration_sec) as max_workflow_sec values(runner_types) as runner_types values(ci_results) as ci_results by forgecicd_tenant repository workflow_run_name\n| eval avg_workflow=tostring(round(avg_workflow_sec,0), \"duration\"), p95_workflow=tostring(round(p95_workflow_sec,0), \"duration\"), max_workflow=tostring(round(max_workflow_sec,0), \"duration\")\n| eval runner_types=mvjoin(runner_types, \", \"), ci_results=mvjoin(ci_results, \", \")\n| sort - p95_workflow_sec - workflow_runs\n| table forgecicd_tenant repository workflow_run_name runner_types ci_results workflow_runs jobs avg_workflow p95_workflow max_workflow avg_workflow_sec p95_workflow_sec max_workflow_sec\n| head 100",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
         "runner_type_workflow_windows_search": {
             "name": "Busiest runner type workflow job windows",
             "options": {
@@ -352,12 +402,32 @@
                         "type": "block"
                     },
                     {
-                        "item": "runner_type_usage_window_chart",
+                        "item": "workflow_run_duration_chart",
                         "position": {
                             "h": 360,
                             "w": 600,
                             "x": 0,
                             "y": 360
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "runner_type_usage_window_chart",
+                        "position": {
+                            "h": 360,
+                            "w": 600,
+                            "x": 600,
+                            "y": 360
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "workflow_run_duration_table",
+                        "position": {
+                            "h": 360,
+                            "w": 600,
+                            "x": 0,
+                            "y": 720
                         },
                         "type": "block"
                     },
@@ -367,7 +437,7 @@
                             "h": 360,
                             "w": 600,
                             "x": 600,
-                            "y": 360
+                            "y": 720
                         },
                         "type": "block"
                     },
@@ -377,7 +447,7 @@
                             "h": 420,
                             "w": 600,
                             "x": 0,
-                            "y": 720
+                            "y": 1080
                         },
                         "type": "block"
                     },
@@ -387,7 +457,7 @@
                             "h": 420,
                             "w": 600,
                             "x": 600,
-                            "y": 720
+                            "y": 1080
                         },
                         "type": "block"
                     },
@@ -397,7 +467,7 @@
                             "h": 720,
                             "w": 1200,
                             "x": 0,
-                            "y": 1140
+                            "y": 1500
                         },
                         "type": "block"
                     }
