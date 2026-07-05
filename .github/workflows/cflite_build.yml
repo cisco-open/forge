@@ -21,6 +21,9 @@ jobs:
   build:
     name: Build Python fuzzers (${{ matrix.sanitizer }})
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ matrix.sanitizer }}-${{ github.ref }}
+      cancel-in-progress: true
     timeout-minutes: 20
     concurrency:
       group: ${{ github.workflow }}-${{ matrix.sanitizer }}-${{ github.ref }}
