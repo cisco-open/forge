@@ -16,7 +16,10 @@ updates:
       - github-actions
 
   - package-ecosystem: pip
-    directory: /
+    directories:
+      - /
+      - /tests/smoke
+      - /.docker/forge-github-app-register
     schedule:
       interval: daily
     cooldown:
@@ -28,6 +31,20 @@ updates:
     labels:
       - dependencies
       - python
+
+  - package-ecosystem: pre-commit
+    directory: /
+    schedule:
+      interval: daily
+    cooldown:
+      default-days: 7
+    groups:
+      pre-commit-dependencies:
+        patterns:
+          - '*'
+    labels:
+      - dependencies
+      - pre-commit
 
   - package-ecosystem: terraform
     directory: /modules
@@ -58,13 +75,29 @@ updates:
       - terraform
 
   - package-ecosystem: docker
-    directory: /.docker
+    directories:
+      - /.docker/pre-commit
+      - /.docker/forge-github-app-register
     schedule:
       interval: daily
     cooldown:
       default-days: 7
     groups:
       docker-dependencies:
+        patterns:
+          - '*'
+    labels:
+      - dependencies
+      - docker
+
+  - package-ecosystem: docker-compose
+    directory: /tests/smoke
+    schedule:
+      interval: daily
+    cooldown:
+      default-days: 7
+    groups:
+      docker-compose-dependencies:
         patterns:
           - '*'
     labels:

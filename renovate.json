@@ -22,6 +22,9 @@
     "stabilityDays": 0,
     "separateMinorPatch": true,
     "separateMajorMinor": true,
+    "ignorePaths": [
+        "**/.terraform/**"
+    ],
     "customManagers": [
         {
             "customType": "regex",
@@ -115,13 +118,46 @@
             ]
         },
         {
+            "description": "Terraform module dependencies",
+            "matchManagers": [
+                "terraform"
+            ],
+            "matchFileNames": [
+                "modules/**"
+            ],
+            "groupName": "Terraform module dependencies",
+            "groupSlug": "terraform-modules-dependencies",
+            "addLabels": [
+                "dependencies",
+                "terraform"
+            ]
+        },
+        {
+            "description": "Terraform example dependencies",
+            "matchManagers": [
+                "terraform",
+                "terragrunt"
+            ],
+            "matchFileNames": [
+                "examples/deployments/**"
+            ],
+            "groupName": "Terraform example dependencies",
+            "groupSlug": "terraform-examples-dependencies",
+            "addLabels": [
+                "dependencies",
+                "terraform"
+            ]
+        },
+        {
             "description": "GitHub Actions - pin to commit SHA for security",
             "matchManagers": [
                 "github-actions"
             ],
             "pinDigests": true,
-            "groupName": "GitHub Actions",
+            "groupName": "GitHub Actions dependencies",
+            "groupSlug": "github-actions-dependencies",
             "addLabels": [
+                "dependencies",
                 "github-actions",
                 "ci-cd"
             ]
@@ -132,18 +168,28 @@
                 "pre-commit"
             ],
             "pinDigests": true,
-            "groupName": "Pre-commit hooks",
+            "groupName": "Pre-commit dependencies",
+            "groupSlug": "pre-commit-dependencies",
             "addLabels": [
+                "dependencies",
                 "pre-commit"
             ]
         },
         {
-            "matchPackagePatterns": [
-                "python",
-                "pip"
+            "description": "Python dependencies",
+            "matchDatasources": [
+                "pypi"
+            ],
+            "matchFileNames": [
+                ".docker/forge-github-app-register/requirements.txt",
+                "pyproject.toml",
+                "requirements*.txt",
+                "tests/smoke/requirements-dev.txt"
             ],
             "groupName": "Python dependencies",
+            "groupSlug": "python-dependencies",
             "addLabels": [
+                "dependencies",
                 "python"
             ]
         },
@@ -166,11 +212,18 @@
             "description": "Docker images - grouped with digest pinning",
             "matchManagers": [
                 "docker-compose",
-                "dockerfile"
+                "dockerfile",
+                "custom.regex"
             ],
-            "groupName": "Docker images",
+            "matchFileNames": [
+                ".docker/**",
+                "tests/smoke/docker-compose.yml"
+            ],
+            "groupName": "Docker dependencies",
+            "groupSlug": "docker-dependencies",
             "pinDigests": true,
             "addLabels": [
+                "dependencies",
                 "docker",
                 "containers"
             ]
