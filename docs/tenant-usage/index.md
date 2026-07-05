@@ -1,232 +1,256 @@
-# Forge Tenant Usage Guide
+# Use Forge Runners
 
-<!-- toc -->
+This page is for repository owners who already have access to a ForgeMT tenant.
+It shows the workflow labels and AWS patterns you need to run jobs on ForgeMT.
 
-- [Forge Tenant Usage Guide](#forge-tenant-usage-guide)
-  - [Forge Tenant Quick Start Guide](#forge-tenant-quick-start-guide)
-    - [What is Forge?](#what-is-forge)
-    - [How to use Forge runners](#how-to-use-forge-runners)
-    - [Adding your repository to Forge](#adding-your-repository-to-forge)
-  - [Forge Multi-Tenant Overview](#forge-multi-tenant-overview)
-    - [🔄 Dependency Management](#-dependency-management)
-  - [⚙️ Advanced Configuration (Optional)](#%EF%B8%8F-advanced-configuration-optional)
-    - [🔐 Optional AWS Access for Runners](#-optional-aws-access-for-runners)
-      - [⚙️ Configuring AWS Access (Optional)](#%EF%B8%8F-configuring-aws-access-optional)
-      - [🔄 Example: Assume Role in External AWS Account (Optional)](#-example-assume-role-in-external-aws-account-optional)
-      - [🐳 Running Jobs in Containers](#-running-jobs-in-containers)
-        - [1. **Create an ECR Policy for the Forge Runner**](#1-create-an-ecr-policy-for-the-forge-runner)
-        - [2. **Attach the Policy to the Forge Runner IAM Role**](#2-attach-the-policy-to-the-forge-runner-iam-role)
-        - [3. **Configure the Runner to Access the ECR Repository**](#3-configure-the-runner-to-access-the-ecr-repository)
-    - [🔍 Observation](#-observation)
-    - [🔧 How to Configure a Repository for Runners](#-how-to-configure-a-repository-for-runners)
-      - [1. Navigate to the Repository](#1-navigate-to-the-repository)
-      - [2. Access Configuration Options](#2-access-configuration-options)
-      - [3. Select Repositories](#3-select-repositories)
-      - [5. Ready for Runners](#5-ready-for-runners)
+If you are installing ForgeMT itself, use the
+[Getting Started](../getting-started/index.md) docs instead.
 
-<!-- tocstop -->
+______________________________________________________________________
 
-## Forge Tenant Quick Start Guide
+## Before You Start
 
-### What is Forge?
+Get these values from the Forge platform team or from your tenant config:
 
-Forge runs your GitHub Actions workflows on managed runners in Forge team AWS accounts — no infra management needed. You just write your workflow and pick the runner type.
+| Value              | Example      | Where it appears                        |
+| ------------------ | ------------ | --------------------------------------- |
+| Tenant name        | `acme`       | Runner label `tnt:acme`                 |
+| Environment        | `prod`       | Runner label `env:ops-prod`             |
+| Region alias       | `euw1`       | Runner label `rgn:euw1`                 |
+| VPC alias          | `main`       | Runner label `vpc:main`                 |
+| EC2 runner type    | `small`      | Runner label `type:small`               |
+| CPU architecture   | `x64`        | Runner label `x64` or `arm64`           |
+| ARC scale set name | `dependabot` | ARC label such as `dependabot` or `k8s` |
+| ARC scale set type | `dind`       | ARC label `type:dind` or `type:k8s`     |
 
-### How to use Forge runners
+Your repository must also be selected in the tenant GitHub App installation.
+If the app is not installed for the repository, the workflow will stay queued.
 
-1. **Pick a runner type for your job:**
+## Tenant Support Contract
 
-| Runner Type  | Description                                                               |
-| ------------ | ------------------------------------------------------------------------- |
-| `small`      | Lightweight, cost-effective runner                                        |
-| `standard`   | Balanced performance for general workloads                                |
-| `large`      | High-performance runner for demanding jobs                                |
-| `metal`      | Bare-metal runner for heavy workloads                                     |
-| `dependabot` | Dedicated runner for Dependabot automation jobs                           |
-| `k8s`        | Kubernetes pod runner for lightweight jobs excluding Docker-based actions |
-| `dind`       | Kubernetes pod runner supporting Docker-in-Docker (DinD) in rootless mode |
+ForgeMT is a platform service. Tenant teams consume the runner API; they do not
+operate the runner control plane.
 
-2. **Update your workflow:**
+| Tenant team owns                               | Platform team owns                                      |
+| ---------------------------------------------- | ------------------------------------------------------- |
+| Workflow YAML, build scripts, tests, artifacts | Runner lifecycle, scale up/down, cleanup, and modules   |
+| Requested runner labels                        | Label generation, runner groups, and capacity settings  |
+| Target AWS role permissions and trust approval | Runner role wiring and allowed role list in tenant IaC  |
+| Custom toolchains and custom images            | Base AMIs, ARC runner images, and image publishing path |
+| Repository selection request                   | GitHub App registration path and webhook plumbing       |
 
-Add this snippet to `.github/workflows/your-workflow.yml`:
+When asking for support, include the workflow URL, repository, tenant name,
+full `runs-on` labels, AWS role ARN, approximate failure time, and whether the
+job reached a runner or stayed queued.
+
+______________________________________________________________________
+
+## Pick the Right Runner
+
+| Workload                         | Use                                           | Avoid                                                 |
+| -------------------------------- | --------------------------------------------- | ----------------------------------------------------- |
+| Normal Linux CI job              | EC2 runner, for example `type:small`          | ARC if the job needs a full VM or custom AMI.         |
+| ARM64 build or test              | EC2 runner with `arm64` label                 | `x64` labels.                                         |
+| Docker build                     | ARC `type:dind` or an EC2 runner with Docker  | ARC `type:k8s` if the job needs Docker daemon access. |
+| Lightweight Kubernetes-style job | ARC `type:k8s`                                | DinD unless Docker daemon access is required.         |
+| macOS build                      | Dedicated macOS EC2 runner                    | Generic Linux labels.                                 |
+| Dependency automation            | Dedicated Renovate or Dependabot runner label | Running on every push.                                |
+
+Do not use only `self-hosted`. Add enough labels to hit the intended tenant,
+environment, and runner type.
+
+______________________________________________________________________
+
+## EC2 Runner Workflow
+
+Use this for a normal Linux runner backed by EC2:
 
 ```yaml
+---
+name: Build
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on:
       - self-hosted
-      - x64
-      - type:standard
-```
-
-For Kubernetes pods, use:
-
-```yaml
-jobs:
-  build:
-    runs-on:
-      - k8s
-```
-
-3. **Request a new runner type**
-
-If you need a runner type not listed here, contact the Forge team.
-
-4. **(Optional) AWS resource access**
-
-If your workflow needs to access external AWS resources (S3, EC2, etc.), check [advanced doc](#%EF%B8%8F-advanced-configuration-optional).
-
-______________________________________________________________________
-
-### Adding your repository to Forge
-
-- Make sure the Forge GitHub App is installed on your repo.
-- Go to your repo Settings → Installed GitHub Apps → Configure Forge app.
-- Select the repos you want Forge runners enabled for.
-- Once configured, push workflows using `runs-on: self-hosted` and Forge runners will pick them up.
-
-______________________________________________________________________
-
-## Forge Multi-Tenant Overview
-
-Forge is designed for flexible, secure, and scalable CI/CD operations, integrating seamlessly with GitHub Actions. Key features include:
-
-- ⚡ **Flexible Scaling**: Choose from predefined runner types (`dependabot`, `small`, `standard`, `large`, `metal`) to match workload needs.
-- 🐳 **Container Support**: Run jobs in Docker containers for isolated execution.
-- 🔐 **IAM Role-Based Access**: Securely access external AWS accounts with per-tenant IAM roles, ensuring strict permission control.
-- 🖥️ **Secure Remote Access**: Enable SSH access via Teleport for debugging and troubleshooting.
-- 📊 **Centralized Logging & Monitoring**: Automatically send logs to Splunk and integrate with CloudWatch for monitoring.
-- 🔄 **Seamless GitHub Actions Integration**: Optimize CI/CD workflows effortlessly.
-- 📦 **Automated Dependency Management**: Utilize **Dependabot** and **Renovate Bot** for automated updates.
-
-______________________________________________________________________
-
-### 🔄 Dependency Management
-
-Forge supports automated dependency updates using **Dependabot** and **Renovate Bot**:
-
-- 🤖 **Dependabot**: A GitHub-native tool that creates PRs to update dependencies automatically.
-- 🔧 **Renovate Bot**: Offers advanced versioning strategies, scheduling, and fine-grained configuration.
-
-[See the detailed comparison guide](./dependency-management.md).
-
-______________________________________________________________________
-
-## ⚙️ Advanced Configuration (Optional)
-
-### 🔐 Optional AWS Access for Runners
-
-By default, Forge Runners do not require access to external AWS resources. However, if a team needs the runner to interact with resources (e.g., launch EC2 instances, access DynamoDB, S3, or Secrets Manager), **IAM role-based access** can be configured.
-
-#### ⚙️ Configuring AWS Access (Optional)
-
-To allow the runner to access external AWS resources:
-
-- 1. **External AWS IAM Role (Optional)**: The external AWS account must have IAM roles configured with the necessary permissions (e.g., EC2, DynamoDB, S3).
-- 2. **Trust Relationship**: The external AWS role must trust the IAM role from the Forge account to allow the Forge runner to assume it.
-
-#### 🔄 Example: Assume Role in External AWS Account (Optional)
-
-To configure role assumption, the external AWS account must allow the Forge runner's role to assume its IAM role:
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": "sts:AssumeRole",
-      "Resource": "arn:aws:iam::EXTERNAL_AWS_ACCOUNT_ID:role/ForgeRunnerRole"
-    }
-  ]
-}
-```
-
-Once the Forge runner assumes this role, it will have the permissions defined in the external AWS account’s IAM role (e.g., to launch EC2 instances, access S3, pull ECR, etc.).
-
-______________________________________________________________________
-
-#### 🐳 Running Jobs in Containers
-
-If your runner's AMI does not contain the necessary tools, you can run your job inside a Docker container.
-
-To allow the Forge runner to pull a Docker image from Amazon ECR, you’ll need to create an ECR policy in the AWS account hosting the ECR repository. This policy should grant permissions to the Forge runner (or the IAM role it assumes) to pull images from ECR.
-
-##### 1. **Create an ECR Policy for the Forge Runner**
-
-Example ECR policy (JSON):
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ecr:GetAuthorizationToken",
-        "ecr:BatchGetImage"
-      ],
-      "Resource": "arn:aws:ecr:<aws-region>:<aws-account-id>:repository/<container-name>"
-    }
-  ]
-}
-```
-
-Replace:
-
-- `<aws-region>` with your ECR region
-- `<aws-account-id>` with your AWS account ID hosting the ECR
-- `<container-name>` with your ECR repo name
-
-##### 2. **Attach the Policy to the Forge Runner IAM Role**
-
-Attach this policy to the IAM role that the Forge runner uses.
-
-##### 3. **Configure the Runner to Access the ECR Repository**
-
-Ensure runner is set up to authenticate against the ECR repo. Usually this means your runner's IAM role can assume the role with this policy.
-
-Example job YAML:
-
-```yaml
-jobs:
-  my-job:
-    runs-on:
-      - self-hosted
-      - x64
       - type:small
+      - x64
+      - ec2
       - env:ops-prod
+      - rgn:euw1
+      - vpc:main
+      - tnt:acme
     timeout-minutes: 60
-
-    container:
-      image: <aws-account-id>.dkr.ecr.<aws-region>.amazonaws.com/<container-name>
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./scripts/test.sh
 ```
 
-______________________________________________________________________
-
-### 🔍 Observation
-
-- **Instance Selection**: Forge provisions the smallest available instance in the requested runner type within your AWS region.
-- **Network Latency**: Pulling container images from ECR in a different region may introduce latency.
+For ARM64, change `x64` to `arm64` and use a tenant runner type whose AMI and
+instance types support ARM64.
 
 ______________________________________________________________________
 
-### 🔧 How to Configure a Repository for Runners
+## ARC Runner Workflows
 
-#### 1. Navigate to the Repository
+Use `type:dind` when the job needs Docker daemon access:
 
-Go to a repository where the **GitHub App for the tenant** is installed.
+```yaml
+jobs:
+  docker-build:
+    runs-on:
+      - self-hosted
+      - dependabot
+      - type:dind
+      - x64
+      - arc
+      - env:ops-prod
+      - rgn:euw1
+      - vpc:main
+      - tnt:acme
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t example .
+```
 
-#### 2. Access Configuration Options
+Use `type:k8s` for Kubernetes runner jobs that do not need Docker daemon
+access:
 
-- Click **Configure** in repository settings.
-- You'll be redirected to the page where you select repos for the Forge GitHub App.
+```yaml
+jobs:
+  test:
+    runs-on:
+      - self-hosted
+      - k8s
+      - type:k8s
+      - x64
+      - arc
+      - env:ops-prod
+      - rgn:euw1
+      - vpc:main
+      - tnt:acme
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./scripts/test.sh
+```
 
-#### 3. Select Repositories
+The first ARC-specific label, such as `dependabot` or `k8s`, comes from the
+tenant `arc_runner_specs.<name>.scale_set_name`.
 
-- Select repos you want to enable Forge runners on.
-- For multiple repos, select them all.
+______________________________________________________________________
 
-#### 5. Ready for Runners
+## Optional AWS Access
 
-Once approved, your repository is ready to use Forge runners.
+If a workflow needs AWS access, the role ARN must be allowed in the Forge tenant
+configuration first. The normal Forge pattern is role chaining: the runner's AWS
+role assumes the target role.
+
+```yaml
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on:
+      - self-hosted
+      - type:small
+      - x64
+      - ec2
+      - env:ops-prod
+      - tnt:acme
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::123456789012:role/role_for_forge_runners
+          aws-region: eu-west-1
+          role-duration-seconds: 3600
+          role-chaining: true
+
+      - run: aws sts get-caller-identity
+```
+
+If `sts:AssumeRole` fails, the tenant config, target role trust policy, or role
+permissions are missing. If your company uses GitHub OIDC instead of runner-role
+chaining, use your normal OIDC workflow and target-role trust policy.
+
+______________________________________________________________________
+
+## Private ECR Images
+
+For Docker commands inside a job, authenticate before pulling:
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+
+  - name: Configure AWS credentials
+    uses: aws-actions/configure-aws-credentials@v4
+    with:
+      role-to-assume: arn:aws:iam::123456789012:role/role_for_forge_runners
+      aws-region: eu-west-1
+      role-chaining: true
+
+  - name: Login to ECR
+    run: |
+      aws ecr get-login-password --region eu-west-1 \
+        | docker login --username AWS --password-stdin 123456789012.dkr.ecr.eu-west-1.amazonaws.com
+
+  - name: Run container
+    run: |
+      docker run --rm 123456789012.dkr.ecr.eu-west-1.amazonaws.com/build-image:latest ./test.sh
+```
+
+For a GitHub job-level `container:` image from private ECR, confirm with the
+platform team first. The runner may need to pull that image before your steps
+can authenticate.
+
+______________________________________________________________________
+
+## Optional Dynamic EC2 Labels
+
+Some EC2 runner pools allow controlled dynamic `ghr-*` labels. Use them only
+when the tenant config has `enable_dynamic_labels: true` and the platform team
+has approved the policy.
+
+Common use case:
+
+```yaml
+runs-on:
+  - self-hosted
+  - type:small
+  - x64
+  - ec2
+  - env:ops-prod
+  - tnt:acme
+  - ghr-ec2-image-id:ami-0123456789abcdef0
+```
+
+Do not use dynamic labels to bypass tenant boundaries, approved AMIs, or quota
+controls.
+
+______________________________________________________________________
+
+## Troubleshooting
+
+| Symptom                     | Check                                                                          |
+| --------------------------- | ------------------------------------------------------------------------------ |
+| Job stays queued            | GitHub App installation, exact labels, runner group access, and tenant name.   |
+| Job lands on wrong runner   | Add `tnt:<tenant>`, `env:<env>`, `rgn:<region>`, and `vpc:<vpc>` labels.       |
+| Docker build fails on ARC   | Use `type:dind`; `type:k8s` is not for Docker daemon workloads.                |
+| AWS assume role fails       | Tenant allowed role list, target role trust policy, and `role-chaining: true`. |
+| Private ECR pull fails      | ECR repository policy, login region, and assumed role permissions.             |
+| Runner disappears after job | Expected behavior; Forge runners are ephemeral.                                |
+
+For dependency automation, see [Dependency Management](./dependency-management.md).
+For platform-side triage without Splunk, see
+[Troubleshooting Without Splunk](../operations/troubleshooting-without-splunk.md).

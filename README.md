@@ -3,215 +3,136 @@
 [![Release](https://img.shields.io/github/v/release/cisco-open/forge?display_name=tag)](https://github.com/cisco-open/forge/releases/latest/)
 [![License](https://img.shields.io/github/license/cisco-open/forge)](LICENSE.md)
 [![Maintainer](https://img.shields.io/badge/Maintainer-Cisco-00bceb.svg)](https://opensource.cisco.com)
+[![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue.svg)](https://cisco-open.github.io/forge/)
 ![CI](https://img.shields.io/github/check-runs/cisco-open/forge/main)
 ![Commits since latest release](https://img.shields.io/github/commits-since/cisco-open/forge/latest)
 [![Contributors](https://img.shields.io/github/contributors/cisco-open/forge)](https://github.com/cisco-open/forge/graphs/contributors)
 
-______________________________________________________________________
+ForgeMT is a multi-tenant GitHub Actions runner platform for AWS. The public
+project name is ForgeMT for searchability; operators often shorten it to Forge
+after the context is clear.
 
-## What is ForgeMT
-
-ForgeMT is an **enterprise-grade GitHub Actions runner platform for AWS**.
-It provides:
-
-- **Secure multi-tenancy** using IAM/OIDC and network segmentation
-- **Ephemeral EC2 and Kubernetes runners** for cost-efficient scaling
-- **Full automation** for onboarding, GitHub App management, and lifecycle updates
-- **Built-in observability** and governance
-
-ForgeMT allows organizations running **thousands of CI/CD pipelines daily** to scale without hitting performance, cost, or security limits.
+ForgeMT helps platform teams run ephemeral EC2 and Kubernetes/ARC runners,
+onboard tenants through reviewed IaC changes, and keep runner operations in
+repeatable repos and pipelines instead of one-off scripts.
 
 ![Architecture Diagram](./docs/img/10k_ft.jpg)
 
-______________________________________________________________________
+## When To Use It
 
-## Who Should Use ForgeMT?
+Use ForgeMT when you need:
 
-ForgeMT is ideal for organizations that:
+- GitHub Actions runners inside your AWS accounts.
+- tenant boundaries for labels, IAM roles, networks, images, and runner specs.
+- EC2 runner support for full VM control, custom AMIs, Windows, macOS, or heavy
+  builds.
+- ARC runner support for Kubernetes-based runner scale sets.
+- copyable operations for runner images, ECR images, cleanup, Renovate, and
+  weekly apply/destroy validation.
 
-- Run 100+ CI/CD jobs daily across multiple teams
-- Need stricter security controls than GitHub hosted runners
-- Want to reduce runner costs while maintaining performance
-- Require custom environments or access to internal AWS resources
+Do not start by deploying every module. The smallest useful install is one
+GitHub.com organization, one tenant, one runner lane, and one smoke workflow.
+Add helpers, EKS, Splunk, Teleport, OpenCost, OpenTelemetry, and webhook relay
+modules only when your operating model needs them.
 
-______________________________________________________________________
+## Module Layout
 
-## Key Benefits
+ForgeMT modules are grouped by operating responsibility:
 
-- **Secure Multi-Tenant Isolation:** Strong boundaries without fragmenting infrastructure. Short-lived IAM roles via OIDC replace static secrets.
-- **Cost Optimization:** Spot instances, scale-to-zero, warm pools, and optimized pod sizing.
-- **Full Automation:** Zero-touch operations for onboarding, updates, and configuration.
-- **Open Source:** Fully transparent, adaptable, and vendor-neutral.
+| Category       | Path                       | Purpose                                                          |
+| -------------- | -------------------------- | ---------------------------------------------------------------- |
+| Platform       | `modules/platform`         | Forge runtime modules for EC2 and ARC tenant runners.            |
+| Infrastructure | `modules/infra`            | EKS foundation for ARC/Kubernetes runner scale sets.             |
+| Helpers        | `modules/helpers`          | Account preparation and operations helpers such as AMI, ECR, S3. |
+| Integrations   | `modules/integrations`     | Optional external systems such as Splunk, Teleport, and relays.  |
+| Examples       | `examples/deployments/...` | Functional Terragrunt roots grouped like the module layout.      |
 
-______________________________________________________________________
-
-## How It Compares
-
-| Solution          | Cost             | Security     | Maintenance | Custom Env |
-| ----------------- | ---------------- | ------------ | ----------- | ---------- |
-| GitHub Hosted     | High volume cost | Standard     | None        | Limited    |
-| Basic Self-Hosted | EC2 costs        | Manual setup | High        | Full       |
-| **ForgeMT**       | Optimized        | Enterprise   | Low         | Full       |
-
-______________________________________________________________________
-
-## Architecture Overview
-
-ForgeMT separates the **control plane** from the **tenant plane**:
-
-- **Control Plane:**
-  Manages the deployment, provisioning, scaling, and monitoring of all runners. Built with OpenTofu/Terraform, Helm (ARC), and centralized IAM/OIDC, it ensures automated and secure operations across tenants.
-
-- **Tenant Plane:**
-  Runs ephemeral CI/CD jobs. Tenants access their AWS resources via **short-lived IAM roles** using OIDC trust relationships. All runners are **automatically deployed by the control plane**, and tenants do not manage them directly.
-
-  Supported runner types:
-
-  - **EC2 runners:** Full VM control, custom AMIs, per-tenant sandboxes.
-  - **EKS runners (ARC):** Containerized workloads in per-tenant namespaces. Uses Calico CNI to optimize IP allocation for large-scale deployments.
-
-**Architecture Diagrams:**
-
-![Multi-Tenant Overview](./docs/img/10k_ft_multi_tenant.jpg)
-*High-level view of ForgeMT multi-tenant architecture.*
-
-![EC2 Runner Architecture](./docs/img/forge_runner_ec2.jpg)
-*Deployment and lifecycle of EC2 runners.*
-
-![EKS Runner Architecture](./docs/img/forge_runner_eks.jpg)
-*Deployment and lifecycle of EKS (ARC) runners.*
-
-![Tenant Overview](./docs/img/10k_ft_tenant.jpg)
-*Tenant plane showing ephemeral runner usage and IAM/OIDC access.*
-
-______________________________________________________________________
-
-## Runner Types
-
-| Type          | Use Case                      | Isolation                                              | Scaling                  |
-| ------------- | ----------------------------- | ------------------------------------------------------ | ------------------------ |
-| **EC2**       | Full VM control, custom AMIs  | Per-tenant sandbox in shared AWS accounts via IAM/OIDC | EC2 ASG + Spot/On-Demand |
-| **EKS (ARC)** | Burst workloads in containers | Per-tenant namespace (optionally node-isolated)        | Karpenter + ARC          |
-
-______________________________________________________________________
-
-## Two User Personas
-
-### 🔧 **Platform Administrator**
-
-- **Role:** Deploy and maintain ForgeMT infrastructure
-- **Responsibilities:** AWS account setup, tenant provisioning, platform updates
-- **Tools:** OpenTofu, AWS CLI, kubectl, helm
-- **Workflow:** Deploy control plane → Onboard tenants → Monitor platform
-
-### 👩‍💻 **Development Team (Tenant)**
-
-- **Role:** Use ForgeMT runners for CI/CD pipelines
-- **Responsibilities:** Configure workflows, manage GitHub Apps, consume runners
-- **Tools:** GitHub Actions YAML, GitHub CLI (optional)
-- **Workflow:** Request access → Configure workflows → Run CI/CD jobs
-
-______________________________________________________________________
+Splunk is optional. If your company does not use Splunk, skip the Splunk
+example folders and all `modules/integrations/splunk_*` modules.
 
 ## Quick Start
 
-### For Platform Administrators
+Start with the documentation site:
 
-Deploy and manage the ForgeMT infrastructure:
+- [ForgeMT documentation](https://cisco-open.github.io/forge/)
+- [Motivation](./docs/motivation.md)
+- [Architecture](./docs/architecture.md)
+- [Platform Engineer Quick Start](./docs/getting-started/platform-engineer.md)
+- [Bootstrap](./docs/getting-started/bootstrap.md)
+- [Minimal Install](./docs/getting-started/minimal-install.md)
+- [Examples](./docs/examples/index.md)
+- [Operations](./docs/operations/index.md)
+- [Security](./docs/security.md)
 
-- **[Deploy Your First Tenant](./docs/configurations/deployments/forge_tenant.md)** — Minimal setup to bootstrap ForgeMT.
-- **[All Deployment Scenarios](./docs/configurations/deployments/index.md)** — Includes EKS, Splunk, BYO AMIs, and advanced patterns.
+The first install path uses:
 
-**Prerequisites:** AWS CLI configured, OpenTofu 1.11+, kubectl, helm
-
-### For Development Teams (Tenants)
-
-Use ForgeMT runners in your GitHub Actions workflows:
-
-- **[Tenant Usage Guide](./docs/tenant-usage/index.md)** — Onboarding, GitHub App setup, and day-2 operations.
-
-______________________________________________________________________
-
-## Sample Tenant Usage
-
-Once onboarded by an admin, tenants use ForgeMT runners like this:
-
-```yaml
-# .github/workflows/ci.yml
-name: CI Pipeline
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: forge-ec2-medium  # Your ForgeMT runner  
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
-          aws-region: us-west-2
-
-      - name: Run tests with AWS access
-        run: |
-          # Your CI/CD commands here
-          # Full access to AWS resources via OIDC
-          aws s3 ls
-          docker build -t myapp .
+```text
+examples/deployments/platform
 ```
 
-**Key Benefits for Tenants:**
+Copy it into your operations IaC repo, replace the AWS and GitHub values, create
+the GitHub App key parameter, store the real base64 PEM in SSM, then run:
 
-- 🔒 **Secure AWS access** without storing secrets
-- ⚡ **Custom instance types** (EC2) or **fast container startup** (EKS)
-- 💰 **Cost-efficient** with auto-scaling and spot instances
-- 🛠️ **Zero maintenance** - admins handle all infrastructure
+```bash
+cd examples/deployments/platform/terragrunt/environments/prod/regions/eu-west-1/vpcs/main/tenants/acme
+terragrunt init
+terragrunt plan
+terragrunt apply
+```
 
-______________________________________________________________________
+For the full sequence, including backend bootstrap and GitHub App registration,
+use [Bootstrap](./docs/getting-started/bootstrap.md) and
+[Minimal Install](./docs/getting-started/minimal-install.md).
 
-## Core Features
+## Tenant Usage
 
-| Feature                 | Description                                      |
-| ----------------------- | ------------------------------------------------ |
-| Ephemeral Runners       | Auto-scaling EC2/EKS runners with zero idle cost |
-| Tenant Isolation        | Secure IAM + OIDC + VPC per tenant/project       |
-| Zero-Touch Operations   | Automatic patching, upgrades, drift remediation  |
-| Observability           | Logs, metrics, dashboards per tenant             |
-| Cost Optimization       | Spot, scale-to-zero, warm pools                  |
-| Flexible Infrastructure | BYO AMIs, VPCs, subnets, instance types          |
-| Multi-Runner Support    | Mix EC2 and EKS in one deployment                |
-| GitHub Cloud & GHES     | Works with SaaS and on-prem GitHub setups        |
+After the platform team onboards a tenant, repository owners request the runner
+with labels generated by ForgeMT:
 
-______________________________________________________________________
+```yaml
+---
+name: Forge smoke
+
+on:
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on:
+      - self-hosted
+      - type:small
+      - x64
+      - ec2
+      - tnt:acme
+    steps:
+      - run: echo "Forge runner is online"
+```
+
+Tenant teams should use [Tenant Usage](./docs/tenant-usage/index.md) for label,
+AWS role, ECR, and troubleshooting patterns.
 
 ## Learn More
 
-- [Technical Case Study](https://www.linkedin.com/pulse/forge-scalable-secure-multi-tenant-github-runner-brilhante--fyxbf)
-- [Full Documentation](./docs/configurations/index.md)
+Technical background:
 
-______________________________________________________________________
+- [No Silver Bullets: Engineering a Multi-Tenant CI Platform a Small Team Can Run](https://dev.to/edersonbrilhante/no-silver-bullets-engineering-a-multi-tenant-ci-platform-a-small-team-can-run-if)
+- [Forge: scalable, secure multi-tenant GitHub runner platform](https://www.linkedin.com/pulse/forge-scalable-secure-multi-tenant-github-runner-brilhante--fyxbf)
+- [Scaling GitHub Actions on AWS with ForgeMT's security and multi-tenancy](https://hackernoon.com/scaling-github-actions-on-aws-with-forgemts-security-and-multi-tenancy)
+- [No Silver Bullets: engineering a multi-tenant CI platform a small team can run](https://www.linkedin.com/pulse/silver-bullets-engineering-multi-tenant-ci-platform-small-brilhante-ofjpf/)
 
-## Contributing
-
-Contributions are welcome via issues or pull requests. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
-
-______________________________________________________________________
-
-## Acknowledgements
-
-Built on top of:
+Implementation foundations:
 
 - [terraform-aws-github-runner](https://github.com/github-aws-runners/terraform-aws-github-runner)
 - [actions-runner-controller](https://github.com/actions/actions-runner-controller)
 
-______________________________________________________________________
+## Contributing
+
+Contributions are welcome via issues or pull requests. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## License
 
-Apache 2.0 — see [LICENSE](LICENSE)
-
-______________________________________________________________________
+Apache 2.0. See [LICENSE](LICENSE).
 
 ## Contact
 

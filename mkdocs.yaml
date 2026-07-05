@@ -1,0 +1,129 @@
+---
+site_name: ForgeMT
+site_description: Enterprise multi-tenant GitHub Actions runner platform for AWS.
+site_url: https://cisco-open.github.io/forge/
+
+repo_name: cisco-open/forge
+repo_url: https://github.com/cisco-open/forge
+edit_uri: edit/main/docs/
+use_directory_urls: true
+
+theme:
+  name: material
+  icon:
+    logo: material/rocket-launch-outline
+  palette:
+    - media: '(prefers-color-scheme: dark)'
+      scheme: slate
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+    - media: '(prefers-color-scheme: light)'
+      scheme: default
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+  features:
+    - content.action.edit
+    - content.code.copy
+    - navigation.footer
+    - navigation.indexes
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.sections
+    - navigation.tracking
+    - search.highlight
+    - search.suggest
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.snippets:
+      check_paths: true
+  - pymdownx.superfences
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Motivation: motivation.md
+  - Architecture: architecture.md
+  - Getting Started:
+      - Overview: getting-started/index.md
+      - Platform Engineer Quick Start: getting-started/platform-engineer.md
+      - Prerequisites: getting-started/prerequisites.md
+      - Bootstrap: getting-started/bootstrap.md
+      - Minimal Install: getting-started/minimal-install.md
+      - Repository Layout: getting-started/repository-layout.md
+      - Deployment Order: getting-started/deployment-order.md
+      - Configure Helpers: getting-started/configure-helpers.md
+      - Configure Infra: getting-started/configure-infra.md
+      - Configure Platform: getting-started/configure-platform.md
+      - First Tenant: getting-started/first-tenant.md
+      - Configure Integrations: getting-started/configure-integrations.md
+  - Examples:
+      - Overview: examples/index.md
+  - Operations:
+      - Overview: operations/index.md
+      - Tenant Onboarding: operations/tenant-onboarding.md
+      - Move ARC Tenants: operations/move-arc-tenants.md
+      - Runner Images: operations/runner-images.md
+      - ECR and Artifacts: operations/ecr-and-artifacts.md
+      - AMI Management: operations/ami-management.md
+      - Cloud Custodian: operations/cloud-custodian.md
+      - Secrets: operations/secrets.md
+      - Upgrades: operations/upgrades.md
+      - Troubleshooting: operations/troubleshooting.md
+      - Troubleshooting Without Splunk: operations/troubleshooting-without-splunk.md
+      - Splunk Dashboard Runbook: operations/splunk-dashboard-runbook.md
+      - Splunk Dashboard Panel Reference: operations/splunk-dashboard-panel-reference.md
+      - Required Checks: operations/required-checks.md
+      - Copyable Blueprints: operations/blueprints.md
+      - Templates:
+          - Tenant Request: operations/templates/tenant-request.md
+      - Workflow Files:
+          - Overview: operations/workflows/index.md
+          - IaC Promotion and PR Plans: operations/workflows/iac-promotion.md
+          - Weekly Example Deployments: operations/workflows/example-deployments.md
+          - Scheduled Maintenance: operations/workflows/scheduled-maintenance.md
+      - Repo Blueprints:
+          - Overview: operations/repo-blueprints/index.md
+          - Adoption Sequence: operations/repo-blueprints/adoption-sequence.md
+          - Runner Base Image: operations/repo-blueprints/runner-base-image/README.md
+          - Runner Custom Image: operations/repo-blueprints/runner-custom-image/README.md
+          - Containers: operations/repo-blueprints/containers/README.md
+          - Renovate Config: operations/repo-blueprints/renovate-config/README.md
+          - Cloud Custodian: operations/repo-blueprints/cloud-custodian/README.md
+          - Forge Tenants IaC AWS: operations/repo-blueprints/forge-tenants-iac-aws/README.md
+          - Forge Infra IaC AWS: operations/repo-blueprints/forge-infra-iac-aws/README.md
+          - Forge Examples IaC AWS: operations/repo-blueprints/forge-examples-iac-aws/README.md
+          - Reusable Actions: operations/repo-blueprints/reusable-actions/README.md
+  - Integrations:
+      - Overview: integrations/index.md
+      - Splunk: integrations/splunk.md
+      - Splunk Secrets: integrations/splunk-secrets.md
+      - Teleport: integrations/teleport.md
+      - GitHub Webhook Relay: integrations/github-webhook-relay.md
+  - Tenant Usage:
+      - Overview: tenant-usage/index.md
+      - Dependency Management: tenant-usage/dependency-management.md
+      - RenovateBot:
+          - Workflow Setup: tenant-usage/renovatebot/index.md
+          - Strategy: tenant-usage/renovatebot/strategy.md
+  - Security: security.md
+  - Reference:
+      - Module Catalog: reference/module-catalog.md
+      - Module Layout: reference/module-layout.md
+      - Examples Layout: reference/examples-layout.md
+      - Release Versions: reference/release-versions.md
+      - Inputs and Secrets: reference/inputs-and-secrets.md
+      - Module Dependencies: reference/module-dependencies.md
+      - Configuration Map: configurations/index.md
+      - Deployment Details:
+          - Overview: configurations/deployments/index.md
+          - Platform: configurations/deployments/platform.md
+          - Infra: configurations/deployments/infra.md
+          - Helpers: configurations/deployments/helpers.md
+          - Integrations: configurations/deployments/integrations.md

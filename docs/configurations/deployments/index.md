@@ -1,22 +1,32 @@
-# Forge Deployment Scenarios
+# Deployment Details
 
-- [**First Tenant**](./forge_tenant.md)
-  *Minimal multi-tenant Forge deployment example. Shows how to provision Forge runners and onboard your first tenant.*
+This folder documents the four deployable example roots. Each page tells you
+which files to edit, which module category it consumes, and what to skip when
+your platform already provides that capability.
 
-- [**New Tenant Guide**](./new_tenant.md)
-  *Step-by-step checklist for adding a new tenant to an existing Forge deployment, including config files, secrets, and GitHub App setup.*
+| Deployment root                   | Use it when                                                                                             | Copy from                           | Skip when                                     |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------- | ----------------------------------- | --------------------------------------------- |
+| [Platform](./platform.md)         | You need the Forge runner runtime for tenants.                                                          | `examples/deployments/platform`     | Never, if you want Forge-managed runners.     |
+| [Infra / EKS](./infra.md)         | You need ARC/Kubernetes runner scale sets and Forge owns EKS.                                           | `examples/deployments/infra`        | You run EC2-only runners or use existing EKS. |
+| [Helpers](./helpers.md)           | Forge owns AMI sharing, ECR, buckets, region opt-in, service-linked roles, or cleanup jobs.             | `examples/deployments/helpers`      | Your platform already owns those resources.   |
+| [Integrations](./integrations.md) | You need Splunk, Teleport, webhook relay destinations, OTel, OpenCost, or another external integration. | `examples/deployments/integrations` | You only need core runner capacity.           |
 
-- [**Tenant Migration Guide**](./tenant_migration.md)
-  *Detailed instructions and automation for migrating a tenant safely between EKS clusters using ForgeMT and ARC.*
+Recommended first path:
 
-- [**Forge EKS**](./forge_eks.md)
-  *Deploys an EKS cluster with Calico and Karpenter, suitable for running Forge ARC runners and other workloads.*
+```bash
+cd examples/deployments/platform/terragrunt/environments/prod/regions/eu-west-1/vpcs/main/tenants/acme
+terragrunt plan
+terragrunt apply
+```
 
-- [**Forge Integrations**](./forge_integrations.md)
-  *Example for deploying Forge with Splunk, Observability, and other integrations. Includes required modules and configuration tips.*
+After that works, add the next smallest scenario: EKS for ARC, a helper module,
+or one integration.
 
-- [**Splunk Deployment**](./splunk_deployment.md)
-  *Complete example for deploying Splunk integrations, including secrets, data manager, and observability modules.*
+## Related Runbooks
 
-- [**Extras Deployments**](./forge_extras.md)
-  *Deploys supporting infrastructure such as Cloud Custodian, CloudFormation permissions, ECR repositories, Forge subscription, and S3 storage.*
+| Task                              | Go to                                                      |
+| --------------------------------- | ---------------------------------------------------------- |
+| Add a tenant                      | [Tenant Onboarding](../../operations/tenant-onboarding.md) |
+| Move ARC tenants between clusters | [Move ARC Tenants](../../operations/move-arc-tenants.md)   |
+| Build or update runner images     | [Runner Images](../../operations/runner-images.md)         |
+| Configure Splunk                  | [Splunk Integration](../../integrations/splunk.md)         |

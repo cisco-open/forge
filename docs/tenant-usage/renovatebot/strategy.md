@@ -1,141 +1,158 @@
-# **Renovate Configuration: Centralized vs. Per-Repository**
+# Renovate Strategy
 
-<!-- toc -->
-
-- [Centralized Configuration](#centralized-configuration)
-  - [Example: Centralized Configuration](#example-centralized-configuration)
-  - [Benefits of Centralized Configuration](#benefits-of-centralized-configuration)
-  - [Limitations of Centralized Configuration](#limitations-of-centralized-configuration)
-- [Per-Repository Configuration](#per-repository-configuration)
-  - [Example: Per-Repository Configuration](#example-per-repository-configuration)
-  - [Benefits of Per-Repository Configuration](#benefits-of-per-repository-configuration)
-  - [Limitations of Per-Repository Configuration](#limitations-of-per-repository-configuration)
-- [Trade-offs: Centralized vs. Per-Repository Configuration](#trade-offs-centralized-vs-per-repository-configuration)
-- [When to Use Centralized Configuration](#when-to-use-centralized-configuration)
-- [When to Use Per-Repository Configuration](#when-to-use-per-repository-configuration)
-- [Conclusion](#conclusion)
-
-<!-- tocstop -->
-
-This document compares two approaches for configuring Renovate: **centralized configuration** and **per-repository configuration**. Both approaches have distinct advantages and drawbacks, and the best choice depends on your team's needs and the structure of your repositories.
+Renovate can run with a repo-local config, a central shared config, or both. Use
+the smallest model that keeps ownership clear.
 
 ______________________________________________________________________
 
-## Centralized Configuration
+## Pick a Model
 
-Centralized configuration allows you to define Renovate settings in one place, which applies across multiple repositories. This method is ideal for teams that need consistent behavior across repositories, reducing the need for repeated configuration and simplifying maintenance.
+| Model                 | Use when                                                             | Avoid when                                      |
+| --------------------- | -------------------------------------------------------------------- | ----------------------------------------------- |
+| Repo-local config     | One repository owns its own dependency rules.                        | Many repos need the same rules.                 |
+| Central shared config | A platform team owns common schedules, grouping, labels, and policy. | Repos have very different structures.           |
+| Central runner repo   | One Renovate workflow manages many repositories.                     | Repo owners need isolated tokens and schedules. |
+| Per-repo runner       | Each repo owns its own Renovate workflow and token.                  | You need one operational view of all updates.   |
 
-### Example: Centralized Configuration
+Most teams should start repo-local. Move common rules into a central preset
+after the same config has been copied a few times.
+
+______________________________________________________________________
+
+## Repo-Local Config
+
+Create `renovate.json` in the repository:
 
 ```json
 {
-    "packageRules": [
-        {
-            "matchDatasources": [
-                "terraform-provider"
-            ],
-            "registryUrls": [
-                "https://registry.opentofu.org"
-            ],
-            "postUpgradeTasks": {
-                "commands": [
-                    "./scripts/update-terraform-docs.sh"
-                ],
-                "fileFilters": [
-                    "modules/**/*"
-                ],
-                "executionMode": "update"
-            }
-        }
-    ]
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "dependencyDashboard": true,
+  "labels": [
+    "dependencies"
+  ],
+  "packageRules": [
+    {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "groupName": "github actions"
+    }
+  ]
 }
 ```
 
-### Benefits of Centralized Configuration
-
-- **Single Source of Truth**: A single configuration file governs Renovate’s behavior across all repositories.
-- **Simplified Maintenance**: Changes to scripts, file filters, or other settings need to be made only once.
-- **Consistency**: Ensures uniform behavior across repositories, particularly when shared scripts or tasks are involved.
-- **Scalability**: Ideal for organizations managing a large number of repositories with similar requirements.
-
-### Limitations of Centralized Configuration
-
-- **Limited Flexibility**: All repositories must adhere to the same configuration, which makes it difficult to apply repository-specific tasks or structures.
-- **Assumes Similar Structure**: The configuration assumes that all repositories follow a similar structure (e.g., `modules/**/*`), which might not always be the case.
+Use repo-local config for paths, test commands, reviewers, labels, and custom
+managers that only make sense for that repo.
 
 ______________________________________________________________________
 
-## Per-Repository Configuration
+## Central Shared Config
 
-Per-repository configuration allows each repository to have its own `renovate.json` file with custom settings. This approach is beneficial when individual repositories require unique tasks, scripts, or behaviors that can't be generalized.
-
-### Example: Per-Repository Configuration
+Create a central repository such as `your-org/renovate-config` with
+`default.json`:
 
 ```json
 {
-    "packageRules": [
-        {
-            "matchDatasources": [
-                "terraform-provider"
-            ],
-            "registryUrls": [
-                "https://registry.opentofu.org"
-            ],
-            "postUpgradeTasks": {
-                "commands": [
-                    "./scripts/update-terraform-docs.sh"
-                ],
-                "fileFilters": [
-                    "modules/**/*"
-                ],
-                "executionMode": "update"
-            }
-        }
-    ]
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    ":rebaseStalePrs"
+  ],
+  "dependencyDashboard": true,
+  "labels": [
+    "dependencies"
+  ],
+  "prHourlyLimit": 2,
+  "schedule": [
+    "before 5am on monday"
+  ]
 }
 ```
 
-### Benefits of Per-Repository Configuration
+Then each managed repo can extend it:
 
-- **Complete Flexibility**: Allows repository-specific settings, such as custom post-upgrade tasks or different file filters.
-- **Tailored for Unique Repositories**: Ideal for repositories that require distinct workflows, dependencies, or tasks that differ from the rest.
+```json
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "github>your-org/renovate-config"
+  ],
+  "reviewers": [
+    "team:platform-reviewers"
+  ]
+}
+```
 
-### Limitations of Per-Repository Configuration
-
-- **Duplication**: Similar configuration settings may need to be repeated across multiple repositories, leading to inconsistency or errors if updates are missed.
-- **Higher Maintenance Overhead**: Each repository’s configuration file must be maintained separately, which can become cumbersome with a large number of repositories.
-- **Inconsistent Behavior**: If different teams handle configurations independently, this can lead to inconsistent behavior across repositories.
-
-______________________________________________________________________
-
-## Trade-offs: Centralized vs. Per-Repository Configuration
-
-| Aspect          | Centralized Configuration                                   | Per-Repository Configuration                                           |
-| --------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------- |
-| **Maintenance** | Easier to maintain due to a single configuration.           | Requires maintaining separate files for each repository.               |
-| **Flexibility** | Less flexible, as all repositories share the same behavior. | Highly flexible, allowing for tailored behavior per repository.        |
-| **Consistency** | Ensures consistent behavior across repositories.            | Potential for inconsistencies across repositories.                     |
-| **Scalability** | Scales well for repositories with similar requirements.     | More difficult to scale due to the need for individual configurations. |
+Keep secrets out of the central config. Tokens, registry credentials, and AWS
+roles belong in the workflow runtime.
 
 ______________________________________________________________________
 
-## When to Use Centralized Configuration
+## Central Runner Repo
 
-- When your repositories have a **consistent structure** and require the same Renovate behavior across all of them.
-- When you want to reduce **redundancy** and maintain a single configuration file for easier updates.
-- If your team prefers **simplicity** and a unified approach.
+Use a central runner repo when one team operates Renovate for many repos.
 
-## When to Use Per-Repository Configuration
+`renovate.json` in the runner repo:
 
-- When different repositories require **customized settings**, workflows, or post-upgrade tasks.
-- When you need **greater flexibility** to handle repositories with varying structures, dependencies, or requirements.
-- If your repositories have a lot of **unique tasks** that cannot be generalized.
+```json
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "github>your-org/renovate-config"
+  ],
+  "repositories": [
+    "your-org/service-a",
+    "your-org/service-b",
+    "your-org/iac-live"
+  ]
+}
+```
+
+Central runner repos are useful when:
+
+- one bot identity owns dependency PRs;
+- private registry or AWS lookup setup is shared;
+- support teams need one log artifact and one schedule;
+- repo owners still review and merge their own PRs.
 
 ______________________________________________________________________
 
-## Conclusion
+## What Belongs Where
 
-- **Centralized Configuration** is ideal for teams that prioritize **consistency** and **ease of maintenance** across a large set of repositories with similar needs.
-- **Per-Repository Configuration** is essential for teams that require **customization** and **flexibility** in handling specific repository tasks but comes with higher maintenance and potential inconsistencies.
+| Setting type                 | Central config      | Repo-local config | Workflow runtime |
+| ---------------------------- | ------------------- | ----------------- | ---------------- |
+| Default schedules            | Yes                 | Override only     | No               |
+| Labels and semantic commits  | Yes                 | Override only     | No               |
+| Repository list              | Central runner only | No                | No               |
+| Reviewers                    | Usually no          | Yes               | No               |
+| Path-specific regex managers | Usually no          | Yes               | No               |
+| Post-upgrade commands        | Usually no          | Yes               | No               |
+| GitHub token                 | No                  | No                | Yes              |
+| AWS role and region          | No                  | No                | Yes              |
+| Private registry credentials | No                  | No                | Yes              |
 
-Carefully consider the structure of your repositories and your team's workflows to decide which configuration approach aligns best with your needs.
+______________________________________________________________________
+
+## Rollout Sequence
+
+1. Enable Renovate for one repo manually with `workflow_dispatch`.
+1. Check the log artifact and the first PRs.
+1. Add grouping and schedules.
+1. Add private registry or AWS access only when a dependency needs it.
+1. Move repeated rules into a central preset.
+1. Add more repositories to the central runner only after the first repo is
+   quiet and predictable.
+
+______________________________________________________________________
+
+## Review Rules
+
+- Major upgrades should get explicit owner review.
+- IaC dependency updates should include a plan or policy check.
+- Runner image or Docker changes should include a smoke test.
+- Post-upgrade commands should be narrow and reviewed like code.
+- Keep automerge off until the repository has reliable tests and rollback.
