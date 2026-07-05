@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.13.0](https://github.com/cisco-open/forge/compare/v3.12.0...v3.13.0) (2026-07-05)
+
+
+### Features
+
+* **runner-logs:** enrich splunk fields from metadata sidecar ([#410](https://github.com/cisco-open/forge/issues/410)) ([946c603](https://github.com/cisco-open/forge/commit/946c603ca11cbcf1cc105f66e45cfbf741be917d))
+* **splunk:** add EC2 scale-up failure dashboards ([#408](https://github.com/cisco-open/forge/issues/408)) ([3176c90](https://github.com/cisco-open/forge/commit/3176c90de1ab59dc5c06645cb334ea9d4760299b))
+
+
+### Bug Fixes
+
+* **ci:** remediate zizmor alerts ([#392](https://github.com/cisco-open/forge/issues/392)) ([953403a](https://github.com/cisco-open/forge/commit/953403adec549b8b9632bb2227a7d92fb5896ea7))
+
 ## [3.12.0](https://github.com/cisco-open/forge/compare/v3.11.0...v3.12.0) (2026-07-03)
 
 
