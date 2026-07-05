@@ -6,7 +6,7 @@
 # which the real-handler exec test needs.
 services:
   ministack:
-    image: ${MINISTACK_IMAGE:-ministackorg/ministack:1.3.69-full}
+    image: ${MINISTACK_IMAGE:-ministackorg/ministack:1.3.70-full}
     container_name: forge-ministack
     ports:
       - 127.0.0.1:4566:4566
