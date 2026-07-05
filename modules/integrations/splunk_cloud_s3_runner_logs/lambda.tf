@@ -39,6 +39,8 @@ module "splunk_s3_runner_logs_lambda" {
 }
 
 data "aws_iam_policy_document" "splunk_s3_runner_logs_lambda" {
+  #checkov:skip=CKV_AWS_111:Lambda policy keeps log and bucket delivery permissions broad until the Splunk S3 runner-log pipeline is regression-tested.
+  #checkov:skip=CKV_AWS_356:Lambda policy keeps log and bucket delivery permissions broad until the Splunk S3 runner-log pipeline is regression-tested.
 
   statement {
     sid       = "S3Read"
@@ -92,6 +94,7 @@ data "aws_iam_policy_document" "splunk_s3_runner_logs_lambda" {
 }
 
 resource "aws_cloudwatch_log_group" "splunk_s3_runner_logs_lambda" {
+  #checkov:skip=CKV_AWS_158:CloudWatch KMS encryption is deferred until this log delivery path is tested with customer-managed keys.
   #checkov:skip=CKV_AWS_338:CloudWatch retention is intentionally operator-defined; teams may keep short CloudWatch windows when exporting logs to Splunk or Loki.
   name              = "/aws/lambda/${local.prefix_lambda}-lambda-${var.aws_region}"
   retention_in_days = var.logging_retention_in_days

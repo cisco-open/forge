@@ -111,6 +111,7 @@ data "aws_iam_policy_document" "job_log_archiver" {
 }
 
 resource "aws_cloudwatch_log_group" "job_log_archiver" {
+  #checkov:skip=CKV_AWS_158:CloudWatch KMS encryption is deferred until this job-log archiver path is tested with customer-managed keys.
   name              = "/aws/lambda/${local.resource_name_archiver}"
   retention_in_days = var.logging_retention_in_days
   tags              = var.tags

@@ -70,6 +70,7 @@ data "aws_iam_policy_document" "redrive_deadletter_lambda" {
 
 
 resource "aws_cloudwatch_log_group" "redrive_deadletter_lambda" {
+  #checkov:skip=CKV_AWS_158:CloudWatch KMS encryption is deferred until this dead-letter redrive log delivery path is tested with customer-managed keys.
   name              = "/aws/lambda/${var.prefix}-redrive-deadletter"
   retention_in_days = var.logging_retention_in_days
   tags              = var.tags

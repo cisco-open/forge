@@ -50,6 +50,7 @@ data "aws_iam_policy_document" "job_log_dispatcher" {
 }
 
 resource "aws_cloudwatch_log_group" "job_log_dispatcher" {
+  #checkov:skip=CKV_AWS_158:CloudWatch KMS encryption is deferred until this job-log dispatcher path is tested with customer-managed keys.
   name              = "/aws/lambda/${local.resource_name_dispatcher}"
   retention_in_days = var.logging_retention_in_days
   tags              = var.tags

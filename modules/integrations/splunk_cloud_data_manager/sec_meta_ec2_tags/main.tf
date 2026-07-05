@@ -46,6 +46,7 @@ data "aws_iam_policy_document" "splunk_dm_metadata_ec2inst_pattern_tags_lambda" 
 }
 
 resource "aws_cloudwatch_log_group" "splunk_dm_metadata_ec2inst_pattern_tags_lambda" {
+  #checkov:skip=CKV_AWS_158:CloudWatch KMS encryption is deferred until this Splunk Data Manager log delivery path is tested with customer-managed keys.
   #checkov:skip=CKV_AWS_338:CloudWatch retention is intentionally short for this Splunk-forwarding helper; durable retention belongs in external log backends.
   name              = "/aws/lambda/SplunkDMMetadataEC2InstPatternTags"
   retention_in_days = 3

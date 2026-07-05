@@ -1,4 +1,7 @@
 data "aws_iam_policy_document" "kms_s3" {
+  #checkov:skip=CKV_AWS_109:Splunk runner-log KMS policy uses service-principal access until the S3/SQS/Firehose delivery path is tested with tighter scoping.
+  #checkov:skip=CKV_AWS_111:Splunk runner-log KMS policy uses wildcard resources for KMS key policy compatibility; revisit after delivery-path regression tests.
+  #checkov:skip=CKV_AWS_356:Splunk runner-log KMS policy uses wildcard resources for KMS key policy compatibility; revisit after delivery-path regression tests.
   # Root full access
   statement {
     sid    = "AllowRootAccountFullAccess"

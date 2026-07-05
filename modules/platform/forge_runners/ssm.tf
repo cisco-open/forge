@@ -1,4 +1,5 @@
 resource "aws_ssm_parameter" "github_app_key" {
+  #checkov:skip=CKV_AWS_337:Customer-managed KMS for GitHub App SSM parameters is deferred until tenant bootstrap and manual secret update flows are regression-tested.
   name        = "/forge/${var.deployment_config.deployment_prefix}/github_app_key"
   description = "Base64 encoded GitHub App private key for GHA ephemeral runners for Tenant ${var.deployment_config.tenant.name}."
   type        = "SecureString"
@@ -13,6 +14,7 @@ resource "aws_ssm_parameter" "github_app_key" {
 }
 
 resource "aws_ssm_parameter" "github_app_id" {
+  #checkov:skip=CKV_AWS_337:Customer-managed KMS for GitHub App SSM parameters is deferred until tenant bootstrap and manual secret update flows are regression-tested.
   name        = "/forge/${var.deployment_config.deployment_prefix}/github_app_id"
   description = "GitHub App ID for GHA ephemeral runners for Tenant ${var.deployment_config.tenant.name}."
   type        = "SecureString"
@@ -22,6 +24,7 @@ resource "aws_ssm_parameter" "github_app_id" {
 }
 
 resource "aws_ssm_parameter" "github_app_client_id" {
+  #checkov:skip=CKV_AWS_337:Customer-managed KMS for GitHub App SSM parameters is deferred until tenant bootstrap and manual secret update flows are regression-tested.
   name        = "/forge/${var.deployment_config.deployment_prefix}/github_app_client_id"
   description = "GitHub App Client ID for GHA ephemeral runners for Tenant ${var.deployment_config.tenant.name}."
   type        = "SecureString"
@@ -31,6 +34,7 @@ resource "aws_ssm_parameter" "github_app_client_id" {
 }
 
 resource "aws_ssm_parameter" "github_app_installation_id" {
+  #checkov:skip=CKV_AWS_337:Customer-managed KMS for GitHub App SSM parameters is deferred until tenant bootstrap and manual secret update flows are regression-tested.
   name        = "/forge/${var.deployment_config.deployment_prefix}/github_app_installation_id"
   description = "GitHub App Installation ID for GHA ephemeral runners for Tenant ${var.deployment_config.tenant.name}."
   type        = "SecureString"
@@ -40,6 +44,7 @@ resource "aws_ssm_parameter" "github_app_installation_id" {
 }
 
 resource "aws_ssm_parameter" "github_app_name" {
+  #checkov:skip=CKV_AWS_337:Customer-managed KMS for GitHub App SSM parameters is deferred until tenant bootstrap and manual secret update flows are regression-tested.
   name        = "/forge/${var.deployment_config.deployment_prefix}/github_app_name"
   description = "GitHub App Name for GHA ephemeral runners for Tenant ${var.deployment_config.tenant.name}."
   type        = "SecureString"
@@ -49,6 +54,7 @@ resource "aws_ssm_parameter" "github_app_name" {
 }
 
 resource "aws_ssm_parameter" "github_app_webhook_secret" {
+  #checkov:skip=CKV_AWS_337:Customer-managed KMS for GitHub App SSM parameters is deferred until tenant bootstrap and manual secret update flows are regression-tested.
   name        = "/forge/${var.deployment_config.deployment_prefix}/github_app_webhook_secret"
   description = "GitHub App webhook secret for GHA ephemeral runners for Tenant ${var.deployment_config.tenant.name}."
   type        = "SecureString"

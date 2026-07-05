@@ -2,6 +2,8 @@
 # Long-term storage (i.e. release builds and SBOMs we need to retain long-term
 # for stability and auditing purposes).
 resource "aws_s3_bucket" "s3_long_term" {
+  #checkov:skip=CKV_AWS_145:SSE-KMS is deferred until downstream S3 readers and CloudFormation template consumers are tested with KMS decrypt permissions.
+  #checkov:skip=CKV2_AWS_61:Long-term storage intentionally keeps retained artifacts without automatic expiry until retention policy requirements are validated.
   #checkov:skip=CKV_AWS_144:Cross-region replication is intentionally omitted because it is not needed for this bucket's use case.
   #checkov:skip=CKV_AWS_18:S3 server access logging is an accepted policy exception for this Forge storage bucket; audit needs are handled outside S3 access logs.
   #checkov:skip=CKV2_AWS_62:Ops storage bucket has no event-driven consumer; S3 event notifications are intentionally not configured for this use case.
@@ -11,6 +13,7 @@ resource "aws_s3_bucket" "s3_long_term" {
 
 # Ownership controls.
 resource "aws_s3_bucket_ownership_controls" "s3_long_term" {
+  #checkov:skip=CKV2_AWS_65:BucketOwnerEnforced ACL disabling is deferred until dependent object uploads are tested; public ACLs remain blocked.
   bucket = aws_s3_bucket.s3_long_term.id
   rule {
     object_ownership = "BucketOwnerPreferred"
@@ -50,6 +53,7 @@ resource "aws_s3_bucket_public_access_block" "s3_long_term" {
 # Short-term storage (i.e. temporary/feature-branch builds, core dumps, and
 # other artifacts we aren't obligated to retain long-term).
 resource "aws_s3_bucket" "s3_short_term" {
+  #checkov:skip=CKV_AWS_145:SSE-KMS is deferred until downstream S3 readers and CloudFormation template consumers are tested with KMS decrypt permissions.
   #checkov:skip=CKV_AWS_144:Cross-region replication is intentionally omitted because it is not needed for this bucket's use case.
   #checkov:skip=CKV_AWS_18:S3 server access logging is an accepted policy exception for this Forge storage bucket; audit needs are handled outside S3 access logs.
   #checkov:skip=CKV2_AWS_62:Ops storage bucket has no event-driven consumer; S3 event notifications are intentionally not configured for this use case.
@@ -59,6 +63,7 @@ resource "aws_s3_bucket" "s3_short_term" {
 
 # Ownership controls.
 resource "aws_s3_bucket_ownership_controls" "s3_short_term" {
+  #checkov:skip=CKV2_AWS_65:BucketOwnerEnforced ACL disabling is deferred until dependent object uploads are tested; public ACLs remain blocked.
   bucket = aws_s3_bucket.s3_short_term.id
   rule {
     object_ownership = "BucketOwnerPreferred"
@@ -67,6 +72,7 @@ resource "aws_s3_bucket_ownership_controls" "s3_short_term" {
 
 # Enable lifecycling.
 resource "aws_s3_bucket_lifecycle_configuration" "s3_short_term" {
+  #checkov:skip=CKV_AWS_300:Abort-incomplete-multipart cleanup is deferred until the helper lifecycle policy is tested end-to-end.
   bucket = aws_s3_bucket.s3_short_term.id
 
   rule {

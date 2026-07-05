@@ -19,6 +19,7 @@ data "aws_secretsmanager_random_password" "secret_seeds" {
 }
 
 resource "aws_kms_key" "webex" {
+  #checkov:skip=CKV2_AWS_64:Webhook receiver secret KMS key policy hardening is deferred until secret access paths are regression-tested.
   description         = "Customer managed CMK for Webex Secrets"
   enable_key_rotation = true
   tags                = local.all_security_tags

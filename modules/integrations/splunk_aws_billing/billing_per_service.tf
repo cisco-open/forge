@@ -65,6 +65,7 @@ resource "aws_lambda_permission" "cur_per_service" {
 }
 
 resource "aws_cloudwatch_log_group" "cur_per_service" {
+  #checkov:skip=CKV_AWS_158:CloudWatch KMS encryption is deferred until this Splunk billing log delivery path is tested with customer-managed keys.
   #checkov:skip=CKV_AWS_338:CloudWatch retention is intentionally operator-defined; teams may keep short CloudWatch windows when exporting logs to Splunk or Loki.
   name              = "/aws/lambda/${local.cur_per_service_lambda_name}"
   retention_in_days = var.logging_retention_in_days

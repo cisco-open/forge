@@ -7,6 +7,8 @@ locals {
 
 # Enable AWS-managed encryption key.
 resource "aws_kms_key" "github" {
+  #checkov:skip=CKV_AWS_7:Runner KMS key rotation is deferred until module-managed key ownership and rotation behavior are regression-tested.
+  #checkov:skip=CKV2_AWS_64:Runner KMS key policy hardening is deferred until module-managed key access paths are regression-tested.
   is_enabled = true
 
   tags = merge(

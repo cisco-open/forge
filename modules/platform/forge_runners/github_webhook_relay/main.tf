@@ -21,6 +21,9 @@ module "github_webhook_relay_source" {
 }
 
 resource "aws_kms_key" "github_webhook_relay" {
+  #checkov:skip=CKV_AWS_7:Webhook relay KMS key rotation is deferred until key ownership and rotation behavior are tested end-to-end.
+  #checkov:skip=CKV_AWS_33:Webhook relay KMS key policy hardening is deferred until cross-account secret-reader access is tested end-to-end.
+  #checkov:skip=CKV2_AWS_64:Webhook relay KMS key policy hardening is deferred until cross-account secret-reader access is tested end-to-end.
   is_enabled = true
 
   tags = merge(

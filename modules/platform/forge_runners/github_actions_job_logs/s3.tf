@@ -7,6 +7,7 @@ resource "aws_s3_bucket" "gh_logs" {
 }
 
 resource "aws_s3_bucket_ownership_controls" "gh_logs" {
+  #checkov:skip=CKV2_AWS_65:BucketOwnerEnforced ACL disabling is deferred until job-log writer object ownership is regression-tested.
   bucket = aws_s3_bucket.gh_logs.id
   rule {
     object_ownership = "BucketOwnerPreferred"

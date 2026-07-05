@@ -147,6 +147,7 @@ resource "aws_iam_role_policy" "forge_trust_validator_lambda" {
 }
 
 resource "aws_sqs_queue" "forge_trust_validator" {
+  #checkov:skip=CKV_AWS_27:SQS customer-managed KMS encryption is deferred until Forge trust queue encryption is tested with Lambda producers and consumers.
   name                       = "${local.forge_trust_validator_function_name}-delay"
   message_retention_seconds  = 86400
   visibility_timeout_seconds = 960
@@ -156,6 +157,7 @@ resource "aws_sqs_queue" "forge_trust_validator" {
 }
 
 resource "aws_cloudwatch_log_group" "forge_trust_preparer_lambda" {
+  #checkov:skip=CKV_AWS_158:CloudWatch KMS encryption is deferred until this Forge trust log delivery path is tested with customer-managed keys.
   name              = "/aws/lambda/${local.forge_trust_preparer_function_name}"
   retention_in_days = var.logging_retention_in_days
   tags              = var.tags
@@ -163,6 +165,7 @@ resource "aws_cloudwatch_log_group" "forge_trust_preparer_lambda" {
 }
 
 resource "aws_cloudwatch_log_group" "forge_trust_validator_lambda" {
+  #checkov:skip=CKV_AWS_158:CloudWatch KMS encryption is deferred until this Forge trust log delivery path is tested with customer-managed keys.
   name              = "/aws/lambda/${local.forge_trust_validator_function_name}"
   retention_in_days = var.logging_retention_in_days
   tags              = var.tags

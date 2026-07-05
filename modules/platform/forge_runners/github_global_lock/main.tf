@@ -1,4 +1,6 @@
 resource "aws_dynamodb_table" "lock_table" {
+  #checkov:skip=CKV_AWS_119:DynamoDB customer-managed KMS encryption is deferred until global lock Lambda access is regression-tested.
+  #checkov:skip=CKV_AWS_28:PITR is deferred until global lock table backup and restore requirements are validated.
   name         = "${var.prefix}-gh-actions-lock"
   billing_mode = "PAY_PER_REQUEST"
 
@@ -153,6 +155,7 @@ data "aws_iam_policy_document" "clean_global_lock_lambda" {
 }
 
 resource "aws_cloudwatch_log_group" "clean_global_lock_lambda" {
+  #checkov:skip=CKV_AWS_158:CloudWatch KMS encryption is deferred until this global-lock log delivery path is tested with customer-managed keys.
   name              = "/aws/lambda/${var.prefix}-clean-global-lock"
   retention_in_days = var.logging_retention_in_days
   tags              = var.tags

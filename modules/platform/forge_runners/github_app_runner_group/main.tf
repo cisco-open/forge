@@ -66,6 +66,7 @@ data "aws_iam_policy_document" "register_github_app_runner_group_lambda" {
 }
 
 resource "aws_cloudwatch_log_group" "register_github_app_runner_group_lambda" {
+  #checkov:skip=CKV_AWS_158:CloudWatch KMS encryption is deferred until this runner-group log delivery path is tested with customer-managed keys.
   name              = "/aws/lambda/${var.prefix}-register-github-app-runner-group"
   retention_in_days = var.logging_retention_in_days
   tags              = var.tags

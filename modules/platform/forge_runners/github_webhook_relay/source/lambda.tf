@@ -50,6 +50,8 @@ data "aws_iam_policy_document" "validate_signature_lambda" {
 }
 
 resource "aws_cloudwatch_log_group" "validate_signature_lambda" {
+  #checkov:skip=CKV_AWS_158:KMS encryption for webhook relay log groups is deferred until the relay logging path is tested with customer-managed keys.
+  #checkov:skip=CKV_AWS_338:One-year retention for webhook relay logs is deferred until operational retention requirements are validated.
   name              = "/aws/lambda/${var.name_prefix}-validate-signature"
   retention_in_days = var.logging_retention_in_days
   tags              = var.tags

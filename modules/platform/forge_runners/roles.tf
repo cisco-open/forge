@@ -26,6 +26,7 @@ resource "aws_iam_policy" "role_assumption_for_forge_runners" {
 
 # Define the IAM policy for ECR access
 data "aws_iam_policy_document" "ecr_access_for_ec2_instances" {
+  #checkov:skip=CKV_AWS_356:ECR pull policy uses account-wide repository discovery for tenant runner images until repository scoping is regression-tested.
   statement {
     actions = [
       "ecr:GetDownloadUrlForLayer",

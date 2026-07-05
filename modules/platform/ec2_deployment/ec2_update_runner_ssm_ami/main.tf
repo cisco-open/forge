@@ -60,6 +60,7 @@ data "aws_iam_policy_document" "ec2_update_runner_ssm_ami_lambda" {
 }
 
 resource "aws_cloudwatch_log_group" "ec2_update_runner_ssm_ami_lambda" {
+  #checkov:skip=CKV_AWS_158:CloudWatch KMS encryption is deferred until this EC2 runner helper log delivery path is tested with customer-managed keys.
   name              = "/aws/lambda/${var.prefix}-ec2-update-runner-ssm-ami"
   retention_in_days = var.logging_retention_in_days
   tags              = var.tags

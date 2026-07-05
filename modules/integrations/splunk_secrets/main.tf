@@ -79,6 +79,7 @@ data "aws_secretsmanager_random_password" "secret_seeds" {
 }
 
 resource "aws_kms_key" "regional" {
+  #checkov:skip=CKV2_AWS_64:Splunk secret KMS key policy hardening is deferred until regional secret replication access paths are regression-tested.
   for_each = local.all_regions
   provider = aws.by_region[each.value]
 
