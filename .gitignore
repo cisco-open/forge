@@ -41,6 +41,7 @@ coverage.xml
 pytest-results.xml
 .venv/
 .python-version
+site/
 
 # Local-only improvement kit (not for the public repo)
 CLAUDE.md
