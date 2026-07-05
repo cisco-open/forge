@@ -4,4 +4,4 @@ product_name: forgeMT
 project_name: forgemt
 aws_account_prefix: forge
 git_org: forgemt
-group_email: forgemt@cisco.com
+group_email: platform-engineering@example.com

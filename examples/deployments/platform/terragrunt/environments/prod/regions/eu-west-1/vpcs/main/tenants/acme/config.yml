@@ -1,7 +1,7 @@
 ---
 gh_config:
   ghes_url: ''
-  ghes_org: cisco-open
+  ghes_org: example-org
   repository_selection: selected
   github_webhook_relay:
     enabled: false
@@ -122,5 +122,5 @@ arc_runner_specs:
     container_limits_memory: 2Gi
     volume_requests_storage_type: gp3
     volume_requests_storage_size: 10Gi
-arc_cluster_name: forge-euw1-prod-green
+arc_cluster_name: forge-euw1-prod
 migrate_arc_cluster: false

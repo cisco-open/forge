@@ -1,6 +1,0 @@
----
-collections:
-  - name: amazon.aws
-    version: 9.4.0
-  - name: signalfx.splunk_otel_collector
-    version: 0.31.0

@@ -1,5 +1,5 @@
 ---
-vpc_alias: <VPC_ALIAS>                    # e.g., "sl"
+vpc_alias: <VPC_ALIAS>                    # e.g., "main"
 lambda_subnet_ids:
   - <LAMBDA_SUBNET_ID_1>                  # e.g., "subnet-0abc1234def567890"
   - <LAMBDA_SUBNET_ID_2>

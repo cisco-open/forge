@@ -2,5 +2,5 @@
 tenants:
   - acme
 teleport_config:
-  cluster_name: forge-euw1-dev
+  cluster_name: forge-euw1-prod
   teleport_iam_role_to_assume: arn:aws:iam::123456789012:role/teleport-access

@@ -1,5 +1,5 @@
 ---
-cluster_name: <CLUSTER_NAME>                  # e.g., "forge-euw1-dev"
+cluster_name: <CLUSTER_NAME>                  # e.g., "forge-euw1-prod"
 cluster_version: <CLUSTER_VERSION>            # e.g., "1.31"
 cluster_size:
   instance_type: <INSTANCE_TYPE>              # e.g., "m5.large"

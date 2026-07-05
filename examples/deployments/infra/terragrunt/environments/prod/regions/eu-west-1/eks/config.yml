@@ -1,5 +1,5 @@
 ---
-cluster_name: forge-euw1-dev
+cluster_name: forge-euw1-prod
 cluster_version: '1.31'
 cluster_size:
   instance_type: m5.large
