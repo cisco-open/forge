@@ -17,15 +17,14 @@ on:
 
 permissions: {}
 
-concurrency:
-  group: ${{ github.workflow }}-${{ matrix.sanitizer }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   build:
     name: Build Python fuzzers (${{ matrix.sanitizer }})
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    concurrency:
+      group: ${{ github.workflow }}-${{ matrix.sanitizer }}-${{ github.ref }}
+      cancel-in-progress: true
     permissions:
       contents: read
     strategy:
