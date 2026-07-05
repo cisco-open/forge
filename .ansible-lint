@@ -3,4 +3,5 @@ exclude_paths:
   - .cache/
   - .github/
   - .terraform/
+  - docs/operations/repo-blueprints/
   - skills/

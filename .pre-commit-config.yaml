@@ -101,7 +101,7 @@ repos:
         name: YAML · Formatter
         always_run: true
         args: [--mapping, '2', --sequence, '4', --offset, '2', --width, '180']
-        exclude: (build/ansible/)
+        exclude: (build/ansible/|docs/operations/repo-blueprints/)
 
   - repo: https://github.com/adrienverge/yamllint
     rev: cba56bcde1fdd01c1deb3f945e69764c291a6530  # v1.38.0
@@ -139,6 +139,7 @@ repos:
     hooks:
       - id: hadolint
         name: Docker · Linter
+        exclude: (docs/operations/repo-blueprints/)
 
   # ---------------------
   # Makefile Hooks
@@ -148,6 +149,7 @@ repos:
     hooks:
       - id: checkmake
         name: Makefile · Lint Makefile
+        exclude: (docs/operations/repo-blueprints/)
 
   # ---------------------
   # Python Hooks
@@ -228,6 +230,7 @@ repos:
       - id: packer-validate
         name: Terraform/IaC · Packer validate
         always_run: true
+        exclude: (docs/operations/repo-blueprints/)
 
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: 05fd71a57a467ccf5598f7e836d3af4cf9225abb  # v1.108.0
@@ -272,6 +275,7 @@ repos:
         name: Ansible · Linter
         always_run: true
         language_version: python3.12
+        exclude: (docs/operations/repo-blueprints/)
 
   # ---------------------
   # Markdown Hooks
