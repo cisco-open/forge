@@ -9,7 +9,8 @@ on:
       - .github/workflows/docs-pages.yml
       - docs/**
       - mkdocs.yaml
-      - requirements-docs.txt
+      - pyproject.toml
+      - uv.lock
   push:
     branches:
       - main
@@ -17,7 +18,8 @@ on:
       - .github/workflows/docs-pages.yml
       - docs/**
       - mkdocs.yaml
-      - requirements-docs.txt
+      - pyproject.toml
+      - uv.lock
       - README.md
   workflow_dispatch:
 
@@ -48,21 +50,15 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
-          python-version: 3.x
+          python-version: '3.12'
 
-      - name: Cache pip packages
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      - name: Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
-          path: ~/.cache/pip
-          key: docs-pip-${{ runner.os }}-${{ hashFiles('requirements-docs.txt') }}
-          restore-keys: |
-            docs-pip-${{ runner.os }}-
-
-      - name: Install MkDocs dependencies
-        run: python -m pip install --requirement requirements-docs.txt
+          version: 0.11.26
 
       - name: Build documentation
-        run: mkdocs build --strict --clean --site-dir site
+        run: uv run --locked --only-group docs mkdocs build --strict --clean --site-dir site
 
   publish-docs:
     name: Build Pages artifact
@@ -85,24 +81,18 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
-          python-version: 3.x
+          python-version: '3.12'
 
-      - name: Cache pip packages
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      - name: Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
-          path: ~/.cache/pip
-          key: docs-pip-${{ runner.os }}-${{ hashFiles('requirements-docs.txt') }}
-          restore-keys: |
-            docs-pip-${{ runner.os }}-
+          version: 0.11.26
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
 
-      - name: Install MkDocs dependencies
-        run: python -m pip install --requirement requirements-docs.txt
-
       - name: Build documentation
-        run: mkdocs build --strict --clean --site-dir site
+        run: uv run --locked --only-group docs mkdocs build --strict --clean --site-dir site
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0

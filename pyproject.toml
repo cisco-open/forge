@@ -1,4 +1,8 @@
 [dependency-groups]
+docs = [
+    "mkdocs-material==9.7.6",
+]
+
 # Dev/test deps for ForgeMT first-party Lambda unit tests.
 # Pinned deliberately; CI installs these exact versions. Bump via Renovate like
 # the rest of the repo.
