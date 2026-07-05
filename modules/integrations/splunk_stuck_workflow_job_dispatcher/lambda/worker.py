@@ -4,16 +4,12 @@ import logging
 import os
 import re
 import time
-import urllib.error
-import urllib.request
 from decimal import Decimal
 from typing import Any, Dict, Iterable, List, Tuple
 
 import boto3
-import jwt
 from boto3.dynamodb.types import TypeDeserializer
 from botocore.exceptions import ClientError
-from cryptography.hazmat.primitives import serialization
 
 LOG = logging.getLogger()
 LOG.setLevel(getattr(logging, os.environ.get(
@@ -49,10 +45,15 @@ def normalize_private_key(raw_key: str) -> Any:
     decoded = base64.b64decode(re.sub(r'\s+', '', key_text), validate=True)
     if b'BEGIN' in decoded:
         return decoded.decode('utf-8').replace('\\n', '\n').strip()
+
+    from cryptography.hazmat.primitives import serialization
+
     return serialization.load_der_private_key(decoded, password=None)
 
 
 def create_github_app_jwt(issuer: str, private_key: Any) -> str:
+    import jwt
+
     now = int(time.time())
     token = jwt.encode(
         {'iat': now - 60, 'exp': now + 540, 'iss': issuer},
@@ -72,11 +73,12 @@ def github_request(
     api_url: str | None = None,
     api_version: str | None = None,
 ) -> Tuple[int, Dict[str, str], bytes]:
+    import requests
+
     resolved_api_url = (api_url or 'https://api.github.com').rstrip('/')
     resolved_api_version = (
         '2022-11-28' if api_version is None else api_version
     )
-    data = json.dumps(body).encode('utf-8') if body is not None else None
     headers = {
         'Accept': 'application/vnd.github+json',
         'Authorization': f"Bearer {jwt}",
@@ -86,21 +88,15 @@ def github_request(
     if resolved_api_version:
         headers['X-GitHub-Api-Version'] = resolved_api_version
 
-    request = urllib.request.Request(
+    response = requests.request(
+        method,
         f"{resolved_api_url}{path}",
-        data=data,
         headers=headers,
-        method=method,
+        json=body,
+        timeout=30,
     )
-
-    try:
-        with urllib.request.urlopen(request, timeout=30) as response:
-            headers = {key.lower(): value for key,
-                       value in response.headers.items()}
-            return response.status, headers, response.read()
-    except urllib.error.HTTPError as err:
-        headers = {key.lower(): value for key, value in err.headers.items()}
-        return err.code, headers, err.read()
+    headers = {key.lower(): value for key, value in response.headers.items()}
+    return response.status_code, headers, response.content
 
 
 def load_tenant_configs() -> List[Dict[str, Any]]:

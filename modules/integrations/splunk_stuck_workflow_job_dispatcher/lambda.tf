@@ -89,8 +89,9 @@ module "worker" {
   }]
 
   layers = [
-    "arn:aws:lambda:${var.aws_region}:770693421928:layer:Klayers-p312-cryptography:17",
-    "arn:aws:lambda:${var.aws_region}:770693421928:layer:Klayers-p312-PyJWT:1",
+    "arn:aws:lambda:${data.aws_region.current.region}:770693421928:layer:Klayers-p312-cryptography:17",
+    "arn:aws:lambda:${data.aws_region.current.region}:770693421928:layer:Klayers-p312-requests:17",
+    "arn:aws:lambda:${data.aws_region.current.region}:770693421928:layer:Klayers-p312-PyJWT:1",
   ]
 
   logging_log_group                 = aws_cloudwatch_log_group.worker.name
@@ -124,6 +125,8 @@ resource "aws_lambda_event_source_mapping" "worker_from_dedupe_stream" {
   starting_position = "LATEST"
   batch_size        = 10
 }
+
+data "aws_region" "current" {}
 
 data "aws_caller_identity" "current" {}
 

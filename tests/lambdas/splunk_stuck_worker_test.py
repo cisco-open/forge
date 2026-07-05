@@ -7,6 +7,7 @@ import importlib
 import json
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import boto3
 import pytest
@@ -54,7 +55,7 @@ def test_create_github_app_jwt_uses_pyjwt_rs256(monkeypatch, aws):
         calls.append((payload, key, algorithm))
         return 'jwt-token'
 
-    monkeypatch.setattr(mod.jwt, 'encode', _encode)
+    monkeypatch.setitem(sys.modules, 'jwt', SimpleNamespace(encode=_encode))
 
     assert mod.create_github_app_jwt('app-client-id', 'pem-key') == 'jwt-token'
     assert calls == [
@@ -62,6 +63,50 @@ def test_create_github_app_jwt_uses_pyjwt_rs256(monkeypatch, aws):
             {'iat': 1940, 'exp': 2540, 'iss': 'app-client-id'},
             'pem-key',
             'RS256',
+        ),
+    ]
+
+
+def test_github_request_uses_requests(monkeypatch, aws):
+    mod = _load_worker(monkeypatch)
+    calls = []
+
+    def _request(method, url, headers, json, timeout):
+        calls.append((method, url, headers, json, timeout))
+        return SimpleNamespace(
+            status_code=404,
+            headers={'X-GitHub-Request-Id': 'abc123'},
+            content=b'not found',
+        )
+
+    monkeypatch.setitem(sys.modules, 'requests',
+                        SimpleNamespace(request=_request))
+
+    status, headers, body = mod.github_request(
+        'jwt-token',
+        'POST',
+        '/app/hook/deliveries/1/attempts',
+        body={'redeliver': True},
+        api_url='https://api.github.test',
+        api_version='2022-11-28',
+    )
+
+    assert status == 404
+    assert headers == {'x-github-request-id': 'abc123'}
+    assert body == b'not found'
+    assert calls == [
+        (
+            'POST',
+            'https://api.github.test/app/hook/deliveries/1/attempts',
+            {
+                'Accept': 'application/vnd.github+json',
+                'Authorization': 'Bearer jwt-token',
+                'Content-Type': 'application/json',
+                'User-Agent': 'forge-stuck-workflow-job-redelivery',
+                'X-GitHub-Api-Version': '2022-11-28',
+            },
+            {'redeliver': True},
+            30,
         ),
     ]
 
