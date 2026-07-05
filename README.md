@@ -4,6 +4,8 @@
 [![License](https://img.shields.io/github/license/cisco-open/forge)](LICENSE.md)
 [![Maintainer](https://img.shields.io/badge/Maintainer-Cisco-00bceb.svg)](https://opensource.cisco.com)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue.svg)](https://cisco-open.github.io/forge/)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/cisco-open/forge/badge)](https://scorecard.dev/viewer/?uri=github.com/cisco-open/forge)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/10894/badge)](https://www.bestpractices.dev/projects/10905)
 ![CI](https://img.shields.io/github/check-runs/cisco-open/forge/main)
 ![Commits since latest release](https://img.shields.io/github/commits-since/cisco-open/forge/latest)
 [![Contributors](https://img.shields.io/github/contributors/cisco-open/forge)](https://github.com/cisco-open/forge/graphs/contributors)
