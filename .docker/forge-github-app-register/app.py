@@ -14,6 +14,7 @@ app = Flask(
 )
 
 GITHUB_API = 'https://api.github.com'
+REQUEST_TIMEOUT_SECONDS = 30
 
 
 @app.route('/', methods=['GET'])
@@ -36,7 +37,7 @@ def oauth_callback():
     # lgtm[py/path-injection]
     url = f'{GITHUB_API}/app-manifests/{code}/conversions'
     headers = {'Accept': 'application/vnd.github.v3+json'}
-    resp = requests.post(url, headers=headers)
+    resp = requests.post(url, headers=headers, timeout=REQUEST_TIMEOUT_SECONDS)
 
     if resp.status_code != 201:
         # Local-only helper; upstream error text is returned only to the local operator.

@@ -72,9 +72,35 @@ jobs:
         with:
           context: ./.docker/forge-github-app-register
           file: .docker/forge-github-app-register/Dockerfile
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: |
+            ${{ steps.meta.outputs.tags }}
+            ${{ github.event_name == 'pull_request' && format('{0}/{1}:pr-test-{2}', env.REGISTRY, env.IMAGE_NAME, github.sha) || '' }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: ${{ env.PLATFORMS }}
           push: ${{ github.event_name != 'pull_request' }}
+          load: ${{ github.event_name == 'pull_request' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Smoke test PR image [forge-github-app-register]
+        if: github.event_name == 'pull_request'
+        env:
+          PR_TEST_IMAGE: ${{ format('{0}/{1}:pr-test-{2}', env.REGISTRY, env.IMAGE_NAME, github.sha) }}
+        run: |
+          set -euo pipefail
+
+          container_id="$(docker run --detach --publish 5000:5000 "${PR_TEST_IMAGE}")"
+          cleanup() {
+              docker rm --force "${container_id}" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          for attempt in $(seq 1 30); do
+              if curl --fail --silent --show-error http://localhost:5000/ >/dev/null; then
+                  exit 0
+              fi
+              sleep 2
+          done
+
+          docker logs "${container_id}" || true
+          curl --fail --verbose http://localhost:5000/
