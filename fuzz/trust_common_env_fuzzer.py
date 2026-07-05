@@ -39,24 +39,28 @@ def TestOneInput(data: bytes) -> None:
         return
 
     text = data.decode('utf-8', errors='replace')
+    if '\x00' in text:
+        return
+
     os.environ[ENV_NAME] = text
-
-    values = trust_common.parse_env_list(ENV_NAME)
-    assert isinstance(values, list)
-    assert all(isinstance(value, str) and value.strip() for value in values)
-
     try:
-        parsed_int = trust_common.parse_env_int(ENV_NAME, 10, -1000, 1000)
-    except RuntimeError:
-        parsed_int = 10
-    assert -1000 <= parsed_int <= 1000
+        values = trust_common.parse_env_list(ENV_NAME)
+        assert isinstance(values, list)
+        assert all(isinstance(value, str) and value.strip()
+                   for value in values)
 
-    role_name = trust_common.get_forge_role_name(text)
-    assert isinstance(role_name, str)
-    if '/' in text:
-        assert role_name == text.rsplit('/', 1)[-1]
+        try:
+            parsed_int = trust_common.parse_env_int(ENV_NAME, 10, -1000, 1000)
+        except RuntimeError:
+            parsed_int = 10
+        assert -1000 <= parsed_int <= 1000
 
-    os.environ.pop(ENV_NAME, None)
+        role_name = trust_common.get_forge_role_name(text)
+        assert isinstance(role_name, str)
+        if '/' in text:
+            assert role_name == text.rsplit('/', 1)[-1]
+    finally:
+        os.environ.pop(ENV_NAME, None)
 
 
 def main() -> None:
