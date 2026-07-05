@@ -262,7 +262,8 @@
         {
             "description": "Group terraform-aws-github-runner updates across all Renovate managers",
             "matchDepNames": [
-                "github-aws-runners/terraform-aws-github-runner"
+                "github-aws-runners/terraform-aws-github-runner",
+                "github.com/github-aws-runners/terraform-aws-github-runner"
             ],
             "groupName": "terraform-aws-github-runner version",
             "groupSlug": "terraform-aws-github-runner",
