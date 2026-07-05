@@ -25,7 +25,7 @@ permissions: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   validate-docs:
@@ -69,8 +69,8 @@ jobs:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      pages: write
+      contents: read # Required to checkout repository content.
+      pages: write # Required to upload the GitHub Pages artifact.
     steps:
       - name: Harden the runner
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
@@ -115,8 +115,8 @@ jobs:
     needs: publish-docs
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
-      pages: write
+      id-token: write # Required for GitHub Pages OIDC deployment.
+      pages: write # Required to deploy the GitHub Pages site.
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

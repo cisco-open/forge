@@ -12,9 +12,7 @@ on:
       - terraform/**
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pull-requests: write
+permissions: {}
 
 concurrency:
   group: forge-infra-promotion
@@ -22,7 +20,11 @@ concurrency:
 
 jobs:
   storage:
+    name: Apply storage helpers
     runs-on: k8s
+    permissions:
+      contents: read # Required to checkout repository content.
+      id-token: write # Required to assume the AWS deployment role through OIDC.
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -38,8 +40,12 @@ jobs:
           run-apply: 'true'
 
   regional:
+    name: Apply regional units
     needs: storage
     runs-on: k8s
+    permissions:
+      contents: read # Required to checkout repository content.
+      id-token: write # Required to assume the AWS deployment role through OIDC.
     strategy:
       fail-fast: false
       matrix:

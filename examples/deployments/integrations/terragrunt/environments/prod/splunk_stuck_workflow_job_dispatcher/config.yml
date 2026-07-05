@@ -9,14 +9,14 @@ splunk_conf:
     app: search
     owner: forge-generic-user
     sharing: global
-    read: ["*"]
+    read: ['*']
     write: [forge-generic-user-role]
   index: forge-index
 redelivery_config:
   tenant_configs:
     - tenant: acme
       gh_config:
-        ghes_url: ""
+        ghes_url: ''
       prefixes:
         - aws_region: eu-west-1
           deployment_prefix: acme

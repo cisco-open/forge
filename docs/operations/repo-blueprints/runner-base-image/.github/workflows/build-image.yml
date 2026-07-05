@@ -47,8 +47,7 @@ on:
       - scripts/**
 
 permissions:
-  contents: read
-  id-token: write
+  contents: read # Required to checkout repository content.
 
 concurrency:
   group: runner-base-image-${{ github.ref }}
@@ -119,6 +118,9 @@ jobs:
     name: ${{ matrix.os }} ${{ matrix.version }} ${{ matrix.arch }}
     needs: select-matrix
     runs-on: ${{ vars.PACKER_RUNNER_LABEL || 'ubuntu-latest' }}
+    permissions:
+      contents: read # Required to checkout repository content.
+      id-token: write # Required to assume the AWS image-builder role through OIDC.
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.select-matrix.outputs.matrix) }}
@@ -140,12 +142,12 @@ jobs:
       PACKER_VPC_ID: ${{ vars.PACKER_VPC_ID }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
       - name: Set up Packer
-        uses: hashicorp/setup-packer@v3
+        uses: hashicorp/setup-packer@ce93c3c08a6c2ff2275bf4b54ff0d9a75f6c9789 # v3
 
       - name: Install Ansible
         shell: bash
@@ -159,32 +161,42 @@ jobs:
 
       - name: Configure AWS credentials
         if: github.event_name != 'pull_request'
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@99214aa6889fcddfa57764031d71add364327e59 # v6.1.3
         with:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
 
       - name: Initialize Packer
         shell: bash
-        run: packer init "${{ matrix.template }}"
+        env:
+          MATRIX_TEMPLATE: ${{ matrix.template }}
+        run: packer init "${MATRIX_TEMPLATE}"
 
       - name: Validate Packer template
         shell: bash
-        run: packer validate "${{ matrix.template }}"
+        env:
+          MATRIX_TEMPLATE: ${{ matrix.template }}
+        run: packer validate "${MATRIX_TEMPLATE}"
 
       - name: Build AMI
         if: github.event_name != 'pull_request' && (github.event_name != 'workflow_dispatch' || inputs.build == true)
         shell: bash
+        env:
+          MATRIX_TEMPLATE: ${{ matrix.template }}
         run: |
           set -euo pipefail
-          packer build -machine-readable "${{ matrix.template }}" | tee packer.log
+          packer build -machine-readable "${MATRIX_TEMPLATE}" | tee packer.log
 
       - name: Add AMI manifest to summary
         if: always()
         shell: bash
+        env:
+          MATRIX_ARCH: ${{ matrix.arch }}
+          MATRIX_OS: ${{ matrix.os }}
+          MATRIX_VERSION: ${{ matrix.version }}
         run: |
           {
-            echo "### ${{ matrix.os }} ${{ matrix.version }} ${{ matrix.arch }}"
+            echo "### ${MATRIX_OS} ${MATRIX_VERSION} ${MATRIX_ARCH}"
             if [[ -f manifest.json ]]; then
               jq -r '.builds[] | "- " + .name + ": `" + .artifact_id + "`"' manifest.json
             else
@@ -194,7 +206,7 @@ jobs:
 
       - name: Upload Packer artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: packer-${{ matrix.os }}-${{ matrix.version }}-${{ matrix.arch }}
           path: |

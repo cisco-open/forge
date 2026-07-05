@@ -32,6 +32,7 @@ permissions: {}
 
 jobs:
   discover:
+    name: Discover Terragrunt units
     runs-on: k8s
     outputs:
       units: ${{ steps.units.outputs.units }}
@@ -48,12 +49,13 @@ jobs:
           echo "units=$units" >> "$GITHUB_OUTPUT"
 
   terragrunt:
+    name: Run Terragrunt
     needs: discover
     runs-on: k8s
     environment: ${{ inputs.run-apply == 'true' && inputs.env || '' }}
     permissions:
-      contents: read
-      pull-requests: write
+      contents: read # Required to checkout repository content.
+      pull-requests: write # Required to post plan comments on pull requests.
     strategy:
       fail-fast: false
       max-parallel: 1

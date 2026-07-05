@@ -22,7 +22,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: borchero/terraform-plan-comment@1af71183a1dd69d1043278bc85f87767bf713048 # v3.0.0
+    - uses: borchero/terraform-plan-comment@d177dfb833ccfb6ef6022700796190dfe54830f1 # v3.0.0
       continue-on-error: true
       env:
         TG_NO_COLOR: true

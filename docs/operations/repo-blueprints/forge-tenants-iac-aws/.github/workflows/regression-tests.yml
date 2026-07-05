@@ -22,8 +22,8 @@ jobs:
   plan:
     uses: ./.github/workflows/rw-terragrunt.yml
     permissions:
-      contents: read
-      pull-requests: write
+      contents: read # Required to checkout repository content.
+      pull-requests: write # Required when the called Terragrunt workflow posts plan comments.
     with:
       aws-region: eu-west-1
       aws-account-id: '000000000000'

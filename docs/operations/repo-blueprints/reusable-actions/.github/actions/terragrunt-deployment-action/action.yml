@@ -32,6 +32,10 @@ inputs:
     description: Create lock
     required: false
     default: 'true'
+  github-app-token-repositories:
+    description: Repositories the automation GitHub App token can access. Defaults to the current repository.
+    required: false
+    default: ''
 
 runs:
   using: composite
@@ -50,7 +54,7 @@ runs:
         lock-id: forge_terraform_${{ inputs.tf-path }}
 
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@930c381f9e7b95df07a7127f7c1f312063a2dacc # v6.1.3
+      uses: aws-actions/configure-aws-credentials@99214aa6889fcddfa57764031d71add364327e59 # v6.1.3
       with:
         role-to-assume: arn:aws:iam::${{ inputs.aws-account-id }}:role/${{ inputs.role-name }}
         aws-region: ${{ inputs.aws-region }}
@@ -69,6 +73,7 @@ runs:
         client-id: ${{ env.GITHUB_APP_AUTOMATION_CLIENT_ID }}
         private-key: ${{ env.GITHUB_APP_AUTOMATION_PEM }}
         owner: ${{ github.repository_owner }}
+        repositories: ${{ inputs.github-app-token-repositories || github.event.repository.name }}
         permission-contents: read
 
     - name: Setup custom credential helper
