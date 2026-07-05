@@ -243,7 +243,7 @@ repos:
         name: Terraform · Linter
         always_run: true
         args: [--hook-config=--tf-path=tofu]
-        exclude: (modules/integrations/splunk_cloud_data_manager|modules/infra/forge_subscription|modules/integrations/splunk_secrets/|modules/integrations/splunk_cloud_s3_runner_logs/)
+        exclude: (modules/integrations/splunk_cloud_data_manager|modules/helpers/forge_subscription|modules/integrations/splunk_secrets/|modules/integrations/splunk_cloud_s3_runner_logs/)
       - id: terraform_validate
         name: Terraform · Validate
         always_run: true
