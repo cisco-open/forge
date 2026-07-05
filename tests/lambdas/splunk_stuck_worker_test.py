@@ -111,78 +111,33 @@ def test_github_request_uses_requests(monkeypatch, aws):
     ]
 
 
-def test_normalize_delivery_references_dedupes_ids_and_guids(
-    monkeypatch, aws
-):
+def test_normalize_delivery_ids_dedupes_numeric_ids(monkeypatch, aws):
     mod = _load_worker(monkeypatch)
-    guid = 'F1234567-89AB-4CDE-8123-456789ABCDEF'
 
-    ids, guids = mod.normalize_delivery_references([
+    ids = mod.normalize_delivery_ids([
         '123',
         ' 123 ',
-        guid,
-        guid.lower(),
+        '456',
+        '456',
         '',
     ])
 
-    assert ids == ['123']
-    assert guids == [guid.lower()]
+    assert ids == ['123', '456']
 
 
-def test_normalize_delivery_references_rejects_invalid_value(
-    monkeypatch, aws
-):
+def test_normalize_delivery_ids_rejects_invalid_value(monkeypatch, aws):
     mod = _load_worker(monkeypatch)
 
-    with pytest.raises(ValueError, match='Invalid delivery ID/GUID'):
-        mod.normalize_delivery_references(['not-a-delivery-reference'])
+    with pytest.raises(ValueError, match='Invalid delivery ID'):
+        mod.normalize_delivery_ids(['not-a-delivery-reference'])
 
 
-def test_delivery_rows_combines_explicit_ids_and_resolved_guids(
-    monkeypatch, aws
-):
-    mod = _load_worker(monkeypatch)
-    guid = 'f1234567-89ab-4cde-8123-456789abcdef'
-    monkeypatch.setattr(
-        mod,
-        'resolve_delivery_guid_rows',
-        lambda jwt, guids, installation_id, api_url, api_version: [
-            {
-                'id': '99',
-                'guid': guids[0],
-                'event': 'workflow_job',
-                'action': 'queued',
-                'delivered_at': '-',
-                'status_code': '500',
-                'status': 'failed',
-                'repository_id': '42',
-            }
-        ],
-    )
-
-    rows = mod.delivery_rows(
-        {'github_delivery': ['123', guid]},
-        'jwt-token',
-        'https://api.github.test',
-        '2022-11-28',
-        'installation-1',
-    )
-
-    assert [row['id'] for row in rows] == ['123', '99']
-    assert rows[0]['event'] == 'explicit-id'
-    assert rows[1]['guid'] == guid
-
-
-def test_next_cursor_from_link_header(monkeypatch, aws):
+def test_delivery_rows_uses_splunk_delivery_ids(monkeypatch, aws):
     mod = _load_worker(monkeypatch)
 
-    assert mod.next_cursor_from_headers({
-        'link': (
-            '<https://api.github.test/app/hook/deliveries?cursor=abc>; '
-            'rel="next"'
-        ),
-    }) == 'abc'
-    assert mod.next_cursor_from_headers({'link': '<x>; rel="last"'}) == ''
+    rows = mod.delivery_rows({'github_delivery': ['123', '456']})
+
+    assert [row['id'] for row in rows] == ['123', '456']
 
 
 def test_resolve_tenant_config_uses_matching_tenant_and_region(
@@ -273,71 +228,6 @@ def test_resolve_tenant_config_rejects_ambiguous_matches(monkeypatch, aws):
             'tenant': 'acgw',
             'aws_region': 'us-west-2',
         })
-
-
-def test_resolve_delivery_guid_rows_pages_and_filters_installation(
-    monkeypatch, aws
-):
-    mod = _load_worker(monkeypatch)
-    first_guid = 'f1234567-89ab-4cde-8123-456789abcdef'
-    second_guid = 'e1234567-89ab-4cde-8123-456789abcdef'
-    calls = []
-
-    def _github_request(_jwt, method, path, **_kwargs):
-        calls.append((method, path))
-        if len(calls) == 1:
-            return 200, {
-                'link': (
-                    '<https://api.github.test/app/hook/deliveries?'
-                    'cursor=next-page>; rel="next"'
-                ),
-            }, json.dumps([
-                {
-                    'id': '11',
-                    'guid': first_guid,
-                    'installation_id': 'wrong-installation',
-                },
-                {
-                    'id': '12',
-                    'guid': first_guid,
-                    'installation_id': 'install-1',
-                    'event': 'workflow_job',
-                    'action': 'queued',
-                    'delivered_at': '2026-07-03T00:00:00Z',
-                    'status_code': 500,
-                    'status': 'failed',
-                    'repository_id': 42,
-                },
-            ]).encode()
-        return 200, {}, json.dumps([
-            {
-                'id': '13',
-                'guid': second_guid,
-                'installation_id': 'install-1',
-                'event': 'workflow_job',
-                'action': 'in_progress',
-                'delivered_at': '2026-07-03T00:01:00Z',
-                'status_code': 500,
-                'status': 'failed',
-                'repository_id': 42,
-            },
-        ]).encode()
-
-    monkeypatch.setattr(mod, 'github_request', _github_request)
-
-    rows = mod.resolve_delivery_guid_rows(
-        'jwt-token',
-        [first_guid, second_guid],
-        'install-1',
-        'https://api.github.test',
-        '2022-11-28',
-    )
-
-    assert [row['id'] for row in rows] == ['12', '13']
-    assert calls == [
-        ('GET', '/app/hook/deliveries?per_page=100'),
-        ('GET', '/app/hook/deliveries?per_page=100&cursor=next-page'),
-    ]
 
 
 def test_process_rows_redelivers_each_candidate(monkeypatch, aws):
