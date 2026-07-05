@@ -1,0 +1,15 @@
+---
+- name: Ubuntu | Clean apt cache
+  ansible.builtin.apt:
+    autoclean: true
+    autoremove: true
+
+- name: Ubuntu | Remove temporary files
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /tmp/awscliv2.zip
+    - /tmp/gh.deb
+    - "/tmp/docker-{{ docker_static_version }}.tgz"
+    - "/tmp/docker-rootless-extras-{{ docker_static_version }}.tgz"

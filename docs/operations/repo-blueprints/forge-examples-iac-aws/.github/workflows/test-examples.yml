@@ -1,0 +1,93 @@
+---
+# yamllint disable rule:comments
+# yamllint disable rule:truthy
+name: Test examples deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Forge ref to test
+        required: false
+        default: main
+  schedule:
+    - cron: 0 4 * * 1
+
+permissions:
+  contents: read
+
+concurrency:
+  group: forge-examples
+  cancel-in-progress: false
+
+jobs:
+  apply-helpers:
+    uses: ./.github/workflows/rw-example-category.yml
+    with:
+      example-folder: helpers
+      operation: apply
+      terragrunt-command: apply
+      ref: ${{ inputs.ref || 'main' }}
+
+  apply-infra:
+    needs: apply-helpers
+    uses: ./.github/workflows/rw-example-category.yml
+    with:
+      example-folder: infra
+      operation: apply
+      terragrunt-command: apply
+      ref: ${{ inputs.ref || 'main' }}
+
+  apply-platform:
+    needs: apply-infra
+    uses: ./.github/workflows/rw-example-category.yml
+    with:
+      example-folder: platform
+      operation: apply
+      terragrunt-command: apply
+      ref: ${{ inputs.ref || 'main' }}
+
+  apply-integrations:
+    needs: apply-platform
+    uses: ./.github/workflows/rw-example-category.yml
+    with:
+      example-folder: integrations
+      operation: apply
+      terragrunt-command: apply
+      ref: ${{ inputs.ref || 'main' }}
+
+  destroy-integrations:
+    needs: apply-integrations
+    uses: ./.github/workflows/rw-example-category.yml
+    with:
+      example-folder: integrations
+      operation: destroy
+      terragrunt-command: destroy
+      ref: ${{ inputs.ref || 'main' }}
+
+  destroy-platform:
+    needs: destroy-integrations
+    uses: ./.github/workflows/rw-example-category.yml
+    with:
+      example-folder: platform
+      operation: destroy
+      terragrunt-command: destroy
+      ref: ${{ inputs.ref || 'main' }}
+
+  destroy-infra:
+    needs: destroy-platform
+    uses: ./.github/workflows/rw-example-category.yml
+    with:
+      example-folder: infra
+      operation: destroy
+      terragrunt-command: destroy
+      ref: ${{ inputs.ref || 'main' }}
+
+  destroy-helpers:
+    needs: destroy-infra
+    uses: ./.github/workflows/rw-example-category.yml
+    with:
+      example-folder: helpers
+      operation: destroy
+      terragrunt-command: destroy
+      ref: ${{ inputs.ref || 'main' }}

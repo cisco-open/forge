@@ -1,0 +1,7 @@
+---
+modules:
+  platform:
+    forge_runners:
+      source: git::https://github.com/cisco-open/forge.git//modules/platform/forge_runners?ref=FORGE_REF
+    arc:
+      source: git::https://github.com/cisco-open/forge.git//modules/platform/arc?ref=FORGE_REF

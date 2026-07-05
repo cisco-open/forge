@@ -1,0 +1,49 @@
+---
+- name: macOS | Ensure /opt/scripts exists
+  ansible.builtin.file:
+    path: /opt/scripts
+    state: directory
+    mode: '0755'
+
+- name: macOS | Copy GitHub Actions runner installer
+  ansible.builtin.copy:
+    src: "{{ osx_install_runner_script }}"
+    dest: /opt/scripts/install_runner_osx.sh
+    owner: root
+    group: wheel
+    mode: '0755'
+
+- name: macOS | Install GitHub Actions runner package
+  ansible.builtin.shell: |
+    set -euo pipefail
+    RUNNER_USER="{{ macos_username }}" RUNNER_TARBALL_URL="{{ runner_tarball }}" \
+      /opt/scripts/install_runner_osx.sh
+  args:
+    executable: /bin/bash
+  vars:
+    runner_tarball: >-
+      {{
+        osx_runner_arm64_tarball
+        if ansible_architecture in ['arm64', 'aarch64']
+        else osx_runner_amd64_tarball
+      }}
+
+- name: macOS | Copy hosted toolcache runtime guard
+  ansible.builtin.copy:
+    src: ensure_runner_toolcache_osx.sh
+    dest: /opt/scripts/ensure_runner_toolcache_osx.sh
+    owner: root
+    group: wheel
+    mode: '0755'
+
+- name: macOS | Copy hosted toolcache launch daemon
+  ansible.builtin.copy:
+    src: com.forge.github-runner-toolcache.plist
+    dest: /Library/LaunchDaemons/com.forge.github-runner-toolcache.plist
+    owner: root
+    group: wheel
+    mode: '0644'
+
+- name: macOS | Verify hosted toolcache runtime guard
+  ansible.builtin.command: /opt/scripts/ensure_runner_toolcache_osx.sh
+  changed_when: false

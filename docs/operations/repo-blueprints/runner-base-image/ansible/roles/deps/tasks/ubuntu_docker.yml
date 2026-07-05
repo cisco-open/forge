@@ -1,0 +1,124 @@
+---
+- name: Ubuntu | Get runner user id
+  ansible.builtin.command: "id -ru {{ ubuntu_username }}"
+  register: deps_user_id_result
+  changed_when: false
+
+- name: Ubuntu | Set Docker facts
+  ansible.builtin.set_fact:
+    deps_user_id: "{{ deps_user_id_result.stdout }}"
+    deps_docker_static_arch: "{{ 'aarch64' if ansible_architecture == 'aarch64' else 'x86_64' }}"
+    deps_docker_plugin_arch: "{{ 'arm64' if ansible_architecture == 'aarch64' else 'amd64' }}"
+    deps_docker_compose_arch: "{{ 'aarch64' if ansible_architecture == 'aarch64' else 'x86_64' }}"
+
+- name: Ubuntu | Enable user lingering
+  ansible.builtin.command: "loginctl enable-linger {{ ubuntu_username }}"
+  changed_when: true
+
+- name: Ubuntu | Ensure runner directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ ubuntu_username }}"
+    group: "{{ ubuntu_username }}"
+    mode: '0755'
+  loop:
+    - "/home/{{ ubuntu_username }}/bin"
+    - "/home/{{ ubuntu_username }}/.config/systemd"
+    - "/home/{{ ubuntu_username }}/.docker/cli-plugins"
+
+- name: Ubuntu | Download Docker static binaries
+  ansible.builtin.get_url:
+    url: "https://download.docker.com/linux/static/stable/{{ deps_docker_static_arch }}/docker-{{ docker_static_version }}.tgz"
+    dest: "/tmp/docker-{{ docker_static_version }}.tgz"
+    mode: '0644'
+
+- name: Ubuntu | Download Docker rootless extras
+  ansible.builtin.get_url:
+    url: "https://download.docker.com/linux/static/stable/{{ deps_docker_static_arch }}/docker-rootless-extras-{{ docker_static_version }}.tgz"
+    dest: "/tmp/docker-rootless-extras-{{ docker_static_version }}.tgz"
+    mode: '0644'
+
+- name: Ubuntu | Extract Docker static binaries
+  ansible.builtin.unarchive:
+    src: "/tmp/docker-{{ docker_static_version }}.tgz"
+    dest: "/home/{{ ubuntu_username }}/bin"
+    remote_src: true
+    extra_opts:
+      - --strip-components=1
+    owner: "{{ ubuntu_username }}"
+    group: "{{ ubuntu_username }}"
+
+- name: Ubuntu | Extract Docker rootless extras
+  ansible.builtin.unarchive:
+    src: "/tmp/docker-rootless-extras-{{ docker_static_version }}.tgz"
+    dest: "/home/{{ ubuntu_username }}/bin"
+    remote_src: true
+    extra_opts:
+      - --strip-components=1
+    owner: "{{ ubuntu_username }}"
+    group: "{{ ubuntu_username }}"
+
+- name: Ubuntu | Configure Docker shell environment
+  ansible.builtin.blockinfile:
+    path: "/home/{{ ubuntu_username }}/.bashrc"
+    create: true
+    owner: "{{ ubuntu_username }}"
+    group: "{{ ubuntu_username }}"
+    mode: '0644'
+    marker: "# {mark} ANSIBLE MANAGED BLOCK rootless-docker"
+    block: |
+      export XDG_RUNTIME_DIR=/run/user/{{ deps_user_id }}
+      export DOCKER_HOST=unix:///run/user/{{ deps_user_id }}/docker.sock
+      export PATH=/home/{{ ubuntu_username }}/bin:$PATH
+
+- name: Ubuntu | Install rootless Docker systemd unit
+  ansible.builtin.command: "/home/{{ ubuntu_username }}/bin/dockerd-rootless-setuptool.sh install"
+  become: true
+  become_user: "{{ ubuntu_username }}"
+  environment:
+    PATH: "/home/{{ ubuntu_username }}/bin:{{ ansible_env.PATH }}"
+    XDG_RUNTIME_DIR: "/run/user/{{ deps_user_id }}"
+    DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ deps_user_id }}/bus"
+    HOME: "/home/{{ ubuntu_username }}"
+  args:
+    creates: "/home/{{ ubuntu_username }}/.config/systemd/user/docker.service"
+
+- name: Ubuntu | Download docker-buildx plugin
+  ansible.builtin.get_url:
+    url: "https://github.com/docker/buildx/releases/download/v{{ docker_buildx_plugin_version }}/buildx-v{{ docker_buildx_plugin_version }}.linux-{{ deps_docker_plugin_arch }}"
+    dest: "/home/{{ ubuntu_username }}/.docker/cli-plugins/docker-buildx"
+    owner: "{{ ubuntu_username }}"
+    group: "{{ ubuntu_username }}"
+    mode: '0755'
+
+- name: Ubuntu | Download Docker Compose plugin
+  ansible.builtin.get_url:
+    url: "https://github.com/docker/compose/releases/download/v{{ docker_compose_plugin_version }}/docker-compose-linux-{{ deps_docker_compose_arch }}"
+    dest: "/home/{{ ubuntu_username }}/.docker/cli-plugins/docker-compose"
+    owner: "{{ ubuntu_username }}"
+    group: "{{ ubuntu_username }}"
+    mode: '0755'
+
+- name: Ubuntu | Start rootless Docker
+  ansible.builtin.systemd:
+    name: docker
+    scope: user
+    state: started
+    enabled: true
+    daemon_reload: true
+  become: true
+  become_user: "{{ ubuntu_username }}"
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ deps_user_id }}"
+    DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ deps_user_id }}/bus"
+
+- name: Ubuntu | Verify Docker CLI
+  ansible.builtin.command: docker version
+  become: true
+  become_user: "{{ ubuntu_username }}"
+  changed_when: false
+  environment:
+    PATH: "/home/{{ ubuntu_username }}/bin:{{ ansible_env.PATH }}"
+    DOCKER_HOST: "unix:///run/user/{{ deps_user_id }}/docker.sock"
+    XDG_RUNTIME_DIR: "/run/user/{{ deps_user_id }}"

@@ -1,0 +1,19 @@
+---
+name: Mark Git Repo as Safe
+description: Mark the Git repository as safe, handling /home/runner/_work/ → /__w/ for ARC runners
+runs:
+  using: composite
+  steps:
+    - name: Mark repo as safe
+      shell: bash
+      run: |
+        if [ -z "$GITHUB_WORKSPACE" ]; then
+          echo "Error: GITHUB_WORKSPACE is not set."
+          exit 1
+        fi
+
+        # Replace /home/runner/_work/ prefix with /__w/ if present
+        SAFE_DIR="${GITHUB_WORKSPACE/#\/home\/runner\/_work\//\/__w/}"
+
+        echo "Marking Git safe directory: $SAFE_DIR"
+        git config --global --add safe.directory "$SAFE_DIR"

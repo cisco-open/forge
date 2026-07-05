@@ -1,0 +1,62 @@
+---
+# yamllint disable rule:comments
+# yamllint disable rule:truthy
+name: Build custom runner image
+
+on:
+  workflow_dispatch:
+    inputs:
+      base-ami-name:
+        description: Base AMI name filter
+        required: false
+        default: forge-runner-base-ubuntu24-*
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/build-image.yml
+      - ansible/**
+      - packer/**
+  push:
+    branches:
+      - main
+    paths:
+      - ansible/**
+      - packer/**
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: runner-custom-image-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  packer:
+    name: Build custom AMI
+    runs-on: k8s
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION || 'eu-west-1' }}
+      PKR_VAR_image_version: ${{ github.sha }}
+      PKR_VAR_base_ami_name: ${{ inputs.base-ami-name || 'forge-runner-base-ubuntu24-*' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
+
+      - name: Validate Packer template
+        shell: bash
+        run: packer validate packer/custom.pkr.hcl
+
+      - name: Build AMI
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: packer build packer/custom.pkr.hcl

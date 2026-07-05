@@ -1,0 +1,37 @@
+---
+# yamllint disable rule:comments
+name: Terragrunt Plan Comment Action
+description: Composite action to post Terragrunt plan comments on PRs
+
+inputs:
+  working-directory:
+    description: Path to the Terraform configuration files
+    required: true
+  planfile:
+    description: Path to the plan file
+    required: true
+  skip-empty:
+    description: Skip empty changes
+    required: true
+    default: 'true'
+  skip-comment:
+    description: Skip comment changes
+    required: true
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - uses: borchero/terraform-plan-comment@1af71183a1dd69d1043278bc85f87767bf713048 # v3.0.0
+      continue-on-error: true
+      env:
+        TG_NO_COLOR: true
+        TG_TF_FORWARD_STDOUT: true
+      with:
+        token: ${{ github.token }}
+        planfile: ${{ inputs.planfile }}
+        terraform-cmd: terragrunt
+        working-directory: ${{ inputs.working-directory }}
+        header: 📝 Terragrunt Plan for ${{ inputs.working-directory }}
+        skip-empty: ${{ inputs.skip-empty }}
+        skip-comment: ${{ inputs.skip-comment }}

@@ -1,0 +1,72 @@
+---
+# yamllint disable rule:comments
+name: Terragrunt Deployment Action
+description: Discover and run one Forge example category
+inputs:
+  example-folder:
+    description: helpers, infra, integrations, or platform
+    required: true
+  run-type:
+    description: discover, apply, or destroy
+    required: true
+  terragrunt-command:
+    description: Terragrunt command used to construct the discovery queue
+    required: false
+    default: apply
+  terragrunt-unit-path:
+    description: Relative Terragrunt unit path
+    required: false
+    default: ''
+  ref:
+    description: Forge ref
+    required: false
+    default: main
+
+outputs:
+  terragrunt-modules:
+    description: DAG-ordered Terragrunt unit matrix
+    value: ${{ steps.discover.outputs.modules }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      with:
+        persist-credentials: false
+        repository: cisco-open/forge
+        path: forge
+        ref: ${{ inputs.ref }}
+
+    - name: Run Terragrunt unit
+      id: discover
+      shell: bash
+      env:
+        EXAMPLE_FOLDER: ${{ inputs.example-folder }}
+        RUN_TYPE: ${{ inputs.run-type }}
+        TERRAGRUNT_COMMAND: ${{ inputs.terragrunt-command }}
+        TERRAGRUNT_UNIT_PATH: ${{ inputs.terragrunt-unit-path }}
+      run: |
+        set -euo pipefail
+        base="forge/examples/deployments/${EXAMPLE_FOLDER}/terragrunt/environments/prod"
+        case "$RUN_TYPE" in
+          discover)
+            modules=$(
+              terragrunt --non-interactive find \
+                --working-dir "$base" \
+                --dag \
+                --format=json \
+                --queue-construct-as "$TERRAGRUNT_COMMAND" |
+                jq -c '[.[] | select(.type == "unit") | {path: .path}]'
+            )
+            echo "$modules" | jq .
+            echo "modules=$modules" >> "$GITHUB_OUTPUT"
+            ;;
+          apply|destroy)
+            cd "${base}/${TERRAGRUNT_UNIT_PATH}"
+            terragrunt "$RUN_TYPE" --non-interactive -auto-approve
+            ;;
+          *)
+            echo "Unsupported run-type: $RUN_TYPE" >&2
+            exit 1
+            ;;
+        esac

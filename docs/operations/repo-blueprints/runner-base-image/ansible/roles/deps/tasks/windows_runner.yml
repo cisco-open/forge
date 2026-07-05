@@ -1,0 +1,16 @@
+---
+- name: Windows | Ensure scripts directory exists
+  ansible.windows.win_file:
+    path: C:\scripts
+    state: directory
+
+- name: Windows | Copy GitHub Actions runner installer
+  ansible.windows.win_copy:
+    src: "{{ win_install_runner_script }}"
+    dest: C:\scripts\install_runner.ps1
+
+- name: Windows | Install GitHub Actions runner package
+  ansible.windows.win_shell: |
+    $env:RUNNER_VERSION = "{{ github_runner_version }}"
+    $env:RUNNER_ARCH = "x64"
+    & C:\scripts\install_runner.ps1

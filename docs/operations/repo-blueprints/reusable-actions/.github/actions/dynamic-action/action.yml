@@ -1,0 +1,61 @@
+---
+name: dynamic-action
+description: >-
+  This GitHub Action dynamically creates and runs a composite action based on provided inputs,
+  allowing for flexible and reusable workflows.
+
+inputs:
+  action-uses:
+    description: The reference to the action to be dynamically executed (e.g., `actions/checkout@v2`).
+    required: true
+  action-with:
+    description: JSON-encoded string of inputs to pass to the dynamically executed action.
+    required: false
+    default: '{}'
+
+outputs:
+  action-outputs:
+    description: JSON-encoded string of outputs from the dynamically executed action.
+    value: ${{ steps.run-action-wrapper.outputs.action-outputs }}
+
+runs:
+  using: composite
+  steps:
+
+    - name: Setup Dynamic Composite
+      shell: bash
+      env:
+        ACTION_USES: ${{ inputs.action-uses }}
+        ACTION_WITH: ${{ inputs.action-with }}
+      run: |
+        mkdir -p ./.tmp-dynamic-action
+        {
+          cat <<'EOF'
+        outputs:
+          action-outputs:
+        EOF
+          printf '    value: $%s\n' '{{ toJSON(steps.run-action.outputs) }}'
+          cat <<'EOF'
+        runs:
+          using: composite
+          steps:
+            - name: Run Action
+              id: run-action
+        EOF
+          printf '      uses: %s\n' "$ACTION_USES"
+          printf '      with: %s\n' "$ACTION_WITH"
+        } > ./.tmp-dynamic-action/action.yml
+
+    - name: Display Dynamic Composite
+      id: display-action-wrapper
+      shell: bash
+      run: cat ./.tmp-dynamic-action/action.yml
+
+    - name: Run Dynamic Composite
+      id: run-action-wrapper
+      uses: ./.tmp-dynamic-action
+
+    - name: Cleanup
+      if: always()
+      shell: bash
+      run: rm -rf ./.tmp-dynamic-action

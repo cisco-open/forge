@@ -1,0 +1,8 @@
+---
+- name: Build GitHub runner base image for Windows
+  hosts: all
+  gather_facts: true
+  become: false
+
+  roles:
+    - role: deps

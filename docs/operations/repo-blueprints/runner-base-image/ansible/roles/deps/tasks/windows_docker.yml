@@ -1,0 +1,38 @@
+---
+- name: Windows | Download Docker static binaries
+  ansible.windows.win_get_url:
+    url: "https://download.docker.com/win/static/stable/x86_64/docker-{{ docker_static_version }}.zip"
+    dest: "C:\\Temp\\docker-{{ docker_static_version }}.zip"
+    force: false
+
+- name: Windows | Extract Docker static binaries
+  community.windows.win_unzip:
+    src: "C:\\Temp\\docker-{{ docker_static_version }}.zip"
+    dest: C:\Tools
+    delete_archive: true
+
+- name: Windows | Add Docker static binaries to PATH
+  ansible.windows.win_path:
+    elements:
+      - C:\Tools\docker
+    scope: machine
+    state: present
+
+- name: Windows | Ensure Docker CLI plugins directory exists
+  ansible.windows.win_file:
+    path: C:\Program Files\Docker\cli-plugins
+    state: directory
+
+- name: Windows | Download docker-buildx plugin
+  ansible.windows.win_get_url:
+    url: "https://github.com/docker/buildx/releases/download/v{{ docker_buildx_plugin_version }}/buildx-v{{ docker_buildx_plugin_version }}.windows-amd64.exe"
+    dest: C:\Program Files\Docker\cli-plugins\docker-buildx.exe
+
+- name: Windows | Download Docker Compose plugin
+  ansible.windows.win_get_url:
+    url: "https://github.com/docker/compose/releases/download/v{{ docker_compose_plugin_version }}/docker-compose-windows-x86_64.exe"
+    dest: C:\Program Files\Docker\cli-plugins\docker-compose.exe
+
+- name: Windows | Verify Docker CLI
+  ansible.windows.win_command: C:\Tools\docker\docker.exe --version
+  changed_when: false

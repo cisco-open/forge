@@ -1,0 +1,56 @@
+---
+name: Compute Terragrunt Layers from DAG Text
+description: Receive DAG text input and output JSON layers
+
+inputs:
+  tf-path:
+    description: Path to the Terraform configuration files
+    required: true
+
+outputs:
+  layers-json:
+    description: Computed layers as JSON
+    value: ${{ steps.compute-layers.outputs.layers-json }}
+
+runs:
+  using: composite
+  steps:
+    - name: Discover DAG
+      id: discover-dag
+      env:
+        TF_PATH: ${{ inputs.tf-path }}
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        echo "::group::Discovery context"
+        echo "TF_PATH=$TF_PATH"
+        if [ ! -d "$TF_PATH" ]; then
+          echo "Error: TF_PATH directory does not exist: $TF_PATH" >&2
+          exit 1
+        fi
+        ls -la "$TF_PATH" || true
+        command -v terragrunt >/dev/null 2>&1 && terragrunt --version || echo "terragrunt not found on PATH"
+        echo "::endgroup::"
+
+        echo "::group::Discover modules"
+        # Encode DAG in base64 to avoid issues with newlines and special characters in step outputs
+        pushd "$TF_PATH"
+        terragrunt dag graph > /tmp/dag.txt
+        popd
+        echo "::endgroup::"
+
+    - name: Compute Layers
+      id: compute-layers
+      shell: bash
+      env:
+        TF_PATH: ${{ inputs.tf-path }}
+      run: |
+        set -euo pipefail
+
+        echo "::group::Computed layers"
+        LAYERS_JSON=$(printf '%s' "$(cat /tmp/dag.txt)" | python3 "$GITHUB_ACTION_PATH/scripts/compute_layers.py" | jq -c)
+        echo "Computed layers:"
+        echo "$LAYERS_JSON"
+        echo "layers-json=$LAYERS_JSON" >> "$GITHUB_OUTPUT"
+        echo "::endgroup::"

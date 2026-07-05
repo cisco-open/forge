@@ -1,0 +1,35 @@
+---
+ubuntu_username: ubuntu
+macos_username: ec2-user
+
+# renovate: datasource=github-releases depName=actions/runner registryUrl=https://github.com/
+github_runner_version: 2.335.1
+linux_runner_amd64_tarball: "https://github.com/actions/runner/releases/download/v{{ github_runner_version }}/actions-runner-linux-x64-{{ github_runner_version }}.tar.gz"
+linux_runner_arm64_tarball: "https://github.com/actions/runner/releases/download/v{{ github_runner_version }}/actions-runner-linux-arm64-{{ github_runner_version }}.tar.gz"
+osx_runner_amd64_tarball: "https://github.com/actions/runner/releases/download/v{{ github_runner_version }}/actions-runner-osx-x64-{{ github_runner_version }}.tar.gz"
+osx_runner_arm64_tarball: "https://github.com/actions/runner/releases/download/v{{ github_runner_version }}/actions-runner-osx-arm64-{{ github_runner_version }}.tar.gz"
+
+linux_install_runner_script: "https://raw.githubusercontent.com/github-aws-runners/terraform-aws-github-runner/main/modules/runners/templates/install-runner.sh"
+osx_install_runner_script: "{{ playbook_dir }}/../scripts/install_runner_osx.sh"
+win_install_runner_script: "{{ playbook_dir }}/../scripts/install_runner.ps1"
+
+# renovate: datasource=github-releases depName=cli/cli registryUrl=https://github.com/
+github_cli_version: 2.95.0
+
+# renovate: datasource=github-releases depName=mikefarah/yq registryUrl=https://github.com/
+yq_version: 4.53.3
+
+# renovate: datasource=github-tags depName=git-lfs/git-lfs registryUrl=https://github.com/
+git_lfs_version: 3.7.1
+
+# renovate: datasource=github-tags depName=aws/aws-cli registryUrl=https://github.com/
+aws_cli_version: 2.35.3
+
+# renovate: datasource=github-tags depName=moby/moby registryUrl=https://github.com/ extractVersion=^docker-v(?<version>.*)$
+docker_static_version: 29.6.1
+
+# renovate: datasource=github-tags depName=docker/buildx registryUrl=https://github.com/
+docker_buildx_plugin_version: 0.35.0
+
+# renovate: datasource=github-tags depName=docker/compose registryUrl=https://github.com/
+docker_compose_plugin_version: 5.3.0

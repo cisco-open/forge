@@ -1,0 +1,18 @@
+---
+policies:
+  - name: forge-stale-runner-volumes
+    resource: ebs
+    description: Mark unattached Forge runner volumes for deletion.
+    filters:
+      - Attachments: []
+      - type: value
+        key: tag:ManagedBy
+        value: forge
+      - type: age
+        days: 7
+        op: greater-than
+    actions:
+      - type: mark-for-op
+        tag: custodian_cleanup
+        op: delete
+        days: 3

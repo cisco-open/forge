@@ -1,0 +1,21 @@
+---
+policies:
+  - name: forge-stale-runner-amis
+    resource: ami
+    description: Report Forge runner AMIs older than 30 days that are not marked protected.
+    filters:
+      - type: value
+        key: tag:Purpose
+        value: forge-runner
+      - type: value
+        key: tag:Protected
+        op: ne
+        value: 'true'
+      - type: age
+        days: 30
+        op: greater-than
+    actions:
+      - type: mark-for-op
+        tag: custodian_cleanup
+        op: deregister
+        days: 7

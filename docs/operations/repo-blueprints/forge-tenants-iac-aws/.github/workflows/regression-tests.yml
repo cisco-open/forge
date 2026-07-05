@@ -1,0 +1,34 @@
+---
+# yamllint disable rule:comments
+# yamllint disable rule:truthy
+name: Regression tests
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/**
+      - release_versions.yml
+      - terraform/**
+
+permissions: {}
+
+concurrency:
+  group: tenants-regression-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  plan:
+    uses: ./.github/workflows/rw-terragrunt.yml
+    permissions:
+      contents: read
+      pull-requests: write
+    with:
+      aws-region: eu-west-1
+      aws-account-id: '000000000000'
+      aws-profile: forge-ops-prod
+      role-name: owner
+      tf-target-env: prod
+      env: prod
+      run-apply: 'false'

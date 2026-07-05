@@ -1,0 +1,45 @@
+---
+- name: macOS | Install AWS CLI v2
+  block:
+    - name: macOS | Download AWS CLI v2 package
+      ansible.builtin.get_url:
+        url: https://awscli.amazonaws.com/AWSCLIV2.pkg
+        dest: /tmp/AWSCLIV2.pkg
+        mode: '0644'
+
+    - name: macOS | Install AWS CLI v2 package
+      ansible.builtin.command: installer -pkg /tmp/AWSCLIV2.pkg -target /
+      changed_when: true
+
+- name: macOS | Set CLI architecture
+  ansible.builtin.set_fact:
+    deps_macos_cli_arch: "{{ 'arm64' if ansible_architecture in ['arm64', 'aarch64'] else 'amd64' }}"
+
+- name: macOS | Download GitHub CLI
+  ansible.builtin.get_url:
+    url: "https://github.com/cli/cli/releases/download/v{{ github_cli_version }}/gh_{{ github_cli_version }}_macOS_{{ deps_macos_cli_arch }}.zip"
+    dest: "/tmp/gh_{{ github_cli_version }}_macOS_{{ deps_macos_cli_arch }}.zip"
+    mode: '0644'
+
+- name: macOS | Extract GitHub CLI
+  ansible.builtin.unarchive:
+    src: "/tmp/gh_{{ github_cli_version }}_macOS_{{ deps_macos_cli_arch }}.zip"
+    dest: /tmp
+    remote_src: true
+
+- name: macOS | Install GitHub CLI
+  ansible.builtin.copy:
+    src: "/tmp/gh_{{ github_cli_version }}_macOS_{{ deps_macos_cli_arch }}/bin/gh"
+    dest: /usr/local/bin/gh
+    owner: root
+    group: wheel
+    mode: '0755'
+    remote_src: true
+
+- name: macOS | Install yq
+  ansible.builtin.get_url:
+    url: "https://github.com/mikefarah/yq/releases/download/v{{ yq_version }}/yq_darwin_{{ deps_macos_cli_arch }}"
+    dest: /usr/local/bin/yq
+    owner: root
+    group: wheel
+    mode: '0755'

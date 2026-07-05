@@ -1,0 +1,63 @@
+---
+# yamllint disable rule:comments
+# yamllint disable rule:truthy
+name: Build containers
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/build-containers.yml
+      - containers/**
+      - renovate.json
+  push:
+    branches:
+      - main
+    paths:
+      - containers/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: containers-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build ${{ matrix.image }}
+    runs-on: k8s
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - action-runner
+          - pre-commit
+    env:
+      REGISTRY: example.com/forge
+      IMAGE_TAG: ${{ github.sha }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.AWS_REGION || 'eu-west-1' }}
+          role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
+
+      - name: Build image
+        shell: bash
+        working-directory: containers/${{ matrix.image }}
+        run: make build REGISTRY="$REGISTRY" IMAGE_TAG="$IMAGE_TAG"
+
+      - name: Push image
+        if: github.event_name != 'pull_request'
+        shell: bash
+        working-directory: containers/${{ matrix.image }}
+        run: make push REGISTRY="$REGISTRY" IMAGE_TAG="$IMAGE_TAG"

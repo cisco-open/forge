@@ -1,0 +1,15 @@
+---
+- name: Ubuntu | Install OS dependencies
+  ansible.builtin.import_tasks: ubuntu_deps.yml
+
+- name: Ubuntu | Install Docker
+  ansible.builtin.import_tasks: ubuntu_docker.yml
+
+- name: Ubuntu | Install CLI tools
+  ansible.builtin.import_tasks: ubuntu_cli_tools.yml
+
+- name: Ubuntu | Install GitHub Actions runner
+  ansible.builtin.import_tasks: ubuntu_runner.yml
+
+- name: Ubuntu | Clean image
+  ansible.builtin.import_tasks: ubuntu_clean.yml

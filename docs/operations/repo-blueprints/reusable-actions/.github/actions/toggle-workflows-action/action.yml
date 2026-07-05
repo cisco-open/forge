@@ -1,0 +1,118 @@
+---
+# yamllint disable rule:comments
+name: Toggle Workflows Action
+description: Enable or disable GitHub Actions workflows with the automation GitHub App
+inputs:
+  aws-region:
+    description: AWS region used to read the GitHub App automation secret.
+    required: true
+  aws-account-id:
+    description: AWS account ID containing the GitHub App automation secret.
+    required: true
+  role-name:
+    description: IAM role name used to read the GitHub App automation secret.
+    required: true
+  workflow-action:
+    description: Workflow action to apply. Must be enable or disable.
+    required: true
+  workflows:
+    description: Newline-separated workflow file names to toggle.
+    required: true
+  owner:
+    description: Organization owner for repositories passed by name.
+    required: false
+  repositories:
+    description: Newline-separated repository names or owner/name values containing the target workflows.
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout Repository
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      with:
+        persist-credentials: false
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@930c381f9e7b95df07a7127f7c1f312063a2dacc # v6.1.3
+      with:
+        role-to-assume: arn:aws:iam::${{ inputs.aws-account-id }}:role/${{ inputs.role-name }}
+        aws-region: ${{ inputs.aws-region }}
+        role-skip-session-tagging: true
+
+    - name: Retrieve Secrets from AWS Secrets Manager
+      uses: aws-actions/aws-secretsmanager-get-secrets@2cb1a461cbd4865ac4299648312e4704c646cd53 # v3.0.1
+      with:
+        secret-ids: |
+          GITHUB_APP_AUTOMATION,/cicd/common/github_app_automation
+        parse-json-secrets: true
+
+    - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+      id: app-token
+      with:
+        client-id: ${{ env.GITHUB_APP_AUTOMATION_CLIENT_ID }}
+        private-key: ${{ env.GITHUB_APP_AUTOMATION_PEM }}
+        owner: ${{ github.repository_owner }}
+        repositories: ${{ inputs.repositories }}
+        permission-contents: read
+        permission-actions: write
+
+    - name: Toggle workflows
+      shell: bash
+      env:
+        APP_TOKEN: ${{ steps.app-token.outputs.token }}
+        GITHUB_API_URL: ${{ github.api_url }}
+        OWNER: ${{ inputs.owner }}
+        REPOSITORIES: ${{ inputs.repositories }}
+        WORKFLOW_ACTION: ${{ inputs.workflow-action }}
+        WORKFLOWS: ${{ inputs.workflows }}
+      run: |
+        set -euo pipefail
+
+        case "$WORKFLOW_ACTION" in
+          enable)
+            expected_state="active"
+            ;;
+          disable)
+            expected_state="disabled_manually"
+            ;;
+          *)
+            echo "workflow-action must be enable or disable, got ${WORKFLOW_ACTION}"
+            exit 1
+            ;;
+        esac
+
+        while IFS= read -r repository; do
+          if [[ -z "${repository//[[:space:]]/}" ]]; then
+            continue
+          fi
+
+          if [[ "$repository" == */* ]]; then
+            target_repository="$repository"
+          else
+            target_repository="${OWNER}/${repository}"
+          fi
+
+          while IFS= read -r workflow; do
+            if [[ -z "${workflow//[[:space:]]/}" ]]; then
+              continue
+            fi
+
+            curl --fail --silent --show-error --location \
+              --request PUT \
+              --header "Authorization: Bearer ${APP_TOKEN}" \
+              --header "Accept: application/vnd.github+json" \
+              --header "X-GitHub-Api-Version: 2022-11-28" \
+              "${GITHUB_API_URL}/repos/${target_repository}/actions/workflows/${workflow}/${WORKFLOW_ACTION}"
+
+            state=$(curl --fail --silent --show-error --location \
+              --header "Authorization: Bearer ${APP_TOKEN}" \
+              --header "Accept: application/vnd.github+json" \
+              --header "X-GitHub-Api-Version: 2022-11-28" \
+              "${GITHUB_API_URL}/repos/${target_repository}/actions/workflows/${workflow}" | jq -r '.state')
+            if [[ "$state" != "$expected_state" ]]; then
+              echo "Expected ${target_repository}/${workflow} to be ${expected_state}, got ${state}"
+              exit 1
+            fi
+          done <<< "$WORKFLOWS"
+        done <<< "$REPOSITORIES"

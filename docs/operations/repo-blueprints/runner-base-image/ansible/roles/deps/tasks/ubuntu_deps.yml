@@ -1,0 +1,67 @@
+---
+- name: Ubuntu | Disable unattended upgrades
+  block:
+    - name: Ubuntu | Disable periodic apt updates
+      ansible.builtin.copy:
+        dest: /etc/apt/apt.conf.d/10periodic
+        owner: root
+        group: root
+        mode: '0644'
+        content: |
+          APT::Periodic::Enable "0";
+          APT::Periodic::Update-Package-Lists "0";
+          APT::Periodic::Unattended-Upgrade "0";
+
+    - name: Ubuntu | Stop apt timer units
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        enabled: false
+        masked: true
+        state: stopped
+      failed_when: false
+      loop:
+        - apt-daily.timer
+        - apt-daily-upgrade.timer
+        - apt-daily.service
+        - apt-daily-upgrade.service
+
+- name: Ubuntu | Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 600
+
+- name: Ubuntu | Upgrade packages
+  ansible.builtin.apt:
+    upgrade: dist
+    force_apt_get: true
+
+- name: Ubuntu | Install base packages
+  ansible.builtin.apt:
+    name:
+      - amazon-ecr-credential-helper
+      - build-essential
+      - ca-certificates
+      - curl
+      - dbus-user-session
+      - dnsutils
+      - fuse-overlayfs
+      - git
+      - git-lfs
+      - gnupg
+      - jq
+      - libffi-dev
+      - libssl-dev
+      - make
+      - pkg-config
+      - python3
+      - python3-pip
+      - python3-venv
+      - python3-yaml
+      - shellcheck
+      - slirp4netns
+      - uidmap
+      - unzip
+      - wget
+      - xz-utils
+      - zip
+    state: present

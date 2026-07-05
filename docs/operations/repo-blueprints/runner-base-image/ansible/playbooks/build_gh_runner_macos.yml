@@ -1,0 +1,8 @@
+---
+- name: Build GitHub runner base image for macOS
+  hosts: all
+  gather_facts: true
+  become: true
+
+  roles:
+    - role: deps

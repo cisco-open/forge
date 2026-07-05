@@ -1,0 +1,12 @@
+---
+- name: macOS | Install OS dependencies
+  ansible.builtin.import_tasks: macos_deps.yml
+
+- name: macOS | Install Docker CLI and plugins
+  ansible.builtin.import_tasks: macos_docker.yml
+
+- name: macOS | Install CLI tools
+  ansible.builtin.import_tasks: macos_cli_tools.yml
+
+- name: macOS | Install GitHub Actions runner
+  ansible.builtin.import_tasks: macos_runner.yml

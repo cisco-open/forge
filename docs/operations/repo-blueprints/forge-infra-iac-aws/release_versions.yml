@@ -1,0 +1,10 @@
+---
+modules:
+  infra:
+    eks:
+      source: git::https://github.com/cisco-open/forge.git//modules/infra/eks?ref=FORGE_REF
+  helpers:
+    storage:
+      source: git::https://github.com/cisco-open/forge.git//modules/helpers/storage?ref=FORGE_REF
+    ecr:
+      source: git::https://github.com/cisco-open/forge.git//modules/helpers/ecr?ref=FORGE_REF

@@ -1,0 +1,41 @@
+---
+- name: Ubuntu | Set CLI architecture
+  ansible.builtin.set_fact:
+    deps_linux_arch: "{{ 'aarch64' if ansible_architecture == 'aarch64' else 'x86_64' }}"
+    deps_gh_arch: "{{ 'arm64' if ansible_architecture == 'aarch64' else 'amd64' }}"
+    deps_yq_arch: "{{ 'arm64' if ansible_architecture == 'aarch64' else 'amd64' }}"
+
+- name: Ubuntu | Download AWS CLI v2
+  ansible.builtin.get_url:
+    url: "https://awscli.amazonaws.com/awscli-exe-linux-{{ deps_linux_arch }}-{{ aws_cli_version }}.zip"
+    dest: /tmp/awscliv2.zip
+    mode: '0644'
+
+- name: Ubuntu | Install AWS CLI v2
+  ansible.builtin.shell: |
+    set -euo pipefail
+    rm -rf /tmp/awscliv2
+    unzip -q /tmp/awscliv2.zip -d /tmp/awscliv2
+    /tmp/awscliv2/aws/install --update -i /usr/local/aws-cli -b /usr/local/bin
+    rm -rf /tmp/awscliv2 /tmp/awscliv2.zip
+  args:
+    executable: /bin/bash
+    creates: /usr/local/bin/aws
+
+- name: Ubuntu | Download GitHub CLI
+  ansible.builtin.get_url:
+    url: "https://github.com/cli/cli/releases/download/v{{ github_cli_version }}/gh_{{ github_cli_version }}_linux_{{ deps_gh_arch }}.deb"
+    dest: /tmp/gh.deb
+    mode: '0644'
+
+- name: Ubuntu | Install GitHub CLI
+  ansible.builtin.apt:
+    deb: /tmp/gh.deb
+
+- name: Ubuntu | Install yq
+  ansible.builtin.get_url:
+    url: "https://github.com/mikefarah/yq/releases/download/v{{ yq_version }}/yq_linux_{{ deps_yq_arch }}"
+    dest: /usr/local/bin/yq
+    owner: root
+    group: root
+    mode: '0755'

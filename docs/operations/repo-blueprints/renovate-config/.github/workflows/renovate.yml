@@ -1,0 +1,61 @@
+---
+# yamllint disable rule:comments
+# yamllint disable rule:truthy
+name: Renovate
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: 0 */4 * * *
+
+permissions: {}
+
+concurrency:
+  group: renovate
+  cancel-in-progress: false
+
+jobs:
+  renovate:
+    name: Run Renovate
+    runs-on: k8s
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+      issues: write
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION || 'eu-west-1' }}
+      LOG_FILE: /tmp/renovate-logs/renovate.log
+      LOG_FILE_FORMAT: json
+      LOG_FILE_LEVEL: debug
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Prepare logs
+        shell: bash
+        run: install -d -m 755 "${RUNNER_TEMP}/renovate-logs"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
+
+      - name: Run Renovate
+        uses: renovatebot/github-action@<commit-sha>
+        with:
+          configurationFile: config/default.json
+          env-regex: '^(AWS_|LOG_FILE|LOG_FILE_FORMAT|LOG_FILE_LEVEL)'
+          docker-volumes: |
+            ${{ runner.temp }}/renovate-logs:/tmp/renovate-logs
+
+      - name: Upload Renovate logs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: renovate-logs
+          path: ${{ runner.temp }}/renovate-logs
+          if-no-files-found: ignore

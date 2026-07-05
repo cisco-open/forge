@@ -1,0 +1,22 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "repositories": [
+    "example-org/forge-infra-iac-aws",
+    "example-org/forge-tenants-iac-aws",
+    "example-org/forge-runner-base-image",
+    "example-org/forge-containers"
+  ],
+  "dependencyDashboard": true,
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "matchManagers": ["terraform", "terragrunt"],
+      "groupName": "terraform modules"
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions"
+    }
+  ]
+}

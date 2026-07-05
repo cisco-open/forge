@@ -1,0 +1,74 @@
+---
+# yamllint disable rule:comments
+# yamllint disable rule:truthy
+name: Reusable Terragrunt
+
+on:
+  workflow_call:
+    inputs:
+      aws-region:
+        type: string
+        required: true
+      aws-account-id:
+        type: string
+        required: true
+      aws-profile:
+        type: string
+        required: true
+      role-name:
+        type: string
+        required: true
+      tf-target-env:
+        type: string
+        required: true
+      env:
+        type: string
+        required: true
+      run-apply:
+        type: string
+        required: true
+
+permissions: {}
+
+jobs:
+  discover:
+    runs-on: k8s
+    outputs:
+      units: ${{ steps.units.outputs.units }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - id: units
+        shell: bash
+        env:
+          TF_TARGET_ENV: ${{ inputs.tf-target-env }}
+        run: |
+          units=$(find "terraform/environments/${TF_TARGET_ENV}" -name terragrunt.hcl -not -path '*/.terragrunt-cache/*' | sed 's#/terragrunt.hcl$##' | jq -R -s -c 'split("\n") | map(select(length > 0)) | map({path: .})')
+          echo "units=$units" >> "$GITHUB_OUTPUT"
+
+  terragrunt:
+    needs: discover
+    runs-on: k8s
+    environment: ${{ inputs.run-apply == 'true' && inputs.env || '' }}
+    permissions:
+      contents: read
+      pull-requests: write
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        unit: ${{ fromJSON(needs.discover.outputs.units) }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/terragrunt-deployment-action
+        with:
+          aws-region: ${{ inputs.aws-region }}
+          aws-account-id: ${{ inputs.aws-account-id }}
+          aws-profile: ${{ inputs.aws-profile }}
+          role-name: ${{ inputs.role-name }}
+          tf-target-env: ${{ inputs.tf-target-env }}
+          tf-path: ${{ matrix.unit.path }}
+          run-apply: ${{ inputs.run-apply }}

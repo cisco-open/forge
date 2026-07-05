@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.forge.github-runner-toolcache</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/scripts/ensure_runner_toolcache_osx.sh</string>
+  </array>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <key>StartInterval</key>
+  <integer>60</integer>
+
+  <key>WorkingDirectory</key>
+  <string>/</string>
+
+  <key>StandardOutPath</key>
+  <string>/var/log/github-runner-toolcache.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/var/log/github-runner-toolcache.err.log</string>
+</dict>
+</plist>

@@ -1,0 +1,12 @@
+---
+- name: Windows | Install OS dependencies
+  ansible.builtin.import_tasks: windows_deps.yml
+
+- name: Windows | Install Docker CLI and plugins
+  ansible.builtin.import_tasks: windows_docker.yml
+
+- name: Windows | Install CLI tools
+  ansible.builtin.import_tasks: windows_cli_tools.yml
+
+- name: Windows | Install GitHub Actions runner
+  ansible.builtin.import_tasks: windows_runner.yml

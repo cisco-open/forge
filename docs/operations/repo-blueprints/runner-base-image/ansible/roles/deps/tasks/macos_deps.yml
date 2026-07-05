@@ -1,0 +1,46 @@
+---
+- name: macOS | Detect Homebrew prefix
+  ansible.builtin.set_fact:
+    deps_homebrew_prefix: "{{ '/opt/homebrew' if ansible_architecture in ['arm64', 'aarch64'] else '/usr/local' }}"
+
+- name: macOS | Check Homebrew
+  ansible.builtin.stat:
+    path: "{{ deps_homebrew_prefix }}/bin/brew"
+  register: deps_homebrew
+
+- name: macOS | Install Homebrew
+  become: false
+  ansible.builtin.shell: |
+    set -euo pipefail
+    NONINTERACTIVE=1 /bin/bash -c \
+      "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  args:
+    executable: /bin/bash
+  when: not deps_homebrew.stat.exists
+
+- name: macOS | Install Homebrew packages
+  become: false
+  community.general.homebrew:
+    name:
+      - bash
+      - coreutils
+      - git
+      - git-lfs
+      - gnupg
+      - jq
+      - shellcheck
+      - wget
+      - xz
+      - docker-credential-helper-ecr
+    state: present
+    path: "{{ deps_homebrew_prefix }}/bin"
+
+- name: macOS | Add Homebrew paths
+  ansible.builtin.copy:
+    dest: /etc/paths.d/homebrew
+    owner: root
+    group: wheel
+    mode: '0644'
+    content: |
+      {{ deps_homebrew_prefix }}/bin
+      {{ deps_homebrew_prefix }}/sbin

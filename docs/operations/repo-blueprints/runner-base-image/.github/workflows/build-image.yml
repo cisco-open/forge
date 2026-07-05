@@ -1,0 +1,203 @@
+---
+# yamllint disable rule:comments
+# yamllint disable rule:truthy
+name: Build runner base images
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    branches:
+      - main
+    paths:
+      - .github/workflows/build-image.yml
+      - ansible/**
+      - packer/**
+      - requirements.yml
+      - renovate.json
+      - scripts/**
+  workflow_dispatch:
+    inputs:
+      target_os:
+        description: Operating system to build or validate.
+        required: true
+        type: choice
+        default: all
+        options:
+          - all
+          - ubuntu
+          - windows
+          - macos
+      build:
+        description: Build AMIs. Disable to validate only.
+        required: true
+        type: boolean
+        default: true
+  schedule:
+    - cron: '17 4 * * 0'
+  push:
+    branches:
+      - main
+    paths:
+      - ansible/**
+      - packer/**
+      - requirements.yml
+      - scripts/**
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: runner-base-image-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  select-matrix:
+    name: Select image matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - name: Select matrix
+        id: matrix
+        shell: bash
+        env:
+          TARGET_OS: ${{ inputs.target_os || 'all' }}
+        run: |
+          set -euo pipefail
+
+          cat >matrix.json <<'JSON'
+          {
+            "include": [
+              {
+                "os": "ubuntu",
+                "version": "24.04",
+                "arch": "amd64",
+                "template": "packer/gha-runner.ubuntu.pkr.hcl"
+              },
+              {
+                "os": "ubuntu",
+                "version": "24.04",
+                "arch": "arm64",
+                "template": "packer/gha-runner.ubuntu.pkr.hcl"
+              },
+              {
+                "os": "windows",
+                "version": "2022",
+                "arch": "amd64",
+                "template": "packer/gha-runner.windows.pkr.hcl"
+              },
+              {
+                "os": "macos",
+                "version": "14",
+                "arch": "amd64",
+                "template": "packer/gha-runner.macos.pkr.hcl"
+              },
+              {
+                "os": "macos",
+                "version": "14",
+                "arch": "arm64",
+                "template": "packer/gha-runner.macos.pkr.hcl"
+              }
+            ]
+          }
+          JSON
+
+          if [[ "$TARGET_OS" = "all" ]]; then
+            matrix=$(jq -c . matrix.json)
+          else
+            matrix=$(jq -c --arg os "$TARGET_OS" \
+              '{include: [.include[] | select(.os == $os)]}' matrix.json)
+          fi
+
+          echo "matrix=${matrix}" >> "$GITHUB_OUTPUT"
+
+  packer:
+    name: ${{ matrix.os }} ${{ matrix.version }} ${{ matrix.arch }}
+    needs: select-matrix
+    runs-on: ${{ vars.PACKER_RUNNER_LABEL || 'ubuntu-latest' }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.select-matrix.outputs.matrix) }}
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION || 'eu-west-1' }}
+      VERSION: ${{ github.ref_name }}-${{ github.run_number }}-${{ github.run_attempt }}
+      JOB_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+      BRANCH: ${{ github.ref_name }}
+      AMI_ARCH: ${{ matrix.arch }}
+      UBUNTU_VERSION: ${{ matrix.os == 'ubuntu' && matrix.version || '' }}
+      WINDOWS_VERSION: ${{ matrix.os == 'windows' && matrix.version || '' }}
+      MACOS_MAJOR_VERSION: ${{ matrix.os == 'macos' && matrix.version || '' }}
+      PACKER_ALLOWED_CIDR: ${{ vars.PACKER_ALLOWED_CIDR || '10.0.0.0/8' }}
+      PACKER_AVAILABILITY_ZONE: ${{ vars.PACKER_MACOS_AVAILABILITY_ZONE || '' }}
+      PACKER_GITHUB_API_TOKEN: ${{ secrets.PACKER_GITHUB_API_TOKEN || '' }}
+      PACKER_HOST_RESOURCE_GROUP_ARN: ${{ vars.PACKER_MACOS_HOST_RESOURCE_GROUP_ARN || '' }}
+      PACKER_LICENSE_CONFIGURATION_ARN: ${{ vars.PACKER_MACOS_LICENSE_CONFIGURATION_ARN || '' }}
+      PACKER_SUBNET_ID: ${{ vars.PACKER_SUBNET_ID }}
+      PACKER_VPC_ID: ${{ vars.PACKER_VPC_ID }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Packer
+        uses: hashicorp/setup-packer@v3
+
+      - name: Install Ansible
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ansible
+
+      - name: Install Ansible collections
+        shell: bash
+        run: ansible-galaxy collection install -r requirements.yml
+
+      - name: Configure AWS credentials
+        if: github.event_name != 'pull_request'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
+
+      - name: Initialize Packer
+        shell: bash
+        run: packer init "${{ matrix.template }}"
+
+      - name: Validate Packer template
+        shell: bash
+        run: packer validate "${{ matrix.template }}"
+
+      - name: Build AMI
+        if: github.event_name != 'pull_request' && (github.event_name != 'workflow_dispatch' || inputs.build == true)
+        shell: bash
+        run: |
+          set -euo pipefail
+          packer build -machine-readable "${{ matrix.template }}" | tee packer.log
+
+      - name: Add AMI manifest to summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "### ${{ matrix.os }} ${{ matrix.version }} ${{ matrix.arch }}"
+            if [[ -f manifest.json ]]; then
+              jq -r '.builds[] | "- " + .name + ": `" + .artifact_id + "`"' manifest.json
+            else
+              echo "- No manifest was produced."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload Packer artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: packer-${{ matrix.os }}-${{ matrix.version }}-${{ matrix.arch }}
+          path: |
+            manifest.json
+            packer.log
+          if-no-files-found: ignore

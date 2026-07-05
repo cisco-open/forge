@@ -1,0 +1,191 @@
+---
+name: Create Global Lock
+description: Ensures only one job runs at a time using a DynamoDB lock.
+inputs:
+  lock-id:
+    description: Unique identifier for the lock.
+    required: true
+  lock-action:
+    description: Action to perform on the lock (acquire or release).
+    required: true
+  lock-ttl:
+    description: Time-to-live for the lock in seconds.
+    required: false
+    default: '172800'  # 48h TTL
+runs:
+  using: composite
+  steps:
+
+    - name: Get AWS Role Prefix, Region, and Environment Type
+      id: aws-role
+      shell: bash
+      run: |
+        write_env() {
+            local name="$1"
+            local value="$2"
+            local delimiter
+            delimiter="ghenv_$(openssl rand -hex 16 2>/dev/null || date +%s%N)"
+            {
+                printf '%s<<%s\n' "$name" "$delimiter"
+                printf '%s\n' "$value"
+                printf '%s\n' "$delimiter"
+            } >> "$GITHUB_ENV"
+        }
+
+        # Defaults
+        ROLE_PREFIX=""
+        REGION=""
+        ENV_TYPE=""
+
+        # Detect Kubernetes pod
+        if [ -f /var/run/secrets/kubernetes.io/serviceaccount/token ]; then
+
+            for var in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_ROLE_ARN; do
+                unset $var
+            done
+
+            if [ -z "${POD_AWS_DEFAULT_REGION:-}" ]; then
+                POD_AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
+                write_env POD_AWS_DEFAULT_REGION "$AWS_DEFAULT_REGION"
+            fi
+
+            ENV_TYPE="pod"
+            echo "Running inside a pod"
+            ROLE_ARN=$(aws sts get-caller-identity --query Arn --output text)
+            ROLE_PREFIX=$(echo "$ROLE_ARN" | cut -d'/' -f2 | cut -d'-' -f1-3)
+            REGION=$POD_AWS_DEFAULT_REGION
+
+        # Detect EC2 VM
+        elif curl --connect-timeout 1 -s http://169.254.169.254/latest/meta-data/ > /dev/null; then
+            ENV_TYPE="vm"
+            echo "Running on EC2 VM"
+            ROLE_PREFIX=$(curl -s http://169.254.169.254/latest/meta-data/iam/info | jq -r '.InstanceProfileArn' | cut -d'/' -f2 | cut -d'-' -f1-3)
+            REGION=$(curl -s http://169.254.169.254/latest/meta-data/placement/region)
+
+        else
+            ENV_TYPE="unknown"
+            echo "Unknown environment"
+            exit 1
+        fi
+
+        write_env ROLE_PREFIX "$ROLE_PREFIX"
+        write_env REGION "$REGION"
+        write_env ENV_TYPE "$ENV_TYPE"
+
+    - name: Define Lock Variables
+      id: lock-vars
+      shell: bash
+      env:
+        WORKFLOW_RUN_ID_VALUE: ${{ github.run_id }}
+        WORKFLOW_RUN_ATTEMPT_VALUE: ${{ github.run_attempt }}
+        WORKFLOW_RUN_JOB_VALUE: ${{ github.job }}
+        MATRIX_JSON: ${{ toJSON(matrix) }}
+        LOCK_TTL: ${{ inputs.lock-ttl }}
+        DYNAMODB_TABLE_PREFIX: ${{ env.ROLE_PREFIX }}
+        WORKFLOW_SERVER_URL: ${{ github.server_url }}
+        WORKFLOW_REPOSITORY: ${{ github.repository }}
+      run: |
+        write_env() {
+            local name="$1"
+            local value="$2"
+            local delimiter
+            delimiter="ghenv_$(openssl rand -hex 16 2>/dev/null || date +%s%N)"
+            {
+                printf '%s<<%s\n' "$name" "$delimiter"
+                printf '%s\n' "$value"
+                printf '%s\n' "$delimiter"
+            } >> "$GITHUB_ENV"
+        }
+
+        WORKFLOW_RUN_ID="$WORKFLOW_RUN_ID_VALUE"
+        WORKFLOW_RUN_ATTEMPT="$WORKFLOW_RUN_ATTEMPT_VALUE"
+        WORKFLOW_RUN_JOB="$WORKFLOW_RUN_JOB_VALUE"
+        MATRIX_KEY=$(printf '%s' "$MATRIX_JSON" | sha256sum | awk '{print $1}')
+        EXPIRATION_TIMESTAMP=$(($(date +%s) + LOCK_TTL ))
+        DYNAMODB_TABLE="${DYNAMODB_TABLE_PREFIX}-gh-actions-lock"
+        WORKFLOW_RUN_URL="${WORKFLOW_SERVER_URL}/${WORKFLOW_REPOSITORY}/actions/runs/${WORKFLOW_RUN_ID}"
+        write_env WORKFLOW_RUN_ID "$WORKFLOW_RUN_ID"
+        write_env WORKFLOW_RUN_ATTEMPT "$WORKFLOW_RUN_ATTEMPT"
+        write_env WORKFLOW_RUN_JOB "$WORKFLOW_RUN_JOB"
+        write_env MATRIX_KEY "$MATRIX_KEY"
+        write_env EXPIRATION_TIMESTAMP "$EXPIRATION_TIMESTAMP"
+        write_env DYNAMODB_TABLE "$DYNAMODB_TABLE"
+        write_env WORKFLOW_RUN_URL "$WORKFLOW_RUN_URL"
+
+    - name: Acquire Lock
+      id: acquire-lock
+      if: ${{ inputs.lock-action == 'acquire' }}
+      shell: bash
+      env:
+        LOCK_ID: ${{ inputs.lock-id }}
+      run: |
+        for var in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_ROLE_ARN; do
+            unset $var
+        done
+        while true; do
+            # Check if the lock already exists
+            EXISTING_LOCK=$(aws dynamodb get-item --region "${REGION}" --table-name "${DYNAMODB_TABLE}" --key '{"lock_id": {"S": "'"$LOCK_ID"'"}}' --output json | jq -r '.Item')
+
+            if [ "$EXISTING_LOCK" != "" ]; then
+                echo "Lock exists, waiting..."
+                sleep 30
+            else
+                echo "Acquiring lock..."
+
+                # Try to put the item (acquire the lock)
+                PUT_LOCK_OUTPUT=$(aws dynamodb put-item --region "${REGION}" --table-name "${DYNAMODB_TABLE}" --item '{
+                    "lock_id": {"S": "'"$LOCK_ID"'"},
+                    "workflow_run_id": {"S": "'"$WORKFLOW_RUN_ID"'"},
+                    "workflow_run_attempt": {"S": "'"$WORKFLOW_RUN_ATTEMPT"'"},
+                    "workflow_run_job": {"S": "'"$WORKFLOW_RUN_JOB"'"},
+                    "matrix_key": {"S": "'"$MATRIX_KEY"'"},
+                    "workflow_run_url": {"S": "'"$WORKFLOW_RUN_URL"'"},
+                    "timestamp": {"N": "'"$EXPIRATION_TIMESTAMP"'"}
+                }')
+                echo $PUT_LOCK_OUTPUT
+
+                EXISTING_LOCK=$(aws dynamodb get-item --region "${REGION}" --table-name "${DYNAMODB_TABLE}" --key '{"lock_id": {"S": "'"$LOCK_ID"'"}}' --output json | jq -r '.Item')
+                # Confirm that this workflow run, and matrix own the lock
+                echo $EXISTING_LOCK
+                if [[ "$(echo "$EXISTING_LOCK" | jq -r '.workflow_run_id.S')" == "$WORKFLOW_RUN_ID" && \
+                      "$(echo "$EXISTING_LOCK" | jq -r '.matrix_key.S')" == "$MATRIX_KEY" ]]; then
+                  echo "Lock acquired successfully."
+                  break
+                else
+                  echo "Lock acquisition was done by another workflow/job/matrix, retrying..."
+                  sleep 30
+                fi
+            fi
+        done
+
+    - name: Release Lock
+      id: release-lock
+      if: ${{ inputs.lock-action == 'release' }}
+      shell: bash
+      env:
+        LOCK_ID: ${{ inputs.lock-id }}
+      run: |
+        for var in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_ROLE_ARN; do
+            unset $var
+        done
+        EXISTING_LOCK=$(aws dynamodb get-item --region "${REGION}" --table-name "${DYNAMODB_TABLE}" --key '{"lock_id": {"S": "'"$LOCK_ID"'"}}' --output json | jq -r '.Item')
+        if [ "$EXISTING_LOCK" != "" ]; then
+          # Check if workflow_run_id and matrix_key all match
+          echo $EXISTING_LOCK
+          if [[ "$(echo "$EXISTING_LOCK" | jq -r '.workflow_run_id.S')" == "$WORKFLOW_RUN_ID" && \
+                "$(echo "$EXISTING_LOCK" | jq -r '.matrix_key.S')" == "$MATRIX_KEY" ]]; then
+            echo "Lock exists and is held by the same workflow/job/matrix, releasing the lock..."
+
+            # Delete the lock from DynamoDB
+            aws dynamodb delete-item --region "${REGION}" --table-name "${DYNAMODB_TABLE}" --key '{
+                "lock_id": {"S": "'"$LOCK_ID"'"}
+            }'
+
+            echo "Lock released."
+            else
+              echo "No matching lock for this workflow/job/matrix (workflow_run_id or matrix_key mismatch)."
+              exit 1
+            fi
+        else
+          echo "Lock does not exist"
+        fi

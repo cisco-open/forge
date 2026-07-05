@@ -1,0 +1,24 @@
+---
+- name: Windows | Download AWS CLI v2 MSI
+  ansible.windows.win_get_url:
+    url: https://awscli.amazonaws.com/AWSCLIV2.msi
+    dest: C:\Temp\AWSCLIV2.msi
+    force: false
+
+- name: Windows | Install AWS CLI v2
+  ansible.windows.win_package:
+    path: C:\Temp\AWSCLIV2.msi
+    arguments: /qn
+    state: present
+
+- name: Windows | Download GitHub CLI MSI
+  ansible.windows.win_get_url:
+    url: "https://github.com/cli/cli/releases/download/v{{ github_cli_version }}/gh_{{ github_cli_version }}_windows_amd64.msi"
+    dest: "C:\\Temp\\gh_{{ github_cli_version }}_windows_amd64.msi"
+    force: false
+
+- name: Windows | Install GitHub CLI
+  ansible.windows.win_package:
+    path: "C:\\Temp\\gh_{{ github_cli_version }}_windows_amd64.msi"
+    arguments: /qn /norestart
+    state: present

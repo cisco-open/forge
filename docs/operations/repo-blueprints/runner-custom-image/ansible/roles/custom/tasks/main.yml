@@ -1,0 +1,16 @@
+---
+- name: Install product build tools
+  ansible.builtin.apt:
+    name:
+      - make
+      - python3-pip
+      - shellcheck
+    state: present
+    update_cache: true
+
+- name: Install Python build tools
+  ansible.builtin.pip:
+    name:
+      - pre-commit
+      - yamllint
+    executable: pip3

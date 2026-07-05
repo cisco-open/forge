@@ -1,0 +1,27 @@
+---
+- name: Ubuntu | Ensure /opt/scripts exists
+  ansible.builtin.file:
+    path: /opt/scripts
+    state: directory
+    mode: '0755'
+
+- name: Ubuntu | Download GitHub Actions runner installer
+  ansible.builtin.get_url:
+    url: "{{ linux_install_runner_script }}"
+    dest: /opt/scripts/install_runner.sh
+    mode: '0755'
+    force: true
+
+- name: Ubuntu | Install GitHub Actions runner package
+  ansible.builtin.shell: |
+    set -euo pipefail
+    USERNAME="{{ ubuntu_username }}" RUNNER_TARBALL_URL="{{ runner_tarball }}" /opt/scripts/install_runner.sh
+  args:
+    executable: /bin/bash
+  vars:
+    runner_tarball: >-
+      {{
+        linux_runner_arm64_tarball
+        if ansible_architecture == 'aarch64'
+        else linux_runner_amd64_tarball
+      }}

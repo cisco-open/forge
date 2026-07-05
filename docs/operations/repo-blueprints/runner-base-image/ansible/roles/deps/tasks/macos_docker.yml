@@ -1,0 +1,47 @@
+---
+- name: macOS | Set Docker architecture
+  ansible.builtin.set_fact:
+    deps_docker_static_arch: "{{ 'aarch64' if ansible_architecture in ['arm64', 'aarch64'] else 'x86_64' }}"
+    deps_docker_plugin_arch: "{{ 'arm64' if ansible_architecture in ['arm64', 'aarch64'] else 'amd64' }}"
+    deps_docker_compose_arch: "{{ 'aarch64' if ansible_architecture in ['arm64', 'aarch64'] else 'x86_64' }}"
+
+- name: macOS | Download Docker static binaries
+  ansible.builtin.get_url:
+    url: "https://download.docker.com/mac/static/stable/{{ deps_docker_static_arch }}/docker-{{ docker_static_version }}.tgz"
+    dest: "/tmp/docker-{{ docker_static_version }}.tgz"
+    mode: '0644'
+
+- name: macOS | Extract Docker static binaries
+  ansible.builtin.command:
+    cmd: >-
+      /usr/bin/tar -xzf /tmp/docker-{{ docker_static_version }}.tgz
+      -C /usr/local/bin --strip-components 1
+  changed_when: true
+
+- name: macOS | Ensure Docker plugins directory exists
+  ansible.builtin.file:
+    path: "/Users/{{ macos_username }}/.docker/cli-plugins"
+    state: directory
+    owner: "{{ macos_username }}"
+    group: staff
+    mode: '0755'
+
+- name: macOS | Download docker-buildx plugin
+  ansible.builtin.get_url:
+    url: "https://github.com/docker/buildx/releases/download/v{{ docker_buildx_plugin_version }}/buildx-v{{ docker_buildx_plugin_version }}.darwin-{{ deps_docker_plugin_arch }}"
+    dest: "/Users/{{ macos_username }}/.docker/cli-plugins/docker-buildx"
+    owner: "{{ macos_username }}"
+    group: staff
+    mode: '0755'
+
+- name: macOS | Download Docker Compose plugin
+  ansible.builtin.get_url:
+    url: "https://github.com/docker/compose/releases/download/v{{ docker_compose_plugin_version }}/docker-compose-darwin-{{ deps_docker_compose_arch }}"
+    dest: "/Users/{{ macos_username }}/.docker/cli-plugins/docker-compose"
+    owner: "{{ macos_username }}"
+    group: staff
+    mode: '0755'
+
+- name: macOS | Verify Docker CLI
+  ansible.builtin.command: /usr/local/bin/docker --version
+  changed_when: false

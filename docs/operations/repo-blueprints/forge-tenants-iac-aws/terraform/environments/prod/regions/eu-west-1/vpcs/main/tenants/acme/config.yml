@@ -1,0 +1,7 @@
+---
+tenant:
+  name: acme
+  github_org: acme
+  arc_cluster_name: forge-prod-eu-west-1
+  github_webhook_relay:
+    enabled: false

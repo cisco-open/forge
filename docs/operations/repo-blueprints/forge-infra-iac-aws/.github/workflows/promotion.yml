@@ -1,0 +1,61 @@
+---
+# yamllint disable rule:comments
+# yamllint disable rule:truthy
+name: Infra promotion
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - release_versions.yml
+      - terraform/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: forge-infra-promotion
+  cancel-in-progress: false
+
+jobs:
+  storage:
+    runs-on: k8s
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/terragrunt-deployment-action
+        with:
+          aws-region: eu-west-1
+          aws-account-id: '000000000000'
+          aws-profile: forge-ops-prod
+          role-name: owner
+          tf-target-env: prod
+          tf-path: terraform/environments/prod/helpers/storage
+          run-apply: 'true'
+
+  regional:
+    needs: storage
+    runs-on: k8s
+    strategy:
+      fail-fast: false
+      matrix:
+        unit:
+          - terraform/environments/prod/regions/eu-west-1/ecr
+          - terraform/environments/prod/regions/eu-west-1/eks
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/terragrunt-deployment-action
+        with:
+          aws-region: eu-west-1
+          aws-account-id: '000000000000'
+          aws-profile: forge-ops-prod
+          role-name: owner
+          tf-target-env: prod
+          tf-path: ${{ matrix.unit }}
+          run-apply: 'true'

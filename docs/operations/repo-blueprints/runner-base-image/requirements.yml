@@ -1,0 +1,8 @@
+---
+collections:
+  - name: ansible.windows
+    version: 3.2.0
+  - name: community.general
+    version: 11.4.0
+  - name: community.windows
+    version: 3.2.0

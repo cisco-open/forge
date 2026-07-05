@@ -1,0 +1,17 @@
+---
+- name: Ubuntu dependencies
+  ansible.builtin.import_tasks: ubuntu.yml
+  when:
+    - ansible_system == 'Linux'
+    - ansible_os_family == 'Debian'
+
+- name: macOS dependencies
+  ansible.builtin.import_tasks: macos.yml
+  when:
+    - ansible_system == 'Darwin'
+
+- name: Windows dependencies
+  ansible.builtin.import_tasks: windows.yml
+  when:
+    - ansible_os_family is defined
+    - ansible_os_family == 'Windows'

@@ -1,0 +1,63 @@
+---
+- name: Windows | Ensure temp and tools directories exist
+  ansible.windows.win_file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - C:\Temp
+    - C:\Tools
+
+- name: Windows | Add tools directory to PATH
+  ansible.windows.win_path:
+    elements:
+      - C:\Tools
+    scope: machine
+    state: present
+
+- name: Windows | Download Git installer
+  ansible.windows.win_get_url:
+    url: https://github.com/git-for-windows/git/releases/download/v2.45.2.windows.1/Git-2.45.2-64-bit.exe
+    dest: C:\Temp\Git-2.45.2-64-bit.exe
+    force: false
+
+- name: Windows | Install Git
+  ansible.windows.win_package:
+    path: C:\Temp\Git-2.45.2-64-bit.exe
+    arguments: /VERYSILENT /NORESTART
+    state: present
+
+- name: Windows | Download Git LFS installer
+  ansible.windows.win_get_url:
+    url: "https://github.com/git-lfs/git-lfs/releases/download/v{{ git_lfs_version }}/git-lfs-windows-v{{ git_lfs_version }}.exe"
+    dest: "C:\\Temp\\git-lfs-windows-v{{ git_lfs_version }}.exe"
+    force: false
+
+- name: Windows | Install Git LFS
+  ansible.windows.win_package:
+    path: "C:\\Temp\\git-lfs-windows-v{{ git_lfs_version }}.exe"
+    arguments: /VERYSILENT /NORESTART
+    state: present
+
+- name: Windows | Download Python
+  ansible.windows.win_get_url:
+    url: https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe
+    dest: C:\Temp\python-3.11.9-amd64.exe
+    force: false
+
+- name: Windows | Install Python
+  ansible.windows.win_package:
+    path: C:\Temp\python-3.11.9-amd64.exe
+    arguments: /quiet InstallAllUsers=1 PrependPath=1 Include_test=0
+    state: present
+
+- name: Windows | Download jq
+  ansible.windows.win_get_url:
+    url: https://github.com/jqlang/jq/releases/download/jq-1.8.1/jq-windows-amd64.exe
+    dest: C:\Tools\jq.exe
+    force: false
+
+- name: Windows | Download yq
+  ansible.windows.win_get_url:
+    url: "https://github.com/mikefarah/yq/releases/download/v{{ yq_version }}/yq_windows_amd64.exe"
+    dest: C:\Tools\yq.exe
+    force: false

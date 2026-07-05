@@ -1,0 +1,6 @@
+---
+- name: Configure Forge custom runner image
+  hosts: all
+  become: true
+  roles:
+    - custom
