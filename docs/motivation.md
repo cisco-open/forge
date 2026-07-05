@@ -52,7 +52,6 @@ These articles explain the architecture and tradeoffs behind Forge. Treat them
 as background context; use the docs in this site for the current implementation
 and copyable paths.
 
-- [No Silver Bullets: Engineering a Multi-Tenant CI Platform a Small Team Can Run](https://dev.to/edersonbrilhante/no-silver-bullets-engineering-a-multi-tenant-ci-platform-a-small-team-can-run-if)
 - [Forge: scalable, secure multi-tenant GitHub runner platform](https://www.linkedin.com/pulse/forge-scalable-secure-multi-tenant-github-runner-brilhante--fyxbf)
 - [Scaling GitHub Actions on AWS with ForgeMT's security and multi-tenancy](https://hackernoon.com/scaling-github-actions-on-aws-with-forgemts-security-and-multi-tenancy)
 - [No Silver Bullets: engineering a multi-tenant CI platform a small team can run](https://www.linkedin.com/pulse/silver-bullets-engineering-multi-tenant-ci-platform-small-brilhante-ofjpf/)
