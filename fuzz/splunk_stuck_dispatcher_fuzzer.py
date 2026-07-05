@@ -85,7 +85,9 @@ def TestOneInput(data: bytes) -> None:
     except (binascii.Error, json.JSONDecodeError, UnicodeDecodeError, ValueError):
         payload = {}
 
-    assert isinstance(payload, dict)
+    if not isinstance(payload, dict):
+        return
+
     results = stuck_handler.extract_results(payload)
     assert all(isinstance(item, dict) for item in results)
 
