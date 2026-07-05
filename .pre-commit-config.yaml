@@ -17,7 +17,7 @@ repos:
   # General Hooks
   # ---------------------
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # v6.0.0
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # frozen: v6.0.0
     hooks:
       - id: check-yaml
         name: YAML · Syntax check
@@ -83,7 +83,7 @@ repos:
   # Commit Message Hooks
   # ---------------------
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: 205e71c26d6dd6a802ca674c9ae4d12f1103a9bb  # v4.16.4
+    rev: a6859a7b8182086a5e013deab8fefc0597b502e9  # frozen: v4.16.4
     hooks:
       - id: commitizen
         name: Git · Validate commit message
@@ -95,7 +95,7 @@ repos:
   # YAML Hooks
   # ---------------------
   - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
-    rev: 8d1b9cadaf854cb25bb0b0f5870e1cc66a083d6b  # 0.2.3
+    rev: 8d1b9cadaf854cb25bb0b0f5870e1cc66a083d6b  # frozen: 0.2.3
     hooks:
       - id: yamlfmt
         name: YAML · Formatter
@@ -104,7 +104,7 @@ repos:
         exclude: (build/ansible/|docs/operations/repo-blueprints/)
 
   - repo: https://github.com/adrienverge/yamllint
-    rev: cba56bcde1fdd01c1deb3f945e69764c291a6530  # v1.38.0
+    rev: cba56bcde1fdd01c1deb3f945e69764c291a6530  # frozen: v1.38.0
     hooks:
       - id: yamllint
         name: YAML · Linter
@@ -113,7 +113,7 @@ repos:
   # Shell Hooks
   # ---------------------
   - repo: http://github.com/jumanjihouse/pre-commit-hooks
-    rev: 38980559e3a605691d6579f96222c30778e5a69e  # 3.0.0
+    rev: 38980559e3a605691d6579f96222c30778e5a69e  # frozen: 3.0.0
     hooks:
       - id: shellcheck
         name: Shell · Shellcheck
@@ -125,7 +125,7 @@ repos:
         name: Shell · Must have extension
 
   - repo: https://github.com/openstack/bashate
-    rev: fbd7c2534c2701351c603ff700ddf08202430a31  # 2.1.1
+    rev: 5798d24d571676fc407e81df574c1ef57b520f23  # frozen: 2.1.1
     hooks:
       - id: bashate
         name: Shell · Check shell script code style
@@ -135,7 +135,7 @@ repos:
   # Docker Hooks
   # ---------------------
   - repo: https://github.com/hadolint/hadolint
-    rev: 57e1618d78fd469a92c1e584e8c9313024656623  # v2.14.0
+    rev: 4e697ba704fd23b2409b947a319c19c3ee54d24f  # frozen: v2.14.0
     hooks:
       - id: hadolint
         name: Docker · Linter
@@ -145,7 +145,7 @@ repos:
   # Makefile Hooks
   # ---------------------
   - repo: https://github.com/mrtazz/checkmake.git
-    rev: 59931d556f8f5cf4fbacf2c8390a8122ef7a881d  # v0.3.2
+    rev: 446732014beed209cff787b0c397a3d9f905424e  # frozen: v0.3.0
     hooks:
       - id: checkmake
         name: Makefile · Lint Makefile
@@ -155,39 +155,39 @@ repos:
   # Python Hooks
   # ---------------------
   - repo: https://github.com/hhatto/autopep8
-    rev: 4046ad49e25b7fa1db275bf66b1b7d60600ac391  # v2.3.2
+    rev: 4046ad49e25b7fa1db275bf66b1b7d60600ac391  # frozen: v2.3.2
     hooks:
       - id: autopep8
         name: Python · autopep8
 
   - repo: https://github.com/PyCQA/isort
-    rev: a333737ed43df02b18e6c95477ea1b285b3de15a  # 8.0.1
+    rev: a333737ed43df02b18e6c95477ea1b285b3de15a  # frozen: 8.0.1
     hooks:
       - id: isort
         name: Python · Import sorter
 
   - repo: https://github.com/PyCQA/autoflake
-    rev: 988e469555a54b0b16e39faf16ae84ff247fd337  # v2.3.3
+    rev: 2d3853a9f31d97783fb2e181d41cd82a6babd666  # frozen: v2.3.3
     hooks:
       - id: autoflake
         name: Python · Remove unused imports
 
   - repo: https://github.com/PyCQA/flake8
-    rev: c48217e1fc006c2dddd14df54e83b67da15de5cd  # 7.3.0
+    rev: d93590f5be797aabb60e3b09f2f52dddb02f349f  # frozen: 7.3.0
     hooks:
       - id: flake8
         name: Python · Linter
         args: [--ignore=E501]
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: 75992aaa40730136014f34227e0135f63fc951b4  # v3.21.2
+    rev: 75992aaa40730136014f34227e0135f63fc951b4  # frozen: v3.21.2
     hooks:
       - id: pyupgrade
         name: Python · Upgrade syntax
         always_run: true
 
   - repo: https://github.com/abravalheri/validate-pyproject
-    rev: 4b2e70d08cb2ccd26d1fba73588de41c7a5d50b7  # v0.25
+    rev: 4b2e70d08cb2ccd26d1fba73588de41c7a5d50b7  # frozen: v0.25
     hooks:
       - id: validate-pyproject
         name: Python · Validate pyproject.toml
@@ -198,7 +198,7 @@ repos:
   # JSON Schema Hooks
   # ---------------------
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 5030dca3047414c338091455ac41803200ec1f0f  # 0.37.3
+    rev: 1a4bb160cab6417b3045e1b37b6b72449243e658  # frozen: 0.37.4
     hooks:
       - id: check-github-workflows
         name: JSON Schema · GitHub workflows
@@ -216,7 +216,7 @@ repos:
   # Terraform / IaC Hooks
   # ---------------------
   - repo: https://github.com/gruntwork-io/pre-commit
-    rev: 40f924cd642f5dc98d12bd97b07f3752223553da  # v0.1.30
+    rev: 40f924cd642f5dc98d12bd97b07f3752223553da  # frozen: v0.1.30
     hooks:
       - id: terragrunt-hcl-fmt
         name: Terraform/IaC · Terragrunt fmt
@@ -233,7 +233,7 @@ repos:
         exclude: (docs/operations/repo-blueprints/)
 
   - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: 05fd71a57a467ccf5598f7e836d3af4cf9225abb  # v1.108.0
+    rev: 05fd71a57a467ccf5598f7e836d3af4cf9225abb  # frozen: v1.108.0
     hooks:
       - id: terraform_fmt
         name: Terraform · Formatter
@@ -259,7 +259,7 @@ repos:
   # Security Hooks
   # ---------------------
   - repo: https://github.com/gitleaks/gitleaks
-    rev: 83d9cd684c87d95d656c1458ef04895a7f1cbd8e  # v8.30.1
+    rev: 2ca41cc1372d1e939a6a879f18cdc19fc1cac1ce  # frozen: v8.30.0
     hooks:
       - id: gitleaks
         name: Security · Gitleaks
@@ -269,7 +269,7 @@ repos:
   # Ansible Hooks
   # ---------------------
   - repo: https://github.com/ansible-community/ansible-lint.git
-    rev: 5fac056c45595896c973fbde871f01f6cb14d74c  # v26.4.0
+    rev: 262624cd0ab22a4221293216856c59671ce7aa5e  # frozen: v26.6.0
     hooks:
       - id: ansible-lint
         name: Ansible · Linter
@@ -281,7 +281,7 @@ repos:
   # Markdown Hooks
   # ---------------------
   - repo: https://github.com/hukkin/mdformat
-    rev: 82912cdaea4fb830f751504486a7879c70526547  # 1.0.0
+    rev: 2d496dbc18e31b83a1596685347ffe0b6041daf0  # frozen: 1.0.0
     hooks:
       - id: mdformat
         name: Markdown · Format markdown

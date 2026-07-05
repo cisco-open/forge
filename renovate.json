@@ -54,6 +54,19 @@
           "fileMatch": ["Dockerfile$"],
           "matchStrings": ["# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+) registryUrl=(?<registryUrl>\\S+)( extractVersion=(?<extractVersion>.+?))?( versioning=(?<versioning>.*?))?\\n.*?VERSION=\"(?<currentValue>.*)?\"\\s"],
           "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+        },
+        {
+            "customType": "regex",
+            "description": "Update SHA-pinned pre-commit hook refs from frozen tag comments",
+            "fileMatch": [
+                "(^|/)\\.pre-commit-config\\.ya?ml$"
+            ],
+            "matchStrings": [
+                "(?<lineStart>^|\\r\\n|\\r|\\n)(?<indentation>[ \\t]*)- repo: (?<repoUrl>https?://github\\.com/(?<packageName>[^\\s]+?)(?:\\.git)?)\\s+rev: (?<currentDigest>[a-f0-9]{40})\\s+# frozen: (?<currentValue>\\S+)"
+            ],
+            "datasourceTemplate": "github-tags",
+            "versioningTemplate": "semver-coerced",
+            "autoReplaceStringTemplate": "{{{lineStart}}}{{{indentation}}}- repo: {{{repoUrl}}}\n{{{indentation}}}  rev: {{{newDigest}}}  # frozen: {{{newValue}}}"
         }
       ],
     "packageRules": [
@@ -152,11 +165,25 @@
             ]
         },
         {
-            "description": "Pre-commit hooks - pin to commit SHA for security",
+            "description": "Pre-commit hook dependencies",
             "matchManagers": [
                 "pre-commit"
             ],
-            "pinDigests": true,
+            "groupName": "Pre-commit dependencies",
+            "groupSlug": "pre-commit-dependencies",
+            "addLabels": [
+                "dependencies",
+                "pre-commit"
+            ]
+        },
+        {
+            "description": "SHA-pinned pre-commit hooks",
+            "matchManagers": [
+                "custom.regex"
+            ],
+            "matchFileNames": [
+                ".pre-commit-config.yaml"
+            ],
             "groupName": "Pre-commit dependencies",
             "groupSlug": "pre-commit-dependencies",
             "addLabels": [
