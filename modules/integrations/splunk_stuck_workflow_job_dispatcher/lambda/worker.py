@@ -1,5 +1,4 @@
 import base64
-import hashlib
 import json
 import logging
 import os
@@ -11,8 +10,10 @@ from decimal import Decimal
 from typing import Any, Dict, Iterable, List, Tuple
 
 import boto3
+import jwt
 from boto3.dynamodb.types import TypeDeserializer
 from botocore.exceptions import ClientError
+from cryptography.hazmat.primitives import serialization
 
 LOG = logging.getLogger()
 LOG.setLevel(getattr(logging, os.environ.get(
@@ -28,70 +29,6 @@ DELIVERY_GUID_RE = re.compile(
 )
 MAX_DELIVERIES = 5000
 PER_PAGE = 100
-SHA256_DIGESTINFO_PREFIX = bytes.fromhex(
-    '3031300d060960864801650304020105000420')
-
-
-class DerReader:
-    def __init__(self, data: bytes):
-        self.data = data
-        self.pos = 0
-
-    def eof(self) -> bool:
-        return self.pos >= len(self.data)
-
-    def peek_tag(self) -> int:
-        if self.eof():
-            raise ValueError('Unexpected end of DER data')
-        return self.data[self.pos]
-
-    def read_tlv(self) -> Tuple[int, bytes]:
-        if self.eof():
-            raise ValueError('Unexpected end of DER data')
-
-        tag = self.data[self.pos]
-        self.pos += 1
-        if self.eof():
-            raise ValueError('Missing DER length')
-
-        length_octet = self.data[self.pos]
-        self.pos += 1
-        if length_octet & 0x80:
-            length_octets = length_octet & 0x7F
-            if length_octets == 0:
-                raise ValueError('Indefinite DER length is not supported')
-            if self.pos + length_octets > len(self.data):
-                raise ValueError('DER length exceeds input')
-            length = int.from_bytes(
-                self.data[self.pos:self.pos + length_octets], 'big')
-            self.pos += length_octets
-        else:
-            length = length_octet
-
-        if self.pos + length > len(self.data):
-            raise ValueError('DER value exceeds input')
-
-        value = self.data[self.pos:self.pos + length]
-        self.pos += length
-        return tag, value
-
-    def read_sequence(self) -> 'DerReader':
-        tag, value = self.read_tlv()
-        if tag != 0x30:
-            raise ValueError(f"Expected DER SEQUENCE, got tag 0x{tag:02x}")
-        return DerReader(value)
-
-    def read_integer(self) -> int:
-        tag, value = self.read_tlv()
-        if tag != 0x02:
-            raise ValueError(f"Expected DER INTEGER, got tag 0x{tag:02x}")
-        return int.from_bytes(value.lstrip(b'\x00') or b'\x00', 'big')
-
-    def read_octet_string(self) -> bytes:
-        tag, value = self.read_tlv()
-        if tag != 0x04:
-            raise ValueError(f"Expected DER OCTET STRING, got tag 0x{tag:02x}")
-        return value
 
 
 def json_default(value: Any) -> Any:
@@ -100,86 +37,31 @@ def json_default(value: Any) -> Any:
     raise TypeError(f"Unsupported JSON value: {type(value).__name__}")
 
 
-def b64url(data: bytes) -> str:
-    return base64.urlsafe_b64encode(data).rstrip(b'=').decode('ascii')
-
-
 def normalize_parameter_value(value: str) -> str:
     return value.strip().strip("'\"")
 
 
-def pem_to_der(raw_key: str) -> bytes:
+def normalize_private_key(raw_key: str) -> Any:
     key_text = raw_key.replace('\\n', '\n').strip()
-    if 'BEGIN' not in key_text:
-        compact = re.sub(r'\s+', '', key_text)
-        decoded = base64.b64decode(compact)
-        if b'BEGIN' in decoded:
-            key_text = decoded.decode('utf-8').replace('\\n', '\n').strip()
-        else:
-            return decoded
+    if 'BEGIN' in key_text:
+        return key_text
 
-    lines = [
-        line.strip()
-        for line in key_text.splitlines()
-        if line.strip() and not line.startswith('-----')
-    ]
-    return base64.b64decode(''.join(lines))
+    decoded = base64.b64decode(re.sub(r'\s+', '', key_text), validate=True)
+    if b'BEGIN' in decoded:
+        return decoded.decode('utf-8').replace('\\n', '\n').strip()
+    return serialization.load_der_private_key(decoded, password=None)
 
 
-def parse_rsa_private_key(raw_key: str) -> Tuple[int, int]:
-    der = pem_to_der(raw_key)
-    sequence = DerReader(der).read_sequence()
-    sequence.read_integer()
-
-    next_tag = sequence.peek_tag()
-    if next_tag == 0x30:
-        sequence.read_tlv()
-        private_key_der = sequence.read_octet_string()
-        return parse_rsa_private_key_from_pkcs1(private_key_der)
-    if next_tag == 0x02:
-        return parse_rsa_private_key_from_sequence(sequence)
-
-    raise ValueError(f"Unsupported private key DER tag 0x{next_tag:02x}")
-
-
-def parse_rsa_private_key_from_pkcs1(der: bytes) -> Tuple[int, int]:
-    sequence = DerReader(der).read_sequence()
-    sequence.read_integer()
-    return parse_rsa_private_key_from_sequence(sequence)
-
-
-def parse_rsa_private_key_from_sequence(sequence: DerReader) -> Tuple[int, int]:
-    modulus = sequence.read_integer()
-    sequence.read_integer()
-    private_exponent = sequence.read_integer()
-    return modulus, private_exponent
-
-
-def rsa_sha256_sign(private_key: Tuple[int, int], message: bytes) -> bytes:
-    modulus, private_exponent = private_key
-    key_size = (modulus.bit_length() + 7) // 8
-    digest = hashlib.sha256(message).digest()
-    digest_info = SHA256_DIGESTINFO_PREFIX + digest
-    padding_length = key_size - len(digest_info) - 3
-    if padding_length < 8:
-        raise ValueError('RSA key is too small for SHA-256 signature')
-    encoded = b'\x00\x01' + (b'\xff' * padding_length) + b'\x00' + digest_info
-    signature = pow(int.from_bytes(encoded, 'big'), private_exponent, modulus)
-    return signature.to_bytes(key_size, 'big')
-
-
-def create_github_app_jwt(issuer: str, private_key: Tuple[int, int]) -> str:
+def create_github_app_jwt(issuer: str, private_key: Any) -> str:
     now = int(time.time())
-    header = b64url(b'{"typ":"JWT","alg":"RS256"}')
-    payload = b64url(
-        json.dumps(
-            {'iat': now - 60, 'exp': now + 540, 'iss': issuer},
-            separators=(',', ':'),
-        ).encode('utf-8')
+    token = jwt.encode(
+        {'iat': now - 60, 'exp': now + 540, 'iss': issuer},
+        private_key,
+        algorithm='RS256',
     )
-    signing_input = f"{header}.{payload}".encode('ascii')
-    signature = b64url(rsa_sha256_sign(private_key, signing_input))
-    return f"{header}.{payload}.{signature}"
+    if isinstance(token, bytes):
+        token = token.decode('ascii')
+    return token
 
 
 def github_request(
@@ -349,7 +231,7 @@ def load_github_app_credentials(payload: Dict[str, Any]) -> Dict[str, Any]:
     )
     return {
         'issuer': issuer,
-        'private_key': parse_rsa_private_key(raw_key),
+        'private_key': normalize_private_key(raw_key),
         'github_api_url': tenant_config['github_api_url'],
         'github_api_version': tenant_config['github_api_version'],
         'installation_id': installation_id,

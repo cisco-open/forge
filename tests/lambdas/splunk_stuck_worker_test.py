@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import importlib
 import json
 import sys
@@ -29,6 +30,40 @@ def _load_worker(monkeypatch):
     monkeypatch.setenv('DEDUPE_TABLE', 'splunk-worker-test')
     sys.modules.pop('worker', None)
     return importlib.import_module('worker')
+
+
+def test_normalize_private_key_decodes_base64_pem(monkeypatch, aws):
+    mod = _load_worker(monkeypatch)
+    key_label = 'PRIVATE KEY'
+    pem = (
+        f'-----BEGIN {key_label}-----\n'
+        'abc123\n'
+        f'-----END {key_label}-----'
+    )
+    encoded = base64.b64encode(pem.encode()).decode()
+
+    assert mod.normalize_private_key(encoded) == pem
+
+
+def test_create_github_app_jwt_uses_pyjwt_rs256(monkeypatch, aws):
+    mod = _load_worker(monkeypatch)
+    calls = []
+    monkeypatch.setattr(mod.time, 'time', lambda: 2000)
+
+    def _encode(payload, key, algorithm):
+        calls.append((payload, key, algorithm))
+        return 'jwt-token'
+
+    monkeypatch.setattr(mod.jwt, 'encode', _encode)
+
+    assert mod.create_github_app_jwt('app-client-id', 'pem-key') == 'jwt-token'
+    assert calls == [
+        (
+            {'iat': 1940, 'exp': 2540, 'iss': 'app-client-id'},
+            'pem-key',
+            'RS256',
+        ),
+    ]
 
 
 def test_normalize_delivery_references_dedupes_ids_and_guids(
