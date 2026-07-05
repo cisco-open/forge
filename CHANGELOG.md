@@ -1,5 +1,28 @@
 # Changelog
 
+## [4.0.0](https://github.com/cisco-open/forge/compare/v3.12.0...v4.0.0) (2026-07-05)
+
+
+### ⚠ BREAKING CHANGES
+
+* Forge module paths were reorganized into platform, infra, integrations, and helpers. Consumers must update module source paths before upgrading.
+
+### Features
+
+* **runner-logs:** enrich splunk fields from metadata sidecar ([#410](https://github.com/cisco-open/forge/issues/410)) ([946c603](https://github.com/cisco-open/forge/commit/946c603ca11cbcf1cc105f66e45cfbf741be917d))
+* **splunk:** add EC2 scale-up failure dashboards ([#408](https://github.com/cisco-open/forge/issues/408)) ([3176c90](https://github.com/cisco-open/forge/commit/3176c90de1ab59dc5c06645cb334ea9d4760299b))
+
+
+### Bug Fixes
+
+* **ci:** remediate zizmor alerts ([#392](https://github.com/cisco-open/forge/issues/392)) ([953403a](https://github.com/cisco-open/forge/commit/953403adec549b8b9632bb2227a7d92fb5896ea7))
+* **docs:** hash-pin docs dependencies ([#422](https://github.com/cisco-open/forge/issues/422)) ([733c9e4](https://github.com/cisco-open/forge/commit/733c9e4b3873a68b62f110e82ecaeb398620221c))
+
+
+### Code Refactoring
+
+* redesign Forge module layout ([#419](https://github.com/cisco-open/forge/issues/419)) ([2791806](https://github.com/cisco-open/forge/commit/2791806731112fa049ddbd5a1bfa4bc5c182d786))
+
 ## [3.12.0](https://github.com/cisco-open/forge/compare/v3.11.0...v3.12.0) (2026-07-03)
 
 
