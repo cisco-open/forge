@@ -58,17 +58,6 @@
       ],
     "packageRules": [
         {
-            "matchDatasources": [
-                "github-tags"
-            ],
-            "matchPackageNames": [
-                "github-aws-runners/terraform-aws-github-runner"
-            ],
-            "groupName": "terraform-aws-github-runner version",
-            "separateMajorMinor": false,
-            "separateMinorPatch": false
-        },
-        {
             "description": "Security updates - immediate processing (override stability days)",
             "matchPackagePatterns": [
                 "*"
@@ -269,6 +258,16 @@
                 "security",
                 "auto-merge"
             ]
+        },
+        {
+            "description": "Group terraform-aws-github-runner updates across all Renovate managers",
+            "matchDepNames": [
+                "github-aws-runners/terraform-aws-github-runner"
+            ],
+            "groupName": "terraform-aws-github-runner version",
+            "groupSlug": "terraform-aws-github-runner",
+            "separateMajorMinor": false,
+            "separateMinorPatch": false
         }
     ]
 }
