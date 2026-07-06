@@ -6,16 +6,17 @@ upgrades, and troubleshooting.
 
 ## Day-2 Loop
 
-| Cadence              | Action                                                                     | Doc                                                     |
-| -------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------- |
-| Every tenant request | Collect tenant values, add config, run plan, run smoke workflow.           | [Tenant Onboarding](tenant-onboarding.md)               |
-| Every image release  | Build base/custom images, share AMIs, update tenant runner specs.          | [Runner Images](runner-images.md)                       |
-| Weekly               | Run example apply/destroy for helpers, infra, platform, integrations.      | [Workflow Blueprints](workflows/index.md)               |
-| Weekly               | Run cleanup and policy jobs.                                               | [Cloud Custodian](cloud-custodian.md)                   |
-| Monthly              | Review module refs, Renovate output, AMI age, stale ECR tags, and secrets. | [Upgrades](upgrades.md)                                 |
-| Planned ARC upgrade  | Rebuild blue/green EKS clusters and move tenants one at a time.            | [Move ARC Tenants](move-arc-tenants.md)                 |
-| Incident             | Triage queued jobs, failed runner registration, IAM, webhooks, or ARC.     | [Troubleshooting](troubleshooting.md)                   |
-| Incident             | Use Splunk dashboards to identify the failing subsystem and severity.      | [Splunk Dashboard Runbook](splunk-dashboard-runbook.md) |
+| Cadence              | Action                                                                     | Doc                                                                         |
+| -------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Every tenant request | Collect tenant values, add config, run plan, run smoke workflow.           | [Tenant Onboarding](tenant-onboarding.md)                                   |
+| Every image release  | Build base/custom images, share AMIs, update tenant runner specs.          | [Runner Images](runner-images.md)                                           |
+| Weekly               | Run example apply/destroy for helpers, infra, platform, integrations.      | [Workflow Blueprints](workflows/index.md)                                   |
+| Weekly               | Run cleanup and policy jobs.                                               | [Cloud Custodian](cloud-custodian.md)                                       |
+| Monthly              | Review module refs, Renovate output, AMI age, stale ECR tags, and secrets. | [Upgrades](upgrades.md)                                                     |
+| Planned ARC upgrade  | Rebuild blue/green EKS clusters and move tenants one at a time.            | [Move ARC Tenants](move-arc-tenants.md)                                     |
+| Incident             | Triage queued jobs, failed runner registration, IAM, webhooks, or ARC.     | [Troubleshooting](troubleshooting.md)                                       |
+| Incident             | Debug Terraform, OpenTofu, or Terragrunt plan/apply that appears stuck.    | [Terraform/Terragrunt Stuck Runbook](terraform-terragrunt-stuck-runbook.md) |
+| Incident             | Use Splunk dashboards to identify the failing subsystem and severity.      | [Splunk Dashboard Runbook](splunk-dashboard-runbook.md)                     |
 
 ## Operating Repos
 
