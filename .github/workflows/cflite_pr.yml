@@ -29,7 +29,6 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-${{ matrix.sanitizer }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
-    timeout-minutes: 20
     permissions:
       contents: read
     strategy:
