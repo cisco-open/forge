@@ -158,6 +158,11 @@ def test_parse_queued_url_empty_returns_empty(monkeypatch):
     assert mod.parse_queued_url('') == ''
 
 
+def test_parse_queued_url_invalid_url_returns_empty(monkeypatch):
+    mod = _load_handler(monkeypatch)
+    assert mod.parse_queued_url('/\n/\n]\n?') == ''
+
+
 def test_runner_name_from_queue_strips_suffix_and_appends_runner_suffix(
     monkeypatch,
 ):

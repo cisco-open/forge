@@ -38,7 +38,10 @@ def get_ec2_client(region: str):
 def parse_queued_url(queued_url: str) -> str:
     if not queued_url:
         return ''
-    parsed = urllib.parse.urlparse(queued_url)
+    try:
+        parsed = urllib.parse.urlparse(queued_url)
+    except ValueError:
+        return ''
     path_parts = [part for part in parsed.path.split('/') if part]
     return path_parts[-1] if path_parts else ''
 
