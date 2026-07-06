@@ -1,4 +1,4 @@
-FROM ubuntu:24.04@sha256:4fbb8e6a8395de5a7550b33509421a2bafbc0aab6c06ba2cef9ebffbc7092d90 AS build
+FROM ubuntu:26.04@sha256:b7f48194d4d8b763a478a621cdc81c27be222ba2206ca3ca6bc42b49685f3d9e AS build
 
 WORKDIR /opt/build
 
@@ -104,7 +104,7 @@ RUN set -eux; \
     unzip -o ${TOFU_ARTIFACT} -d /usr/local/bin/; \
     chmod 755 /usr/local/bin/tofu
 
-FROM ubuntu:24.04@sha256:4fbb8e6a8395de5a7550b33509421a2bafbc0aab6c06ba2cef9ebffbc7092d90 AS final
+FROM ubuntu:26.04@sha256:b7f48194d4d8b763a478a621cdc81c27be222ba2206ca3ca6bc42b49685f3d9e AS final
 
 ENV DEBIAN_FRONTEND=noninteractive
 
