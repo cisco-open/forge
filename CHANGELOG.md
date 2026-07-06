@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.0.1](https://github.com/cisco-open/forge/compare/v4.0.0...v4.0.1) (2026-07-06)
+
+
+### Bug Fixes
+
+* **splunk:** use PyJWT for GitHub app JWTs ([#424](https://github.com/cisco-open/forge/issues/424)) ([26df3a2](https://github.com/cisco-open/forge/commit/26df3a2afac0e799f30374dea27d165c8e53b875))
+
 ## [4.0.0](https://github.com/cisco-open/forge/compare/v3.12.0...v4.0.0) (2026-07-05)
 
 
