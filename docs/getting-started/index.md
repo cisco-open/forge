@@ -1,7 +1,8 @@
 # Getting Started
 
-Use this section when you are installing Forge into a new AWS estate or turning
-the examples into your own operations repos.
+Use this section when you are installing ForgeMT as a self-hosted GitHub
+Actions runner platform in a new AWS estate or turning the examples into your
+own operations repos.
 
 Follow the pages in order:
 

@@ -14,9 +14,10 @@ turn into snowflake instances, shared secrets, manual onboarding, and cleanup
 jobs that only one person understands.
 
 ForgeMT is the platform layer between those two extremes. It gives a platform
-team a repeatable way to deploy ephemeral GitHub Actions runners on AWS,
-separate tenant configuration from runtime modules, and keep day-2 operations
-inside repos and pipelines instead of tribal knowledge.
+team a repeatable way to deploy ephemeral self-hosted GitHub Actions runners on
+AWS across EC2 and ARC/Kubernetes lanes, separate tenant configuration from
+runtime modules, and keep day-2 operations inside repos and pipelines instead
+of tribal knowledge.
 
 ## Design Goals
 

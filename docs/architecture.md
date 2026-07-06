@@ -1,8 +1,9 @@
 # Architecture
 
-Forge is organized around a simple operating model:
+Forge is organized around a self-hosted GitHub Actions runner operating model
+for AWS:
 
-- platform modules run the Forge runner runtime
+- platform modules run the Forge runner runtime for EC2 and ARC lanes
 - infra modules provide EKS only when ARC runners are used
 - helper modules prepare and maintain accounts
 - integration modules connect Forge to external systems when the company uses

@@ -10,32 +10,63 @@
 ![Commits since latest release](https://img.shields.io/github/commits-since/cisco-open/forge/latest)
 [![Contributors](https://img.shields.io/github/contributors/cisco-open/forge)](https://github.com/cisco-open/forge/graphs/contributors)
 
-ForgeMT is a multi-tenant GitHub Actions runner platform for AWS. The public
-project name is ForgeMT for searchability; operators often shorten it to Forge
-after the context is clear.
+ForgeMT is a multi-tenant platform for self-hosted GitHub Actions runners on
+AWS. It gives platform teams an IaC-driven way to operate ephemeral EC2 runners
+and ARC/Kubernetes runner scale sets for many tenant repositories.
 
-ForgeMT helps platform teams run ephemeral EC2 and Kubernetes/ARC runners,
-onboard tenants through reviewed IaC changes, and keep runner operations in
-repeatable repos and pipelines instead of one-off scripts.
+Think of ForgeMT as the runner control plane and operating model, not only a
+Terraform module. The platform team owns GitHub App integration, runner images,
+AWS placement, tenant configuration, lifecycle cleanup, and optional
+observability. Tenant teams consume approved `runs-on` labels and AWS role
+access from their workflow YAML.
 
 ![Architecture Diagram](./docs/img/10k_ft.jpg)
+
+## What You Get
+
+- Ephemeral self-hosted GitHub Actions runner capacity in AWS.
+- EC2 runner lanes for full VM isolation, custom AMIs, Windows, macOS, ARM64, or
+  heavier builds.
+- ARC runner lanes for Kubernetes-based runner scale sets on EKS.
+- Tenant boundaries for labels, IAM/OIDC role access, networks, images, runner
+  specs, and GitHub App scope.
+- Copyable Terragrunt deployment examples for platform, infra, helpers, and
+  integrations.
+- Day-2 operating patterns for runner images, ECR images, cleanup, Renovate,
+  smoke tests, and optional Splunk/Teleport/OpenTelemetry/OpenCost integrations.
 
 ## When To Use It
 
 Use ForgeMT when you need:
 
-- GitHub Actions runners inside your AWS accounts.
+- self-hosted GitHub Actions runners inside your AWS accounts.
 - tenant boundaries for labels, IAM roles, networks, images, and runner specs.
-- EC2 runner support for full VM control, custom AMIs, Windows, macOS, or heavy
-  builds.
-- ARC runner support for Kubernetes-based runner scale sets.
-- copyable operations for runner images, ECR images, cleanup, Renovate, and
-  weekly apply/destroy validation.
+- reviewed IaC changes for tenant onboarding instead of manual runner setup.
+- one operating model for EC2 runners, ARC runners, or both.
+- repeatable cleanup, image, upgrade, and validation workflows.
 
 Do not start by deploying every module. The smallest useful install is one
 GitHub.com organization, one tenant, one runner lane, and one smoke workflow.
 Add helpers, EKS, Splunk, Teleport, OpenCost, OpenTelemetry, and webhook relay
 modules only when your operating model needs them.
+
+## Before You Deploy
+
+Have these answers before applying the examples:
+
+| Decision        | Minimum answer                                                                                  |
+| --------------- | ----------------------------------------------------------------------------------------------- |
+| GitHub target   | GitHub.com or GHES URL, organization, runner group, and GitHub App installation scope.          |
+| AWS placement   | Account, region, VPC, subnets, security groups, and tenant AWS role access.                     |
+| State backend   | S3 bucket and DynamoDB lock table for Terraform or OpenTofu state.                              |
+| First lane      | EC2, ARC on EKS, or both. Start with one lane and add the other after the first smoke workflow. |
+| Runner image    | AMI owner/name for EC2 runners or reachable container images for ARC runners.                   |
+| Tenant boundary | Tenant name, generated labels, allowed repositories, IAM roles, and metadata ownership.         |
+| Integrations    | Which systems are mandatory now and which can be skipped until the runner path works.           |
+
+Pick EC2 first when you already have a runner AMI or need VM-level isolation.
+Pick ARC first when EKS is already available and the first workloads fit a
+Kubernetes runner model. You can skip EKS for an EC2-only first deployment.
 
 ## Module Layout
 
@@ -54,26 +85,25 @@ example folders and all `modules/integrations/splunk_*` modules.
 
 ## Quick Start
 
-Start with the documentation site:
+Start with the platform path:
 
-- [ForgeMT documentation](https://cisco-open.github.io/forge/)
-- [Motivation](./docs/motivation.md)
-- [Architecture](./docs/architecture.md)
-- [Platform Engineer Quick Start](./docs/getting-started/platform-engineer.md)
-- [Bootstrap](./docs/getting-started/bootstrap.md)
-- [Minimal Install](./docs/getting-started/minimal-install.md)
-- [Examples](./docs/examples/index.md)
-- [Operations](./docs/operations/index.md)
-- [Security](./docs/security.md)
+1. Read [Platform Engineer Quick Start](./docs/getting-started/platform-engineer.md)
+   and [Minimal Install](./docs/getting-started/minimal-install.md).
+1. Choose the first lane: EC2, ARC, or both.
+1. Copy `examples/deployments/platform` into your operations IaC repo.
+1. Replace the AWS, GitHub, VPC, runner image, and tenant values.
+1. Create or register the GitHub App and store the private key in SSM.
+1. Run `terragrunt init`, `terragrunt plan`, and `terragrunt apply`.
+1. Queue one smoke workflow with the generated runner labels.
 
-The first install path uses:
+The first install path is the platform example:
 
 ```text
 examples/deployments/platform
 ```
 
-Copy it into your operations IaC repo, replace the AWS and GitHub values, create
-the GitHub App key parameter, store the real base64 PEM in SSM, then run:
+After replacing the values and storing the real GitHub App PEM in SSM, run from
+the tenant folder:
 
 ```bash
 cd examples/deployments/platform/terragrunt/environments/prod/regions/eu-west-1/vpcs/main/tenants/acme
@@ -85,6 +115,15 @@ terragrunt apply
 For the full sequence, including backend bootstrap and GitHub App registration,
 use [Bootstrap](./docs/getting-started/bootstrap.md) and
 [Minimal Install](./docs/getting-started/minimal-install.md).
+
+Read next:
+
+- [ForgeMT documentation](https://cisco-open.github.io/forge/)
+- [Motivation](./docs/motivation.md)
+- [Architecture](./docs/architecture.md)
+- [Examples](./docs/examples/index.md)
+- [Operations](./docs/operations/index.md)
+- [Security](./docs/security.md)
 
 ## Tenant Usage
 

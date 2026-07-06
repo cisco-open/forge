@@ -1,10 +1,10 @@
 # Forge Documentation
 
-ForgeMT is a multi-tenant GitHub Actions runner platform for AWS. The open
-source project uses ForgeMT as the searchable product name; the docs sometimes
-use Forge as the short name. Platform teams use it to run ephemeral EC2 and
-Kubernetes runners, onboard tenants, and keep runner infrastructure out of
-application repos.
+ForgeMT is a multi-tenant platform for self-hosted GitHub Actions runners on
+AWS. The open source project uses ForgeMT as the searchable product name; the
+docs sometimes use Forge as the short name. Platform teams use it to run
+ephemeral EC2 and ARC/Kubernetes runners, onboard tenants, and keep runner
+infrastructure out of application repos.
 
 If you are new to Forge, read these pages first:
 
