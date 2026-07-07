@@ -14,7 +14,7 @@ module "webhook_relay_destination" {
   aws_region  = var.aws_region
 
   reader_config = {
-    role_name = "forge-github-webhook-relay-secret-reader"
+    role_name = var.reader_role_name
     role_trust_principals = [
       "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
     ]

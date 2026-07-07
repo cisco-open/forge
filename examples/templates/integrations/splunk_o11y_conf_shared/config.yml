@@ -1,32 +1,40 @@
 ---
-splunk_api_url: https://api.us0.signalfx.com
-splunk_organization_id: EXAMPLEORG
-team: example-team
+splunk_api_url: <SPLUNK_API_URL>                    # e.g., https://api.us0.signalfx.com
+splunk_organization_id: <SPLUNK_ORGANIZATION_ID>    # e.g., EXAMPLEORG
+team: <TEAM_NAME>                                   # e.g., example-team
 detector_notifications: []
 detector_name_prefix: ForgeCICD
 dashboard_group_name: ForgeCICD Dashboards
 dashboard_variables:
   runner_k8s:
-    tenant_names: [acme]
+    tenant_names:
+      - <TENANT_NAME>  # e.g., acme
     dynamic_variables: []
   runner_ec2:
-    tenant_names: [acme]
+    tenant_names:
+      - <TENANT_NAME>  # e.g., acme
     dynamic_variables: []
   billing:
-    tenant_names: [acme]
+    tenant_names:
+      - <TENANT_NAME>  # e.g., acme
     dynamic_variables: []
   sqs:
-    tenant_names: [acme]
+    tenant_names:
+      - <TENANT_NAME>  # e.g., acme
     dynamic_variables: []
   ebs:
-    tenant_names: [acme]
+    tenant_names:
+      - <TENANT_NAME>  # e.g., acme
     dynamic_variables: []
   lambda:
-    tenant_names: [acme]
+    tenant_names:
+      - <TENANT_NAME>  # e.g., acme
     dynamic_variables: []
   dynamodb:
-    tenant_names: [acme]
+    tenant_names:
+      - <TENANT_NAME>  # e.g., acme
     dynamic_variables: []
   forge_impact:
-    tenant_names: [acme]
+    tenant_names:
+      - <TENANT_NAME>  # e.g., acme
     dynamic_variables: []

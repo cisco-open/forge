@@ -1,7 +1,7 @@
 ---
 splunk_aws_billing_config:
-  splunk_hec_url: https://http-inputs-example.splunkcloud.com:443/services/collector
-  splunk_index: forge-billing
-  splunk_metrics_url: https://ingest.us0.signalfx.com/v2/datapoint
+  splunk_hec_url: <SPLUNK_HEC_URL>          # e.g., https://http-inputs-example.splunkcloud.com:443/services/collector
+  splunk_index: <SPLUNK_INDEX>              # e.g., forge-billing
+  splunk_metrics_url: <SPLUNK_METRICS_URL>  # e.g., https://ingest.us0.signalfx.com/v2/datapoint
 logging_retention_in_days: 3
 log_level: INFO

@@ -1,6 +1,6 @@
 ---
 tenants:
-  - acme
+  - <TENANT_NAME>  # e.g., acme
 teleport_config:
-  cluster_name: forge-euw1-prod
-  teleport_iam_role_to_assume: arn:aws:iam::123456789012:role/teleport-access
+  cluster_name: <CLUSTER_NAME>                              # e.g., forge-euw1-prod
+  teleport_iam_role_to_assume: <TELEPORT_IAM_ROLE_TO_ASSUME>  # e.g., arn:aws:iam::123456789012:role/teleport-access

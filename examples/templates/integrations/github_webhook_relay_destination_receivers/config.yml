@@ -1,13 +1,14 @@
 ---
+reader_role_name: <READER_ROLE_NAME>           # e.g., forge-github-webhook-relay-secret-reader-with-receivers
 reader_config:
   enable_secret_fetch: false
   source_secret_role_arn: ''
   source_secret_arn: ''
-  source_secret_region: eu-west-1
+  source_secret_region: <SOURCE_SECRET_REGION>  # e.g., eu-west-1
 webhook_relay_destination_config:
-  name_prefix: forge-webhook-relay-receivers
-  destination_event_bus_name: forge-webhook-relay-receivers
-  source_account_id: '123456789012'
+  name_prefix: <NAME_PREFIX>                                # e.g., forge-webhook-relay-receivers
+  destination_event_bus_name: <DESTINATION_EVENT_BUS_NAME>  # e.g., forge-webhook-relay-receivers
+  source_account_id: <SOURCE_ACCOUNT_ID>                    # e.g., "123456789012"
 enable_webex_webhook_relay: false
 logging_retention_in_days: 3
 log_level: INFO

@@ -1,5 +1,5 @@
 ---
 account_ids:
-  - '123456789012'
+  - <AMI_SHARING_ACCOUNT_ID>  # e.g., "123456789012"
 ami_name_filters:
-  - forge-gh-runner-base-image-v*
+  - <AMI_NAME_FILTER>         # e.g., "forge-gh-runner-base-image-v*"

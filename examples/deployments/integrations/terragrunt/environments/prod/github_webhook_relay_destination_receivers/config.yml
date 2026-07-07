@@ -1,4 +1,5 @@
 ---
+reader_role_name: forge-github-webhook-relay-secret-reader-with-receivers
 reader_config:
   enable_secret_fetch: false
   source_secret_role_arn: ''

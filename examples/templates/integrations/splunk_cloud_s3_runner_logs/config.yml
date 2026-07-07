@@ -1,4 +1,4 @@
 ---
-splunk_hec_endpoint: https://http-inputs-example.splunkcloud.com:443/services/collector
+splunk_hec_endpoint: <SPLUNK_HEC_ENDPOINT>  # e.g., https://http-inputs-example.splunkcloud.com:443/services/collector
 logging_retention_in_days: 3
 log_level: INFO

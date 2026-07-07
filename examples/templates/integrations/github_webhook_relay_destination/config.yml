@@ -1,14 +1,14 @@
 ---
 reader_config:
-  role_name: forge-github-webhook-relay-secret-reader
+  role_name: <READER_ROLE_NAME>                 # e.g., forge-github-webhook-relay-secret-reader
   role_trust_principals:
-    - arn:aws:iam::123456789012:root
+    - <ROLE_TRUST_PRINCIPAL_ARN>                # e.g., arn:aws:iam::123456789012:root
   source_secret_role_arn: ''
   enable_secret_fetch: false
   source_secret_arn: ''
-  source_secret_region: eu-west-1
+  source_secret_region: <SOURCE_SECRET_REGION>  # e.g., eu-west-1
 webhook_relay_destination_config:
-  name_prefix: forge-webhook-relay-destination
-  destination_event_bus_name: forge-webhook-relay-destination
-  source_account_id: '123456789012'
+  name_prefix: <NAME_PREFIX>                                # e.g., forge-webhook-relay-destination
+  destination_event_bus_name: <DESTINATION_EVENT_BUS_NAME>  # e.g., forge-webhook-relay-destination
+  source_account_id: <SOURCE_ACCOUNT_ID>                    # e.g., "123456789012"
   targets: []

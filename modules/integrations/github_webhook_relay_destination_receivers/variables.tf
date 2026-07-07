@@ -28,6 +28,12 @@ variable "reader_config" {
   })
 }
 
+variable "reader_role_name" {
+  description = "IAM role name used by the destination reader to fetch secrets."
+  type        = string
+  default     = "forge-github-webhook-relay-secret-reader"
+}
+
 variable "webhook_relay_destination_config" {
   description = "Configuration for webhook relay destination."
   type = object({

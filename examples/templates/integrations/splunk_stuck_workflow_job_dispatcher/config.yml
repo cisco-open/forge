@@ -1,25 +1,27 @@
 ---
-name_prefix: forge-stuck-workflow-job-dispatcher
+name_prefix: <NAME_PREFIX>  # e.g., forge-stuck-workflow-job-dispatcher
 logging_retention_in_days: 3
 log_level: INFO
 splunk_conf:
-  splunk_cloud: example-org.splunkcloud.com
-  tenant_names: [acme]
+  splunk_cloud: <SPLUNK_CLOUD_HOSTNAME>  # e.g., example-org.splunkcloud.com
+  tenant_names:
+    - <TENANT_NAME>                      # e.g., acme
   acl:
-    app: search
-    owner: forge-generic-user
-    sharing: global
+    app: <SPLUNK_APP>                    # e.g., search
+    owner: <SPLUNK_OWNER>                # e.g., forge-generic-user
+    sharing: <SPLUNK_SHARING_MODE>       # e.g., global
     read: ['*']
-    write: [forge-generic-user-role]
-  index: forge-index
+    write:
+      - <SPLUNK_WRITE_ROLE>              # e.g., forge-generic-user-role
+  index: <SPLUNK_INDEX>                  # e.g., forge-index
 redelivery_config:
   tenant_configs:
-    - tenant: acme
+    - tenant: <TENANT_NAME>              # e.g., acme
       gh_config:
         ghes_url: ''
       prefixes:
-        - aws_region: eu-west-1
-          deployment_prefix: acme
+        - aws_region: <AWS_REGION>       # e.g., eu-west-1
+          deployment_prefix: <DEPLOYMENT_PREFIX>  # e.g., acme
 splunk_alert:
   disabled: true
 dedupe_ttl_seconds: 1800
