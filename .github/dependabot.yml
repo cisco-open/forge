@@ -18,8 +18,6 @@ updates:
   - package-ecosystem: pip
     directories:
       - /
-      - /tests/smoke
-      - /.docker/forge-github-app-register
     schedule:
       interval: daily
     cooldown:

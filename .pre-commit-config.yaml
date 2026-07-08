@@ -258,12 +258,30 @@ repos:
   # ---------------------
   # Security Hooks
   # ---------------------
-  - repo: https://github.com/gitleaks/gitleaks
-    rev: 83d9cd684c87d95d656c1458ef04895a7f1cbd8e  # frozen: v8.30.1
+  - repo: local
     hooks:
-      - id: gitleaks
+      - id: security-gitleaks
         name: Security · Gitleaks
+        entry: gitleaks detect --source . --config .gitleaks.toml --redact --verbose --no-git
+        language: system
         always_run: true
+        pass_filenames: false
+      - id: security-bandit
+        name: Security · Bandit
+        entry: bandit -q -r modules tests -x */__pycache__/*,tests/.hypothesis/*,tests/.pytest_cache/* -lll -iii
+        language: system
+        always_run: true
+        pass_filenames: false
+      - id: security-pip-audit
+        name: Security · pip-audit
+        entry: >-
+          bash -c 'set -euo pipefail; req="$(mktemp)";
+          trap "rm -f \"$req\"" EXIT;
+          uv export --project . --locked --only-group lambda-tests --format requirements-txt --no-hashes > "$req";
+          pip-audit -r "$req" --strict --no-deps'
+        language: system
+        always_run: true
+        pass_filenames: false
 
   # ---------------------
   # Ansible Hooks

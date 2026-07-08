@@ -1,4 +1,8 @@
 ENDPOINT ?= http://localhost:4566
+UV ?= uv
+UV_PROJECT ?= ../..
+PYTEST := $(UV) run --project $(UV_PROJECT) --locked --only-group smoke-tests pytest
+
 export AWS_ENDPOINT_URL=$(ENDPOINT)
 export AWS_DEFAULT_REGION=us-east-1
 export AWS_ACCESS_KEY_ID=test
@@ -10,11 +14,11 @@ up:      ## start MiniStack
 down:    ## stop MiniStack and wipe state
 	docker compose down -v
 smoke:   ## fast plumbing smoke tests
-	pytest -m smoke -q
+	$(PYTEST) -m smoke -q
 lambda:  ## lambda execution smoke (needs Docker)
-	pytest -m lambda_exec -q
+	$(PYTEST) -m lambda_exec -q
 test:    ## run all smoke tests (plumbing + lambda exec)
-	pytest -q
+	$(PYTEST) -q
 all: smoke lambda
 clean:   ## stop MiniStack and remove local test artifacts
 	docker compose down -v || true

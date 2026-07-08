@@ -43,7 +43,7 @@ jobs:
       FORGE_REQUIRE_MINISTACK: '1'
       # MiniStack: a token-free, LocalStack-compatible emulator on :4566. The
       # '-full' image bundles Lambda, needed by the real-handler exec test.
-      MINISTACK_IMAGE: ministackorg/ministack:1.3.69-full
+      MINISTACK_IMAGE: ministackorg/ministack:1.3.72-full@sha256:fda44c46c4cec06cd6774ce794eb68d5ab7e57a2ecb731fe7e7dda37fc2486be
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
@@ -60,9 +60,10 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install deps
-        working-directory: tests/smoke
-        run: pip install -r requirements-dev.txt
+      - name: Set up uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        with:
+          version: 0.11.26
 
       - name: Start MiniStack
         working-directory: tests/smoke
@@ -70,7 +71,7 @@ jobs:
 
       - name: Wait for readiness
         run: |
-          python - <<'PY'
+          uv run --project . --locked --only-group smoke-tests python - <<'PY'
           import time, boto3
           for _ in range(45):
               try:
@@ -87,11 +88,11 @@ jobs:
 
       - name: Smoke plumbing tests
         working-directory: tests/smoke
-        run: pytest -m smoke -q
+        run: uv run --project ../.. --locked --only-group smoke-tests pytest -m smoke -q
 
       - name: Real-handler lambda execution
         working-directory: tests/smoke
-        run: pytest -m lambda_exec -q
+        run: uv run --project ../.. --locked --only-group smoke-tests pytest -m lambda_exec -q
 
       - name: MiniStack logs (on failure)
         if: failure()

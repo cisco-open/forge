@@ -36,6 +36,8 @@ package
 __pycache__/
 *.pyc
 .pytest_cache/
+.hypothesis/
+.mutmut-cache/
 .coverage
 coverage.xml
 pytest-results.xml
