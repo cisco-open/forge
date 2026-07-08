@@ -4,6 +4,12 @@
 #   docker compose up -d
 # Override/pin the tag via MINISTACK_IMAGE. The '-full' image bundles Lambda,
 # which the real-handler exec test needs.
+#
+# To block a caller (CI, Make, local dev) until MiniStack is answering, run:
+#   docker compose up --wait
+# --wait exits 0 when every service reports healthy, non-zero on timeout /
+# crash. The healthcheck below hits /_localstack/health, which only returns
+# 200 once MiniStack's gateway is accepting requests (STS included).
 services:
   ministack:
     image: ${MINISTACK_IMAGE:-ministackorg/ministack:1.3.72-full@sha256:fda44c46c4cec06cd6774ce794eb68d5ab7e57a2ecb731fe7e7dda37fc2486be}
@@ -14,3 +20,12 @@ services:
       # Needed only for the lambda_exec smoke test (MiniStack spawns a container
       # per function via the host Docker socket). Safe to drop for plumbing-only.
       - /var/run/docker.sock:/var/run/docker.sock
+    # LocalStack-compatible images expose /_localstack/health and ship curl,
+    # so this is a zero-dependency liveness signal. Budget: 60 * 2s = ~2min
+    # after start_period, which covers cold pulls of the -full image.
+    healthcheck:
+      test: [CMD-SHELL, curl -sf http://localhost:4566/_localstack/health || exit 1]
+      interval: 2s
+      timeout: 3s
+      retries: 60
+      start_period: 5s
