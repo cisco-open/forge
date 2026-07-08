@@ -1,41 +1,55 @@
-# ForgeMT policy-as-code (OPA / conftest)
+# OPA Tenant-Isolation Policies
 
-These Rego policies encode tenant-isolation invariants as CI gates (see
-`docs-improvement/phase1-audit-register.md`, findings P0-7 and P1-8). They
-complement — they do not replace — the `tofu fmt`/`validate`/`tflint` hooks that
-already run in pre-commit. The genuine Phase 1 gap was **policy-as-code**, not
-formatting/validation (register P1-10).
+## What This Is
 
-## What they enforce
+`policy/opa` contains Rego policies for conftest. The current policy file,
+`forge_iac.rego`, evaluates IAM or S3 policy JSON documents where the input is a
+single policy document with a `Statement` list.
 
-`forge_iac.rego` evaluates an IAM or S3 policy **JSON document** (input is a
-single policy with a `Statement` list) and denies:
+## Why It Is Used
 
-1. **Wildcard `sts:AssumeRole` principal** — a tenant/forge trust policy must
-   name an explicit principal; a `"*"` principal breaks the STS isolation
-   boundary.
-1. **Unscoped tenant bucket policy** — an S3 statement granting a wildcard
-   principal with no `Condition` (cross-tenant read/write risk).
+These policies encode tenant-isolation invariants as CI gates. They complement
+OpenTofu formatting, validation, TFLint, and Checkov by pinning Forge-specific
+security expectations:
 
-## Running
+1. Wildcard principals must not be able to call `sts:AssumeRole`.
+1. Tenant bucket policies must not grant S3 access to wildcard principals without
+   a scoping `Condition`.
 
-Validate the policy logic itself (deterministic, no AWS, no tofu plan — this is
-the CI hard gate):
+The embedded `test_*` Rego rules make the policy logic deterministic and
+hermetic: no AWS, no backend, no Terraform plan, and no network are required.
+
+## CI Execution
+
+The `IaC Policy` workflow installs conftest and runs this as a hard gate:
 
 ```sh
 conftest verify --policy policy/opa
 ```
 
-Gate a rendered policy document:
+That command validates the policy's self-tests. It does not currently render
+module plans or evaluate live cloud state.
+
+## Local Execution
+
+Run the same hard gate locally with:
+
+```sh
+conftest verify --policy policy/opa
+```
+
+To check a rendered policy document manually:
 
 ```sh
 conftest test some-policy.json --policy policy/opa
 ```
 
-## Extending to the live plan (follow-up)
+## What This Does Not Prove
 
-To gate the real modules end-to-end, render a plan and convert to JSON, then
-feed the IAM/bucket policy documents to `conftest test`. That path needs
-`tofu init`/`plan` and is intentionally **not** wired into the fast per-PR job;
-it belongs in the slower integration job (see `iac-policy.yml` notes). Until
-then, `checkov` (soft-fail + SARIF) provides broad coverage over the HCL.
+- It does not contact AWS or prove behavior in a deployed account.
+- It does not render every Terraform plan in CI today.
+- It does not replace module-local OpenTofu tests or Python Lambda tests.
+
+To gate rendered modules end to end, add a slower integration job that runs
+`tofu init`, creates a JSON plan, extracts IAM and S3 policy documents, and feeds
+those documents to `conftest test`.

@@ -154,3 +154,36 @@ test_denies_wildcard_star_action_assume {
 		}],
 	}
 }
+
+test_allows_wildcard_principal_for_non_assume_role_actions {
+	count(deny) == 0 with input as {
+		"Version": "2012-10-17",
+		"Statement": [{
+			"Effect": "Allow",
+			"Action": "sts:GetCallerIdentity",
+			"Principal": {"AWS": "*"},
+		}],
+	}
+}
+
+test_denies_unscoped_bucket_policy_with_s3_wildcard_action {
+	count(deny) == 1 with input as {
+		"Version": "2012-10-17",
+		"Statement": [{
+			"Effect": "Allow",
+			"Action": "s3:*",
+			"Principal": {"AWS": ["arn:aws:iam::111111111111:role/reader", "*"]},
+		}],
+	}
+}
+
+test_allows_non_s3_wildcard_principal_without_condition {
+	count(deny) == 0 with input as {
+		"Version": "2012-10-17",
+		"Statement": [{
+			"Effect": "Allow",
+			"Action": ["kms:Decrypt"],
+			"Principal": "*",
+		}],
+	}
+}
