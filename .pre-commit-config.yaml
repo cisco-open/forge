@@ -269,9 +269,13 @@ repos:
       - id: security-bandit
         name: Security · Bandit
         entry: >-
-          bandit -q -r modules tests
-          -x */__pycache__/*,*/.terraform/*,tests/.hypothesis/*,tests/.pytest_cache/*
-          -lll -iii
+          bash -c 'set -euo pipefail; files=();
+          while IFS= read -r -d "" file; do files+=("$file"); done < <(
+          find modules tests
+          \( -type d \( -name __pycache__ -o -name .terraform -o -name .hypothesis -o -name .pytest_cache \) -prune \)
+          -o \( -type f -name "*.py" -print0 \)
+          );
+          ((${#files[@]} == 0)) || bandit -q -lll -iii "${files[@]}"'
         language: system
         always_run: true
         pass_filenames: false
