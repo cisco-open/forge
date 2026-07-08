@@ -84,7 +84,7 @@ def test_pre_commit_covers_security_sca_and_secrets() -> None:
         'COPY pyproject.toml uv.lock ./',
         'data["dependency-groups"]["pre-commit-image"]',
         'uv export --locked --only-group pre-commit-image',
-        'pip install --no-cache-dir --break-system-packages -r /tmp/pre-commit-image-requirements.txt',
+        'pip install --no-cache-dir --break-system-packages --ignore-installed -r /tmp/pre-commit-image-requirements.txt',
     ]:
         assert required in dockerfile
 
