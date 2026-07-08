@@ -1,41 +1,57 @@
-# Forge smoke tests (MiniStack)
+# Forge Smoke Tests
 
-Shallow "is the plumbing alive" checks against a local MiniStack emulator.
-No AWS account, no auth token, no Forge code required.
+## What This Is
 
-## Run locally
+`tests/smoke` contains shallow MiniStack checks that answer whether Forge's
+AWS-like plumbing is alive and wired. They use dummy credentials against a local
+MiniStack emulator on `http://localhost:4566`.
+
+## Why It Is Used
+
+These are not correctness tests. They catch broken service wiring and emulator
+compatibility for S3, SQS + DLQ, SSM SecureString, EventBridge, CloudWatch Logs,
+STS identity, IAM role create/assume mechanics, and selected real Lambda
+execution paths.
+
+## CI Execution
+
+The `MiniStack Smoke` workflow runs this suite when Lambda code, smoke tests, or
+the workflow itself changes. CI starts MiniStack with Docker Compose, waits for
+STS readiness, then runs:
 
 ```bash
-pip install -r requirements-dev.txt
+uv run --project ../.. --locked --only-group smoke-tests pytest -m smoke -q
+uv run --project ../.. --locked --only-group smoke-tests pytest -m lambda_exec -q
+```
+
+CI sets `FORGE_REQUIRE_MINISTACK=1`, so an unreachable emulator fails the job
+instead of skipping.
+
+## Local Execution
+
+From this directory:
+
+```bash
 make up        # start MiniStack on :4566
 make smoke     # fast plumbing tests
 make lambda    # optional: real Lambda execution (needs Docker)
 make down      # stop + wipe
 ```
 
-Without `make`, set the env yourself:
+Without `make`, set the environment yourself:
 
 ```bash
 export AWS_ENDPOINT_URL=http://localhost:4566 AWS_DEFAULT_REGION=us-east-1 \
        AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test
-pytest -m smoke -q
+uv run --project ../.. --locked --only-group smoke-tests pytest -m smoke -q
 ```
 
-## What's covered
+If MiniStack is down locally, the suite skips cleanly. In environments without
+Docker, including Cowork, run only non-Docker pytest suites.
 
-S3 (tenant log bucket), SQS + DLQ (event queue), SSM SecureString (webhook
-secret), EventBridge, CloudWatch Logs, STS identity, IAM role create + assume.
-Shaped after Forge's data plane.
+## What This Does Not Prove
 
-## What these do NOT prove
-
-- IAM/STS isolation: the emulator does not enforce trust/permission policies, so
-  role assumption is a mechanics check, not an isolation guarantee.
-- EKS / Karpenter / ARC / runner orchestration: not emulated meaningfully.
-  Use real ephemeral AWS for those.
-
-## Notes
-
-- If MiniStack is down, the suite SKIPS locally but FAILS in CI
-  (FORGE_REQUIRE_MINISTACK=1) so it can't pass green vacuously.
-- Pin the MiniStack image to a real tag in docker-compose.yml for reproducibility.
+- IAM or STS tenant isolation. The emulator does not enforce real AWS trust and
+  permission behavior.
+- EKS, Karpenter, ARC, or runner orchestration. Those require a real environment.
+- End-to-end Forge correctness. This suite is a liveness and wiring smoke check.
