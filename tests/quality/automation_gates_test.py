@@ -104,17 +104,15 @@ def test_pre_commit_covers_security_sca_and_secrets() -> None:
     ]:
         assert required in workflow
 
-    for required in [
+    for removed in [
         'name: Ensure pre-commit system tools',
-        'command -v uv',
         'command -v bandit',
         'command -v pip-audit',
-        'python3.12 -m venv --help',
         'apt-get install -y --no-install-recommends python3.12-venv',
         'uv export --locked --only-group pre-commit-image',
-        'pip install --no-cache-dir --break-system-packages --ignore-installed -r /tmp/pre-commit-image-requirements.txt',
+        '/tmp/pre-commit-image-requirements.txt',
     ]:
-        assert required in pre_commit_workflow
+        assert removed not in pre_commit_workflow
 
 
 def test_github_app_register_image_uses_root_locked_dependencies() -> None:
@@ -150,6 +148,7 @@ def test_github_app_register_image_uses_root_locked_dependencies() -> None:
     )[1].split('  - package-ecosystem: pre-commit', 1)[0]
     assert '- /.docker/forge-github-app-register' not in pip_dependabot_block
     assert '.docker/forge-github-app-register/requirements.txt' not in renovate
+    assert 'requirements*.txt' not in renovate
 
 
 def test_test_suites_have_named_ci_jobs() -> None:
@@ -185,10 +184,12 @@ def test_test_suites_have_named_ci_jobs() -> None:
 
     for required in [
         'name: MiniStack smoke + real-handler exec',
+        'docker compose up --wait',
         'pytest -m smoke -q',
         'pytest -m lambda_exec -q',
     ]:
         assert required in smoke_workflow
+    assert 'Wait for readiness' not in smoke_workflow
 
     for required in [
         'name: Python fuzzers (${{ matrix.sanitizer }})',

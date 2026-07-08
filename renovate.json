@@ -197,8 +197,7 @@
                 "pypi"
             ],
             "matchFileNames": [
-                "pyproject.toml",
-                "requirements*.txt"
+                "pyproject.toml"
             ],
             "groupName": "Python dependencies",
             "groupSlug": "python-dependencies",

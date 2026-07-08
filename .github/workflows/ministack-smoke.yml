@@ -67,24 +67,7 @@ jobs:
 
       - name: Start MiniStack
         working-directory: tests/smoke
-        run: docker compose up -d
-
-      - name: Wait for readiness
-        run: |
-          uv run --project . --locked --only-group smoke-tests python - <<'PY'
-          import time, boto3
-          for _ in range(45):
-              try:
-                  boto3.client("sts", endpoint_url="http://localhost:4566",
-                               region_name="us-east-1",
-                               aws_access_key_id="test",
-                               aws_secret_access_key="test").get_caller_identity()
-                  print("MiniStack ready"); break
-              except Exception:
-                  time.sleep(2)
-          else:
-              raise SystemExit("MiniStack did not become ready")
-          PY
+        run: docker compose up --wait
 
       - name: Smoke plumbing tests
         working-directory: tests/smoke

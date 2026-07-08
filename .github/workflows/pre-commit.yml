@@ -59,36 +59,6 @@ jobs:
         shell: bash
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
-      - name: Ensure pre-commit system tools
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          if command -v uv >/dev/null 2>&1 && command -v bandit >/dev/null 2>&1 && command -v pip-audit >/dev/null 2>&1 && python3.12 -m venv --help >/dev/null 2>&1; then
-              exit 0
-          fi
-
-          apt-get update
-          apt-get install -y --no-install-recommends python3.12-venv
-          rm -rf /var/lib/apt/lists/*
-
-          uv_version="$(
-              python3.12 <<'PY'
-          import tomllib
-
-          data = tomllib.load(open("pyproject.toml", "rb"))
-          print(next(
-              dep.removeprefix("uv==")
-              for dep in data["dependency-groups"]["pre-commit-image"]
-              if dep.startswith("uv==")
-          ))
-          PY
-          )"
-          pip install --no-cache-dir --break-system-packages "uv==${uv_version}"
-          uv export --locked --only-group pre-commit-image --format requirements-txt --no-hashes > /tmp/pre-commit-image-requirements.txt
-          pip install --no-cache-dir --break-system-packages --ignore-installed -r /tmp/pre-commit-image-requirements.txt
-          rm /tmp/pre-commit-image-requirements.txt
-
       - name: Run pre-commit in all files
         shell: bash
         run: pre-commit run --show-diff-on-failure --color=always --all-files | tee pre-commit.log
