@@ -8,8 +8,8 @@
 # To block a caller (CI, Make, local dev) until MiniStack is answering, run:
 #   docker compose up --wait
 # --wait exits 0 when every service reports healthy, non-zero on timeout /
-# crash. The healthcheck below waits until MiniStack's gateway port accepts
-# connections; the pytest session fixture then verifies STS readiness.
+# crash. The healthcheck below waits until MiniStack's STS-compatible endpoint
+# answers through the AWS CLI before pytest starts.
 services:
   ministack:
     image: ${MINISTACK_IMAGE:-ministackorg/ministack:1.3.72-full@sha256:fda44c46c4cec06cd6774ce794eb68d5ab7e57a2ecb731fe7e7dda37fc2486be}
@@ -21,10 +21,9 @@ services:
       # per function via the host Docker socket). Safe to drop for plumbing-only.
       - /var/run/docker.sock:/var/run/docker.sock
     # MiniStack does not expose LocalStack's /_localstack/health endpoint.
-    # Keep this zero-dependency: Python is present because MiniStack itself is
-    # a Python service. Budget: 60 * 2s = ~2min after start_period.
+    # Budget: 60 * 2s = ~2min after start_period.
     healthcheck:
-      test: [CMD-SHELL, python -c 'import socket; socket.create_connection(("127.0.0.1", 4566), 2).close()']
+      test: [CMD-SHELL, aws sts get-caller-identity --endpoint-url http://localhost:4566 --region us-east-1 --no-sign-request || exit 1]
       interval: 2s
       timeout: 3s
       retries: 60
