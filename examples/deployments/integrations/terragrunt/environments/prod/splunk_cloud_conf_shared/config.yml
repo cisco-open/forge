@@ -1,0 +1,14 @@
+---
+splunk_conf:
+  splunk_cloud: example-org.splunkcloud.com
+  tenant_names:
+    - acme
+  acl:
+    app: search_app_generic
+    owner: forge-generic-user
+    sharing: global
+    read:
+      - '*'
+    write:
+      - forge-generic-user-role
+  index: forge-index

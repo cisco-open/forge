@@ -14,6 +14,9 @@ locals {
   default_aws_region  = local.env_data.locals.default_aws_region
   default_aws_profile = local.env_data.locals.default_aws_profile
 
+  config_data = read_terragrunt_config(find_in_parent_folders("splunk_cloud_conf_shared/config.hcl"))
+  config      = local.config_data.locals.config
+
   # ─────────────────────────────────────────────────────────────────────────────
   # Tags
   # ─────────────────────────────────────────────────────────────────────────────
@@ -27,27 +30,11 @@ locals {
   }
 }
 
-inputs = {
+inputs = merge(local.config, {
   # Core Environment
   aws_profile = local.default_aws_profile
   aws_region  = local.default_aws_region
 
-  # Splunk Cloud Configuration
-  splunk_conf = {
-    splunk_cloud = "example-org.splunkcloud.com" # <REPLACE WITH YOUR VALUE>
-    tenant_names = ["acme"]                      # <REPLACE WITH YOUR VALUE>
-    acl = {
-      app     = "search_app_generic" # <REPLACE WITH YOUR VALUE>
-      owner   = "forge-generic-user" # <REPLACE WITH YOUR VALUE>
-      sharing = "global"             # <REPLACE WITH YOUR VALUE>
-      read    = ["*"]                # <REPLACE WITH YOUR VALUE>
-      write = [
-        "forge-generic-user-role" # <REPLACE WITH YOUR VALUE>
-      ]
-    }
-    index = "forge-index" # <REPLACE WITH YOUR VALUE>
-  }
-
   # Misc
   default_tags = local.default_tags
-}
+})
