@@ -12,6 +12,7 @@ on:
     paths:
       - modules/**/lambda/**
       - tests/smoke/**
+      - scripts/ci_summary.py
       - .github/workflows/ministack-smoke.yml
   push:
     branches:
@@ -19,6 +20,7 @@ on:
     paths:
       - modules/**/lambda/**
       - tests/smoke/**
+      - scripts/ci_summary.py
       - .github/workflows/ministack-smoke.yml
 
 permissions: {}
@@ -34,6 +36,8 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
+      issues: write
+      pull-requests: write
     env:
       AWS_ENDPOINT_URL: http://localhost:4566
       AWS_DEFAULT_REGION: us-east-1
@@ -71,11 +75,28 @@ jobs:
 
       - name: Smoke plumbing tests
         working-directory: tests/smoke
-        run: uv run --project ../.. --locked --only-group smoke-tests pytest -m smoke -q
+        run: |
+          uv run --project ../.. --locked --only-group smoke-tests \
+            pytest -m smoke -q --junitxml=smoke-results.xml
 
       - name: Real-handler lambda execution
         working-directory: tests/smoke
-        run: uv run --project ../.. --locked --only-group smoke-tests pytest -m lambda_exec -q
+        run: |
+          uv run --project ../.. --locked --only-group smoke-tests \
+            pytest -m lambda_exec -q --junitxml=lambda-exec-results.xml
+
+      - name: Write MiniStack smoke summary
+        if: always()
+        working-directory: tests/smoke
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python ../../scripts/ci_summary.py \
+            --title "MiniStack smoke + real-handler exec" \
+            --junit "Smoke plumbing tests=smoke-results.xml" \
+            --junit "Real-handler lambda execution=lambda-exec-results.xml" \
+            --output ministack-smoke-summary.md \
+            --comment-marker forge-ci-summary:ministack-smoke
 
       - name: MiniStack logs (on failure)
         if: failure()
