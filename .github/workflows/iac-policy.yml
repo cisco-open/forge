@@ -76,8 +76,6 @@ jobs:
     name: OpenTofu module tests (${{ matrix.opentofu.name }})
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    container:
-      image: ghcr.io/cisco-open/forge-pre-commit:main@sha256:51127f81bc41e09c6306822f6c81911abc51b6745d663d8d4af4683cde8415e7
     permissions:
       contents: read
     strategy:
