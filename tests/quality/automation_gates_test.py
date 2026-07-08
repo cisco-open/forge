@@ -1,0 +1,219 @@
+import re
+import tomllib
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def read(path: str) -> str:
+    return (REPO_ROOT / path).read_text(encoding='utf-8')
+
+
+def is_terraform_module(path: Path) -> bool:
+    if not path.is_dir():
+        return False
+    if '.terraform' in path.parts:
+        return False
+    return any(path.glob('*.tf'))
+
+
+def dependency_group_names(group_name: str) -> set[str]:
+    data = tomllib.loads(read('pyproject.toml'))
+    dependencies = data['dependency-groups'][group_name]
+    return {
+        re.split(
+            r'\s*(?:\[|==|~=|!=|<=|>=|<|>|;)',
+            dependency,
+            maxsplit=1,
+        )[0].lower()
+        for dependency in dependencies
+    }
+
+
+def test_each_module_has_specific_native_test_file() -> None:
+    modules = sorted(
+        path
+        for path in (REPO_ROOT / 'modules').rglob('*')
+        if is_terraform_module(path)
+    )
+
+    missing_tests = []
+    generic_tests = []
+    for module in modules:
+        tests_dir = module / 'tests'
+        if tests_dir.exists():
+            tests = sorted(tests_dir.glob('*.tftest.hcl'))
+        else:
+            tests = []
+        if not tests:
+            missing_tests.append(module.relative_to(REPO_ROOT).as_posix())
+        for test_file in tests:
+            if test_file.name in {
+                'module_contract.tftest.hcl',
+                'module_static_contract.tftest.hcl',
+            }:
+                generic_tests.append(
+                    test_file.relative_to(REPO_ROOT).as_posix())
+
+    assert missing_tests == []
+    assert generic_tests == []
+
+
+def test_pre_commit_covers_security_sca_and_secrets() -> None:
+    pre_commit = read('.pre-commit-config.yaml')
+    pyproject = read('pyproject.toml')
+    dockerfile = read('.docker/pre-commit/Dockerfile')
+    workflow = read('.github/workflows/quality-gates.yml')
+    pre_commit_deps = dependency_group_names('pre-commit-image')
+
+    for required in [
+        'security-gitleaks',
+        'gitleaks detect --source . --config .gitleaks.toml',
+        'security-bandit',
+        'bandit -q -r modules tests',
+        'security-pip-audit',
+        'uv export --project . --locked --only-group lambda-tests',
+        'pip-audit -r "$req" --strict --no-deps',
+    ]:
+        assert required in pre_commit
+
+    assert 'pre-commit-image = [' in pyproject
+    assert {'pre-commit', 'bandit', 'pip-audit', 'uv'} <= pre_commit_deps
+
+    for required in [
+        'COPY pyproject.toml uv.lock ./',
+        'data["dependency-groups"]["pre-commit-image"]',
+        'uv export --locked --only-group pre-commit-image',
+        'pip install --no-cache-dir --break-system-packages -r /tmp/pre-commit-image-requirements.txt',
+    ]:
+        assert required in dockerfile
+
+    for required in [
+        'working-directory: tests',
+        'pytest -q quality',
+        'pytest -q mutation',
+    ]:
+        assert required in workflow
+
+
+def test_github_app_register_image_uses_root_locked_dependencies() -> None:
+    requirements_path = (
+        REPO_ROOT / '.docker/forge-github-app-register/requirements.txt'
+    )
+    assert not requirements_path.exists()
+
+    pyproject = read('pyproject.toml')
+    dockerfile = read('.docker/forge-github-app-register/Dockerfile')
+    workflow = read('.github/workflows/build-forge-github-app-register.yml')
+    dependabot = read('.github/dependabot.yml')
+    renovate = read('renovate.json')
+    register_deps = dependency_group_names('forge-github-app-register')
+
+    assert 'forge-github-app-register = [' in pyproject
+    assert {'flask', 'requests', 'uv'} <= register_deps
+
+    for required in [
+        'COPY pyproject.toml uv.lock ./',
+        'data["dependency-groups"]["forge-github-app-register"]',
+        'uv export --locked --only-group forge-github-app-register',
+        'COPY --chown=appuser:appuser .docker/forge-github-app-register/app.py .',
+    ]:
+        assert required in dockerfile
+
+    assert 'context: .' in workflow
+    assert 'pyproject.toml' in workflow
+    assert 'uv.lock' in workflow
+    pip_dependabot_block = dependabot.split(
+        '  - package-ecosystem: pip',
+        1,
+    )[1].split('  - package-ecosystem: pre-commit', 1)[0]
+    assert '- /.docker/forge-github-app-register' not in pip_dependabot_block
+    assert '.docker/forge-github-app-register/requirements.txt' not in renovate
+
+
+def test_test_suites_have_named_ci_jobs() -> None:
+    lambda_workflow = read('.github/workflows/lambda-tests.yml')
+    iac_workflow = read('.github/workflows/iac-policy.yml')
+    quality_workflow = read('.github/workflows/quality-gates.yml')
+    smoke_workflow = read('.github/workflows/ministack-smoke.yml')
+    fuzz_workflow = read('.github/workflows/cflite_pr.yml')
+
+    for required in [
+        'name: Lambda unit tests',
+        'pytest -q lambdas',
+    ]:
+        assert required in lambda_workflow
+
+    for required in [
+        'name: Offline IaC contract tests',
+        'pytest -q iac',
+        'tofu -chdir="${module}" test -no-color',
+        'conftest verify --policy policy/opa',
+        'tests/iac/**',
+        'tests/tofu/**',
+    ]:
+        assert required in iac_workflow
+
+    for required in [
+        'name: Automation gate tests',
+        'pytest -q quality',
+        'name: Mutation test critical Lambda boundaries',
+        'pytest -q mutation',
+    ]:
+        assert required in quality_workflow
+
+    for required in [
+        'name: MiniStack smoke + real-handler exec',
+        'pytest -m smoke -q',
+        'pytest -m lambda_exec -q',
+    ]:
+        assert required in smoke_workflow
+
+    for required in [
+        'name: Python fuzzers (${{ matrix.sanitizer }})',
+        'fuzz/**',
+        'build_fuzzers',
+        'run_fuzzers',
+    ]:
+        assert required in fuzz_workflow
+
+
+def test_mutation_config_targets_trusted_input_boundaries() -> None:
+    required_targets = {
+        'tests/mutation/webhook_signature_mutation_test.py': [
+            'github_webhook_relay/source/lambda/',
+            'validate_signature.py',
+            'accepts_missing_or_wrong_signature',
+            'uses_legacy_sha1_digest',
+        ],
+        'tests/mutation/redrive_deadletter_mutation_test.py': [
+            'redrive_deadletter.py',
+            'uses_main_queue_as_redrive_source',
+            'reports_client_error_as_started',
+        ],
+        'tests/mutation/trust_boundary_mutation_test.py': [
+            'trust_common.py',
+            'allows_delay_outside_bounds',
+            'allows_session_policy_for_all_resources',
+        ],
+        'tests/mutation/job_log_archiver_mutation_test.py': [
+            'job_log_archiver.py',
+            'swallows_archiver_exceptions',
+            'ignores_metadata_field_limit',
+        ],
+        'tests/mutation/splunk_stuck_dispatcher_mutation_test.py': [
+            'splunk_stuck_workflow_job_dispatcher/lambda/',
+            'accepts_wrong_webhook_token',
+            'omits_tenant_region_from_dedupe_key',
+        ],
+        'tests/mutation/github_app_runner_group_mutation_test.py': [
+            'github_app_runner_group.py',
+            'reads_ssm_without_decryption',
+            'skips_selected_repository_listing',
+        ],
+    }
+
+    for test_path, required_strings in required_targets.items():
+        mutation_test = read(test_path)
+        for required in required_strings:
+            assert required in mutation_test

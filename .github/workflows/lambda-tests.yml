@@ -10,7 +10,10 @@ on:
       - renovatebot
     paths:
       - modules/**/lambda/**
-      - tests/**
+      - tests/conftest.py
+      - tests/pytest.ini
+      - tests/lambdas/**
+      - tests/support/**
       - pyproject.toml
       - uv.lock
       - .github/workflows/lambda-tests.yml
@@ -19,7 +22,10 @@ on:
       - main
     paths:
       - modules/**/lambda/**
-      - tests/**
+      - tests/conftest.py
+      - tests/pytest.ini
+      - tests/lambdas/**
+      - tests/support/**
       - pyproject.toml
       - uv.lock
       - .github/workflows/lambda-tests.yml
@@ -32,7 +38,7 @@ concurrency:
 
 jobs:
   unit-tests:
-    name: Lambda unit tests + coverage
+    name: Lambda unit tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -61,7 +67,7 @@ jobs:
 
       - name: Run unit tests
         working-directory: tests
-        run: uv run --project .. --locked --only-group lambda-tests pytest -q --junitxml=pytest-results.xml
+        run: uv run --project .. --locked --only-group lambda-tests pytest -q lambdas --junitxml=pytest-results.xml
 
       - name: Write unit test summary
         if: always()

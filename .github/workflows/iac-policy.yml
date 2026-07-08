@@ -10,16 +10,28 @@ on:
       - renovatebot
     paths:
       - modules/**/*.tf
+      - modules/**/*.tftest.hcl
+      - modules/**/*.tofutest.hcl
       - examples/**/*.tf
       - policy/**
+      - tests/iac/**
+      - tests/tofu/**
+      - pyproject.toml
+      - uv.lock
       - .github/workflows/iac-policy.yml
   push:
     branches:
       - main
     paths:
       - modules/**/*.tf
+      - modules/**/*.tftest.hcl
+      - modules/**/*.tofutest.hcl
       - examples/**/*.tf
       - policy/**
+      - tests/iac/**
+      - tests/tofu/**
+      - pyproject.toml
+      - uv.lock
       - .github/workflows/iac-policy.yml
 
 permissions: {}
@@ -29,6 +41,171 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  offline-iac-contracts:
+    name: Offline IaC contract tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      - name: Checkout Repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: '3.12'
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        with:
+          version: 0.11.26
+
+      - name: Run offline IaC contract tests
+        working-directory: tests
+        run: uv run --project .. --locked --only-group lambda-tests pytest -q iac
+
+  opentofu-tests:
+    name: OpenTofu module tests (${{ matrix.opentofu.name }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: ghcr.io/cisco-open/forge-pre-commit:main@sha256:51127f81bc41e09c6306822f6c81911abc51b6745d663d8d4af4683cde8415e7
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        opentofu:
+          - name: minimum-supported
+            version: 1.11.0
+          - name: latest-stable
+            version: latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Install OpenTofu
+        uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
+        with:
+          tofu_version: ${{ matrix.opentofu.version }}
+          tofu_wrapper: false
+          cache: true
+          github_token: ${{ github.token }}
+
+      - name: Record OpenTofu version
+        id: tofu-version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          version="$(
+            tofu version -json \
+              | jq -r '.terraform_version // .tofu_version // .opentofu_version // empty'
+          )"
+
+          if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid OpenTofu version: ${version}" >&2
+            exit 1
+          fi
+
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+
+      - name: Cache OpenTofu providers
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: /github/home/.terraform.d/plugin
+          key: tofu-${{ steps.tofu-version.outputs.version }}-providers-${{ hashFiles('modules/**/*.tf') }}
+          restore-keys: |
+            tofu-${{ steps.tofu-version.outputs.version }}-providers-
+            tofu-providers-
+
+      - name: Install TFLint
+        env:
+          TFLINT_VERSION: 0.55.1
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          install_dir="${HOME}/.local/bin"
+          mkdir -p "${install_dir}"
+          curl -fsSL -o /tmp/tflint.zip \
+            "https://github.com/terraform-linters/tflint/releases/download/v${TFLINT_VERSION}/tflint_linux_amd64.zip"
+          unzip -oq /tmp/tflint.zip -d "${install_dir}"
+          chmod +x "${install_dir}/tflint"
+
+      - name: Show IaC tool versions
+        shell: bash
+        run: |
+          tofu version
+          tflint --version
+
+      - name: Discover OpenTofu test modules
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          find modules -path '*/tests/*.tftest.hcl' -exec dirname {} \; \
+            | sed 's#/tests$##' \
+            | sort -u > .opentofu-test-modules
+
+          test -s .opentofu-test-modules
+          wc -l .opentofu-test-modules
+
+      - name: Check OpenTofu formatting
+        shell: bash
+        run: tofu fmt -check -recursive
+
+      - name: Initialize and validate modules
+        env:
+          TF_PLUGIN_CACHE_DIR: /github/home/.terraform.d/plugin
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          while IFS= read -r module; do
+            echo "::group::${module}"
+            tofu -chdir="${module}" init -backend=false -input=false
+            tofu -chdir="${module}" validate -no-color
+            echo "::endgroup::"
+          done < .opentofu-test-modules
+
+      - name: Run TFLint
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          while IFS= read -r module; do
+            echo "::group::${module}"
+            # Static .tftest.hcl contracts already enforce required_providers.
+            # TFLint 0.55 does not understand OpenTofu provider for_each
+            # references used by modules/helpers/forge_subscription.
+            tflint --chdir="${module}" --disable-rule=terraform_required_providers --no-color
+            echo "::endgroup::"
+          done < .opentofu-test-modules
+
+      - name: Run native OpenTofu tests
+        env:
+          TF_PLUGIN_CACHE_DIR: /github/home/.terraform.d/plugin
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          while IFS= read -r module; do
+            echo "::group::${module}"
+            tofu -chdir="${module}" test -no-color
+            echo "::endgroup::"
+          done < .opentofu-test-modules
+
   opa-policy:
     name: OPA/conftest tenant-isolation gate
     runs-on: ubuntu-latest
@@ -94,6 +271,7 @@ jobs:
           pip install "checkov==3.2.334"
           checkov --directory modules/ --framework terraform \
             --skip-path '.*/\.terraform/.*' \
+            --skip-download \
             --soft-fail \
             --output cli --output sarif --output-file-path console,results.sarif
 

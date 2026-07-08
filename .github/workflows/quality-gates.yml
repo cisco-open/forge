@@ -1,0 +1,122 @@
+---
+# yamllint disable rule:comments
+# yamllint disable rule:truthy
+name: Quality Gates
+
+on:
+  pull_request:
+    branches:
+      - main
+      - renovatebot
+    paths:
+      - modules/**/lambda/**
+      - modules/**/*.tf
+      - modules/**/*.tftest.hcl
+      - tests/**
+      - .docker/pre-commit/Dockerfile
+      - .docker/forge-github-app-register/Dockerfile
+      - .github/dependabot.yml
+      - .github/workflows/build-forge-github-app-register.yml
+      - .github/workflows/cflite_pr.yml
+      - .github/workflows/iac-policy.yml
+      - .github/workflows/lambda-tests.yml
+      - .github/workflows/ministack-smoke.yml
+      - pyproject.toml
+      - uv.lock
+      - .pre-commit-config.yaml
+      - .gitleaks.toml
+      - renovate.json
+      - .github/workflows/quality-gates.yml
+  push:
+    branches:
+      - main
+    paths:
+      - modules/**/lambda/**
+      - modules/**/*.tf
+      - modules/**/*.tftest.hcl
+      - tests/**
+      - .docker/pre-commit/Dockerfile
+      - .docker/forge-github-app-register/Dockerfile
+      - .github/dependabot.yml
+      - .github/workflows/build-forge-github-app-register.yml
+      - .github/workflows/cflite_pr.yml
+      - .github/workflows/iac-policy.yml
+      - .github/workflows/lambda-tests.yml
+      - .github/workflows/ministack-smoke.yml
+      - pyproject.toml
+      - uv.lock
+      - .pre-commit-config.yaml
+      - .gitleaks.toml
+      - renovate.json
+      - .github/workflows/quality-gates.yml
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  automation-gates:
+    name: Automation gate tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      - name: Checkout Repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: '3.12'
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        with:
+          version: 0.11.26
+
+      - name: Run automation gate tests
+        working-directory: tests
+        run: uv run --project .. --locked --only-group lambda-tests pytest -q quality
+
+  mutation:
+    name: Mutation test critical Lambda boundaries
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      - name: Checkout Repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: '3.12'
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        with:
+          version: 0.11.26
+
+      - name: Run deterministic mutation tests
+        working-directory: tests
+        run: |
+          uv run --project .. --locked --only-group lambda-tests \
+            pytest -q mutation
