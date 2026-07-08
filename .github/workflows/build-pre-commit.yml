@@ -116,27 +116,6 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Cache pre-commit
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.cache/pre-commit/
-          key: pre-commit|${{ github.repository }}|${{ hashFiles('.pre-commit-config.yaml') }}
-
-      - name: Cache OpenTofu providers
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: /github/home/.terraform.d/plugin
-          key: tf-providers-${{ github.run_id }}
-          restore-keys: |
-            tf-providers
-
-      - name: Set Terraform plugin cache
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          echo "TF_PLUGIN_CACHE_DIR=/github/home/.terraform.d/plugin" >> "${GITHUB_ENV}"
-
       - name: Mark repository as safe
         shell: bash
         run: |
