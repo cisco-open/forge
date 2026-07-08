@@ -12,6 +12,8 @@ on:
     paths:
       - .docker/pre-commit/**
       - .github/workflows/build-pre-commit.yml
+      - pyproject.toml
+      - uv.lock
   pull_request:
     types:
       - opened
@@ -23,6 +25,8 @@ on:
     paths:
       - .docker/pre-commit/**
       - .github/workflows/build-pre-commit.yml
+      - pyproject.toml
+      - uv.lock
 
 permissions: {}
 
