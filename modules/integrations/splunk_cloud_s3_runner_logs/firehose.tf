@@ -63,7 +63,7 @@ resource "aws_iam_policy" "firehose_policy" {
           "logs:PutLogEvents"
         ]
         Resource = [
-          "${aws_cloudwatch_log_group.firehose_splunk.arn}",
+          aws_cloudwatch_log_group.firehose_splunk.arn,
           "${aws_cloudwatch_log_group.firehose_splunk.arn}:*"
         ]
       }
