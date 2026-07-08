@@ -78,6 +78,8 @@ jobs:
     timeout-minutes: 45
     permissions:
       contents: read
+    env:
+      TF_PLUGIN_CACHE_DIR: ${{ runner.temp }}/tofu-plugin-cache
     strategy:
       fail-fast: false
       matrix:
@@ -118,10 +120,14 @@ jobs:
 
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
 
+      - name: Prepare OpenTofu plugin cache
+        shell: bash
+        run: mkdir -p "${TF_PLUGIN_CACHE_DIR}"
+
       - name: Cache OpenTofu providers
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: /github/home/.terraform.d/plugin
+          path: ${{ runner.temp }}/tofu-plugin-cache
           key: tofu-${{ steps.tofu-version.outputs.version }}-providers-${{ hashFiles('modules/**/*.tf') }}
           restore-keys: |
             tofu-${{ steps.tofu-version.outputs.version }}-providers-
@@ -164,8 +170,6 @@ jobs:
         run: tofu fmt -check -recursive
 
       - name: Initialize and validate modules
-        env:
-          TF_PLUGIN_CACHE_DIR: /github/home/.terraform.d/plugin
         shell: bash
         run: |
           set -euo pipefail
@@ -192,8 +196,6 @@ jobs:
           done < .opentofu-test-modules
 
       - name: Run native OpenTofu tests
-        env:
-          TF_PLUGIN_CACHE_DIR: /github/home/.terraform.d/plugin
         shell: bash
         run: |
           set -euo pipefail
