@@ -16,6 +16,7 @@ on:
       - policy/**
       - tests/iac/**
       - tests/tofu/**
+      - scripts/ci_summary.py
       - pyproject.toml
       - uv.lock
       - .github/workflows/iac-policy.yml
@@ -30,6 +31,7 @@ on:
       - policy/**
       - tests/iac/**
       - tests/tofu/**
+      - scripts/ci_summary.py
       - pyproject.toml
       - uv.lock
       - .github/workflows/iac-policy.yml
@@ -47,6 +49,8 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
+      issues: write
+      pull-requests: write
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
@@ -70,7 +74,22 @@ jobs:
 
       - name: Run offline IaC contract tests
         working-directory: tests
-        run: uv run --project .. --locked --only-group lambda-tests pytest -q iac
+        run: |
+          uv run --project .. --locked --only-group lambda-tests \
+            pytest -q iac --junitxml=iac-results.xml
+
+      - name: Write offline IaC contract summary
+        if: always()
+        working-directory: tests
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python ../scripts/ci_summary.py \
+            --title "Offline IaC contract tests" \
+            --junit "Offline IaC contracts=iac-results.xml" \
+            --coverage coverage.xml \
+            --output iac-contract-summary.md \
+            --comment-marker forge-ci-summary:offline-iac-contracts
 
   opentofu-tests:
     name: OpenTofu module tests (${{ matrix.opentofu.name }})
@@ -78,6 +97,8 @@ jobs:
     timeout-minutes: 45
     permissions:
       contents: read
+      issues: write
+      pull-requests: write
     env:
       TF_PLUGIN_CACHE_DIR: ${{ runner.temp }}/tofu-plugin-cache
     strategy:
@@ -197,14 +218,61 @@ jobs:
 
       - name: Run native OpenTofu tests
         shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          OPENTOFU_NAME: ${{ matrix.opentofu.name }}
+          OPENTOFU_VERSION: ${{ steps.tofu-version.outputs.version }}
         run: |
           set -euo pipefail
 
+          summary_table="$(mktemp)"
+          failures=0
+          total=0
+
           while IFS= read -r module; do
             echo "::group::${module}"
-            tofu -chdir="${module}" test -no-color
+            total=$((total + 1))
+            log_file="${RUNNER_TEMP}/tofu-test-${total}.log"
+            if tofu -chdir="${module}" test -no-color > "${log_file}" 2>&1; then
+              result="passed"
+            else
+              result="failed"
+              failures=$((failures + 1))
+            fi
+            cat "${log_file}"
+            printf '| `%s` | %s |\n' "${module}" "${result}" >> "${summary_table}"
             echo "::endgroup::"
           done < .opentofu-test-modules
+
+          if (( failures == 0 )); then
+            result="passed"
+          else
+            result="failed"
+          fi
+
+          summary_file="opentofu-${OPENTOFU_NAME}-summary.md"
+          {
+            printf '## OpenTofu module tests (%s)\n\n' "${OPENTOFU_NAME}"
+            printf '**Result:** %s\n\n' "${result}"
+            printf '**OpenTofu version:** `%s`\n\n' "${OPENTOFU_VERSION}"
+            printf '| Metric | Count |\n'
+            printf '| --- | ---: |\n'
+            printf '| Passed modules | %s |\n' "$((total - failures))"
+            printf '| Failed modules | %s |\n' "${failures}"
+            printf '| Total modules | %s |\n\n' "${total}"
+            printf '| Module | Result |\n'
+            printf '| --- | --- |\n'
+            cat "${summary_table}"
+            printf '\n'
+          } > "${summary_file}"
+
+          python scripts/ci_summary.py \
+            --title "OpenTofu module tests (${OPENTOFU_NAME})" \
+            --input-markdown "${summary_file}" \
+            --output "${summary_file}" \
+            --comment-marker "forge-ci-summary:opentofu-${OPENTOFU_NAME}"
+
+          (( failures == 0 ))
 
   opa-policy:
     name: OPA/conftest tenant-isolation gate
@@ -212,6 +280,8 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
+      issues: write
+      pull-requests: write
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
@@ -234,7 +304,36 @@ jobs:
           conftest --version
 
       - name: Verify policy logic (hard gate)
+        id: conftest-verify
         run: conftest verify --policy policy/opa
+
+      - name: Write OPA policy summary
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          VERIFY_OUTCOME: ${{ steps.conftest-verify.outcome }}
+        run: |
+          set -euo pipefail
+
+          if [[ "${VERIFY_OUTCOME}" == "success" ]]; then
+            result="passed"
+          else
+            result="failed"
+          fi
+
+          {
+            printf '## OPA/conftest tenant-isolation gate\n\n'
+            printf '**Result:** %s\n\n' "${result}"
+            printf '| Gate | Result |\n'
+            printf '| --- | --- |\n'
+            printf '| `conftest verify --policy policy/opa` | %s |\n\n' "${result}"
+          } > opa-policy-summary.md
+
+          python scripts/ci_summary.py \
+            --title "OPA/conftest tenant-isolation gate" \
+            --input-markdown opa-policy-summary.md \
+            --output opa-policy-summary.md \
+            --comment-marker forge-ci-summary:opa-policy
 
   checkov:
     name: Checkov IaC scan (informational)
