@@ -64,9 +64,13 @@ jobs:
         run: |
           set -euo pipefail
 
-          if command -v uv >/dev/null 2>&1 && command -v bandit >/dev/null 2>&1 && command -v pip-audit >/dev/null 2>&1; then
+          if command -v uv >/dev/null 2>&1 && command -v bandit >/dev/null 2>&1 && command -v pip-audit >/dev/null 2>&1 && python3.12 -m venv --help >/dev/null 2>&1; then
               exit 0
           fi
+
+          apt-get update
+          apt-get install -y --no-install-recommends python3.12-venv
+          rm -rf /var/lib/apt/lists/*
 
           uv_version="$(
               python3.12 <<'PY'

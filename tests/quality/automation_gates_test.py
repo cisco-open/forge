@@ -72,6 +72,7 @@ def test_pre_commit_covers_security_sca_and_secrets() -> None:
         'gitleaks detect --source . --config .gitleaks.toml',
         'security-bandit',
         'bandit -q -r modules tests',
+        '*/.terraform/*',
         'security-pip-audit',
         'uv export --project . --locked --only-group lambda-tests',
         'pip-audit -r "$req" --strict --no-deps',
@@ -83,6 +84,7 @@ def test_pre_commit_covers_security_sca_and_secrets() -> None:
 
     for required in [
         'COPY pyproject.toml uv.lock ./',
+        'python3.12-venv',
         'data["dependency-groups"]["pre-commit-image"]',
         'uv export --locked --only-group pre-commit-image',
         'pip install --no-cache-dir --break-system-packages --ignore-installed -r /tmp/pre-commit-image-requirements.txt',
@@ -101,6 +103,8 @@ def test_pre_commit_covers_security_sca_and_secrets() -> None:
         'command -v uv',
         'command -v bandit',
         'command -v pip-audit',
+        'python3.12 -m venv --help',
+        'apt-get install -y --no-install-recommends python3.12-venv',
         'uv export --locked --only-group pre-commit-image',
         'pip install --no-cache-dir --break-system-packages --ignore-installed -r /tmp/pre-commit-image-requirements.txt',
     ]:
