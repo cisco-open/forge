@@ -12,7 +12,7 @@ provider "aws" {
 provider "aws" {
   alias = "by_region"
   # supported by opentofu >= 1.9.0
-  for_each = local.ecr_provider_regions
+  for_each = toset(var.forge.ecr_repositories.regions)
   profile  = var.aws_profile
   region   = each.key
 

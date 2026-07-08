@@ -15,7 +15,6 @@ variable "forge" {
       names                  = list(string)
       ecr_access_account_ids = list(string)
       regions                = list(string)
-      provider_regions       = optional(list(string), [])
     })
   })
   description = "Configuration for Forge runners."
@@ -25,7 +24,6 @@ variable "forge" {
       names                  = []
       ecr_access_account_ids = []
       regions                = []
-      provider_regions       = []
     }
   }
 }
