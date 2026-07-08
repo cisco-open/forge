@@ -68,13 +68,18 @@ def test_pre_commit_covers_security_sca_and_secrets() -> None:
     pre_commit_deps = dependency_group_names('pre-commit-image')
 
     for required in [
-        'security-gitleaks',
+        'repo: https://github.com/gitleaks/gitleaks',
+        'id: gitleaks',
         'gitleaks detect --source . --config .gitleaks.toml',
-        'security-bandit',
-        'find modules tests',
-        '-name .terraform',
-        'bandit -q -lll -iii "${files[@]}"',
-        'security-pip-audit',
+        'repo: https://github.com/PyCQA/bandit',
+        'id: bandit',
+        '- modules',
+        '- tests',
+        '*/.terraform/*',
+        'repo: https://github.com/pypa/pip-audit',
+        'id: pip-audit',
+        'additional_dependencies:',
+        'uv==0.11.26',
         'uv export --project . --locked --only-group lambda-tests',
         'pip-audit -r "$req" --strict --no-deps',
     ]:
