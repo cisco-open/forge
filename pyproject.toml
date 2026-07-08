@@ -11,7 +11,7 @@ docs = [
 
 # Tools baked into the pre-commit Docker image for local system hooks.
 pre-commit-image = [
-    "pre-commit==4.0.0",
+    "pre-commit==4.6.0",
     "bandit==1.9.4",
     "pip-audit==2.10.1",
     "uv==0.11.26",
