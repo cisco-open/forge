@@ -116,6 +116,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     git \
     python3.12 \
+    python3.12-venv \
     python3-pip \
     ruby3.2 \
     build-essential \
@@ -133,5 +134,12 @@ COPY --from=build /usr/local/bin/terragrunt /usr/local/bin/terragrunt
 COPY --from=build /usr/local/bin/tflint /usr/local/bin/tflint
 COPY --from=build /usr/local/bin/tofu /usr/local/bin/tofu
 
+COPY pyproject.toml uv.lock ./
+
 # hadolint ignore=DL3013
-RUN pip install --no-cache-dir --break-system-packages pre-commit
+RUN set -eux; \
+    uv_version="$(python3.12 -c 'import tomllib; data = tomllib.load(open("pyproject.toml", "rb")); print(next(dep.removeprefix("uv==") for dep in data["dependency-groups"]["pre-commit-image"] if dep.startswith("uv==")))')"; \
+    pip install --no-cache-dir --break-system-packages "uv==${uv_version}"; \
+    uv export --locked --only-group pre-commit-image --format requirements-txt --no-hashes > /tmp/pre-commit-image-requirements.txt; \
+    pip install --no-cache-dir --break-system-packages --ignore-installed -r /tmp/pre-commit-image-requirements.txt; \
+    rm /tmp/pre-commit-image-requirements.txt

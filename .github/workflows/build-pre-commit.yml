@@ -11,6 +11,8 @@ on:
       - v*
     paths:
       - .docker/pre-commit/**
+      - pyproject.toml
+      - uv.lock
       - .github/workflows/build-pre-commit.yml
   pull_request:
     types:
@@ -22,6 +24,8 @@ on:
       - renovatebot
     paths:
       - .docker/pre-commit/**
+      - pyproject.toml
+      - uv.lock
       - .github/workflows/build-pre-commit.yml
 
 permissions: {}
@@ -72,9 +76,29 @@ jobs:
         with:
           context: .
           file: .docker/pre-commit/Dockerfile
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: |
+            ${{ steps.meta.outputs.tags }}
+            ${{ github.event_name == 'pull_request' && format('{0}/{1}:pr-test-{2}', env.REGISTRY, env.IMAGE_NAME, github.sha) || '' }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: ${{ env.PLATFORMS }}
           push: ${{ github.event_name != 'pull_request' }}
+          load: ${{ github.event_name == 'pull_request' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Smoke test PR image [pre-commit]
+        if: github.event_name == 'pull_request'
+        shell: bash
+        env:
+          PR_TEST_IMAGE: ${{ format('{0}/{1}:pr-test-{2}', env.REGISTRY, env.IMAGE_NAME, github.sha) }}
+        run: |
+          set -euo pipefail
+
+          docker run --rm "${PR_TEST_IMAGE}" sh -lc '
+            pre-commit --version
+            bandit --version
+            pip-audit --version
+            uv --version
+            tofu version
+            tflint --version
+          '
