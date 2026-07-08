@@ -177,6 +177,8 @@ def test_test_suites_have_named_ci_jobs() -> None:
     for required in [
         'name: Automation gate tests',
         'pytest -q quality',
+        'scripts/ci_summary.py',
+        'scripts/terragrunt-deps.py',
         'name: Mutation test critical Lambda boundaries',
         'pytest -q mutation',
     ]:

@@ -14,6 +14,7 @@ on:
       - modules/**/*.tftest.hcl
       - tests/**
       - scripts/ci_summary.py
+      - scripts/terragrunt-deps.py
       - .docker/pre-commit/Dockerfile
       - .docker/forge-github-app-register/Dockerfile
       - .github/dependabot.yml
@@ -37,6 +38,7 @@ on:
       - modules/**/*.tftest.hcl
       - tests/**
       - scripts/ci_summary.py
+      - scripts/terragrunt-deps.py
       - .docker/pre-commit/Dockerfile
       - .docker/forge-github-app-register/Dockerfile
       - .github/dependabot.yml
