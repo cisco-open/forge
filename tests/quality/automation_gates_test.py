@@ -64,6 +64,7 @@ def test_pre_commit_covers_security_sca_and_secrets() -> None:
     pyproject = read('pyproject.toml')
     dockerfile = read('.docker/pre-commit/Dockerfile')
     workflow = read('.github/workflows/quality-gates.yml')
+    pre_commit_workflow = read('.github/workflows/pre-commit.yml')
     pre_commit_deps = dependency_group_names('pre-commit-image')
 
     for required in [
@@ -94,6 +95,16 @@ def test_pre_commit_covers_security_sca_and_secrets() -> None:
         'pytest -q mutation',
     ]:
         assert required in workflow
+
+    for required in [
+        'name: Ensure pre-commit system tools',
+        'command -v uv',
+        'command -v bandit',
+        'command -v pip-audit',
+        'uv export --locked --only-group pre-commit-image',
+        'pip install --no-cache-dir --break-system-packages --ignore-installed -r /tmp/pre-commit-image-requirements.txt',
+    ]:
+        assert required in pre_commit_workflow
 
 
 def test_github_app_register_image_uses_root_locked_dependencies() -> None:
