@@ -323,6 +323,80 @@ def test_resolve_delivery_guid_rows_pages_and_filters_installation(
     ]
 
 
+def test_next_cursor_from_headers_returns_empty_when_next_link_absent(
+    monkeypatch, aws
+):
+    mod = _load_worker(monkeypatch)
+
+    assert mod.next_cursor_from_headers({}) == ''
+    assert mod.next_cursor_from_headers({
+        'link': '<https://api.github.test/app/hook/deliveries?page=1>; rel="prev"',
+    }) == ''
+
+
+def test_resolve_delivery_guid_rows_rejects_non_list_payload(
+    monkeypatch, aws
+):
+    mod = _load_worker(monkeypatch)
+    guid = '9fff76f0-77ed-11f1-910c-57c17856fa99'
+    monkeypatch.setattr(
+        mod,
+        'github_request',
+        lambda *_args, **_kwargs: (
+            200,
+            {},
+            json.dumps({'guid': guid}).encode(),
+        ),
+    )
+
+    with pytest.raises(ValueError, match='non-list payload'):
+        mod.resolve_delivery_guid_rows(
+            'jwt-token',
+            [guid],
+            'installation-1',
+            'https://api.github.test',
+            '2022-11-28',
+        )
+
+
+def test_resolve_delivery_guid_rows_rejects_invalid_resolved_id(
+    monkeypatch, aws
+):
+    mod = _load_worker(monkeypatch)
+    guid = '9fff76f0-77ed-11f1-910c-57c17856fa99'
+    monkeypatch.setattr(
+        mod,
+        'github_request',
+        lambda *_args, **_kwargs: (
+            200,
+            {},
+            json.dumps([
+                {
+                    'id': 'not-numeric',
+                    'guid': guid,
+                    'installation_id': 'installation-1',
+                },
+            ]).encode(),
+        ),
+    )
+
+    with pytest.raises(ValueError, match='invalid numeric ID'):
+        mod.resolve_delivery_guid_rows(
+            'jwt-token',
+            [guid],
+            'installation-1',
+            'https://api.github.test',
+            '2022-11-28',
+        )
+
+
+def test_delivery_rows_rejects_missing_delivery_reference(monkeypatch, aws):
+    mod = _load_worker(monkeypatch)
+
+    with pytest.raises(ValueError, match='No github_delivery'):
+        mod.delivery_rows({'github_delivery': []}, 'jwt-token')
+
+
 def test_process_rows_redelivers_each_candidate(monkeypatch, aws):
     mod = _load_worker(monkeypatch)
     calls = []

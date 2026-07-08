@@ -146,6 +146,177 @@ def test_call_with_backoff_retries_retryable_client_error(monkeypatch, aws):
     assert sleeps == [2.0]
 
 
+def test_call_with_backoff_does_not_retry_permission_denied_by_default(
+    monkeypatch, aws
+):
+    mod = load_handler_module('trust_common')
+    sleeps = []
+    monkeypatch.setattr(mod.time, 'sleep',
+                        lambda seconds: sleeps.append(seconds))
+
+    def _operation():
+        raise ClientError({
+            'Error': {
+                'Code': 'AccessDenied',
+                'Message': 'not authorized',
+            },
+        }, 'AssumeRole')
+
+    with pytest.raises(ClientError) as exc:
+        mod.call_with_backoff(
+            'assume denied role',
+            _operation,
+            max_attempts=3,
+        )
+
+    assert exc.value.response['Error']['Code'] == 'AccessDenied'
+    assert sleeps == []
+
+
+def test_access_denied_retry_is_opt_in_for_eventual_consistency(
+    monkeypatch, aws
+):
+    mod = load_handler_module('trust_common')
+    err = ClientError({
+        'Error': {
+            'Code': 'AccessDenied',
+            'Message': 'not authorized',
+        },
+    }, 'AssumeRole')
+
+    assert not mod.is_retryable_client_error(err)
+    assert mod.is_retryable_client_error(err, retry_access_denied=True)
+
+
+def test_parse_env_int_enforces_bounds(monkeypatch, aws):
+    mod = load_handler_module('trust_common')
+
+    monkeypatch.setenv('VALIDATION_DELAY_SECONDS', '900')
+    assert mod.parse_env_int('VALIDATION_DELAY_SECONDS', 300, 0, 900) == 900
+
+    monkeypatch.setenv('VALIDATION_DELAY_SECONDS', '901')
+    with pytest.raises(RuntimeError, match='between 0 and 900'):
+        mod.parse_env_int('VALIDATION_DELAY_SECONDS', 300, 0, 900)
+
+    monkeypatch.setenv('VALIDATION_DELAY_SECONDS', 'not-an-int')
+    with pytest.raises(RuntimeError, match='must be an integer'):
+        mod.parse_env_int('VALIDATION_DELAY_SECONDS', 300, 0, 900)
+
+
+def test_parse_env_list_accepts_json_csv_and_malformed_json_fallback(
+    monkeypatch, aws
+):
+    mod = load_handler_module('trust_common')
+
+    monkeypatch.setenv('FORGE_IAM_ROLES', json.dumps([
+        FORGE_ROLE,
+        '',
+        '  arn:aws:iam::123456789012:role/other  ',
+    ]))
+    assert mod.parse_env_list('FORGE_IAM_ROLES') == [
+        FORGE_ROLE,
+        'arn:aws:iam::123456789012:role/other',
+    ]
+
+    monkeypatch.setenv('FORGE_IAM_ROLES', f' {FORGE_ROLE},, {VALIDATOR_ROLE} ')
+    assert mod.parse_env_list('FORGE_IAM_ROLES') == [
+        FORGE_ROLE,
+        VALIDATOR_ROLE,
+    ]
+
+    monkeypatch.setenv('FORGE_IAM_ROLES', '[not-json')
+    assert mod.parse_env_list('FORGE_IAM_ROLES') == ['[not-json']
+
+
+def test_normalize_policy_document_rejects_invalid_shapes(monkeypatch, aws):
+    mod = load_handler_module('trust_common')
+
+    with pytest.raises(ValueError, match='must be a JSON object'):
+        mod.normalize_policy_document([])
+
+    with pytest.raises(ValueError, match='Statement must be a list or object'):
+        mod.normalize_policy_document({'Statement': 'not-a-statement'})
+
+
+def test_wait_for_temporary_trust_retries_until_statement_visible(
+    monkeypatch, aws
+):
+    mod = load_handler_module('trust_common')
+    policies = [
+        {'Statement': []},
+        {
+            'Statement': [
+                mod.build_lambda_trust_statement(VALIDATOR_ROLE),
+            ],
+        },
+    ]
+    sleeps = []
+
+    monkeypatch.setattr(
+        mod,
+        'get_role_assume_policy',
+        lambda _role_name: policies.pop(0),
+    )
+    monkeypatch.setattr(mod.time, 'sleep',
+                        lambda seconds: sleeps.append(seconds))
+
+    result = mod.wait_for_temporary_forge_role_trust(
+        'forge-role',
+        VALIDATOR_ROLE,
+    )
+
+    assert mod.policy_has_validator_trust(result, VALIDATOR_ROLE)
+    assert sleeps == [2.0]
+
+
+def test_wait_for_temporary_trust_raises_when_statement_never_visible(
+    monkeypatch, aws
+):
+    mod = load_handler_module('trust_common')
+    sleeps = []
+    monkeypatch.setattr(
+        mod,
+        'get_role_assume_policy',
+        lambda _role_name: {'Statement': []},
+    )
+    monkeypatch.setattr(mod.time, 'sleep',
+                        lambda seconds: sleeps.append(seconds))
+    monkeypatch.setattr(mod, 'TRUST_POLICY_VERIFY_MAX_ATTEMPTS', 2)
+
+    with pytest.raises(RuntimeError, match='Temporary trust statement'):
+        mod.wait_for_temporary_forge_role_trust('forge-role', VALIDATOR_ROLE)
+
+    assert sleeps == [2.0]
+
+
+def test_session_policy_only_allows_tenant_assume_and_tag(monkeypatch, aws):
+    mod = load_handler_module('trust_common')
+
+    policy = json.loads(mod.build_session_policy_for_tenants([
+        TENANT_ROLE,
+        'arn:aws:iam::222222222222:role/tenant-two',
+    ]))
+
+    assert policy == {
+        'Version': '2012-10-17',
+        'Statement': [
+            {
+                'Sid': 'AllowAssumeTenantRolesForValidation',
+                'Effect': 'Allow',
+                'Action': [
+                    'sts:AssumeRole',
+                    'sts:TagSession',
+                ],
+                'Resource': [
+                    TENANT_ROLE,
+                    'arn:aws:iam::222222222222:role/tenant-two',
+                ],
+            }
+        ],
+    }
+    assert policy['Statement'][0]['Resource'] != '*'
+
+
 def test_remove_temporary_forge_role_trust_updates_when_present(
     monkeypatch, aws
 ):

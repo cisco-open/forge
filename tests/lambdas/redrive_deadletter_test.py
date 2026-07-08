@@ -55,9 +55,8 @@ def test_empty_map_is_noop(monkeypatch):
 
 def test_redrive_starts_move_task_per_mapping(monkeypatch, sqs):
     mod = load_handler_module('redrive_deadletter')
-    # moto 5.x does not implement start_message_move_task; stub it so we can
-    # assert the handler calls it correctly (the live path is covered by the
-    # MiniStack/LocalStack smoke suite).
+    # moto 5.x and MiniStack do not implement StartMessageMoveTask reliably.
+    # Stub the client so this test pins Forge's behavior: move FROM the DLQ.
     calls = []
     monkeypatch.setattr(
         mod.sqs, 'start_message_move_task',

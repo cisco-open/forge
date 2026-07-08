@@ -190,6 +190,14 @@ def test_dedupe_key_includes_tenant_region_repo_job(monkeypatch):
     assert mod.dedupe_key(payload) == 'acgw#us-west-2#acme/app#42'
 
 
+def test_split_multivalue_dedupes_preserving_order(monkeypatch):
+    mod = _load_handler(monkeypatch)
+
+    assert mod.split_multivalue(
+        ' self-hosted, x64\nx64  type:small,self-hosted '
+    ) == ['self-hosted', 'x64', 'type:small']
+
+
 def test_normalize_result_raises_when_required_fields_missing(monkeypatch):
     mod = _load_handler(monkeypatch)
     # No queued_url, no github_delivery -> ValueError listing both.
@@ -519,6 +527,40 @@ def test_duplicate_dedupe_key_is_skipped(monkeypatch, aws):
     assert len(body['queued']) == 1
     assert len(body['skipped']) == 1
     assert body['skipped'][0]['reason'] == 'duplicate'
+
+
+def test_expired_dedupe_key_can_be_requeued(monkeypatch, aws):
+    import boto3
+    ddb = _create_dedupe_table(boto3)
+    mod = _load_handler(monkeypatch)
+    monkeypatch.setattr(mod.time, 'time', lambda: 1000)
+    key = 'acgw#us-west-2#acme/app#900'
+    ddb.put_item(
+        TableName=DEDUPE_TABLE,
+        Item={
+            'dedupe_key': {'S': key},
+            'created_at': {'N': '1'},
+            'expires_at': {'N': '900'},
+            'payload': {'S': '{}'},
+            'payload_hash': {'S': 'old'},
+            'status': {'S': 'completed'},
+        },
+    )
+    payload = {
+        'tenant': 'acgw',
+        'aws_region': 'us-west-2',
+        'repository': 'acme/app',
+        'workflow_job_id': 900,
+    }
+
+    assert mod.put_pending_work_once(key, payload)
+
+    item = ddb.get_item(
+        TableName=DEDUPE_TABLE,
+        Key={'dedupe_key': {'S': key}},
+    )['Item']
+    assert item['status']['S'] == 'pending'
+    assert item['expires_at']['N'] == '2800'
 
 
 def test_ec2_describe_failure_fails_open(monkeypatch, aws):

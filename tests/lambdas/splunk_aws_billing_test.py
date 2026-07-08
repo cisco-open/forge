@@ -8,7 +8,9 @@ event-body behavior with a tiny pandas shim, avoiding parquet fixture churn.
 from __future__ import annotations
 
 import datetime as dt
+import gzip
 import importlib.util
+import json
 import sys
 import types
 from pathlib import Path
@@ -75,6 +77,125 @@ def test_parse_tags_rejects_malformed_values(monkeypatch, aws):
     assert common.parse_tags('[not-json') == {}
     assert common.parse_tags([['a']]) == {}
     assert common.parse_tags(None) == {}
+
+
+def test_send_to_splunk_batch_gzips_newline_delimited_events(
+    monkeypatch, aws
+):
+    monkeypatch.setenv('SPLUNK_HEC_URL', 'https://splunk.example/hec')
+    monkeypatch.setenv('SPLUNK_HEC_TOKEN', 'token-123')
+    common = _load_billing_module(monkeypatch, 'common')
+    calls = []
+
+    class _Response:
+        status_code = 200
+
+        def raise_for_status(self):
+            return None
+
+    def _post(url, headers, data, timeout):
+        calls.append({
+            'url': url,
+            'headers': headers,
+            'data': data,
+            'timeout': timeout,
+        })
+        return _Response()
+
+    monkeypatch.setattr(common.requests, 'post', _post)
+
+    common.send_to_splunk_batch([
+        json.dumps({'event': {'id': 1}}),
+        json.dumps({'event': {'id': 2}}),
+    ])
+
+    assert calls[0]['url'] == 'https://splunk.example/hec'
+    assert calls[0]['headers']['Authorization'] == 'Splunk token-123'
+    assert calls[0]['headers']['Content-Encoding'] == 'gzip'
+    assert gzip.decompress(calls[0]['data']).decode() == (
+        '{"event": {"id": 1}}\n{"event": {"id": 2}}'
+    )
+    assert calls[0]['timeout'] == 10
+
+
+def test_send_to_splunk_batch_empty_list_does_not_call_http(
+    monkeypatch, aws
+):
+    common = _load_billing_module(monkeypatch, 'common')
+    monkeypatch.setattr(
+        common.requests,
+        'post',
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError('empty batch must not call Splunk')
+        ),
+    )
+
+    assert common.send_to_splunk_batch([]) is None
+
+
+def test_send_metric_to_o11y_batch_posts_gauge_payload(monkeypatch, aws):
+    monkeypatch.setenv('SPLUNK_METRICS_URL',
+                       'https://o11y.example/v2/datapoint')
+    monkeypatch.setenv('SPLUNK_METRICS_TOKEN', 'metric-token')
+    common = _load_billing_module(monkeypatch, 'common')
+    calls = []
+
+    class _Response:
+        status_code = 200
+
+        def raise_for_status(self):
+            return None
+
+    def _post(url, headers, json, timeout):
+        calls.append({
+            'url': url,
+            'headers': headers,
+            'json': json,
+            'timeout': timeout,
+        })
+        return _Response()
+
+    monkeypatch.setattr(common.requests, 'post', _post)
+
+    common.send_metric_to_o11y_batch([
+        {
+            'metric': 'forge.per_service.cost_usd',
+            'value': 1.25,
+            'dimensions': {'service': 'AmazonEC2'},
+        },
+    ])
+
+    assert calls == [{
+        'url': 'https://o11y.example/v2/datapoint',
+        'headers': {
+            'X-SF-TOKEN': 'metric-token',
+            'Content-Type': 'application/json',
+        },
+        'json': {
+            'gauge': [
+                {
+                    'metric': 'forge.per_service.cost_usd',
+                    'value': 1.25,
+                    'dimensions': {'service': 'AmazonEC2'},
+                },
+            ],
+        },
+        'timeout': 10,
+    }]
+
+
+def test_splunk_http_errors_are_logged_not_retried_inline(
+    monkeypatch, aws, captured_logs
+):
+    common = _load_billing_module(monkeypatch, 'common')
+
+    def _post(*_args, **_kwargs):
+        raise common.requests.RequestException('network down')
+
+    monkeypatch.setattr(common.requests, 'post', _post)
+
+    assert common.send_to_splunk_batch(['{"event":{"id":1}}']) is None
+    assert 'Failed to send batch to Splunk: network down' in captured_logs.text
 
 
 def test_extract_arn_parts_for_resource_group_application(monkeypatch, aws):

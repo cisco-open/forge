@@ -203,6 +203,134 @@ def test_metadata_flattening_stops_at_field_limit(monkeypatch, aws):
     assert fields == {'a': 1, 'b': 2}
 
 
+def test_s3_tag_serialization_encodes_drops_none_and_limits(monkeypatch, aws):
+    mod = load_handler_module('job_log_archiver')
+
+    encoded = mod._serialize_tags({
+        'space key': 'a b',
+        'slash': 'x/y',
+        'equals': 'a=b',
+        'empty': '',
+        'none': None,
+    })
+
+    assert encoded.split('&') == [
+        'space%20key=a%20b',
+        'slash=x%2Fy',
+        'equals=a%3Db',
+        'empty=',
+    ]
+
+    many_tags = {f'k{i}': f'v{i}' for i in range(mod.MAX_S3_TAGS + 2)}
+
+    limited = mod._serialize_tags(many_tags).split('&')
+
+    assert len(limited) == mod.MAX_S3_TAGS
+    assert limited[-1] == f'k{mod.MAX_S3_TAGS - 1}=v{mod.MAX_S3_TAGS - 1}'
+
+
+def test_github_request_retry_retries_then_succeeds(monkeypatch, aws):
+    mod = load_handler_module('job_log_archiver')
+    sleeps = []
+    calls = []
+    monkeypatch.setattr(mod.time, 'sleep',
+                        lambda seconds: sleeps.append(seconds))
+
+    def _flaky(**kwargs):
+        calls.append(kwargs)
+        if len(calls) < 3:
+            raise mod.RequestException('temporary github failure')
+        return {'ok': True}
+
+    result = mod._retry_request(
+        _flaky,
+        attempts=3,
+        delay=2,
+        url='https://api.github.test',
+    )
+
+    assert result == {'ok': True}
+    assert calls == [
+        {'url': 'https://api.github.test'},
+        {'url': 'https://api.github.test'},
+        {'url': 'https://api.github.test'},
+    ]
+    assert sleeps == [2, 4]
+
+
+def test_github_request_retry_raises_after_final_attempt(monkeypatch, aws):
+    mod = load_handler_module('job_log_archiver')
+    sleeps = []
+    calls = []
+    monkeypatch.setattr(mod.time, 'sleep',
+                        lambda seconds: sleeps.append(seconds))
+
+    def _always_fails(**kwargs):
+        calls.append(kwargs)
+        raise mod.RequestException('github timeout')
+
+    with pytest.raises(mod.RequestException, match='github timeout'):
+        mod._retry_request(
+            _always_fails,
+            attempts=3,
+            delay=1,
+            url='https://api.github.test',
+        )
+
+    assert calls == [
+        {'url': 'https://api.github.test'},
+        {'url': 'https://api.github.test'},
+        {'url': 'https://api.github.test'},
+    ]
+    assert sleeps == [1, 2]
+
+
+def test_parse_event_rejects_malformed_sqs_body(monkeypatch, aws):
+    mod = load_handler_module('job_log_archiver')
+
+    with pytest.raises(ValueError, match='invalid_json'):
+        mod._parse_event({'Records': [{'body': '{"detail":'}]})
+
+
+def test_missing_runtime_env_fails_before_side_effects(monkeypatch, aws):
+    mod = load_handler_module('job_log_archiver')
+    for key in (
+        'SECRET_NAME_APP_ID',
+        'SECRET_NAME_PRIVATE_KEY',
+        'SECRET_NAME_INSTALLATION_ID',
+        'BUCKET_NAME',
+        'KMS_KEY_ARN',
+        'GITHUB_API',
+    ):
+        monkeypatch.delenv(key, raising=False)
+
+    with pytest.raises(ValueError, match='missing_env'):
+        mod.lambda_handler(_completed_event(), None)
+
+
+def test_missing_repository_is_rejected_without_github_or_s3_side_effects(
+    monkeypatch, s3_kms, ssm
+):
+    alpha = s3_kms['buckets']['alpha']
+    mod = _load_archiver(monkeypatch, s3_kms, ssm, bucket=alpha)
+    monkeypatch.setattr(
+        mod,
+        '_download_job_logs',
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError('missing repository must not call GitHub')
+        ),
+    )
+    evt = _completed_event()
+    body = json.loads(evt['Records'][0]['body'])
+    body['detail']['repository'] = {}
+    evt['Records'][0]['body'] = json.dumps(body)
+
+    with pytest.raises(ValueError, match='missing_repository'):
+        mod.lambda_handler(evt, None)
+
+    assert s3_kms['s3'].list_objects_v2(Bucket=alpha).get('Contents', []) == []
+
+
 def test_skipped_jobs_are_not_archived(monkeypatch, s3_kms, ssm):
     alpha = s3_kms['buckets']['alpha']
     mod = _load_archiver(monkeypatch, s3_kms, ssm, bucket=alpha)

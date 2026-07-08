@@ -5,6 +5,8 @@ from __future__ import annotations
 import base64
 import json
 
+import pytest
+from botocore.exceptions import ClientError
 from conftest import requires_aws
 from support import load_handler_module
 
@@ -124,6 +126,67 @@ def test_save_to_runner_group_updates_all_visibility_without_repo_puts(
     assert len(patch_calls) == 1
     assert patch_calls[0][0].endswith('/runner-groups/123')
     assert patch_calls[0][1] == {'visibility': 'all'}
+
+
+def test_get_all_runner_groups_follows_link_header_pagination(
+    monkeypatch, aws
+):
+    mod = load_handler_module('github_app_runner_group')
+    calls = []
+
+    def _get(url, headers):
+        calls.append((url, headers))
+        if len(calls) == 1:
+            return _Response(
+                {'runner_groups': [{'id': 1, 'name': 'small'}]},
+                headers={
+                    'link': (
+                        '<https://api.github.test/page/2>; rel="next"'
+                    ),
+                },
+            )
+        return _Response(
+            {'runner_groups': [{'id': 2, 'name': 'large'}]},
+            headers={},
+        )
+
+    monkeypatch.setattr(mod.requests, 'get', _get)
+
+    groups = mod.get_all_runner_groups(
+        'https://api.github.test/orgs/acme/actions/runner-groups',
+        {'Authorization': 'Bearer token'},
+    )
+
+    assert [group['name'] for group in groups] == ['small', 'large']
+    assert calls[1][0] == 'https://api.github.test/page/2'
+
+
+def test_lambda_handler_propagates_missing_secret_without_github_calls(
+    monkeypatch, ssm
+):
+    mod = load_handler_module('github_app_runner_group')
+    for key, value in {
+        'SECRET_NAME_APP_ID': '/forge/missing-app-id',
+        'SECRET_NAME_PRIVATE_KEY': '/forge/missing-private-key',
+        'SECRET_NAME_INSTALLATION_ID': '/forge/missing-installation-id',
+        'REPOSITORY_SELECTION': 'selected',
+        'ORGANIZATION': 'acme',
+        'GITHUB_API': 'https://api.github.test',
+        'RUNNER_GROUP_NAME': 'forge-small',
+    }.items():
+        monkeypatch.setenv(key, value)
+    monkeypatch.setattr(
+        mod,
+        'generate_jwt',
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError('missing SSM secret must stop before GitHub auth')
+        ),
+    )
+
+    with pytest.raises(ClientError) as exc:
+        mod.lambda_handler({}, None)
+
+    assert exc.value.response['Error']['Code'] == 'ParameterNotFound'
 
 
 def test_lambda_handler_uses_ssm_secrets_and_selected_repos(
