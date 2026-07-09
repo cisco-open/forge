@@ -120,4 +120,6 @@ resource "aws_bcmdataexports_export" "cur_per_service" {
     }
   }
   tags = local.all_security_tags
+
+  depends_on = [aws_s3_bucket_policy.cur_bucket_policy]
 }

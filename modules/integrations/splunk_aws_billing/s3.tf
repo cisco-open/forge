@@ -91,34 +91,24 @@ data "aws_iam_policy_document" "cur_bucket_policy" {
   }
 
   statement {
-    sid    = "EnableAWSDataExportsToWriteToS3AndCheckPolicy"
+    sid    = "EnableAWSDataExportsToWriteToS3"
     effect = "Allow"
 
     principals {
-      type = "Service"
-      identifiers = [
-        "billingreports.amazonaws.com",
-        "bcm-data-exports.amazonaws.com"
-      ]
+      type        = "Service"
+      identifiers = ["bcm-data-exports.amazonaws.com"]
     }
 
-    actions = [
-      "s3:PutObject",
-      "s3:GetBucketPolicy"
-    ]
+    actions = ["s3:PutObject"]
 
     resources = [
-      aws_s3_bucket.aws_billing_report.arn,
       "${aws_s3_bucket.aws_billing_report.arn}/*"
     ]
 
     condition {
-      test     = "StringLike"
+      test     = "ArnLike"
       variable = "aws:SourceArn"
-      values = [
-        "arn:aws:cur:us-east-1:${data.aws_caller_identity.current.account_id}:definition/*",
-        "arn:aws:bcm-data-exports:us-east-1:${data.aws_caller_identity.current.account_id}:export/*"
-      ]
+      values   = ["arn:${data.aws_partition.current.partition}:bcm-data-exports:us-east-1:${data.aws_caller_identity.current.account_id}:export/*"]
     }
 
     condition {
