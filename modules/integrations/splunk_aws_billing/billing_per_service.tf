@@ -93,6 +93,7 @@ resource "aws_bcmdataexports_export" "cur_per_service" {
       EOF
       table_configurations = {
         COST_AND_USAGE_REPORT = {
+          BILLING_VIEW_ARN                      = local.primary_billing_view_arn
           TIME_GRANULARITY                      = "DAILY",
           INCLUDE_RESOURCES                     = "FALSE",
           INCLUDE_MANUAL_DISCOUNT_COMPATIBILITY = "FALSE",
@@ -119,11 +120,4 @@ resource "aws_bcmdataexports_export" "cur_per_service" {
     }
   }
   tags = local.all_security_tags
-
-  # See billing_per_resource.tf for the full explanation; same upstream bug
-  # (hashicorp/terraform-provider-aws#48807, PR #48809). Remove the lifecycle
-  # block once the provider fix ships and versions.tf pins to a fixed version.
-  lifecycle {
-    ignore_changes = [export[0].data_query[0].table_configurations]
-  }
 }
