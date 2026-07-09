@@ -74,3 +74,22 @@ def test_terragrunt_deps_rejects_ambiguous_suffix_match(
     assert 'Error: path is ambiguous: app' in result.stderr
     assert 'prod/app' in result.stderr
     assert 'dev/app' in result.stderr
+
+
+def test_terragrunt_deps_reports_missing_path(tmp_path: Path) -> None:
+    dag_file = tmp_path / 'dag.txt'
+    dag_file.write_text(
+        '\n'.join(
+            [
+                '└── live/apps',
+                '    └── live/apps/service',
+            ]
+        ),
+        encoding='utf-8',
+    )
+
+    result = run_script(dag_file, 'live/network')
+
+    assert result.returncode == 1
+    assert result.stdout == ''
+    assert 'Error: path not found in DAG: live/network' in result.stderr
