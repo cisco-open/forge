@@ -359,41 +359,60 @@ def test_redrive_deadletter_policy_scope_is_configured_from_sqs_map() -> None:
 
 def test_forge_subscription_ecr_cross_product_uses_region_provider_alias() -> None:
     ecr_tf = read_repo_file('modules/helpers/forge_subscription/ecr.tf')
-    ecr_policy_tf = read_repo_file(
-        'modules/helpers/forge_subscription/modules/ecr_repository_policy/main.tf'
-    )
     providers_tf = read_repo_file(
         'modules/helpers/forge_subscription/providers.tf')
     variables_tf = read_repo_file(
         'modules/helpers/forge_subscription/variables.tf')
+    ecr_policy_doc = hcl_block(
+        ecr_tf,
+        'data',
+        'aws_iam_policy_document',
+        'ecr_repository_policy',
+    )
+    ecr_policy_resource = hcl_block(
+        ecr_tf,
+        'resource',
+        'aws_ecr_repository_policy',
+        'repository_policy',
+    )
 
     assert_contains_all(
         ecr_tf,
         [
-            'module "ecr_repository_policy_by_region"',
-            'for_each = local.ecr_repository_regions',
-            'aws = aws.by_region[each.key]',
-            'repository_names       = var.forge.ecr_repositories.names',
-            'ecr_access_account_ids = var.forge.ecr_repositories.ecr_access_account_ids',
+            'ecr_repo_region_pairs = flatten([',
+            'for region in var.forge.ecr_repositories.regions : [',
+            'for name in var.forge.ecr_repositories.names : {',
+            'region = region',
+            'name   = name',
         ],
     )
-    assert 'provider = aws.by_region[' not in ecr_tf
     assert_contains_all(
-        ecr_policy_tf,
+        ecr_policy_doc,
         [
-            'for_each = toset(var.repository_names)',
-            'repository = each.value',
-            'identifiers = var.ecr_access_account_ids',
+            'identifiers = var.forge.ecr_repositories.ecr_access_account_ids',
             '"ecr:GetDownloadUrlForLayer"',
+            '"ecr:BatchCheckLayerAvailability"',
             '"ecr:BatchGetImage"',
+            '"ecr:DescribeImages"',
             '"ecr:GetAuthorizationToken"',
+            '"ecr:ListImages"',
         ],
     )
+    assert_contains_all(
+        ecr_policy_resource,
+        [
+            'for pair in local.ecr_repo_region_pairs : "${pair.region}/${pair.name}" => pair',
+            'provider = aws.by_region[each.value.region]',
+            'repository = each.value.name',
+            'policy     = data.aws_iam_policy_document.ecr_repository_policy.json',
+        ],
+    )
+    assert 'module "ecr_repository_policy_by_region"' not in ecr_tf
     assert_contains_all(
         providers_tf,
         [
             'alias = "by_region"',
-            'for_each = local.ecr_provider_regions',
+            'for_each = toset(var.forge.ecr_repositories.regions)',
             'region   = each.key',
         ],
     )
@@ -404,7 +423,6 @@ def test_forge_subscription_ecr_cross_product_uses_region_provider_alias() -> No
             'names                  = list(string)',
             'ecr_access_account_ids = list(string)',
             'regions                = list(string)',
-            'provider_regions       = optional(list(string), [])',
         ],
     )
 
