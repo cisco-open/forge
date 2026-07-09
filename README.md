@@ -1,5 +1,7 @@
 # ForgeMT
 
+[![GitHub stars](https://img.shields.io/github/stars/cisco-open/forge?style=flat-square&logo=github)](https://github.com/cisco-open/forge/stargazers)
+[![GitHub issues](https://img.shields.io/github/issues/cisco-open/forge?style=flat-square)](https://github.com/cisco-open/forge/issues)
 [![Release](https://img.shields.io/github/v/release/cisco-open/forge?display_name=tag)](https://github.com/cisco-open/forge/releases/latest/)
 [![License](https://img.shields.io/github/license/cisco-open/forge)](LICENSE)
 [![Maintainer](https://img.shields.io/badge/Maintainer-Cisco-00bceb.svg)](https://opensource.cisco.com)
