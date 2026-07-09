@@ -1,5 +1,16 @@
 # Changelog
 
+## [4.0.2](https://github.com/cisco-open/forge/compare/v4.0.1...v4.0.2) (2026-07-09)
+
+
+### Bug Fixes
+
+* **deps:** update Forge dependency pins ([#453](https://github.com/cisco-open/forge/issues/453)) ([5f34a94](https://github.com/cisco-open/forge/commit/5f34a94c5bb22914afd2bc422b07bb2e59ba2e25))
+* **deps:** update uv lockfile automation ([#450](https://github.com/cisco-open/forge/issues/450)) ([c73f596](https://github.com/cisco-open/forge/commit/c73f596aa6ebffc381d07dd9219b54a2fc769048))
+* **splunk-aws-billing:** set billing view ARN ([#449](https://github.com/cisco-open/forge/issues/449)) ([43f0123](https://github.com/cisco-open/forge/commit/43f01238962860e1a6332462708c87eaa98bccf5))
+* **splunk-billing:** add log group dependencies ([#442](https://github.com/cisco-open/forge/issues/442)) ([b75ab7f](https://github.com/cisco-open/forge/commit/b75ab7f776c15ba532449625902348bfd2bcbb5d))
+* **splunk:** suppress AWS billing export drift ([#444](https://github.com/cisco-open/forge/issues/444)) ([993d603](https://github.com/cisco-open/forge/commit/993d60326cde764ec97d1328116eeab9a8cb2a2a))
+
 ## [4.0.1](https://github.com/cisco-open/forge/compare/v4.0.0...v4.0.1) (2026-07-06)
 
 
