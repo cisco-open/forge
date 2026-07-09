@@ -11,7 +11,7 @@ docs = [
 
 # Tools baked into the pre-commit Docker image for local system hooks.
 pre-commit-image = [
-    "pre-commit==4.0.0",
+    "pre-commit==4.6.0",
     "bandit==1.9.4",
     "pip-audit==2.10.1",
     "uv==0.11.26",
@@ -39,7 +39,7 @@ lambda-tests = [
     "requests==2.34.2",
     "cryptography==49.0.0",
     "responses==0.26.2",
-    "hypothesis==6.148.7",
+    "hypothesis==6.155.7",
 ]
 
 # Dev/test deps for the MiniStack smoke suite under tests/smoke.
