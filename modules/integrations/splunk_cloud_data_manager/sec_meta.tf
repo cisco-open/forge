@@ -59,7 +59,6 @@ module "splunk_security_metadata" {
   cloudformation_s3_config = var.cloudformation_s3_config
   splunk_cloud_input_json  = local.splunk_cloud_input_security_metadata_json
 
-  tags     = local.all_security_tags
   tags_all = local.all_security_tags
 }
 

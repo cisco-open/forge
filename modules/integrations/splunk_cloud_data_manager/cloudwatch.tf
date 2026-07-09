@@ -53,7 +53,6 @@ module "splunk_cloudwatch" {
   cloudformation_s3_config = var.cloudformation_s3_config
   splunk_cloud_input_json  = local.splunk_cloud_input_cloudwatch_json
 
-  tags     = local.all_security_tags
   tags_all = local.all_security_tags
 }
 

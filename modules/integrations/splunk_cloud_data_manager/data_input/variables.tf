@@ -8,11 +8,6 @@ variable "splunk_cloud_input_json" {
   description = "Splunk Cloud input JSON."
 }
 
-variable "tags" {
-  type        = map(string)
-  description = "Tags to apply to resources."
-}
-
 variable "tags_all" {
   type        = map(string)
   description = "All Tags to apply to resources."

@@ -66,7 +66,6 @@ No modules.
 | <a name="input_cloudformation_s3_config"></a> [cloudformation_s3_config](#input_cloudformation_s3_config) | S3 bucket for CloudFormation templates. | <pre>object({<br/> bucket = string<br/> key = string<br/> })</pre> | n/a     |   yes    |
 | <a name="input_splunk_cloud"></a> [splunk_cloud](#input_splunk_cloud)                                     | Splunk Cloud endpoint.                  | `string`                                                           | n/a     |   yes    |
 | <a name="input_splunk_cloud_input_json"></a> [splunk_cloud_input_json](#input_splunk_cloud_input_json)    | Splunk Cloud input JSON.                | `string`                                                           | n/a     |   yes    |
-| <a name="input_tags"></a> [tags](#input_tags)                                                             | Tags to apply to resources.             | `map(string)`                                                      | n/a     |   yes    |
 | <a name="input_tags_all"></a> [tags_all](#input_tags_all)                                                 | All Tags to apply to resources.         | `map(string)`                                                      | n/a     |   yes    |
 
 ## Outputs
