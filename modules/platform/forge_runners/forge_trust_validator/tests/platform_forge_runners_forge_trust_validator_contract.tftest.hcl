@@ -24,6 +24,10 @@ run "platform_forge_runners_forge_trust_validator_contract" {
       "data \"aws_iam_policy_document\" \"forge_trust_preparer_lambda\"",
       "data \"aws_iam_policy_document\" \"forge_trust_validator_lambda\"",
     ]
+    forbidden_literals = [
+      "Principal = \"*\"",
+      "resources = [\"*\"]",
+    ]
   }
 
   assert {
@@ -34,5 +38,10 @@ run "platform_forge_runners_forge_trust_validator_contract" {
   assert {
     condition     = output.expected_literal_count > 0
     error_message = "Module contract must pin at least one module-specific literal."
+  }
+
+  assert {
+    condition     = length(output.present_forbidden_literals) == 0
+    error_message = "Module contract includes forbidden literals: ${join(", ", output.present_forbidden_literals)}"
   }
 }
