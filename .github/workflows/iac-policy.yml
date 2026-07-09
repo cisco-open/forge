@@ -99,8 +99,6 @@ jobs:
       contents: read # Required to checkout repository content.
       issues: write # Required to create or update sticky PR summary comments.
       pull-requests: write # Required to publish summaries back to pull requests.
-    env:
-      TF_PLUGIN_CACHE_DIR: ${{ runner.temp }}/tofu-plugin-cache
     strategy:
       fail-fast: false
       matrix:
@@ -143,7 +141,12 @@ jobs:
 
       - name: Prepare OpenTofu plugin cache
         shell: bash
-        run: mkdir -p "${TF_PLUGIN_CACHE_DIR}"
+        run: |
+          set -euo pipefail
+
+          cache_dir="${RUNNER_TEMP}/tofu-plugin-cache"
+          mkdir -p "${cache_dir}"
+          echo "TF_PLUGIN_CACHE_DIR=${cache_dir}" >> "${GITHUB_ENV}"
 
       - name: Cache OpenTofu providers
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
