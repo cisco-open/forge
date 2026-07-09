@@ -12,7 +12,7 @@ on:
       - synchronize
 
 permissions:
-  contents: read
+  contents: read # Required for the semantic pull request action runtime.
   pull-requests: read # Required to read the pull request title and labels.
 
 concurrency:

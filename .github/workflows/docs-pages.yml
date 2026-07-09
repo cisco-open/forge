@@ -23,7 +23,7 @@ on:
       - README.md
   workflow_dispatch:
 
-permissions: {}
+permissions: {} # Default deny; jobs declare only the permissions they need.
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -35,7 +35,7 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: read # Required to checkout repository content.
     steps:
       - name: Harden the runner
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4

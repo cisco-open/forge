@@ -23,7 +23,7 @@ on:
       - scripts/ci_summary.py
       - .github/workflows/ministack-smoke.yml
 
-permissions: {}
+permissions: {} # Default deny; jobs declare only the permissions they need.
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -35,9 +35,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
-      contents: read
-      issues: write
-      pull-requests: write
+      contents: read # Required to checkout repository content.
+      issues: write # Required to create or update sticky PR summary comments.
+      pull-requests: write # Required to publish summaries back to pull requests.
     env:
       AWS_ENDPOINT_URL: http://localhost:4566
       AWS_DEFAULT_REGION: us-east-1

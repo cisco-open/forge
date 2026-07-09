@@ -28,7 +28,7 @@ on:
       - pyproject.toml
       - uv.lock
 
-permissions: {}
+permissions: {} # Default deny; jobs declare only the permissions they need.
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}

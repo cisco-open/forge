@@ -20,7 +20,7 @@ on:
       - pyproject.toml
       - uv.lock
 
-permissions: {}
+permissions: {} # Default deny; jobs declare only the permissions they need.
 
 jobs:
   fuzz:
@@ -30,7 +30,7 @@ jobs:
       group: ${{ github.workflow }}-${{ matrix.sanitizer }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     permissions:
-      contents: read
+      contents: read # Required to checkout repository content for fuzz builds.
     strategy:
       fail-fast: false
       matrix:

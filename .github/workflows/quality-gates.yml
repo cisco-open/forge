@@ -54,7 +54,7 @@ on:
       - renovate.json
       - .github/workflows/quality-gates.yml
 
-permissions: {}
+permissions: {} # Default deny; jobs declare only the permissions they need.
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -66,9 +66,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
-      contents: read
-      issues: write
-      pull-requests: write
+      contents: read # Required to checkout repository content.
+      issues: write # Required to create or update sticky PR summary comments.
+      pull-requests: write # Required to publish summaries back to pull requests.
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
@@ -114,9 +114,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
-      contents: read
-      issues: write
-      pull-requests: write
+      contents: read # Required to checkout repository content.
+      issues: write # Required to create or update sticky PR summary comments.
+      pull-requests: write # Required to publish summaries back to pull requests.
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4

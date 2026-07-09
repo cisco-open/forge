@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: read # Required for OSSF Scorecard repository analysis.
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.repository.default_branch == github.ref_name || github.event_name == 'branch_protection_rule' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     permissions:
-      contents: read
+      contents: read # Required to checkout repository content for analysis.
       id-token: write # Required for OSSF Scorecard keyless result publishing.
       security-events: write # Required to upload Scorecard SARIF results to code scanning.
     steps:

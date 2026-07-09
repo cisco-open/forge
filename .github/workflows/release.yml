@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: read # Default read; release job elevates only what release-please needs.
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
