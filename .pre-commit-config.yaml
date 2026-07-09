@@ -254,7 +254,6 @@ repos:
           - --tf-init-args=-backend=false
           - --tf-init-args=--upgrade=true
           - --hook-config=--tf-path=tofu
-          - --hook-config=--parallelism-limit=1
         exclude: (modules/integrations/splunk_cloud_data_manager|modules/integrations/splunk_cloud_s3_runner_logs)
 
   # ---------------------
