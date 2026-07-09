@@ -295,8 +295,6 @@ repos:
           trap "rm -f \"$req\"" EXIT;
           uv export --project . --locked --only-group lambda-tests --format requirements-txt --no-hashes > "$req";
           pip-audit -r "$req" --strict --no-deps --disable-pip'
-        additional_dependencies:
-          - uv==0.11.26
         always_run: true
         pass_filenames: false
 

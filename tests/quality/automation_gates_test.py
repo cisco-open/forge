@@ -78,12 +78,17 @@ def test_pre_commit_covers_security_sca_and_secrets() -> None:
         '*/.terraform/*',
         'repo: https://github.com/pypa/pip-audit',
         'id: pip-audit',
-        'additional_dependencies:',
-        'uv==0.11.26',
         'uv export --project . --locked --only-group lambda-tests',
         'pip-audit -r "$req" --strict --no-deps --disable-pip',
     ]:
         assert required in pre_commit
+
+    pip_audit_block = pre_commit.split(
+        'repo: https://github.com/pypa/pip-audit',
+        1,
+    )[1].split('  # ---------------------', 1)[0]
+    assert 'additional_dependencies:' not in pip_audit_block
+    assert 'uv==' not in pip_audit_block
 
     assert 'pre-commit-image = [' in pyproject
     assert {'pre-commit', 'bandit', 'pip-audit', 'uv'} <= pre_commit_deps
