@@ -35,9 +35,25 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Prepare InfraScan input
+        shell: bash
+        run: |
+          rm -rf .infrascan-src
+          mkdir -p .infrascan-src
+          rsync -a --delete \
+            --exclude='.git/' \
+            --exclude='.infrascan-src/' \
+            --exclude='test/' \
+            --exclude='tests/' \
+            --exclude='example/' \
+            --exclude='examples/' \
+            --exclude='*.tftest.hcl' \
+            ./ .infrascan-src/
+
       - name: Run InfraScan
         uses: soldevelo/infrascan@ec0d1160ea4fd593ad44c4f88bbf3917a0939947 # v1.0.9
         with:
+          directory: .infrascan-src
           scanner: comprehensive
           format: html
           out: infrascan-report.html
