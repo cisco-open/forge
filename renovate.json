@@ -229,6 +229,25 @@
             ]
         },
         {
+            "description": "Ignore Ubuntu Docker base image major and minor updates",
+            "matchManagers": [
+                "dockerfile"
+            ],
+            "matchDatasources": [
+                "docker"
+            ],
+            "matchPackageNames": [
+                "ubuntu",
+                "library/ubuntu",
+                "docker.io/library/ubuntu"
+            ],
+            "matchUpdateTypes": [
+                "major",
+                "minor"
+            ],
+            "enabled": false
+        },
+        {
             "description": "Docker images - grouped with digest pinning",
             "matchManagers": [
                 "docker-compose",
