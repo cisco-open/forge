@@ -55,7 +55,7 @@ updates:
       - dependencies
       - docker
 
-  - package-ecosystem: pip
+  - package-ecosystem: uv
     directory: /
     schedule:
       interval: weekly
@@ -81,7 +81,9 @@ updates:
 ```
 
 Remove ecosystems that do not exist in the repo. For monorepos, add one entry
-per directory that contains dependency files.
+per directory that contains dependency files. Use `uv` for repositories that
+commit `pyproject.toml` and `uv.lock`; use `pip` only for requirements-file
+projects.
 
 ______________________________________________________________________
 

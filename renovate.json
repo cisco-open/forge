@@ -25,6 +25,9 @@
     "ignorePaths": [
         "**/.terraform/**"
     ],
+    "lockFileMaintenance": {
+        "enabled": true
+    },
     "customManagers": [
         {
             "customType": "regex",
@@ -193,11 +196,15 @@
         },
         {
             "description": "Python dependencies",
+            "matchManagers": [
+                "pep621"
+            ],
             "matchDatasources": [
                 "pypi"
             ],
             "matchFileNames": [
-                "pyproject.toml"
+                "pyproject.toml",
+                "uv.lock"
             ],
             "groupName": "Python dependencies",
             "groupSlug": "python-dependencies",

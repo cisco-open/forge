@@ -15,7 +15,7 @@ updates:
       - dependencies
       - github-actions
 
-  - package-ecosystem: pip
+  - package-ecosystem: uv
     directories:
       - /
     schedule:
@@ -84,6 +84,10 @@ updates:
       docker-dependencies:
         patterns:
           - '*'
+    ignore:
+      - dependency-name: ubuntu
+        update-types:
+          - version-update:semver-major
     labels:
       - dependencies
       - docker

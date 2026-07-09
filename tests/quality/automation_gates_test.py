@@ -142,13 +142,16 @@ def test_github_app_register_image_uses_root_locked_dependencies() -> None:
     assert 'context: .' in workflow
     assert 'pyproject.toml' in workflow
     assert 'uv.lock' in workflow
-    pip_dependabot_block = dependabot.split(
-        '  - package-ecosystem: pip',
+    uv_dependabot_block = dependabot.split(
+        '  - package-ecosystem: uv',
         1,
     )[1].split('  - package-ecosystem: pre-commit', 1)[0]
-    assert '- /.docker/forge-github-app-register' not in pip_dependabot_block
+    assert '  - package-ecosystem: pip' not in dependabot
+    assert '- /.docker/forge-github-app-register' not in uv_dependabot_block
     assert '.docker/forge-github-app-register/requirements.txt' not in renovate
     assert 'requirements*.txt' not in renovate
+    assert 'uv.lock' in renovate
+    assert 'lockFileMaintenance' in renovate
 
 
 def test_test_suites_have_named_ci_jobs() -> None:
