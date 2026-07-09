@@ -2,12 +2,10 @@
 
 Each check answers only "is this service path reachable?" and avoids mutating
 state. Optional services skip cleanly when the emulator/live target does not
-support them. Set FORGE_SMOKE_ASSUME_ROLE_ARN to verify a concrete role-chain.
+support them. Local MiniStack derives a dummy role-chain automatically.
 """
 
 from __future__ import annotations
-
-import os
 
 import pytest
 from botocore.exceptions import BotoCoreError, ClientError
@@ -75,13 +73,9 @@ def test_sts_caller_identity_liveness(client):
     assert identity.get('Account')
 
 
-def test_configured_sts_role_chain_is_assumable(client):
-    role_arn = os.environ.get('FORGE_SMOKE_ASSUME_ROLE_ARN', '').strip()
-    if not role_arn:
-        pytest.skip('FORGE_SMOKE_ASSUME_ROLE_ARN not set')
-
+def test_configured_sts_role_chain_is_assumable(client, smoke_assume_role_arn):
     response = client('sts').assume_role(
-        RoleArn=role_arn,
+        RoleArn=smoke_assume_role_arn,
         RoleSessionName='forge-smoke-readonly',
     )
 

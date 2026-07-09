@@ -25,7 +25,8 @@ uv run --project ../.. --locked --only-group smoke-tests pytest -m lambda_exec -
 ```
 
 CI sets `FORGE_REQUIRE_MINISTACK=1`, so an unreachable emulator fails the job
-instead of skipping.
+instead of skipping. The STS role-chain check creates and assumes a dummy IAM
+role inside MiniStack; it does not require a live AWS role or repository secret.
 
 ## Local Execution
 

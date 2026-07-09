@@ -25,6 +25,9 @@ uv run --project ../.. --locked --only-group smoke-tests pytest -m lambda_exec -
 The `lambda_exec` marker requires Docker because MiniStack starts Lambda
 containers.
 
+The `smoke` role-chain liveness test creates and assumes a dummy IAM role inside
+MiniStack. It does not require `FORGE_SMOKE_ASSUME_ROLE_ARN` or live AWS access.
+
 ## Local Execution
 
 Use the parent directory Makefile:
