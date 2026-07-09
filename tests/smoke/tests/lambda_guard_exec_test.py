@@ -22,10 +22,15 @@ pytestmark = pytest.mark.lambda_exec
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
-def _zip_handler(source: Path) -> bytes:
+def _zip_handler(
+    source: Path,
+    extra_sources: dict[str, Path] | None = None,
+) -> bytes:
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, 'w') as z:
         z.writestr('handler.py', source.read_text())
+        for archive_name, extra_source in (extra_sources or {}).items():
+            z.writestr(archive_name, extra_source.read_text())
     return buf.getvalue()
 
 
@@ -39,16 +44,28 @@ def _wait_until_active(lam, function_name: str):
     raise AssertionError(f'Lambda {function_name} did not become active')
 
 
-def _deploy_handler(client, *, function_name: str, source: Path, env: dict[str, str]):
+def _deploy_handler(
+    client,
+    *,
+    function_name: str,
+    source: Path,
+    env: dict[str, str],
+    handler: str = 'handler.lambda_handler',
+    extra_sources: dict[str, Path] | None = None,
+):
     assert source.exists(), f'handler not found: {source}'
+    for extra_source in (extra_sources or {}).values():
+        assert extra_source.exists(), (
+            f'handler dependency not found: {extra_source}'
+        )
     lam = client('lambda')
     try:
         lam.create_function(
             FunctionName=function_name,
             Runtime='python3.12',
             Role='arn:aws:iam::000000000000:role/forge-smoke-lambda',
-            Handler='handler.lambda_handler',
-            Code={'ZipFile': _zip_handler(source)},
+            Handler=handler,
+            Code={'ZipFile': _zip_handler(source, extra_sources)},
             Timeout=30,
             Environment={'Variables': env},
         )
@@ -57,7 +74,7 @@ def _deploy_handler(client, *, function_name: str, source: Path, env: dict[str, 
             raise
         lam.update_function_code(
             FunctionName=function_name,
-            ZipFile=_zip_handler(source),
+            ZipFile=_zip_handler(source, extra_sources),
         )
         _wait_until_active(lam, function_name)
         lam.update_function_configuration(
@@ -244,6 +261,57 @@ CASES = [
         'event': {'detail': {'eventName': 'DescribeInstances'}},
         'expected': None,
     },
+    {
+        'id': 'trust-preparer-rejects-empty-role-config',
+        'function_name': 'forge-smoke-trust-preparer',
+        'source': Path(
+            'modules/platform/forge_runners/forge_trust_validator/lambda/'
+            'trust_preparer.py'
+        ),
+        'handler': 'handler.prepare_handler',
+        'extra_sources': {
+            'trust_common.py': Path(
+                'modules/platform/forge_runners/forge_trust_validator/lambda/'
+                'trust_common.py'
+            ),
+        },
+        'env': {
+            'LOG_LEVEL': 'INFO',
+            'FORGE_IAM_ROLES': '',
+            'TENANT_IAM_ROLES': '',
+            'VALIDATOR_LAMBDA_ROLE_ARN': (
+                'arn:aws:iam::000000000000:role/forge-smoke-validator'
+            ),
+            'VALIDATION_QUEUE_URL': (
+                'https://sqs.us-east-1.amazonaws.com/000000000000/unused'
+            ),
+            'VALIDATION_DELAY_SECONDS': '0',
+        },
+        'event': {},
+        'expected_function_error': 'Unhandled',
+        'expected_error_message': 'Missing forge_role_arns or tenant_role_arns',
+    },
+    {
+        'id': 'trust-validator-rejects-non-sqs-event',
+        'function_name': 'forge-smoke-trust-validator',
+        'source': Path(
+            'modules/platform/forge_runners/forge_trust_validator/lambda/'
+            'trust_validator.py'
+        ),
+        'handler': 'handler.validate_handler',
+        'extra_sources': {
+            'trust_common.py': Path(
+                'modules/platform/forge_runners/forge_trust_validator/lambda/'
+                'trust_common.py'
+            ),
+        },
+        'env': {'LOG_LEVEL': 'INFO'},
+        'event': {},
+        'expected_function_error': 'Unhandled',
+        'expected_error_message': (
+            'Validator Lambda only accepts SQS validation events'
+        ),
+    },
 ]
 
 
@@ -254,9 +322,19 @@ def test_lambda_handler_guard_path_executes_in_ministack(client, case):
         function_name=case['function_name'],
         source=_REPO_ROOT / case['source'],
         env=case['env'],
+        handler=case.get('handler', 'handler.lambda_handler'),
+        extra_sources={
+            name: _REPO_ROOT / source
+            for name, source in case.get('extra_sources', {}).items()
+        },
     )
 
     resp, payload = _invoke(lam, case['function_name'], case['event'])
+    if 'expected_function_error' in case:
+        assert resp.get('FunctionError') == case['expected_function_error']
+        assert case['expected_error_message'] in payload['errorMessage']
+        return
+
     assert 'FunctionError' not in resp
 
     expected = case['expected']
