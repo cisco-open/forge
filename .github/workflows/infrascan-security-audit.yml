@@ -43,6 +43,7 @@ jobs:
           rsync -a --delete \
             --exclude='.git/' \
             --exclude='.infrascan-src/' \
+            --exclude='docs/' \
             --exclude='test/' \
             --exclude='tests/' \
             --exclude='example/' \
