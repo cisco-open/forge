@@ -12,6 +12,7 @@ on:
       - modules/**/lambda/**
       - modules/**/*.tf
       - modules/**/*.tftest.hcl
+      - examples/**
       - tests/**
       - scripts/ci_summary.py
       - scripts/terragrunt-deps.py
@@ -36,6 +37,7 @@ on:
       - modules/**/lambda/**
       - modules/**/*.tf
       - modules/**/*.tftest.hcl
+      - examples/**
       - tests/**
       - scripts/ci_summary.py
       - scripts/terragrunt-deps.py
