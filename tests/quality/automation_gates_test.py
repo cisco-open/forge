@@ -81,7 +81,7 @@ def test_pre_commit_covers_security_sca_and_secrets() -> None:
         'additional_dependencies:',
         'uv==0.11.26',
         'uv export --project . --locked --only-group lambda-tests',
-        'pip-audit -r "$req" --strict --no-deps',
+        'pip-audit -r "$req" --strict --no-deps --disable-pip',
     ]:
         assert required in pre_commit
 
