@@ -8,19 +8,25 @@ ______________________________________________________________________
 
 ## Practical Rollout Order
 
-| Step | Deploy root or module group                            | Required?                       | Apply when                                                                 |
-| ---- | ------------------------------------------------------ | ------------------------------- | -------------------------------------------------------------------------- |
-| 1    | State backend, AWS profiles or roles, and tags         | Yes                             | Before any Terragrunt stack.                                               |
-| 2    | `examples/deployments/helpers`: `opt_in_regions`       | Only for opt-in regions         | Before deploying resources into regions that are disabled by default.      |
-| 3    | `examples/deployments/helpers`: `service_linked_roles` | Usually for EC2 Spot            | Before EC2 runners if the account lacks required AWS service-linked roles. |
-| 4    | Runner AMI build and optional AMI sharing              | Needed for EC2 runners          | Before tenant EC2 runner specs reference the AMI.                          |
-| 5    | `examples/deployments/infra`: EKS                      | Only for ARC/Kubernetes runners | Before tenant `arc_runner_specs`.                                          |
-| 6    | `examples/deployments/platform`: one tenant            | Yes for Forge runners           | The first real Forge runtime deployment.                                   |
-| 7    | `examples/deployments/helpers`: remaining helpers      | Optional                        | When Forge owns ECR, buckets, tenant subscription roles, or cleanup jobs.  |
-| 8    | `examples/deployments/integrations`                    | Optional                        | After the platform path works.                                             |
+| Step | Deploy root or module group                                        | Required?                       | Apply when                                                                 |
+| ---- | ------------------------------------------------------------------ | ------------------------------- | -------------------------------------------------------------------------- |
+| 1    | State backend, AWS profiles or roles, tags, and account guardrails | Yes                             | Before any Terragrunt stack.                                               |
+| 2    | `examples/deployments/helpers`: `opt_in_regions`                   | Only for opt-in regions         | Before deploying resources into regions that are disabled by default.      |
+| 3    | `examples/deployments/helpers`: `service_linked_roles`             | Usually for EC2 Spot            | Before EC2 runners if the account lacks required AWS service-linked roles. |
+| 4    | Runner AMI build and optional AMI sharing                          | Needed for EC2 runners          | Before tenant EC2 runner specs reference the AMI.                          |
+| 5    | `examples/deployments/infra`: EKS                                  | Only for ARC/Kubernetes runners | Before tenant `arc_runner_specs`.                                          |
+| 6    | `examples/deployments/platform`: one tenant                        | Yes for Forge runners           | The first real Forge runtime deployment.                                   |
+| 7    | `examples/deployments/helpers`: remaining helpers                  | Optional                        | When Forge owns ECR, buckets, tenant subscription roles, or cleanup jobs.  |
+| 8    | `examples/deployments/integrations`                                | Optional                        | After the platform path works.                                             |
 
 Do not block a first tenant on Splunk, Teleport, billing, dashboards, or helper
 modules your company already provides.
+
+AWS Budgets and spend alerts are account or control-plane guardrails, not
+module-local defaults. Keep budget resources in the consuming account bootstrap
+or tenant/control-plane deployment so optional infra, helper, and integration
+modules do not create duplicate or misleading alerts when they are used outside
+the runner runtime.
 
 ______________________________________________________________________
 

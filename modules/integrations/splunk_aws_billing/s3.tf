@@ -15,7 +15,6 @@ resource "aws_s3_bucket_ownership_controls" "aws_billing_report" {
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "aws_billing_report" {
-  #checkov:skip=CKV_AWS_300:Abort-incomplete-multipart lifecycle behavior is deferred until AWS billing export writes are regression-tested.
   bucket = aws_s3_bucket.aws_billing_report.id
 
   rule {
@@ -27,6 +26,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "aws_billing_report" {
     expiration {
       days = 30
     }
+
+    abort_incomplete_multipart_upload { days_after_initiation = 7 }
   }
 }
 

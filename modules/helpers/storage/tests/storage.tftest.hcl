@@ -63,8 +63,9 @@ run "storage_bucket_contract" {
     condition = (
       aws_s3_bucket_lifecycle_configuration.s3_short_term.rule[0].id == "30d-cleanup-all"
       && aws_s3_bucket_lifecycle_configuration.s3_short_term.rule[0].expiration[0].days == 30
+      && aws_s3_bucket_lifecycle_configuration.s3_short_term.rule[0].abort_incomplete_multipart_upload[0].days_after_initiation == 7
       && aws_s3_bucket_lifecycle_configuration.s3_short_term.rule[0].status == "Enabled"
     )
-    error_message = "Short-term storage must keep 30 day object cleanup enabled."
+    error_message = "Short-term storage must keep 30 day object cleanup and 7 day incomplete multipart cleanup enabled."
   }
 }

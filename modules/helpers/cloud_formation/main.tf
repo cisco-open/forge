@@ -53,14 +53,17 @@ resource "aws_iam_role" "cloudformation_execution_role" {
   tags_all = local.all_security_tags
 }
 
+# Optional helper policy, not part of the core Forge runner path. CloudFormation
+# StackSet execution requires broad service and resource coverage for
+# operator-managed stacks, so wildcard findings here are intentional.
 data "aws_iam_policy_document" "execution_role_policy" {
-  #checkov:skip=CKV2_AWS_40:CloudFormation StackSet execution role intentionally needs broad IAM permissions to deploy tenant-managed stacks.
-  #checkov:skip=CKV_AWS_107:CloudFormation StackSet execution role intentionally needs broad permissions to deploy tenant-managed stacks.
-  #checkov:skip=CKV_AWS_108:CloudFormation StackSet execution role intentionally needs broad permissions to deploy tenant-managed stacks.
-  #checkov:skip=CKV_AWS_109:CloudFormation StackSet execution role intentionally needs broad permissions to deploy tenant-managed stacks.
-  #checkov:skip=CKV_AWS_110:CloudFormation StackSet execution role intentionally needs broad permissions to deploy tenant-managed stacks.
-  #checkov:skip=CKV_AWS_111:CloudFormation StackSet execution role intentionally needs broad permissions to deploy tenant-managed stacks.
-  #checkov:skip=CKV_AWS_356:CloudFormation StackSet execution role intentionally needs wildcard resources to deploy tenant-managed stacks.
+  #checkov:skip=CKV2_AWS_40:Optional CloudFormation helper intentionally grants broad StackSet execution permissions for operator-managed stacks; this is not part of the core Forge runner path.
+  #checkov:skip=CKV_AWS_107:Optional CloudFormation helper intentionally grants broad StackSet execution permissions for operator-managed stacks; this is not part of the core Forge runner path.
+  #checkov:skip=CKV_AWS_108:Optional CloudFormation helper intentionally grants broad StackSet execution permissions for operator-managed stacks; this is not part of the core Forge runner path.
+  #checkov:skip=CKV_AWS_109:Optional CloudFormation helper intentionally grants broad StackSet execution permissions for operator-managed stacks; this is not part of the core Forge runner path.
+  #checkov:skip=CKV_AWS_110:Optional CloudFormation helper intentionally grants broad StackSet execution permissions for operator-managed stacks; this is not part of the core Forge runner path.
+  #checkov:skip=CKV_AWS_111:Optional CloudFormation helper intentionally grants broad StackSet execution permissions for operator-managed stacks; this is not part of the core Forge runner path.
+  #checkov:skip=CKV_AWS_356:Optional CloudFormation helper intentionally needs wildcard resources for StackSet-managed tenant resources; this is not part of the core Forge runner path.
   statement {
     effect = "Allow"
     actions = [

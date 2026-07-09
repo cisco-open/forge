@@ -72,7 +72,6 @@ resource "aws_s3_bucket_ownership_controls" "s3_short_term" {
 
 # Enable lifecycling.
 resource "aws_s3_bucket_lifecycle_configuration" "s3_short_term" {
-  #checkov:skip=CKV_AWS_300:Abort-incomplete-multipart cleanup is deferred until the helper lifecycle policy is tested end-to-end.
   bucket = aws_s3_bucket.s3_short_term.id
 
   rule {
@@ -80,6 +79,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "s3_short_term" {
     expiration {
       days = 30
     }
+    abort_incomplete_multipart_upload { days_after_initiation = 7 }
     status = "Enabled"
   }
 }

@@ -42,15 +42,17 @@ data "aws_iam_policy_document" "secrets_access_for_forge_runners" {
   }
 }
 
-# Helper permissions for Forge runners that assume this role to run tenant
-# Packer builds and build AMIs in tenant accounts, not the Forge account. See:
+# Optional helper permissions for Forge runners that assume this role to run
+# tenant Packer builds and build AMIs in tenant accounts, not the Forge account
+# and not the core Forge runner path. The wildcard resource scope is intentional
+# because Packer creates and cleans up transient EC2, ECR, and IAM resources. See:
 # <https://developer.hashicorp.com/packer/plugins/builders/amazon>.
 data "aws_iam_policy_document" "packer_support_for_forge_runners" {
-  #checkov:skip=CKV_AWS_107:Forge subscription is an ops helper; tenant Packer builds need broad EC2/ECR/IAM permissions from Forge-hosted runners in tenant accounts.
-  #checkov:skip=CKV_AWS_109:Forge subscription is an ops helper; tenant Packer builds need broad EC2/ECR/IAM permissions from Forge-hosted runners in tenant accounts.
-  #checkov:skip=CKV_AWS_110:Tenant Packer builds intentionally use Forge-hosted runners to build AMIs in tenant accounts; runner workloads do not use this path directly.
-  #checkov:skip=CKV_AWS_111:Forge subscription is an ops helper; tenant Packer builds need broad EC2/ECR/IAM permissions from Forge-hosted runners in tenant accounts.
-  #checkov:skip=CKV_AWS_356:Forge subscription is an ops helper; tenant Packer builds need broad EC2/ECR/IAM permissions from Forge-hosted runners in tenant accounts.
+  #checkov:skip=CKV_AWS_107:Forge subscription is an optional ops helper; tenant Packer builds intentionally need broad EC2/ECR/IAM permissions and are not part of the core Forge runner path.
+  #checkov:skip=CKV_AWS_109:Forge subscription is an optional ops helper; tenant Packer builds intentionally need broad EC2/ECR/IAM permissions and are not part of the core Forge runner path.
+  #checkov:skip=CKV_AWS_110:Tenant Packer builds intentionally use Forge-hosted runners to build AMIs in tenant accounts; ordinary runner workloads do not use this helper path.
+  #checkov:skip=CKV_AWS_111:Forge subscription is an optional ops helper; tenant Packer builds intentionally need broad EC2/ECR/IAM permissions and are not part of the core Forge runner path.
+  #checkov:skip=CKV_AWS_356:Forge subscription is an optional ops helper; tenant Packer builds intentionally need wildcard resources for transient EC2/ECR/IAM resources and are not part of the core Forge runner path.
   statement {
     effect = "Allow"
     actions = [
