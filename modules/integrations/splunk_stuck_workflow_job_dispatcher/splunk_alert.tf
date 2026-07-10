@@ -3,7 +3,7 @@ locals {
 
   stuck_workflow_job_search = <<-EOT
     index="${var.splunk_conf.index}" ((forgecicd_log_type=webhook github.status=*) OR ("Successfully dispatched job for"))
-    | rex field=message "to the queue (?<queued_url>https?://\S+)\s-\sJob ID:\s(?<dispatch_workflowJobId>\d+)"
+    | rex field=message "to the queue(s) (?<queued_url>https?://\S+)\s-\sJob ID:\s(?<dispatch_workflowJobId>\d+)"
     | spath path=github.workflowJobId output=github_workflow_job_id
     | spath path=github.workflowJobUrl output=workflow_job_url
     | spath path=github.runId output=run_id
