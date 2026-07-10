@@ -41,6 +41,20 @@ def is_source_inventory_contract(path: Path) -> bool:
     return has_source_inventory_suffix and contains_source_inventory_contract(path)
 
 
+def is_behavior_contract(path: Path) -> bool:
+    source = path.read_text(encoding='utf-8')
+    if 'tests/tofu/module_contract' in source:
+        return False
+    if 'tests/tofu/module_interface_contract' in source:
+        return False
+    if path.name.endswith('_validation_contract.tftest.hcl'):
+        return False
+    return any(
+        marker in source
+        for marker in ('mock_provider', 'assert {', 'expect_failures')
+    )
+
+
 def dependency_group_names(group_name: str) -> set[str]:
     data = tomllib.loads(read('pyproject.toml'))
     dependencies = data['dependency-groups'][group_name]
@@ -169,6 +183,19 @@ def test_each_module_has_one_source_inventory_contract() -> None:
     assert missing_inventory_tests == []
     assert misnamed_inventory_tests == []
     assert duplicate_inventory_tests == []
+
+
+def test_behavior_contracts_use_behavior_suffix() -> None:
+    misnamed_behavior_tests = [
+        test_file.relative_to(REPO_ROOT).as_posix()
+        for test_file in sorted(
+            (REPO_ROOT / 'modules').glob('**/tests/*.tftest.hcl'),
+        )
+        if is_behavior_contract(test_file)
+        if not test_file.name.endswith('_behavior.tftest.hcl')
+    ]
+
+    assert misnamed_behavior_tests == []
 
 
 def test_pre_commit_covers_security_sca_and_secrets() -> None:
