@@ -17,6 +17,13 @@ def is_terraform_module(path: Path) -> bool:
     return any(path.glob('*.tf'))
 
 
+def module_has_variable_validation(path: Path) -> bool:
+    return any(
+        re.search(r'\bvalidation\s*\{', tf_file.read_text(encoding='utf-8'))
+        for tf_file in path.glob('*.tf')
+    )
+
+
 def dependency_group_names(group_name: str) -> set[str]:
     data = tomllib.loads(read('pyproject.toml'))
     dependencies = data['dependency-groups'][group_name]
@@ -57,6 +64,41 @@ def test_each_module_has_specific_native_test_file() -> None:
 
     assert missing_tests == []
     assert generic_tests == []
+
+
+def test_variable_validation_blocks_have_validation_contract_tests() -> None:
+    modules = sorted(
+        path
+        for path in (REPO_ROOT / 'modules').rglob('*')
+        if is_terraform_module(path)
+    )
+
+    missing_validation_contracts = []
+    unexpected_validation_contracts = []
+    duplicate_validation_contracts = []
+    for module in modules:
+        tests_dir = module / 'tests'
+        validation_contracts = (
+            sorted(tests_dir.glob('*_validation_contract.tftest.hcl'))
+            if tests_dir.exists()
+            else []
+        )
+        has_validation = module_has_variable_validation(module)
+        module_path = module.relative_to(REPO_ROOT).as_posix()
+
+        if has_validation and not validation_contracts:
+            missing_validation_contracts.append(module_path)
+        if not has_validation and validation_contracts:
+            unexpected_validation_contracts.extend(
+                path.relative_to(REPO_ROOT).as_posix()
+                for path in validation_contracts
+            )
+        if len(validation_contracts) > 1:
+            duplicate_validation_contracts.append(module_path)
+
+    assert missing_validation_contracts == []
+    assert unexpected_validation_contracts == []
+    assert duplicate_validation_contracts == []
 
 
 def test_pre_commit_covers_security_sca_and_secrets() -> None:

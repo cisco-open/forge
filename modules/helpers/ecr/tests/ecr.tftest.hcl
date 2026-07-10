@@ -51,21 +51,3 @@ run "ecr_repository_contract" {
     error_message = "ECR helper lifecycle policy must keep untagged, release, and pre-release cleanup rules."
   }
 }
-
-run "rejects_unknown_ecr_mutability" {
-  command = plan
-
-  variables {
-    repositories = [
-      {
-        repo         = "forge/bad"
-        mutability   = "BROKEN"
-        scan_on_push = true
-      },
-    ]
-  }
-
-  expect_failures = [
-    var.repositories,
-  ]
-}
