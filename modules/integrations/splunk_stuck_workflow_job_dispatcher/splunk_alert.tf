@@ -4,6 +4,7 @@ locals {
   stuck_workflow_job_search = <<-EOT
     index="${var.splunk_conf.index}" ((forgecicd_log_type=webhook github.status=*) OR ("Successfully dispatched job for"))
     | rex field=message "to the queue\(s\) (?<queued_url>https?://\S+)\s-\sJob ID:\s(?<dispatch_workflowJobId>\d+)"
+    | rex field=queued_urls_raw max_match=0 "(?<queued_url>https?://[^,\s]+)"
     | spath path=github.workflowJobId output=github_workflow_job_id
     | spath path=github.workflowJobUrl output=workflow_job_url
     | spath path=github.runId output=run_id
@@ -52,6 +53,7 @@ locals {
     | where has_dispatch = 1
     | eval stuck_since=strftime(first_seen, "%Y-%m-%dT%H:%M:%S%Z"), stuck_minutes=round((now() - first_seen) / 60, 1)
     | where stuck_minutes > ${var.splunk_alert.stuck_minutes_threshold} AND stuck_minutes <= 1440
+    | mvexpand queued_url
     | sort - stuck_minutes
     | eval splunk_batch_result=json_object("workflowJobId", workflowJobId, "job_name", job_name, "repository", repository, "workflow_job_url", workflow_job_url, "run_id", run_id, "run_attempt", run_attempt, "run_url", run_url, "workflow_name", workflow_name, "runner_labels", labels, "head_sha", head_sha, "head_branch", head_branch, "created_at", created_at, "started_at", started_at, "stuck_since", stuck_since, "stuck_minutes", stuck_minutes, "queued_url", queued_url, "github_delivery", github_delivery, "forgecicd_tenant", forgecicd_tenant, "aws_region", aws_region)
     | stats count as result_count list(splunk_batch_result) as splunk_batch_results
