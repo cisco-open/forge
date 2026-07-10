@@ -21,6 +21,8 @@ run "integrations_splunk_opencost_eks_contract" {
       "output \"metrics_port\"",
       "output \"metrics_path\"",
       "output \"prometheus_endpoint\"",
+      "provider \"aws\"",
+      "provider \"helm\"",
     ]
   }
 

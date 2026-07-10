@@ -21,6 +21,9 @@ run "integrations_splunk_otel_eks_contract" {
       "data \"aws_iam_policy_document\" \"ec2_describe_instances\"",
       "data \"aws_secretsmanager_secret\" \"secrets\"",
       "data \"aws_secretsmanager_secret_version\" \"secrets\"",
+      "provider \"aws\"",
+      "provider \"kubernetes\"",
+      "provider \"helm\"",
     ]
   }
 

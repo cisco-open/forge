@@ -22,6 +22,9 @@ run "integrations_teleport_contract" {
       "output \"teleport_tenant_groups\"",
       "output \"teleport_cluster_name\"",
       "output \"teleport_account_id\"",
+      "provider \"aws\"",
+      "provider \"kubernetes\"",
+      "provider \"helm\"",
     ]
   }
 

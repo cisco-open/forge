@@ -13,6 +13,7 @@ run "integrations_github_webhook_relay_destination_receivers_contract" {
       "data \"aws_caller_identity\" \"current\"",
       "output \"role_arn\"",
       "output \"webhook\"",
+      "provider \"aws\"",
     ]
   }
 

@@ -21,6 +21,8 @@ run "integrations_splunk_o11y_conf_shared_contract" {
       "resource \"signalfx_dashboard_group\" \"forgecicd\"",
       "data \"aws_secretsmanager_secret\" \"secrets\"",
       "data \"aws_secretsmanager_secret_version\" \"secrets\"",
+      "provider \"aws\"",
+      "provider \"signalfx\"",
     ]
   }
 

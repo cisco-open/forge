@@ -86,6 +86,8 @@ run "integrations_splunk_cloud_conf_shared_contract" {
       "resource \"splunk_configs_conf\" \"forgecicd_stuck_workflow_job_dispatcher_worker_source\"",
       "data \"aws_secretsmanager_secret\" \"secrets\"",
       "data \"aws_secretsmanager_secret_version\" \"secrets\"",
+      "provider \"aws\"",
+      "provider \"splunk\"",
     ]
   }
 

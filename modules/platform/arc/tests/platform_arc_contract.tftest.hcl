@@ -21,6 +21,9 @@ run "platform_arc_contract" {
       "data \"external\" \"karpenter_ec2nodeclass\"",
       "output \"runners_map\"",
       "output \"subnet_cidr_blocks\"",
+      "provider \"aws\"",
+      "provider \"kubernetes\"",
+      "provider \"helm\"",
     ]
   }
 

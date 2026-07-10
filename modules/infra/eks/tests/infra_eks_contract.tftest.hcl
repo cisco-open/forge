@@ -32,6 +32,8 @@ run "infra_eks_contract" {
       "output \"cluster_security_group_id\"",
       "output \"aws_region\"",
       "output \"kubeconfig\"",
+      "provider \"aws\"",
+      "provider \"kubectl\"",
     ]
   }
 

@@ -38,6 +38,8 @@ run "integrations_splunk_stuck_workflow_job_dispatcher_contract" {
       "output \"worker_lambda_log_group_name\"",
       "output \"dedupe_table_name\"",
       "output \"saved_search_name\"",
+      "provider \"aws\"",
+      "provider \"splunk\"",
     ]
   }
 

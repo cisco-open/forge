@@ -38,6 +38,7 @@ run "integrations_splunk_aws_billing_contract" {
       "data \"aws_iam_policy_document\" \"cur_bucket_policy\"",
       "data \"aws_secretsmanager_secret\" \"secrets\"",
       "data \"aws_secretsmanager_secret_version\" \"secrets\"",
+      "provider \"aws\"",
     ]
   }
 

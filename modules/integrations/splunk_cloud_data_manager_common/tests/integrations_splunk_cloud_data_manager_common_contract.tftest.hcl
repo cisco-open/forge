@@ -16,6 +16,7 @@ run "integrations_splunk_cloud_data_manager_common_contract" {
       "data \"aws_secretsmanager_secret_version\" \"secrets\"",
       "data \"external\" \"splunk_data\"",
       "data \"external\" \"config\"",
+      "provider \"aws\"",
     ]
   }
 

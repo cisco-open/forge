@@ -21,6 +21,8 @@ run "integrations_splunk_o11y_aws_integration_common_contract" {
       "data \"aws_secretsmanager_secret\" \"secrets\"",
       "data \"aws_secretsmanager_secret_version\" \"secrets\"",
       "output \"iam_role_splunk_integration\"",
+      "provider \"aws\"",
+      "provider \"signalfx\"",
     ]
   }
 

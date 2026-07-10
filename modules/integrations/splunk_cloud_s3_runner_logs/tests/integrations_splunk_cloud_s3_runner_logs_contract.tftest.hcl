@@ -35,6 +35,7 @@ run "integrations_splunk_cloud_s3_runner_logs_contract" {
       "data \"aws_secretsmanager_secret\" \"secrets\"",
       "data \"aws_secretsmanager_secret_version\" \"secrets\"",
       "data \"aws_iam_policy_document\" \"allow_s3\"",
+      "provider \"aws\"",
     ]
   }
 

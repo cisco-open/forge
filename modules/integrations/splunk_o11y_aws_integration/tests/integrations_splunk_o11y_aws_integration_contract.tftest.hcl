@@ -11,6 +11,7 @@ run "integrations_splunk_o11y_aws_integration_contract" {
       "resource \"aws_cloudformation_stack\" \"splunk_integration\"",
       "data \"aws_secretsmanager_secret\" \"secrets\"",
       "data \"aws_secretsmanager_secret_version\" \"secrets\"",
+      "provider \"aws\"",
     ]
   }
 

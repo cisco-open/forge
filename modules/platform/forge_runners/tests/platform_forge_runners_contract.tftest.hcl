@@ -39,6 +39,7 @@ run "platform_forge_runners_contract" {
       "output \"forge_webhook_relay\"",
       "output \"forge_github_actions_job_logs\"",
       "output \"forge_github_app\"",
+      "provider \"aws\"",
     ]
   }
 

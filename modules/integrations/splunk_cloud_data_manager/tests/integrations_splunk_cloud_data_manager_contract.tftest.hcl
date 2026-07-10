@@ -25,6 +25,7 @@ run "integrations_splunk_cloud_data_manager_contract" {
       "output \"splunk_cloud_input_cloudwatch_logs_json\"",
       "output \"splunk_cloud_input_security_metadata_json\"",
       "output \"splunk_cloud_input_custom_logs_json\"",
+      "provider \"aws\"",
     ]
   }
 
