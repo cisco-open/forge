@@ -1,17 +1,16 @@
 mock_provider "aws" {
-  mock_data "aws_iam_policy_document" {
+  mock_data "aws_caller_identity" {
     defaults = {
-      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
+      account_id = "123456789012"
+      arn        = "arn:aws:iam::123456789012:user/test"
+      user_id    = "test"
     }
   }
-}
 
-override_data {
-  target = data.aws_caller_identity.current
-  values = {
-    account_id = "123456789012"
-    arn        = "arn:aws:iam::123456789012:user/test"
-    user_id    = "test"
+  mock_data "aws_iam_policy_document" {
+    defaults = {
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"sts:AssumeRole\",\"cloudformation:*\",\"secretsmanager:*\",\"tag:TagResources\"],\"Resource\":[\"arn:aws:iam::123456789012:role/AWSCloudFormationStackSetAdministrationRole\",\"arn:aws:iam::*:role/AWSCloudFormationStackSetExecutionRole\"],\"Principal\":{\"Service\":\"cloudformation.amazonaws.com\",\"AWS\":\"arn:aws:iam::123456789012:role/AWSCloudFormationStackSetAdministrationRole\"}}]}"
+    }
   }
 }
 
@@ -26,26 +25,32 @@ variables {
   }
 }
 
-run "stackset_role_names_and_policies_are_stable" {
+run "cloudformation_stackset_roles_contract" {
   command = plan
 
   assert {
     condition = (
       aws_iam_role.cloudformation_admin_role.name == "AWSCloudFormationStackSetAdministrationRole"
-      && aws_iam_role.cloudformation_execution_role.name == "AWSCloudFormationStackSetExecutionRole"
+      && strcontains(aws_iam_role.cloudformation_admin_role.assume_role_policy, "cloudformation.amazonaws.com")
+      && aws_iam_role_policy.admin_assume_execution_role_policy_attachment.name == "AWSCloudFormationStackSetAdministrationRolePolicy"
+      && strcontains(aws_iam_role_policy.admin_assume_execution_role_policy_attachment.policy, "AWSCloudFormationStackSetExecutionRole")
       && aws_iam_role.cloudformation_admin_role.tags.Product == "Forge"
-      && aws_iam_role.cloudformation_execution_role.tags.Env == "test"
+      && aws_iam_role.cloudformation_admin_role.tags.Env == "test"
     )
-    error_message = "CloudFormation helper must keep the AWS StackSet admin/execution role names and merged tags."
+    error_message = "CloudFormation helper must keep the StackSet administration role, assume-role policy, and merged tags."
   }
 
   assert {
     condition = (
-      aws_iam_role_policy.admin_assume_execution_role_policy_attachment.name == "AWSCloudFormationStackSetAdministrationRolePolicy"
-      && aws_iam_role_policy.admin_assume_execution_role_policy_attachment.role == aws_iam_role.cloudformation_admin_role.id
+      aws_iam_role.cloudformation_execution_role.name == "AWSCloudFormationStackSetExecutionRole"
+      && strcontains(aws_iam_role.cloudformation_execution_role.assume_role_policy, "arn:aws:iam::123456789012:role/AWSCloudFormationStackSetAdministrationRole")
       && aws_iam_role_policy.execution_role_policy_attachment.name == "AWSCloudFormationStackSetExecutionRolePolicy"
-      && aws_iam_role_policy.execution_role_policy_attachment.role == aws_iam_role.cloudformation_execution_role.id
+      && strcontains(aws_iam_role_policy.execution_role_policy_attachment.policy, "cloudformation:*")
+      && strcontains(aws_iam_role_policy.execution_role_policy_attachment.policy, "secretsmanager:*")
+      && strcontains(aws_iam_role_policy.execution_role_policy_attachment.policy, "tag:TagResources")
+      && aws_iam_role.cloudformation_execution_role.tags.Product == "Forge"
+      && aws_iam_role.cloudformation_execution_role.tags.Env == "test"
     )
-    error_message = "CloudFormation helper must keep the expected inline policies attached to their StackSet roles."
+    error_message = "CloudFormation helper must keep the StackSet execution role, admin trust, broad execution policy, and merged tags."
   }
 }

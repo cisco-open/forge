@@ -11,44 +11,46 @@ variables {
   }
   repositories = [
     {
-      repo         = "forge/runner"
+      repo         = "forge/actions-runner"
       mutability   = "IMMUTABLE"
       scan_on_push = true
     },
     {
-      repo         = "forge/tools"
+      repo         = "forge/bootstrap"
       mutability   = "MUTABLE"
       scan_on_push = false
     },
   ]
 }
 
-run "ecr_repository_contract" {
+run "ecr_repository_lifecycle_contract" {
+  command = plan
+
   assert {
     condition = (
-      aws_ecr_repository.ops_container_repository["forge/runner"].name == "forge/runner"
-      && aws_ecr_repository.ops_container_repository["forge/runner"].image_tag_mutability == "IMMUTABLE"
-      && aws_ecr_repository.ops_container_repository["forge/runner"].image_scanning_configuration[0].scan_on_push
+      aws_ecr_repository.ops_container_repository["forge/actions-runner"].name == "forge/actions-runner"
+      && aws_ecr_repository.ops_container_repository["forge/actions-runner"].image_tag_mutability == "IMMUTABLE"
+      && aws_ecr_repository.ops_container_repository["forge/actions-runner"].image_scanning_configuration[0].scan_on_push == true
+      && aws_ecr_repository.ops_container_repository["forge/actions-runner"].tags.Product == "Forge"
+      && aws_ecr_repository.ops_container_repository["forge/actions-runner"].tags.Env == "test"
+      && aws_ecr_repository.ops_container_repository["forge/bootstrap"].image_tag_mutability == "MUTABLE"
+      && aws_ecr_repository.ops_container_repository["forge/bootstrap"].image_scanning_configuration[0].scan_on_push == false
+      && contains(output.ops_container_repository_names, "forge/actions-runner")
+      && contains(output.ops_container_repository_names, "forge/bootstrap")
     )
-    error_message = "ECR helper must preserve immutable scan-on-push repositories when configured."
+    error_message = "ECR helper must create repositories from inputs, preserve mutability/scanning settings, merge tags, and expose repository names."
   }
 
   assert {
     condition = (
-      aws_ecr_repository.ops_container_repository["forge/tools"].name == "forge/tools"
-      && aws_ecr_repository.ops_container_repository["forge/tools"].image_tag_mutability == "MUTABLE"
-      && aws_ecr_repository.ops_container_repository["forge/tools"].image_scanning_configuration[0].scan_on_push == false
+      aws_ecr_lifecycle_policy.ops_cleanup_policy["forge/actions-runner"].repository == "forge/actions-runner"
+      && strcontains(aws_ecr_lifecycle_policy.ops_cleanup_policy["forge/actions-runner"].policy, "Expire untagged images after 28 days")
+      && strcontains(aws_ecr_lifecycle_policy.ops_cleanup_policy["forge/actions-runner"].policy, "\"countNumber\": 28")
+      && strcontains(aws_ecr_lifecycle_policy.ops_cleanup_policy["forge/actions-runner"].policy, "\"countNumber\": 180")
+      && strcontains(aws_ecr_lifecycle_policy.ops_cleanup_policy["forge/actions-runner"].policy, "\"countNumber\": 2")
+      && strcontains(aws_ecr_lifecycle_policy.ops_cleanup_policy["forge/actions-runner"].policy, "*-pre-*")
     )
-    error_message = "ECR helper must preserve mutable repositories without forcing scan-on-push."
-  }
-
-  assert {
-    condition = (
-      strcontains(aws_ecr_lifecycle_policy.ops_cleanup_policy["forge/runner"].policy, "Expire untagged images after 28 days")
-      && strcontains(aws_ecr_lifecycle_policy.ops_cleanup_policy["forge/runner"].policy, "\"countNumber\": 180")
-      && strcontains(aws_ecr_lifecycle_policy.ops_cleanup_policy["forge/runner"].policy, "\"*-pre-*\"")
-    )
-    error_message = "ECR helper lifecycle policy must keep untagged, release, and pre-release cleanup rules."
+    error_message = "ECR helper must keep untagged, versioned, and prerelease lifecycle cleanup rules."
   }
 }
 

@@ -6,21 +6,24 @@ variables {
   default_tags = {
     Product = "Forge"
   }
-  opt_in_regions = ["ap-east-1", "me-south-1"]
+  opt_in_regions = [
+    "ap-east-1",
+    "me-south-1",
+  ]
 }
 
-run "enables_each_configured_region" {
+run "opt_in_regions_contract" {
   command = plan
 
   assert {
     condition = (
       length(aws_account_region.enabled_regions) == 2
       && aws_account_region.enabled_regions["ap-east-1"].region_name == "ap-east-1"
-      && aws_account_region.enabled_regions["ap-east-1"].enabled
+      && aws_account_region.enabled_regions["ap-east-1"].enabled == true
       && aws_account_region.enabled_regions["me-south-1"].region_name == "me-south-1"
-      && aws_account_region.enabled_regions["me-south-1"].enabled
+      && aws_account_region.enabled_regions["me-south-1"].enabled == true
     )
-    error_message = "Opt-in region helper must enable every configured region by name."
+    error_message = "Opt-in regions helper must enable every configured region by name."
   }
 }
 

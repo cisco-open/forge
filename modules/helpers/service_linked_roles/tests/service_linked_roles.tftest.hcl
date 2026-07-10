@@ -11,7 +11,7 @@ variables {
   }
 }
 
-run "creates_spot_service_linked_role" {
+run "service_linked_role_contract" {
   command = plan
 
   assert {
@@ -20,6 +20,6 @@ run "creates_spot_service_linked_role" {
       && aws_iam_service_linked_role.spot.tags.Product == "Forge"
       && aws_iam_service_linked_role.spot.tags.Env == "test"
     )
-    error_message = "Service-linked roles helper must create the EC2 Spot service-linked role with merged tags."
+    error_message = "Service-linked role helper must keep the Spot service-linked role and merged security tags."
   }
 }
