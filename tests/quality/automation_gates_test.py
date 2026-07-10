@@ -29,9 +29,16 @@ def is_module_interface_contract(path: Path) -> bool:
     return has_interface_suffix and contains_module_interface_contract(path)
 
 
-def is_source_inventory_contract(path: Path) -> bool:
+def contains_source_inventory_contract(path: Path) -> bool:
     source = path.read_text(encoding='utf-8')
     return path.name.endswith('.tftest.hcl') and 'tests/tofu/module_contract' in source
+
+
+def is_source_inventory_contract(path: Path) -> bool:
+    has_source_inventory_suffix = path.name.endswith(
+        '_source_inventory.tftest.hcl',
+    )
+    return has_source_inventory_suffix and contains_source_inventory_contract(path)
 
 
 def dependency_group_names(group_name: str) -> set[str]:
@@ -128,17 +135,24 @@ def test_each_module_has_one_source_inventory_contract() -> None:
     )
 
     missing_inventory_tests = []
+    misnamed_inventory_tests = []
     duplicate_inventory_tests = []
     for module in modules:
         tests_dir = module / 'tests'
+        tests = sorted(tests_dir.glob('*.tftest.hcl')
+                       ) if tests_dir.exists() else []
+        misnamed_inventory_tests.extend(
+            test_file.relative_to(REPO_ROOT).as_posix()
+            for test_file in tests
+            if contains_source_inventory_contract(test_file)
+            if not test_file.name.endswith('_source_inventory.tftest.hcl')
+        )
         inventory_tests = (
             sorted(
                 test_file
-                for test_file in tests_dir.glob('*.tftest.hcl')
+                for test_file in tests
                 if is_source_inventory_contract(test_file)
             )
-            if tests_dir.exists()
-            else []
         )
         if not inventory_tests:
             missing_inventory_tests.append(
@@ -153,6 +167,7 @@ def test_each_module_has_one_source_inventory_contract() -> None:
             duplicate_inventory_tests.append(f'{module_path}: {test_paths}')
 
     assert missing_inventory_tests == []
+    assert misnamed_inventory_tests == []
     assert duplicate_inventory_tests == []
 
 
