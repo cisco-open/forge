@@ -1,9 +1,34 @@
 # Runtime job-hook wrapper. The real hook is stored gzip+base64 in SSM (too large
 # to inline in EC2 user_data). This wrapper fetches, decompresses, and runs it.
+#
+# The hook is best-effort telemetry/bookkeeping: a failure to fetch, decode, or
+# run it is logged but must never fail the runner job, so the wrapper always
+# exits 0 regardless of what happens below.
 $ErrorActionPreference = 'Stop'
-$enc = (Get-SSMParameter -Name '${param_name}' -Region '${region}').Value
-$gz = New-Object System.IO.Compression.GZipStream((New-Object System.IO.MemoryStream(, [Convert]::FromBase64String($enc))), [System.IO.Compression.CompressionMode]::Decompress)
-$body = (New-Object System.IO.StreamReader($gz)).ReadToEnd()
-$hookFile = [System.IO.Path]::ChangeExtension([System.IO.Path]::GetTempFileName(), 'ps1')
-Set-Content -Path $hookFile -Value $body -Encoding utf8
-try { & $hookFile } finally { Remove-Item $hookFile -ErrorAction SilentlyContinue }
+$hookFile = $null
+try {
+    $enc = (Get-SSMParameter -Name '${param_name}' -Region '${region}').Value
+    $gz = New-Object System.IO.Compression.GZipStream((New-Object System.IO.MemoryStream(, [Convert]::FromBase64String($enc))), [System.IO.Compression.CompressionMode]::Decompress)
+    $body = (New-Object System.IO.StreamReader($gz)).ReadToEnd()
+    $hookFile = [System.IO.Path]::ChangeExtension([System.IO.Path]::GetTempFileName(), 'ps1')
+    Set-Content -Path $hookFile -Value $body -Encoding utf8
+} catch {
+    Write-Warning "job-hook: could not load hook from SSM parameter '${param_name}'; skipping it (runner job not affected)"
+    Write-Warning "job-hook:   $($_.Exception.Message)"
+    try {
+        $id = Get-STSCallerIdentity -Region '${region}'
+        Write-Warning "job-hook:   caller identity used for the failed request: Account=$($id.Account) Arn=$($id.Arn) UserId=$($id.UserId)"
+    } catch {
+        Write-Warning "job-hook:   unable to determine caller identity: $($_.Exception.Message)"
+    }
+    exit 0
+}
+try {
+    & $hookFile
+} catch {
+    Write-Warning "job-hook: hook from '${param_name}' raised an error; ignoring (runner job not affected)"
+    Write-Warning "job-hook:   $($_.Exception.Message)"
+} finally {
+    if ($hookFile) { Remove-Item $hookFile -ErrorAction SilentlyContinue }
+}
+exit 0

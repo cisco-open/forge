@@ -3,11 +3,24 @@
 # user_data (16 KB limit), so it is stored gzip+base64 in SSM. This wrapper is
 # what the runner actually invokes: it fetches the param, decompresses it, and
 # runs the real hook (inheriting the job's GITHUB_*/RUNNER_* environment).
+#
+# The hook is best-effort telemetry/bookkeeping: a failure to fetch, decode, or
+# run it is logged but must never fail the runner job, so the wrapper always
+# exits 0 regardless of what happens below.
 set -uo pipefail
 _hook="$(mktemp)"
-trap 'rm -f "$_hook"' EXIT
-if ! aws ssm get-parameter --name "${param_name}" --query Parameter.Value --output text --region ${region} | base64 -d | gunzip >"$_hook"; then
-  echo "job-hook: failed to fetch ${param_name} from SSM" >&2
-  exit 1
+_err="$(mktemp)"
+trap 'rm -f "$_hook" "$_err"' EXIT
+if ! aws ssm get-parameter --name "${param_name}" --query Parameter.Value --output text --region ${region} 2>"$_err" | base64 -d 2>/dev/null | gunzip 2>/dev/null >"$_hook"; then
+  echo "job-hook: WARNING: could not load hook from SSM parameter ${param_name}; skipping it (runner job not affected)" >&2
+  if [ -s "$_err" ]; then
+    sed 's/^/job-hook:   /' "$_err" >&2
+  fi
+  echo "job-hook:   caller identity used for the failed request:" >&2
+  aws sts get-caller-identity --output text --region ${region} 2>&1 | sed 's/^/job-hook:     /' >&2 || true
+  exit 0
 fi
-bash "$_hook"
+if ! bash "$_hook"; then
+  echo "job-hook: WARNING: hook from ${param_name} exited non-zero; ignoring (runner job not affected)" >&2
+fi
+exit 0
