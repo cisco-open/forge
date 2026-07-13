@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.0.3](https://github.com/cisco-open/forge/compare/v4.0.2...v4.0.3) (2026-07-13)
+
+
+### Bug Fixes
+
+* **splunk:** fix alert for multiple matches in stuck jobs ([#462](https://github.com/cisco-open/forge/issues/462)) ([fbd16d5](https://github.com/cisco-open/forge/commit/fbd16d5e2cfaaa4ab45f6766b0c754b69763c50f))
+* **splunk:** fix query with breaking change in lambda logs ([#460](https://github.com/cisco-open/forge/issues/460)) ([4ae7972](https://github.com/cisco-open/forge/commit/4ae79725bda0ccbd1fc75495ee517ed82d84e9fb))
+
 ## [4.0.2](https://github.com/cisco-open/forge/compare/v4.0.1...v4.0.2) (2026-07-09)
 
 
