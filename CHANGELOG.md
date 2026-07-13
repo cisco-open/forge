@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.0.4](https://github.com/cisco-open/forge/compare/v4.0.3...v4.0.4) (2026-07-13)
+
+
+### Bug Fixes
+
+* **ec2:** use instance profile for runner job-hooks and make them non-fatal ([#468](https://github.com/cisco-open/forge/issues/468)) ([6054d8c](https://github.com/cisco-open/forge/commit/6054d8cbd5806e580028a681db940cf944f2f38f))
+
 ## [4.0.3](https://github.com/cisco-open/forge/compare/v4.0.2...v4.0.3) (2026-07-13)
 
 
