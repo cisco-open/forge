@@ -5,6 +5,14 @@
 # run it is logged but must never fail the runner job, so the wrapper always
 # exits 0 regardless of what happens below.
 $ErrorActionPreference = 'Stop'
+
+# Ignore any AWS credential/profile env vars the workflow injected into the job
+# (e.g. AWS_PROFILE=default) so this wrapper authenticates with the runner's EC2
+# instance profile (IMDS), not the job's credentials.
+foreach ($v in 'AWS_ACCESS_KEY_ID','AWS_SECRET_ACCESS_KEY','AWS_SESSION_TOKEN','AWS_PROFILE','AWS_DEFAULT_PROFILE') {
+    Remove-Item -Path "Env:$v" -ErrorAction SilentlyContinue
+}
+
 $hookFile = $null
 try {
     $enc = (Get-SSMParameter -Name '${param_name}' -Region '${region}').Value
