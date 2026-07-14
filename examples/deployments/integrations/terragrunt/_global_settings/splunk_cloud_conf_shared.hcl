@@ -30,6 +30,12 @@ locals {
   }
 }
 
+dependencies {
+  paths = [
+    find_in_parent_folders("splunk_stuck_workflow_job_dispatcher")
+  ]
+}
+
 inputs = merge(local.config, {
   # Core Environment
   aws_profile = local.default_aws_profile

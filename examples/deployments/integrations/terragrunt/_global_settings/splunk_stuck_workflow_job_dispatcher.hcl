@@ -30,7 +30,6 @@ locals {
 
 dependencies {
   paths = [
-    find_in_parent_folders("splunk_cloud_conf_shared"),
     find_in_parent_folders("splunk_secrets")
   ]
 }
