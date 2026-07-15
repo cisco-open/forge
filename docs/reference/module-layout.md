@@ -48,10 +48,12 @@ ______________________________________________________________________
 
 | Module                                 | Purpose                                                                                     |
 | -------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `modules/helpers/aws_config_recording` | Records EC2 Dedicated Hosts and their instances with AWS Config.                            |
 | `modules/helpers/ami_policy`           | IAM policy support for Forge AMI usage.                                                     |
 | `modules/helpers/ami_sharing`          | Shares runner AMIs across accounts or regions.                                              |
 | `modules/helpers/cloud_custodian`      | Runs cleanup and policy automation.                                                         |
 | `modules/helpers/cloud_formation`      | Creates CloudFormation admin and execution roles used by CloudFormation-backed setup paths. |
+| `modules/helpers/dedicated_mac_hosts`  | Allocates Mac Dedicated Hosts and configures host groups and licensing.                     |
 | `modules/helpers/ecr`                  | Creates ECR repositories for runner, sidecar, Lambda, or operational images.                |
 | `modules/helpers/forge_subscription`   | Creates tenant-side roles and access policies for Forge runner jobs.                        |
 | `modules/helpers/opt_in_regions`       | Enables AWS opt-in regions.                                                                 |

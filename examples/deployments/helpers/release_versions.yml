@@ -8,6 +8,11 @@ spec:
   # Versions of our IaC/Terraform modules.
   iac:
     modules:
+      aws_config_recording:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/helpers/aws_config_recording
+        ref: main
       ami_policy:
         local_path: ../forge
         repo: git@github.com:cisco-open/forge.git
@@ -27,6 +32,11 @@ spec:
         local_path: ../forge
         repo: git@github.com:cisco-open/forge.git
         module_path: modules/helpers/cloud_formation
+        ref: main
+      dedicated_mac_hosts:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/helpers/dedicated_mac_hosts
         ref: main
       ecr:
         local_path: ../forge

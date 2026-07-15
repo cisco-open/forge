@@ -59,6 +59,10 @@ ______________________________________________________________________
    - `modules/helpers/service_linked_roles` for EC2 Spot and AWS service-linked
      roles.
    - `modules/helpers/cloud_formation` for CloudFormation-backed integrations.
+   - `modules/helpers/aws_config_recording` for Dedicated Host and instance
+     configuration history.
+   - `modules/helpers/dedicated_mac_hosts` for EC2 Mac host capacity, host
+     groups, and license configuration.
    - `modules/helpers/cloud_custodian` for cleanup and policy jobs.
    - `modules/helpers/forge_subscription` for tenant-side IAM and artifact
      access used by Forge jobs.

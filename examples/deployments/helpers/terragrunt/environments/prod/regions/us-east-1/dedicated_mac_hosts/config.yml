@@ -1,0 +1,3 @@
+---
+# Keep this empty until you intend to allocate billable Mac Dedicated Hosts.
+host_groups: {}

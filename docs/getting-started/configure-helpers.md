@@ -32,6 +32,8 @@ examples/deployments/helpers/terragrunt/_global_settings/_global.yml
 examples/deployments/helpers/terragrunt/environments/prod/_environment_wide_settings/_environment.yml
 examples/deployments/helpers/terragrunt/environments/prod/regions/eu-west-1/ami_sharing/config.yml
 examples/deployments/helpers/terragrunt/environments/prod/regions/eu-west-1/ecr/config.yml
+examples/deployments/helpers/terragrunt/environments/prod/regions/us-east-1/aws_config_recording/config.yml
+examples/deployments/helpers/terragrunt/environments/prod/regions/us-east-1/dedicated_mac_hosts/config.yml
 examples/deployments/helpers/terragrunt/environments/prod/cloud_custodian/config.yml
 examples/deployments/helpers/terragrunt/environments/prod/forge_subscription/config.yml
 ```

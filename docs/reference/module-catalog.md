@@ -31,10 +31,12 @@ EC2-only deployments can skip `examples/deployments/infra`.
 
 | Module                                 | Role                                                         | Required? | Example root                   | Validation                                      |
 | -------------------------------------- | ------------------------------------------------------------ | --------- | ------------------------------ | ----------------------------------------------- |
+| `modules/helpers/aws_config_recording` | AWS Config history for Dedicated Hosts and their instances.  | Optional  | `examples/deployments/helpers` | Recorder is active for both EC2 resource types. |
 | `modules/helpers/ami_policy`           | AMI policy support for approved runner images.               | Optional  | `examples/deployments/helpers` | Policy plan plus AMI usage review.              |
 | `modules/helpers/ami_sharing`          | Shares runner AMIs across accounts or regions.               | Optional  | `examples/deployments/helpers` | Target account can describe and launch AMI.     |
 | `modules/helpers/cloud_custodian`      | Cleanup and policy jobs for stale resources.                 | Optional  | `examples/deployments/helpers` | Custodian dry run and scheduled job output.     |
 | `modules/helpers/cloud_formation`      | CloudFormation admin/execution roles for setup paths.        | Optional  | `examples/deployments/helpers` | Stack role assumption check.                    |
+| `modules/helpers/dedicated_mac_hosts`  | Mac Dedicated Hosts, host groups, and license configuration. | Optional  | `examples/deployments/helpers` | Host allocation and group membership review.    |
 | `modules/helpers/ecr`                  | ECR repositories for runner and CI helper containers.        | Optional  | `examples/deployments/helpers` | Push/pull smoke for configured repositories.    |
 | `modules/helpers/forge_subscription`   | Tenant-side access for ForgeMT jobs and artifacts.           | Optional  | `examples/deployments/helpers` | Tenant role can access intended S3/ECR/secrets. |
 | `modules/helpers/opt_in_regions`       | Enables AWS opt-in regions.                                  | Sometimes | `examples/deployments/helpers` | AWS account region status is enabled.           |
