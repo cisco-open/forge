@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.0.5](https://github.com/cisco-open/forge/compare/v4.0.4...v4.0.5) (2026-07-15)
+
+
+### Bug Fixes
+
+* **dispatcher:** alias reserved result attribute ([#474](https://github.com/cisco-open/forge/issues/474)) ([5573be6](https://github.com/cisco-open/forge/commit/5573be69b33bfdfab719b0173d0380525c0ff6a9))
+* **examples:** order shared Splunk config after dispatcher ([#471](https://github.com/cisco-open/forge/issues/471)) ([64642aa](https://github.com/cisco-open/forge/commit/64642aa0c02f9d90807b3a8b9ed88aca3dc59c01))
+
 ## [4.0.4](https://github.com/cisco-open/forge/compare/v4.0.3...v4.0.4) (2026-07-13)
 
 
