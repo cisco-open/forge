@@ -4,5 +4,5 @@ host_groups:
     name: <HOST_GROUP_NAME>                 # e.g., mac2-servers
     host_instance_type: <HOST_INSTANCE_TYPE>  # e.g., mac2.metal
     hosts:
-      - name: <HOST_NAME>                   # e.g., mac2-server-1-us-east-1a
-        availability_zone: <AVAILABILITY_ZONE>  # e.g., us-east-1a
+      - name: <HOST_NAME>                   # e.g., mac2-server-1-eu-west-1a
+        availability_zone: <AVAILABILITY_ZONE>  # e.g., eu-west-1a

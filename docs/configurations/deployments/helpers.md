@@ -19,12 +19,12 @@ ______________________________________________________________________
 
 | Module                                 | Example directory                                          | Use when                                                             |
 | -------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------- |
-| `modules/helpers/aws_config_recording` | `environments/prod/regions/us-east-1/aws_config_recording` | You need configuration history for Dedicated Hosts and instances.    |
+| `modules/helpers/aws_config_recording` | `environments/prod/regions/eu-west-1/aws_config_recording` | You need configuration history for Dedicated Hosts and instances.    |
 | `modules/helpers/ami_policy`           | `environments/prod/ami_policy`                             | Forge owns AMI usage policy support.                                 |
 | `modules/helpers/ami_sharing`          | `environments/prod/regions/eu-west-1/ami_sharing`          | Runner AMIs must be shared across accounts or regions.               |
 | `modules/helpers/cloud_custodian`      | `environments/prod/cloud_custodian`                        | You run cleanup or governance policies from Forge.                   |
 | `modules/helpers/cloud_formation`      | `environments/prod/cloud_formation`                        | Integrations need CloudFormation admin/execution roles.              |
-| `modules/helpers/dedicated_mac_hosts`  | `environments/prod/regions/us-east-1/dedicated_mac_hosts`  | Forge owns EC2 Mac Dedicated Host capacity.                          |
+| `modules/helpers/dedicated_mac_hosts`  | `environments/prod/regions/eu-west-1/dedicated_mac_hosts`  | Forge owns EC2 Mac Dedicated Host capacity.                          |
 | `modules/helpers/ecr`                  | `environments/prod/regions/eu-west-1/ecr`                  | Forge owns ECR repositories for runner or helper images.             |
 | `modules/helpers/forge_subscription`   | `environments/prod/forge_subscription`                     | Tenant accounts need Forge-managed IAM, Packer, S3, or ECR access.   |
 | `modules/helpers/opt_in_regions`       | `environments/prod/opt_in_regions`                         | You need to enable AWS opt-in regions before regional deploys.       |
@@ -44,8 +44,8 @@ ______________________________________________________________________
 | `environments/prod/opt_in_regions/config.yml`                         | Regions to enable.                                          |
 | `environments/prod/regions/eu-west-1/ami_sharing/config.yml`          | AMI names, owners, target accounts, and target regions.     |
 | `environments/prod/regions/eu-west-1/ecr/config.yml`                  | Repositories and lifecycle settings.                        |
-| `environments/prod/regions/us-east-1/aws_config_recording/config.yml` | Globally unique AWS Config delivery bucket name.            |
-| `environments/prod/regions/us-east-1/dedicated_mac_hosts/config.yml`  | Mac host groups, instance types, names, and AZs.            |
+| `environments/prod/regions/eu-west-1/aws_config_recording/config.yml` | Globally unique AWS Config delivery bucket name.            |
+| `environments/prod/regions/eu-west-1/dedicated_mac_hosts/config.yml`  | Mac host groups, instance types, names, and AZs.            |
 | `release_versions.yml`                                                | Helper module sources, refs, and `module_path` values.      |
 
 Templates live under `examples/templates/helpers` for the helpers with
@@ -73,8 +73,8 @@ cd examples/deployments/helpers/terragrunt/environments/prod/opt_in_regions
 cd examples/deployments/helpers/terragrunt/environments/prod/service_linked_roles
 cd examples/deployments/helpers/terragrunt/environments/prod/storage
 cd examples/deployments/helpers/terragrunt/environments/prod/regions/eu-west-1/ami_sharing
-cd examples/deployments/helpers/terragrunt/environments/prod/regions/us-east-1/aws_config_recording
-cd examples/deployments/helpers/terragrunt/environments/prod/regions/us-east-1/dedicated_mac_hosts
+cd examples/deployments/helpers/terragrunt/environments/prod/regions/eu-west-1/aws_config_recording
+cd examples/deployments/helpers/terragrunt/environments/prod/regions/eu-west-1/dedicated_mac_hosts
 ```
 
 Plan the full helper environment only after the individual helper plans are
