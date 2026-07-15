@@ -480,8 +480,8 @@ def complete_work(key: str, status: str, result: Dict[str, Any]) -> None:
     dynamodb.update_item(
         TableName=os.environ['DEDUPE_TABLE'],
         Key={'dedupe_key': {'S': key}},
-        UpdateExpression='SET #status = :status, finished_at = :now, result = :result',
-        ExpressionAttributeNames={'#status': 'status'},
+        UpdateExpression='SET #status = :status, finished_at = :now, #result = :result',
+        ExpressionAttributeNames={'#status': 'status', '#result': 'result'},
         ExpressionAttributeValues={
             ':status': {'S': status},
             ':now': {'N': str(int(time.time()))},

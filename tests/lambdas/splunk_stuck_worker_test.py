@@ -469,6 +469,27 @@ def test_claim_work_returns_false_when_already_claimed(monkeypatch, aws):
     assert not mod.claim_work('tenant#region#repo#job')
 
 
+def test_complete_work_aliases_reserved_result_attribute(monkeypatch, aws):
+    mod = _load_worker(monkeypatch)
+    updates = []
+
+    class _DynamoDB:
+        def update_item(self, **kwargs):
+            updates.append(kwargs)
+
+    monkeypatch.setattr(mod, 'dynamodb', _DynamoDB())
+
+    mod.complete_work('tenant#region#repo#job', 'completed', {'ok': True})
+
+    assert updates[0]['UpdateExpression'] == (
+        'SET #status = :status, finished_at = :now, #result = :result'
+    )
+    assert updates[0]['ExpressionAttributeNames'] == {
+        '#status': 'status',
+        '#result': 'result',
+    }
+
+
 def test_lambda_handler_completes_pending_stream_record(monkeypatch, aws):
     mod = _load_worker(monkeypatch)
     completed = []
