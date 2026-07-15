@@ -1,10 +1,3 @@
-locals {
-  dedicated_host_resource_types = [
-    "AWS::EC2::Host",
-    "AWS::EC2::Instance",
-  ]
-}
-
 resource "aws_iam_role" "config" {
   name               = var.iam_role_name
   assume_role_policy = data.aws_iam_policy_document.config_assume_role.json
@@ -54,13 +47,13 @@ resource "aws_s3_bucket_policy" "config_delivery" {
   policy = data.aws_iam_policy_document.config_delivery_bucket.json
 }
 
-resource "aws_config_configuration_recorder" "dedicated_hosts" {
+resource "aws_config_configuration_recorder" "this" {
   name     = var.recorder_name
   role_arn = aws_iam_role.config.arn
 
   recording_group {
     all_supported  = false
-    resource_types = local.dedicated_host_resource_types
+    resource_types = sort(tolist(var.recorded_resource_types))
 
     recording_strategy {
       use_only = "INCLUSION_BY_RESOURCE_TYPES"
@@ -74,19 +67,19 @@ resource "aws_config_configuration_recorder" "dedicated_hosts" {
   depends_on = [aws_iam_role_policy_attachment.config]
 }
 
-resource "aws_config_delivery_channel" "dedicated_hosts" {
+resource "aws_config_delivery_channel" "this" {
   name           = var.delivery_channel_name
   s3_bucket_name = aws_s3_bucket.config_delivery.bucket
 
   depends_on = [
-    aws_config_configuration_recorder.dedicated_hosts,
+    aws_config_configuration_recorder.this,
     aws_s3_bucket_policy.config_delivery,
   ]
 }
 
-resource "aws_config_configuration_recorder_status" "dedicated_hosts" {
-  name       = aws_config_configuration_recorder.dedicated_hosts.name
+resource "aws_config_configuration_recorder_status" "this" {
+  name       = aws_config_configuration_recorder.this.name
   is_enabled = true
 
-  depends_on = [aws_config_delivery_channel.dedicated_hosts]
+  depends_on = [aws_config_delivery_channel.this]
 }

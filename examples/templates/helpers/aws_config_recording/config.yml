@@ -1,2 +1,5 @@
 ---
 delivery_bucket_name: <AWS_CONFIG_BUCKET_NAME>  # e.g., forge-config-123456789012-eu-west-1
+recorded_resource_types:
+  - AWS::EC2::Host
+  - AWS::EC2::Instance

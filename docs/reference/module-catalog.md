@@ -31,7 +31,7 @@ EC2-only deployments can skip `examples/deployments/infra`.
 
 | Module                                 | Role                                                         | Required? | Example root                   | Validation                                      |
 | -------------------------------------- | ------------------------------------------------------------ | --------- | ------------------------------ | ----------------------------------------------- |
-| `modules/helpers/aws_config_recording` | AWS Config history for Dedicated Hosts and their instances.  | Optional  | `examples/deployments/helpers` | Recorder is active for both EC2 resource types. |
+| `modules/helpers/aws_config_recording` | AWS Config history for caller-selected AWS resource types.   | Optional  | `examples/deployments/helpers` | Recorder is active for the configured types.    |
 | `modules/helpers/ami_policy`           | AMI policy support for approved runner images.               | Optional  | `examples/deployments/helpers` | Policy plan plus AMI usage review.              |
 | `modules/helpers/ami_sharing`          | Shares runner AMIs across accounts or regions.               | Optional  | `examples/deployments/helpers` | Target account can describe and launch AMI.     |
 | `modules/helpers/cloud_custodian`      | Cleanup and policy jobs for stale resources.                 | Optional  | `examples/deployments/helpers` | Custodian dry run and scheduled job output.     |

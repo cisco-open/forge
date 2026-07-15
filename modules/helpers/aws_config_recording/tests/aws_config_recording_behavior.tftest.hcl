@@ -41,6 +41,10 @@ variables {
   aws_profile          = "test"
   aws_region           = "us-east-1"
   delivery_bucket_name = "forge-config-123456789012-us-east-1"
+  recorded_resource_types = [
+    "AWS::EC2::Instance",
+    "AWS::S3::Bucket",
+  ]
   default_tags = {
     Product = "Forge"
   }
@@ -54,15 +58,25 @@ run "aws_config_recording_contract" {
 
   assert {
     condition = (
-      aws_config_configuration_recorder.dedicated_hosts.recording_group[0].all_supported == false
-      && toset(aws_config_configuration_recorder.dedicated_hosts.recording_group[0].resource_types) == toset(["AWS::EC2::Host", "AWS::EC2::Instance"])
-      && aws_config_configuration_recorder.dedicated_hosts.recording_mode[0].recording_frequency == "CONTINUOUS"
-      && aws_config_configuration_recorder_status.dedicated_hosts.is_enabled == true
-      && aws_config_delivery_channel.dedicated_hosts.s3_bucket_name == "forge-config-123456789012-us-east-1"
+      aws_config_configuration_recorder.this.recording_group[0].all_supported == false
+      && toset(aws_config_configuration_recorder.this.recording_group[0].resource_types) == toset(["AWS::EC2::Instance", "AWS::S3::Bucket"])
+      && aws_config_configuration_recorder.this.recording_mode[0].recording_frequency == "CONTINUOUS"
+      && aws_config_configuration_recorder_status.this.is_enabled == true
+      && aws_config_delivery_channel.this.s3_bucket_name == "forge-config-123456789012-us-east-1"
     )
-    error_message = "AWS Config must continuously record Dedicated Hosts and EC2 instances and enable the recorder."
+    error_message = "AWS Config must continuously record the configured resource types and enable the recorder."
   }
 
+}
+
+run "rejects_empty_recorded_resource_types" {
+  command = plan
+
+  variables {
+    recorded_resource_types = []
+  }
+
+  expect_failures = [var.recorded_resource_types]
 }
 
 run "rejects_invalid_delivery_bucket_name" {

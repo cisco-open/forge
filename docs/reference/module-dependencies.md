@@ -46,7 +46,7 @@ ______________________________________________________________________
 
 | Module                                 | Deploy before platform?        | Why                                                              |
 | -------------------------------------- | ------------------------------ | ---------------------------------------------------------------- |
-| `modules/helpers/aws_config_recording` | Before Dedicated Hosts         | Captures host and instance configuration history from creation.  |
+| `modules/helpers/aws_config_recording` | Before recorded resources      | Captures configuration history from resource creation.           |
 | `modules/helpers/opt_in_regions`       | Yes, for opt-in regions        | Regional resources cannot deploy until the region is enabled.    |
 | `modules/helpers/service_linked_roles` | Usually, for EC2 Spot          | Some accounts need AWS service-linked roles created first.       |
 | `modules/helpers/ami_policy`           | Optional                       | Account policy support for AMI usage.                            |

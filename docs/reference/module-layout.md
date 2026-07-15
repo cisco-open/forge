@@ -48,7 +48,7 @@ ______________________________________________________________________
 
 | Module                                 | Purpose                                                                                     |
 | -------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `modules/helpers/aws_config_recording` | Records EC2 Dedicated Hosts and their instances with AWS Config.                            |
+| `modules/helpers/aws_config_recording` | Records caller-selected AWS resource types with AWS Config.                                 |
 | `modules/helpers/ami_policy`           | IAM policy support for Forge AMI usage.                                                     |
 | `modules/helpers/ami_sharing`          | Shares runner AMIs across accounts or regions.                                              |
 | `modules/helpers/cloud_custodian`      | Runs cleanup and policy automation.                                                         |

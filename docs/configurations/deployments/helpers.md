@@ -19,7 +19,7 @@ ______________________________________________________________________
 
 | Module                                 | Example directory                                          | Use when                                                             |
 | -------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------- |
-| `modules/helpers/aws_config_recording` | `environments/prod/regions/eu-west-1/aws_config_recording` | You need configuration history for Dedicated Hosts and instances.    |
+| `modules/helpers/aws_config_recording` | `environments/prod/regions/eu-west-1/aws_config_recording` | You need configuration history for selected AWS resource types.      |
 | `modules/helpers/ami_policy`           | `environments/prod/ami_policy`                             | Forge owns AMI usage policy support.                                 |
 | `modules/helpers/ami_sharing`          | `environments/prod/regions/eu-west-1/ami_sharing`          | Runner AMIs must be shared across accounts or regions.               |
 | `modules/helpers/cloud_custodian`      | `environments/prod/cloud_custodian`                        | You run cleanup or governance policies from Forge.                   |
@@ -44,7 +44,7 @@ ______________________________________________________________________
 | `environments/prod/opt_in_regions/config.yml`                         | Regions to enable.                                          |
 | `environments/prod/regions/eu-west-1/ami_sharing/config.yml`          | AMI names, owners, target accounts, and target regions.     |
 | `environments/prod/regions/eu-west-1/ecr/config.yml`                  | Repositories and lifecycle settings.                        |
-| `environments/prod/regions/eu-west-1/aws_config_recording/config.yml` | Globally unique AWS Config delivery bucket name.            |
+| `environments/prod/regions/eu-west-1/aws_config_recording/config.yml` | Delivery bucket and AWS Config resource types to record.    |
 | `environments/prod/regions/eu-west-1/dedicated_mac_hosts/config.yml`  | Mac host groups, instance types, names, and AZs.            |
 | `release_versions.yml`                                                | Helper module sources, refs, and `module_path` values.      |
 

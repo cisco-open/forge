@@ -1,17 +1,17 @@
 # AWS Config Recording
 
-This module enables continuous AWS Config recording for EC2 Dedicated Hosts and the instances launched on them.
+This module enables continuous AWS Config recording for caller-selected AWS resource types.
 
 ## What It Manages
 
-- A configuration recorder for `AWS::EC2::Host` and `AWS::EC2::Instance`.
+- A configuration recorder for the resource types supplied through `recorded_resource_types`.
 - An IAM role with the AWS managed Config recorder policy.
 - An encrypted, versioned S3 delivery bucket with public access blocked.
 - A delivery channel and enabled recorder status.
 
 ## Operational Notes
 
-- Deploy one instance of this module per AWS account and Region where Dedicated Hosts run.
+- Deploy one instance of this module per AWS account and Region where configuration recording is required.
 - The account and Region must not already have a customer-managed configuration recorder or delivery channel with conflicting names.
 - The delivery bucket name must be globally unique.
 - Keep `force_destroy_delivery_bucket` disabled in production to preserve configuration history.
@@ -38,9 +38,9 @@ No modules.
 
 | Name | Type |
 | ---- | ---- |
-| [aws_config_configuration_recorder.dedicated_hosts](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/config_configuration_recorder) | resource |
-| [aws_config_configuration_recorder_status.dedicated_hosts](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/config_configuration_recorder_status) | resource |
-| [aws_config_delivery_channel.dedicated_hosts](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/config_delivery_channel) | resource |
+| [aws_config_configuration_recorder.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/config_configuration_recorder) | resource |
+| [aws_config_configuration_recorder_status.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/config_configuration_recorder_status) | resource |
+| [aws_config_delivery_channel.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/config_delivery_channel) | resource |
 | [aws_iam_role.config](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role_policy_attachment.config](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_s3_bucket.config_delivery](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
@@ -64,6 +64,7 @@ No modules.
 | <a name="input_delivery_channel_name"></a> [delivery\_channel\_name](#input\_delivery\_channel\_name) | Name of the AWS Config delivery channel. | `string` | `"default"` | no |
 | <a name="input_force_destroy_delivery_bucket"></a> [force\_destroy\_delivery\_bucket](#input\_force\_destroy\_delivery\_bucket) | Whether to delete AWS Config objects when destroying the delivery bucket. | `bool` | `false` | no |
 | <a name="input_iam_role_name"></a> [iam\_role\_name](#input\_iam\_role\_name) | Name of the IAM role used by AWS Config. | `string` | `"forge-aws-config-recorder"` | no |
+| <a name="input_recorded_resource_types"></a> [recorded\_resource\_types](#input\_recorded\_resource\_types) | AWS Config resource types to record, using identifiers such as AWS::EC2::Instance. | `set(string)` | n/a | yes |
 | <a name="input_recorder_name"></a> [recorder\_name](#input\_recorder\_name) | Name of the AWS Config configuration recorder. | `string` | `"default"` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of additional tags to apply to resources. | `map(string)` | n/a | yes |
 
@@ -73,5 +74,5 @@ No modules.
 | ---- | ----------- |
 | <a name="output_configuration_recorder_name"></a> [configuration\_recorder\_name](#output\_configuration\_recorder\_name) | Name of the enabled AWS Config configuration recorder. |
 | <a name="output_delivery_bucket_name"></a> [delivery\_bucket\_name](#output\_delivery\_bucket\_name) | Name of the S3 bucket receiving AWS Config snapshots and history. |
-| <a name="output_recorded_resource_types"></a> [recorded\_resource\_types](#output\_recorded\_resource\_types) | AWS resource types recorded for Dedicated Host configuration history. |
+| <a name="output_recorded_resource_types"></a> [recorded\_resource\_types](#output\_recorded\_resource\_types) | AWS resource types recorded by AWS Config. |
 <!-- END_TF_DOCS -->

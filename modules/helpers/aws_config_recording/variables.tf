@@ -28,6 +28,16 @@ variable "delivery_bucket_name" {
   }
 }
 
+variable "recorded_resource_types" {
+  description = "AWS Config resource types to record, using identifiers such as AWS::EC2::Instance."
+  type        = set(string)
+
+  validation {
+    condition     = length(var.recorded_resource_types) > 0
+    error_message = "At least one AWS Config resource type must be provided."
+  }
+}
+
 variable "force_destroy_delivery_bucket" {
   description = "Whether to delete AWS Config objects when destroying the delivery bucket."
   type        = bool

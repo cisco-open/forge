@@ -1,6 +1,6 @@
 output "configuration_recorder_name" {
   description = "Name of the enabled AWS Config configuration recorder."
-  value       = aws_config_configuration_recorder.dedicated_hosts.name
+  value       = aws_config_configuration_recorder.this.name
 }
 
 output "delivery_bucket_name" {
@@ -9,6 +9,6 @@ output "delivery_bucket_name" {
 }
 
 output "recorded_resource_types" {
-  description = "AWS resource types recorded for Dedicated Host configuration history."
-  value       = local.dedicated_host_resource_types
+  description = "AWS resource types recorded by AWS Config."
+  value       = var.recorded_resource_types
 }
