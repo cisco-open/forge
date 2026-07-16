@@ -9,6 +9,13 @@ override_data {
   }
 }
 
+override_data {
+  target = data.aws_iam_policy_document.config_delivery
+  values = {
+    json = "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Sid\":\"AWSConfigBucketPermissionsCheck\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"config.amazonaws.com\"},\"Action\":[\"s3:GetBucketAcl\",\"s3:ListBucket\"],\"Resource\":\"arn:aws:s3:::123456789012-long-term-storage\"},{\"Sid\":\"AWSConfigBucketDelivery\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"config.amazonaws.com\"},\"Action\":\"s3:PutObject\",\"Resource\":\"arn:aws:s3:::123456789012-long-term-storage/AWSLogs/123456789012/Config/*\"}]}"
+  }
+}
+
 override_resource {
   target = aws_s3_bucket.s3_long_term
   values = {
@@ -51,6 +58,7 @@ run "storage_buckets_contract" {
       && aws_s3_bucket_public_access_block.s3_long_term.ignore_public_acls == true
       && aws_s3_bucket_public_access_block.s3_long_term.restrict_public_buckets == true
       && aws_s3_bucket_public_access_block.s3_long_term.skip_destroy == true
+      && aws_s3_bucket_policy.config_delivery.bucket == "123456789012-long-term-storage"
     )
     error_message = "Storage helper must keep long-term bucket naming, tags, versioning, AES256 encryption, and public access block settings."
   }

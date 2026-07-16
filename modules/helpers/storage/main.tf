@@ -50,6 +50,13 @@ resource "aws_s3_bucket_public_access_block" "s3_long_term" {
   skip_destroy = true
 }
 
+# Allow AWS Config recorders in this account to deliver configuration history
+# and snapshots to the long-term bucket.
+resource "aws_s3_bucket_policy" "config_delivery" {
+  bucket = aws_s3_bucket.s3_long_term.id
+  policy = data.aws_iam_policy_document.config_delivery.json
+}
+
 # Short-term storage (i.e. temporary/feature-branch builds, core dumps, and
 # other artifacts we aren't obligated to retain long-term).
 resource "aws_s3_bucket" "s3_short_term" {

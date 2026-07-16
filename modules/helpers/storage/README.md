@@ -10,6 +10,7 @@ Forge produces operational artifacts, logs, and temporary data across many tenan
 
 - Long-term and short-term S3 buckets.
 - Versioning, ownership controls, server-side encryption, and public access blocks.
+- An account-scoped bucket policy allowing AWS Config delivery to the long-term bucket.
 - Lifecycle configuration for the short-term bucket.
 - Bucket settings exported for downstream modules.
 
@@ -42,6 +43,7 @@ No modules.
 | Name | Type |
 | ---- | ---- |
 | [aws_s3_bucket.s3_long_term](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
+| [aws_s3_bucket_policy.config_delivery](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_policy) | resource |
 | [aws_s3_bucket.s3_short_term](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
 | [aws_s3_bucket_lifecycle_configuration.s3_short_term](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_lifecycle_configuration) | resource |
 | [aws_s3_bucket_ownership_controls.s3_long_term](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_ownership_controls) | resource |
@@ -53,6 +55,7 @@ No modules.
 | [aws_s3_bucket_versioning.s3_long_term](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_versioning) | resource |
 | [aws_s3_bucket_versioning.s3_short_term](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_versioning) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
+| [aws_iam_policy_document.config_delivery](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 
 ## Inputs
 
