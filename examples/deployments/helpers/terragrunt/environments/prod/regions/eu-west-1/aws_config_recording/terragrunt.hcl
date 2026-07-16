@@ -21,19 +21,6 @@ include "mod_global" {
   expose = true
 }
 
-dependency "storage" {
-  config_path = "../../../storage"
-
-  mock_outputs = {
-    s3_long_term_settings = {
-      arn    = "arn:aws:s3:::123456789012-long-term-storage"
-      path   = "123456789012-long-term-storage/cicd_artifacts"
-      suffix = "/cicd_artifacts"
-    }
-  }
-  mock_outputs_allowed_terraform_commands = ["validate", "plan", "render"]
-}
-
 # Version of module to use.
 locals {
   module_name = basename(get_terragrunt_dir())
@@ -55,13 +42,6 @@ locals {
 terraform {
   source = local.module_ref
 }
-
-inputs = merge(
-  include.mod_global.inputs,
-  {
-    delivery_bucket_name = split("/", dependency.storage.outputs.s3_long_term_settings.path)[0]
-  },
-)
 
 remote_state {
   backend = include.env.locals.remote_state_config.backend

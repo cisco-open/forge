@@ -7,6 +7,7 @@ locals {
 
   env_data            = read_terragrunt_config(find_in_parent_folders("_environment_wide_settings/_environment.hcl"))
   default_aws_profile = local.env_data.locals.default_aws_profile
+  aws_account_id      = local.env_data.locals.aws_account_id
 
   region_data = read_terragrunt_config(find_in_parent_folders("_region_wide_settings/_region.hcl"))
   region      = local.region_data.locals.region_aws
@@ -29,10 +30,17 @@ locals {
   }
 }
 
+dependencies {
+  paths = [
+    find_in_parent_folders("storage")
+  ]
+}
+
 inputs = {
   aws_profile = local.default_aws_profile
   aws_region  = local.region
 
+  delivery_bucket_name    = "${local.aws_account_id}-long-term-storage"
   recorded_resource_types = local.config_recording_data.locals.recorded_resource_types
 
   tags         = local.tags
