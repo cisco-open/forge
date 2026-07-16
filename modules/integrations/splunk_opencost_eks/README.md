@@ -16,7 +16,7 @@ OpenCost exposes Prometheus-format cost metrics on `/metrics`. The existing `spl
 - OpenCost service account: `opencost`
 - OpenCost chart: `opencost/opencost` version `2.5.25`
 - Prometheus namespace: `prometheus-system`
-- Prometheus chart: `prometheus-community/prometheus` version `29.14.0`
+- Prometheus chart: `prometheus-community/prometheus` version `29.17.0`
 - Prometheus keeps kube-state-metrics and node-exporter enabled for OpenCost source metrics
 - Prometheus scrapes the OpenCost exporter with the upstream OpenCost scrape config
 - OpenCost metrics endpoint: `http://opencost.opencost.svc.cluster.local:9003/metrics`

@@ -34,7 +34,7 @@ run "opencost_helm_release_contract" {
       helm_release.managed_prometheus.name == "prometheus"
       && helm_release.managed_prometheus.repository == "https://prometheus-community.github.io/helm-charts"
       && helm_release.managed_prometheus.chart == "prometheus"
-      && helm_release.managed_prometheus.version == "29.14.0"
+      && helm_release.managed_prometheus.version == "29.17.0"
       && helm_release.managed_prometheus.namespace == "prometheus-system"
       && helm_release.managed_prometheus.create_namespace == true
       && helm_release.managed_prometheus.atomic == true
