@@ -10,6 +10,8 @@ resource "aws_iam_role_policy_attachment" "config" {
 }
 
 resource "aws_config_configuration_recorder" "this" {
+  #checkov:skip=CKV2_AWS_45:Selective recording is intentional; callers supply recorded_resource_types.
+  #checkov:skip=CKV2_AWS_48:Global resources are recorded only when explicitly selected by the caller.
   name     = var.recorder_name
   role_arn = aws_iam_role.config.arn
 
