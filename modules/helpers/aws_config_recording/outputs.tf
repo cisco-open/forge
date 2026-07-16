@@ -5,7 +5,7 @@ output "configuration_recorder_name" {
 
 output "delivery_bucket_name" {
   description = "Name of the S3 bucket receiving AWS Config snapshots and history."
-  value       = aws_s3_bucket.config_delivery.bucket
+  value       = var.delivery_bucket_name
 }
 
 output "recorded_resource_types" {

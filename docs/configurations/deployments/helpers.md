@@ -44,7 +44,7 @@ ______________________________________________________________________
 | `environments/prod/opt_in_regions/config.yml`                         | Regions to enable.                                          |
 | `environments/prod/regions/eu-west-1/ami_sharing/config.yml`          | AMI names, owners, target accounts, and target regions.     |
 | `environments/prod/regions/eu-west-1/ecr/config.yml`                  | Repositories and lifecycle settings.                        |
-| `environments/prod/regions/eu-west-1/aws_config_recording/config.yml` | Delivery bucket and AWS Config resource types to record.    |
+| `environments/prod/regions/eu-west-1/aws_config_recording/config.yml` | AWS Config resource types to record.                        |
 | `environments/prod/regions/eu-west-1/dedicated_mac_hosts/config.yml`  | Mac host groups, instance types, names, and AZs.            |
 | `release_versions.yml`                                                | Helper module sources, refs, and `module_path` values.      |
 
@@ -91,6 +91,7 @@ ______________________________________________________________________
 
 1. `service_linked_roles` when Spot or other AWS services need bootstrap roles.
 1. `opt_in_regions` before deploying into opt-in regions.
+1. `storage` before `aws_config_recording` so the long-term bucket is available as its delivery dependency.
 1. `aws_config_recording` before allocating Dedicated Hosts so their full history is captured.
 1. `dedicated_mac_hosts` only after reviewing Mac host cost and minimum allocation periods.
 1. `ecr` if Forge builds or stores runner/helper images.

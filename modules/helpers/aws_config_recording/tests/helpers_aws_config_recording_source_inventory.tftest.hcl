@@ -11,13 +11,13 @@ run "helpers_aws_config_recording_source_inventory" {
       "resource \"aws_config_configuration_recorder\" \"this\"",
       "resource \"aws_config_delivery_channel\" \"this\"",
       "resource \"aws_config_configuration_recorder_status\" \"this\"",
-      "resource \"aws_s3_bucket\" \"config_delivery\"",
-      "resource \"aws_s3_bucket_public_access_block\" \"config_delivery\"",
-      "resource \"aws_s3_bucket_server_side_encryption_configuration\" \"config_delivery\"",
-      "resource \"aws_s3_bucket_versioning\" \"config_delivery\"",
       "resource \"aws_iam_role\" \"config\"",
       "var.recorded_resource_types",
       "provider \"aws\"",
+    ]
+    forbidden_literals = [
+      "resource \"aws_s3_bucket\"",
+      "resource \"aws_s3_bucket_policy\"",
     ]
   }
 
@@ -27,7 +27,12 @@ run "helpers_aws_config_recording_source_inventory" {
   }
 
   assert {
-    condition     = output.expected_literal_count == 10
-    error_message = "Source inventory must keep 10 AWS Config Terraform blocks and literals pinned."
+    condition     = output.expected_literal_count == 6
+    error_message = "Source inventory must keep 6 AWS Config Terraform blocks and literals pinned."
+  }
+
+  assert {
+    condition     = length(output.present_forbidden_literals) == 0
+    error_message = "AWS Config recording must not manage S3 delivery bucket resources: ${join(", ", output.present_forbidden_literals)}"
   }
 }

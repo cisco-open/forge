@@ -44,19 +44,19 @@ ______________________________________________________________________
 
 ## Helper Modules
 
-| Module                                 | Deploy before platform?        | Why                                                              |
-| -------------------------------------- | ------------------------------ | ---------------------------------------------------------------- |
-| `modules/helpers/aws_config_recording` | Before recorded resources      | Captures configuration history from resource creation.           |
-| `modules/helpers/opt_in_regions`       | Yes, for opt-in regions        | Regional resources cannot deploy until the region is enabled.    |
-| `modules/helpers/service_linked_roles` | Usually, for EC2 Spot          | Some accounts need AWS service-linked roles created first.       |
-| `modules/helpers/ami_policy`           | Optional                       | Account policy support for AMI usage.                            |
-| `modules/helpers/ami_sharing`          | Yes, if tenant AMIs are shared | Tenant runner specs must be able to find the AMI.                |
-| `modules/helpers/ecr`                  | Optional                       | Only if Forge owns runner/helper image repositories.             |
-| `modules/helpers/storage`              | Optional                       | Only if Forge owns buckets for logs, artifacts, or integrations. |
-| `modules/helpers/cloud_formation`      | Optional                       | Mainly for integrations that need CloudFormation roles.          |
-| `modules/helpers/dedicated_mac_hosts`  | Optional                       | Only when Forge owns billable EC2 Mac host capacity.             |
-| `modules/helpers/forge_subscription`   | Optional                       | Tenant-side IAM, S3, Secrets Manager, Packer, or ECR access.     |
-| `modules/helpers/cloud_custodian`      | No                             | Day-2 cleanup/governance; deploy after policies are reviewed.    |
+| Module                                 | Deploy before platform?        | Why                                                            |
+| -------------------------------------- | ------------------------------ | -------------------------------------------------------------- |
+| `modules/helpers/storage`              | Before AWS Config recording    | Supplies the long-term S3 delivery bucket used by the example. |
+| `modules/helpers/aws_config_recording` | Before recorded resources      | Captures configuration history from resource creation.         |
+| `modules/helpers/opt_in_regions`       | Yes, for opt-in regions        | Regional resources cannot deploy until the region is enabled.  |
+| `modules/helpers/service_linked_roles` | Usually, for EC2 Spot          | Some accounts need AWS service-linked roles created first.     |
+| `modules/helpers/ami_policy`           | Optional                       | Account policy support for AMI usage.                          |
+| `modules/helpers/ami_sharing`          | Yes, if tenant AMIs are shared | Tenant runner specs must be able to find the AMI.              |
+| `modules/helpers/ecr`                  | Optional                       | Only if Forge owns runner/helper image repositories.           |
+| `modules/helpers/cloud_formation`      | Optional                       | Mainly for integrations that need CloudFormation roles.        |
+| `modules/helpers/dedicated_mac_hosts`  | Optional                       | Only when Forge owns billable EC2 Mac host capacity.           |
+| `modules/helpers/forge_subscription`   | Optional                       | Tenant-side IAM, S3, Secrets Manager, Packer, or ECR access.   |
+| `modules/helpers/cloud_custodian`      | No                             | Day-2 cleanup/governance; deploy after policies are reviewed.  |
 
 ______________________________________________________________________
 

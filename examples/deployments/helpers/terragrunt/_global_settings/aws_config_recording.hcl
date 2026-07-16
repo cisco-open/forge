@@ -33,7 +33,6 @@ inputs = {
   aws_profile = local.default_aws_profile
   aws_region  = local.region
 
-  delivery_bucket_name    = local.config_recording_data.locals.delivery_bucket_name
   recorded_resource_types = local.config_recording_data.locals.recorded_resource_types
 
   tags         = local.tags

@@ -1,6 +1,4 @@
 ---
-# Replace the account ID before applying; S3 bucket names are globally unique.
-delivery_bucket_name: forge-config-example-123456789012-eu-west-1
 recorded_resource_types:
   - AWS::EC2::Host
   - AWS::EC2::Instance

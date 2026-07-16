@@ -13,7 +13,6 @@ run "helpers_aws_config_recording_interface_contract" {
       "default_tags",
       "delivery_bucket_name",
       "delivery_channel_name",
-      "force_destroy_delivery_bucket",
       "iam_role_name",
       "recorded_resource_types",
       "recorder_name",
@@ -26,10 +25,8 @@ run "helpers_aws_config_recording_interface_contract" {
     ]
     expected_interface_literals = [
       "variable \"delivery_bucket_name\"",
-      "variable \"force_destroy_delivery_bucket\"",
-      "default     = false",
       "variable \"iam_role_name\"",
-      "default     = \"forge-aws-config-recorder\"",
+      "forge-aws-config-recorder-$${var.aws_region}",
       "variable \"recorded_resource_types\"",
       "variable \"recorder_name\"",
       "variable \"delivery_channel_name\"",

@@ -3,16 +3,7 @@ mock_provider "aws" {}
 override_resource {
   target = aws_iam_role.config
   values = {
-    arn = "arn:aws:iam::123456789012:role/forge-aws-config-recorder"
-  }
-}
-
-override_data {
-  target = data.aws_caller_identity.current
-  values = {
-    account_id = "123456789012"
-    arn        = "arn:aws:iam::123456789012:user/test"
-    user_id    = "AIDATEST"
+    arn = "arn:aws:iam::123456789012:role/forge-aws-config-recorder-us-east-1"
   }
 }
 
@@ -27,13 +18,6 @@ override_data {
   target = data.aws_iam_policy_document.config_assume_role
   values = {
     json = "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"sts:AssumeRole\",\"Principal\":{\"Service\":\"config.amazonaws.com\"}}]}"
-  }
-}
-
-override_data {
-  target = data.aws_iam_policy_document.config_delivery_bucket
-  values = {
-    json = "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"s3:PutObject\",\"Resource\":\"arn:aws:s3:::forge-config-123456789012-us-east-1/*\",\"Principal\":{\"Service\":\"config.amazonaws.com\"}}]}"
   }
 }
 
@@ -59,6 +43,7 @@ run "aws_config_recording_contract" {
   assert {
     condition = (
       aws_config_configuration_recorder.this.recording_group[0].all_supported == false
+      && aws_iam_role.config.name == "forge-aws-config-recorder-us-east-1"
       && toset(aws_config_configuration_recorder.this.recording_group[0].resource_types) == toset(["AWS::EC2::Instance", "AWS::S3::Bucket"])
       && aws_config_configuration_recorder.this.recording_mode[0].recording_frequency == "CONTINUOUS"
       && aws_config_configuration_recorder_status.this.is_enabled == true
@@ -67,6 +52,19 @@ run "aws_config_recording_contract" {
     error_message = "AWS Config must continuously record the configured resource types and enable the recorder."
   }
 
+}
+
+run "uses_input_delivery_bucket" {
+  command = plan
+
+  variables {
+    delivery_bucket_name = "central-config-bucket-eu-west-1"
+  }
+
+  assert {
+    condition     = aws_config_delivery_channel.this.s3_bucket_name == "central-config-bucket-eu-west-1"
+    error_message = "AWS Config must use the input delivery bucket without creating or managing S3 resources."
+  }
 }
 
 run "rejects_empty_recorded_resource_types" {

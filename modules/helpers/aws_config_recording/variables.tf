@@ -19,7 +19,7 @@ variable "tags" {
 }
 
 variable "delivery_bucket_name" {
-  description = "Globally unique name for the S3 bucket that receives AWS Config data."
+  description = "Name of the existing S3 bucket that receives AWS Config data. The bucket can be in another Region or account."
   type        = string
 
   validation {
@@ -38,16 +38,10 @@ variable "recorded_resource_types" {
   }
 }
 
-variable "force_destroy_delivery_bucket" {
-  description = "Whether to delete AWS Config objects when destroying the delivery bucket."
-  type        = bool
-  default     = false
-}
-
 variable "iam_role_name" {
-  description = "Name of the IAM role used by AWS Config."
+  description = "Name of the IAM role used by AWS Config. Defaults to forge-aws-config-recorder-<aws_region>."
   type        = string
-  default     = "forge-aws-config-recorder"
+  default     = null
 }
 
 variable "recorder_name" {
