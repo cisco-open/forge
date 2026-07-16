@@ -3,7 +3,7 @@ mock_provider "aws" {}
 override_resource {
   target = aws_iam_role.config
   values = {
-    arn = "arn:aws:iam::123456789012:role/forge-aws-config-recorder-us-east-1"
+    arn = "arn:aws:iam::123456789012:role/forge-aws-config-recorder-eu-west-1"
   }
 }
 
@@ -23,8 +23,8 @@ override_data {
 
 variables {
   aws_profile          = "test"
-  aws_region           = "us-east-1"
-  delivery_bucket_name = "forge-config-123456789012-us-east-1"
+  aws_region           = "eu-west-1"
+  delivery_bucket_name = "forge-config-123456789012-eu-west-1"
   recorded_resource_types = [
     "AWS::EC2::Instance",
     "AWS::S3::Bucket",
@@ -43,11 +43,11 @@ run "aws_config_recording_contract" {
   assert {
     condition = (
       aws_config_configuration_recorder.this.recording_group[0].all_supported == false
-      && aws_iam_role.config.name == "forge-aws-config-recorder-us-east-1"
+      && aws_iam_role.config.name == "forge-aws-config-recorder-eu-west-1"
       && toset(aws_config_configuration_recorder.this.recording_group[0].resource_types) == toset(["AWS::EC2::Instance", "AWS::S3::Bucket"])
       && aws_config_configuration_recorder.this.recording_mode[0].recording_frequency == "CONTINUOUS"
       && aws_config_configuration_recorder_status.this.is_enabled == true
-      && aws_config_delivery_channel.this.s3_bucket_name == "forge-config-123456789012-us-east-1"
+      && aws_config_delivery_channel.this.s3_bucket_name == "forge-config-123456789012-eu-west-1"
     )
     error_message = "AWS Config must continuously record the configured resource types and enable the recorder."
   }
