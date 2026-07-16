@@ -9,11 +9,13 @@ EC2 runner pools can use Spot capacity and other AWS services that depend on acc
 ## What It Manages
 
 - The EC2 Spot service-linked role.
+- The License Manager core service-linked role used by dedicated Mac hosts.
 - Standard account and region inputs for bootstrap consistency.
 
 ## Operational Notes
 
 - Apply this before enabling Spot-backed EC2 runner pools.
+- Apply this before creating the License Manager configuration and resource group for dedicated Mac hosts.
 - AWS service-linked roles are account scoped and may already exist; Terraform should own them only where this module is the bootstrap authority.
 - This does not decide whether a runner pool uses Spot; that is configured in the EC2 deployment specs.
 
@@ -29,7 +31,7 @@ EC2 runner pools can use Spot capacity and other AWS services that depend on acc
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.55.0 |
 
 ## Modules
 
@@ -39,6 +41,7 @@ No modules.
 
 | Name | Type |
 | ---- | ---- |
+| [aws_iam_service_linked_role.license_manager](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_service_linked_role) | resource |
 | [aws_iam_service_linked_role.spot](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_service_linked_role) | resource |
 
 ## Inputs
