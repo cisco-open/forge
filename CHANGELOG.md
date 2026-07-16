@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.0](https://github.com/cisco-open/forge/compare/v4.0.5...v4.1.0) (2026-07-16)
+
+
+### Features
+
+* **helpers:** add dedicated Mac hosts and Config recording ([#475](https://github.com/cisco-open/forge/issues/475)) ([ea10bca](https://github.com/cisco-open/forge/commit/ea10bca806bb2517a826e67394428f2ce097152e))
+
+
+### Bug Fixes
+
+* **helpers:** add License Manager service role ([#480](https://github.com/cisco-open/forge/issues/480)) ([e3a1fa4](https://github.com/cisco-open/forge/commit/e3a1fa403df3aeeb97330024a4e52291857c6f0c))
+
 ## [4.0.5](https://github.com/cisco-open/forge/compare/v4.0.4...v4.0.5) (2026-07-15)
 
 
