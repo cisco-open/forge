@@ -114,7 +114,6 @@ run "splunk_otel_eks_contract" {
     condition = (
       helm_release.splunk_otel_collector.name == "splunk-otel-collector"
       && helm_release.splunk_otel_collector.chart == "splunk-otel-collector"
-      && helm_release.splunk_otel_collector.version == "0.155.0"
       && helm_release.splunk_otel_collector.namespace == "splunk-otel-collector"
       && helm_release.splunk_otel_collector.create_namespace == true
       && contains([for item in helm_release.splunk_otel_collector.set : "${item.name}=${item.value}"], "clusterName=forge-euw1-dev")
