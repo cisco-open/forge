@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.1.1](https://github.com/cisco-open/forge/compare/v4.1.0...v4.1.1) (2026-07-20)
+
+
+### Bug Fixes
+
+* **splunk-otel:** allow chart version updates ([#481](https://github.com/cisco-open/forge/issues/481)) ([540a15d](https://github.com/cisco-open/forge/commit/540a15d432cc2b3b0b61432db32717d8e6a82ab6))
+
 ## [4.1.0](https://github.com/cisco-open/forge/compare/v4.0.5...v4.1.0) (2026-07-16)
 
 
