@@ -128,16 +128,16 @@ wheels = [
 
 [[package]]
 name = "botocore"
-version = "1.43.47"
+version = "1.43.48"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jmespath" },
     { name = "python-dateutil" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/76/2c/279bf51f68e85a12323996aa4a7f2a163da84dad949ee751caa318928ce1/botocore-1.43.47.tar.gz", hash = "sha256:9e04d8da7f9cff8a911b14284829f78b74e1ce785444833199837decb5ecc17a", size = 15696311, upload-time = "2026-07-13T19:32:01.095Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6b/69/76c5576654c0982351a821c544042ccd7a25a060776453a3c15e0486e47e/botocore-1.43.48.tar.gz", hash = "sha256:4f60c1072fb529610359cdb6df92c59615d739df3b0a124091d3bbd28f7ea00c", size = 15700978, upload-time = "2026-07-14T19:29:45.916Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/28/c0/6a8f824d613c5e5b8755ce99e3cf83fd1db135f5df02da7ed5bf106abdfd/botocore-1.43.47-py3-none-any.whl", hash = "sha256:4d16559a3a1866fa7b9e651dd1422c1a033497e069f8a73cae5eebafe70ff39c", size = 15382537, upload-time = "2026-07-13T19:31:56.213Z" },
+    { url = "https://files.pythonhosted.org/packages/7c/b0/28d40443ed912260d55cf7a5d377378fc43e384627fd57b632472cbea7bf/botocore-1.43.48-py3-none-any.whl", hash = "sha256:cc9b4e925c1913d662194507f4f9b37aa744dcd2361af31c013672eafe824490", size = 15385380, upload-time = "2026-07-14T19:29:41.826Z" },
 ]
 
 [[package]]
@@ -603,7 +603,7 @@ forge-github-app-register = [
 ]
 lambda-tests = [
     { name = "boto3", specifier = "==1.43.47" },
-    { name = "botocore", specifier = "==1.43.47" },
+    { name = "botocore", specifier = "==1.43.48" },
     { name = "cryptography", specifier = "==49.0.0" },
     { name = "hypothesis", specifier = "==6.157.0" },
     { name = "moto", extras = ["all"], specifier = "==5.2.2" },
@@ -621,7 +621,7 @@ pre-commit-image = [
 ]
 smoke-tests = [
     { name = "boto3", specifier = "==1.43.47" },
-    { name = "botocore", specifier = "==1.43.47" },
+    { name = "botocore", specifier = "==1.43.48" },
     { name = "pytest", specifier = "==9.1.1" },
 ]
 
