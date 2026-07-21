@@ -69,7 +69,7 @@ generate_jwt() {
 
     if [[ -z "$signature" ]]; then
         log "ERROR: Signature generation failed (invalid PRIVATE_KEY or header_payload?)"
-        return
+        return 1
     else
         log "Signature (b64 len)=${#signature}"
     fi
@@ -81,7 +81,7 @@ generate_jwt() {
     # Optional local validation (exp > now)
     if ((exp <= now)); then
         log "ERROR: exp is not in the future"
-        return
+        return 1
     fi
 }
 
@@ -91,7 +91,7 @@ patch_github_webhook() {
     # Check if JWT is set
     if [[ -z "${JWT:-}" ]]; then
         log "ERROR: JWT is not set. Cannot proceed with webhook patching."
-        return
+        return 1
     fi
 
     LOG_FILE="/tmp/${PREFIX}-github_api_response.log"
@@ -133,7 +133,7 @@ EOF
         log "Success"
     else
         log "ERROR: Failure (non-2xx). See ${LOG_FILE}"
-        return
+        return 1
     fi
 }
 

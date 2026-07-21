@@ -3,7 +3,7 @@ resource "null_resource" "update_github_app_webhook" {
     ghes_org               = var.deployment_config.github.ghes_org
     ghes_url               = var.deployment_config.github.ghes_url
     webhook_url            = try(module.ec2_runners[0].webhook_endpoint, "https://cisco-open.github.io/forge")
-    secret                 = aws_ssm_parameter.github_app_webhook_secret.value
+    secret_hash            = nonsensitive(sha256(aws_ssm_parameter.github_app_webhook_secret.value))
     secret_version         = aws_ssm_parameter.github_app_webhook_secret.version
     id                     = var.deployment_config.github_app.id
     client_id              = var.deployment_config.github_app.client_id
@@ -17,11 +17,11 @@ resource "null_resource" "update_github_app_webhook" {
   provisioner "local-exec" {
     environment = {
       CLIENT_ID = var.deployment_config.github_app.client_id
-      PRIVATE_KEY = base64decode(
+      PRIVATE_KEY = nonsensitive(base64decode(
         data.aws_ssm_parameter.github_app_key.value
-      )
+      ))
       WEBHOOK_URL = self.triggers.webhook_url
-      SECRET      = self.triggers.secret
+      SECRET      = nonsensitive(aws_ssm_parameter.github_app_webhook_secret.value)
       GITHUB_API  = local.github_api
       PREFIX      = "${var.deployment_config.env}-${var.deployment_config.deployment_prefix}"
     }
