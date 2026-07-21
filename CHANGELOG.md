@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.1.2](https://github.com/cisco-open/forge/compare/v4.1.1...v4.1.2) (2026-07-21)
+
+
+### Bug Fixes
+
+* **forge-runners:** make GitHub App webhook updates retryable ([#484](https://github.com/cisco-open/forge/issues/484)) ([e3ab1e3](https://github.com/cisco-open/forge/commit/e3ab1e3b1408d31bfd3913c5f22022d85ac950fb))
+
 ## [4.1.1](https://github.com/cisco-open/forge/compare/v4.1.0...v4.1.1) (2026-07-20)
 
 
