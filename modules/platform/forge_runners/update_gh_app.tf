@@ -26,7 +26,7 @@ resource "null_resource" "update_github_app_webhook" {
       PREFIX      = "${var.deployment_config.env}-${var.deployment_config.deployment_prefix}"
     }
 
-    command = "${path.module}/scripts/generate_and_patch_github_app.sh"
+    command = "python3 \"${path.module}/scripts/generate_and_patch_github_app.py\""
   }
 
   depends_on = [
