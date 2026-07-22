@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.2.1](https://github.com/cisco-open/forge/compare/v4.2.0...v4.2.1) (2026-07-22)
+
+
+### Bug Fixes
+
+* **lambda:** prevent recurring deployment plans ([#489](https://github.com/cisco-open/forge/issues/489)) ([0549365](https://github.com/cisco-open/forge/commit/0549365de85f0de8057e14cbc2a11f726c9a081b))
+
 ## [4.2.0](https://github.com/cisco-open/forge/compare/v4.1.2...v4.2.0) (2026-07-22)
 
 
