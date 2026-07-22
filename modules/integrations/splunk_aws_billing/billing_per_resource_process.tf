@@ -29,7 +29,7 @@ module "cur_per_resource_process" {
   logging_log_group                 = aws_cloudwatch_log_group.cur_per_resource_process.name
   use_existing_cloudwatch_log_group = true
 
-  trigger_on_package_timestamp = true
+  trigger_on_package_timestamp = false
 
   environment_variables = {
     SPLUNK_HEC_URL       = var.splunk_aws_billing_config.splunk_hec_url

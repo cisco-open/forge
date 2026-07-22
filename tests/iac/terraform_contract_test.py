@@ -143,6 +143,24 @@ def assert_contains_all(text: str, expected: Iterable[str]) -> None:
     assert not missing, f'missing expected Terraform contract text: {missing}'
 
 
+@pytest.mark.parametrize(
+    'filename',
+    [
+        'billing_per_resource_process.tf',
+        'billing_per_resource.tf',
+        'billing_per_service.tf',
+    ],
+)
+def test_splunk_aws_billing_packages_ignore_artifact_timestamps(
+    filename: str,
+) -> None:
+    module_tf = read_repo_file(
+        f'modules/integrations/splunk_aws_billing/{filename}'
+    )
+
+    assert 'trigger_on_package_timestamp = false' in module_tf
+
+
 def test_job_log_pipeline_wires_runtime_env_and_event_contract() -> None:
     dispatcher_tf = read_repo_file(
         'modules/platform/forge_runners/github_actions_job_logs/'
