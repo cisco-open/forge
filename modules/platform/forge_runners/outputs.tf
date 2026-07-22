@@ -13,11 +13,13 @@ output "forge_runners" {
       runners_arn_map    = try(module.ec2_runners[0].ec2_runners_arn_map, {})
       ami_name_map       = try(module.ec2_runners[0].ec2_runners_ami_name_map, {})
       subnet_cidr_blocks = try(module.ec2_runners[0].subnet_cidr_blocks, [])
+      runner_labels      = try(module.ec2_runners[0].ec2_runners_labels_map, {})
     }
     arc = {
       cluster_name       = try(module.arc_runners.arc_cluster_name, {})
       runners_arn_map    = try(module.arc_runners.arc_runners_arn_map, {})
       subnet_cidr_blocks = try(module.arc_runners.subnet_cidr_blocks, [])
+      runner_labels      = try(module.arc_runners.arc_runners_labels_map, {})
     }
   }
 }

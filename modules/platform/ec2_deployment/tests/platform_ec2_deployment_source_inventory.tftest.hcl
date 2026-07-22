@@ -29,6 +29,7 @@ run "platform_ec2_deployment_contract" {
       "output \"webhook_endpoint\"",
       "output \"ec2_runners_arn_map\"",
       "output \"ec2_runners_ami_name_map\"",
+      "output \"ec2_runners_labels_map\"",
       "output \"subnet_cidr_blocks\"",
       "output \"event_bus_name\"",
     ]

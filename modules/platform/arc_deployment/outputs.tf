@@ -5,6 +5,14 @@ output "arc_runners_arn_map" {
   description = "Map of ARC runner keys to their IAM role ARNs."
 }
 
+output "arc_runners_labels_map" {
+  value = {
+    for runner_key, spec in var.runner_configs.runner_specs :
+    runner_key => spec.scale_set_labels
+  }
+  description = "Map of ARC runner keys to their GitHub scale set labels."
+}
+
 output "subnet_cidr_blocks" {
   value       = module.arc.subnet_cidr_blocks
   description = "Map of ARC runner subnet IDs to their CIDR blocks."

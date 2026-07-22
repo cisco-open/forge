@@ -16,6 +16,7 @@ run "platform_ec2_deployment_interface_contract" {
     expected_output_values = [
       "ec2_runners_ami_name_map",
       "ec2_runners_arn_map",
+      "ec2_runners_labels_map",
       "event_bus_name",
       "subnet_cidr_blocks",
       "webhook_endpoint",
@@ -104,6 +105,9 @@ run "platform_ec2_deployment_interface_contract" {
       "output \"ec2_runners_arn_map\"",
       "for runner_key, runner in module.runners.runners_map : runner_key => runner.role_runner[0].arn",
       "description = \"Map of EC2 runner keys to their IAM role ARNs.\"",
+      "output \"ec2_runners_labels_map\"",
+      "runner_key => concat(spec.runner_labels, spec.extra_labels)",
+      "description = \"Map of EC2 runner keys to their base and extra GitHub labels.\"",
       "output \"event_bus_name\"",
       "value       = module.runners.webhook.eventbridge.event_bus.name",
       "description = \"Name of the EventBridge event bus used by the webhook relay.\"",
@@ -144,8 +148,8 @@ run "platform_ec2_deployment_interface_contract" {
   assert {
     condition = (
       output.expected_input_variable_count == 4
-      && output.expected_output_value_count == 5
-      && output.expected_interface_literal_count == 92
+      && output.expected_output_value_count == 6
+      && output.expected_interface_literal_count == 95
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

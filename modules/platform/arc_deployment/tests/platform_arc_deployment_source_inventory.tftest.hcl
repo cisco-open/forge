@@ -10,6 +10,7 @@ run "platform_arc_deployment_contract" {
     expected_literals = [
       "module \"arc\"",
       "output \"arc_runners_arn_map\"",
+      "output \"arc_runners_labels_map\"",
       "output \"subnet_cidr_blocks\"",
       "output \"arc_cluster_name\"",
     ]

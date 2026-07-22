@@ -17,6 +17,14 @@ output "ec2_runners_ami_name_map" {
   description = "Map of EC2 runner keys to the AMI names used for each runner."
 }
 
+output "ec2_runners_labels_map" {
+  value = {
+    for runner_key, spec in var.runner_configs.runner_specs :
+    runner_key => concat(spec.runner_labels, spec.extra_labels)
+  }
+  description = "Map of EC2 runner keys to their base and extra GitHub labels."
+}
+
 output "subnet_cidr_blocks" {
   value       = { for id, subnet in data.aws_subnet.runner_subnet : id => subnet.cidr_block }
   description = "Map of EC2 runner subnet IDs to their CIDR blocks."

@@ -16,6 +16,7 @@ run "platform_arc_deployment_interface_contract" {
     expected_output_values = [
       "arc_cluster_name",
       "arc_runners_arn_map",
+      "arc_runners_labels_map",
       "subnet_cidr_blocks",
     ]
     expected_interface_literals = [
@@ -68,6 +69,9 @@ run "platform_arc_deployment_interface_contract" {
       "value = {",
       "for runner_key, runner in module.arc.runners_map : runner_key => runner.runner_role_arn",
       "description = \"Map of ARC runner keys to their IAM role ARNs.\"",
+      "output \"arc_runners_labels_map\"",
+      "runner_key => spec.scale_set_labels",
+      "description = \"Map of ARC runner keys to their GitHub scale set labels.\"",
       "output \"subnet_cidr_blocks\"",
       "value       = module.arc.subnet_cidr_blocks",
       "description = \"Map of ARC runner subnet IDs to their CIDR blocks.\"",
@@ -102,8 +106,8 @@ run "platform_arc_deployment_interface_contract" {
   assert {
     condition = (
       output.expected_input_variable_count == 4
-      && output.expected_output_value_count == 3
-      && output.expected_interface_literal_count == 52
+      && output.expected_output_value_count == 4
+      && output.expected_interface_literal_count == 55
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

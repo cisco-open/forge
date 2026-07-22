@@ -262,10 +262,12 @@ run "platform_forge_runners_interface_contract" {
       "runners_arn_map    = try(module.ec2_runners[0].ec2_runners_arn_map, {})",
       "ami_name_map       = try(module.ec2_runners[0].ec2_runners_ami_name_map, {})",
       "subnet_cidr_blocks = try(module.ec2_runners[0].subnet_cidr_blocks, [])",
+      "runner_labels      = try(module.ec2_runners[0].ec2_runners_labels_map, {})",
       "arc = {",
       "cluster_name       = try(module.arc_runners.arc_cluster_name, {})",
       "runners_arn_map    = try(module.arc_runners.arc_runners_arn_map, {})",
       "subnet_cidr_blocks = try(module.arc_runners.subnet_cidr_blocks, [])",
+      "runner_labels      = try(module.arc_runners.arc_runners_labels_map, {})",
       "output \"forge_webhook_relay\"",
       "description = \"Webhook relay integration outputs.\"",
       "source_secret_arn      = try(module.github_webhook_relay[0].source_secret_arn, null)",
@@ -303,7 +305,7 @@ run "platform_forge_runners_interface_contract" {
     condition = (
       output.expected_input_variable_count == 10
       && output.expected_output_value_count == 5
-      && output.expected_interface_literal_count == 244
+      && output.expected_interface_literal_count == 246
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }
