@@ -113,10 +113,7 @@ module "worker" {
   role_tags     = local.all_security_tags
   tags          = local.all_security_tags
 
-  depends_on = [
-    aws_cloudwatch_log_group.worker,
-    aws_ssm_parameter.tenant_configs,
-  ]
+  depends_on = [aws_cloudwatch_log_group.worker]
 }
 
 resource "aws_lambda_event_source_mapping" "worker_from_dedupe_stream" {

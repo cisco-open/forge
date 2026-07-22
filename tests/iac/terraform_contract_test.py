@@ -314,7 +314,10 @@ def test_splunk_stuck_dispatcher_worker_contract_is_offline_and_scoped() -> None
             'values   = ["ssm.*.amazonaws.com"]',
         ],
     )
-    assert 'type  = "String"' in tenant_configs_tf
+    assert 'type           = "String"' in tenant_configs_tf
+    assert 'insecure_value = each.value' in tenant_configs_tf
+    assert 'depends_on = [aws_cloudwatch_log_group.worker]' in worker_module
+    assert 'aws_ssm_parameter.tenant_configs' not in worker_module
 
 
 def test_redrive_deadletter_policy_scope_is_configured_from_sqs_map() -> None:

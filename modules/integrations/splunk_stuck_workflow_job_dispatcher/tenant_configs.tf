@@ -5,8 +5,8 @@ resource "aws_ssm_parameter" "tenant_configs" {
     tostring(index) => chunk
   }
 
-  name  = "${local.redelivery_tenant_config_parameter_prefix}/${each.key}"
-  type  = "String"
-  value = each.value
-  tags  = local.all_security_tags
+  name           = "${local.redelivery_tenant_config_parameter_prefix}/${each.key}"
+  type           = "String"
+  insecure_value = each.value
+  tags           = local.all_security_tags
 }
