@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.2.0](https://github.com/cisco-open/forge/compare/v4.1.2...v4.2.0) (2026-07-22)
+
+
+### Features
+
+* **runners:** expose runner label maps ([#487](https://github.com/cisco-open/forge/issues/487)) ([294adca](https://github.com/cisco-open/forge/commit/294adca9a4886405bd446cf86a2737b484737595))
+
 ## [4.1.2](https://github.com/cisco-open/forge/compare/v4.1.1...v4.1.2) (2026-07-21)
 
 
