@@ -83,7 +83,7 @@ repos:
   # Commit Message Hooks
   # ---------------------
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: a6859a7b8182086a5e013deab8fefc0597b502e9  # frozen: v4.16.4
+    rev: 6afcd8e9560ddf1b9a5032262a0be26540e85fb3  # frozen: v4.16.5
     hooks:
       - id: commitizen
         name: Git · Validate commit message
