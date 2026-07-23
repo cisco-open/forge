@@ -83,19 +83,21 @@ locals {
         "vpc:${local.vpc_alias}",
         "tnt:${local.tenant_name}",
       ]
-      enable_userdata               = true
-      enable_dynamic_labels         = try(spec.enable_dynamic_labels, false)
-      ec2_dynamic_labels_policy     = try(spec.ec2_dynamic_labels_policy, null)
-      runner_user                   = spec.runner_user
-      instance_target_capacity_type = "on-demand"
-      min_run_time                  = 30
-      max_instances                 = spec.max_instances
-      instance_types                = spec.instance_types
-      placement                     = try(spec.placement, null)
-      license_specifications        = try(spec.license_specifications, null)
-      use_dedicated_host            = try(spec.use_dedicated_host, false)
-      vpc_id                        = try(spec.vpc_id, null)
-      subnet_ids                    = try(spec.subnet_ids, null)
+      enable_userdata                                                = true
+      enable_dynamic_labels                                          = try(spec.enable_dynamic_labels, false)
+      ec2_dynamic_labels_policy                                      = try(spec.ec2_dynamic_labels_policy, null)
+      lambda_event_source_mapping_batch_size                         = try(spec.lambda_event_source_mapping_batch_size, 10)
+      lambda_event_source_mapping_maximum_batching_window_in_seconds = try(spec.lambda_event_source_mapping_maximum_batching_window_in_seconds, 0)
+      runner_user                                                    = spec.runner_user
+      instance_target_capacity_type                                  = "on-demand"
+      min_run_time                                                   = 30
+      max_instances                                                  = spec.max_instances
+      instance_types                                                 = spec.instance_types
+      placement                                                      = try(spec.placement, null)
+      license_specifications                                         = try(spec.license_specifications, null)
+      use_dedicated_host                                             = try(spec.use_dedicated_host, false)
+      vpc_id                                                         = try(spec.vpc_id, null)
+      subnet_ids                                                     = try(spec.subnet_ids, null)
       block_device_mappings = [{
         delete_on_termination = true
         device_name           = spec.volume.device_name

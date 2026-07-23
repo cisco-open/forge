@@ -26,6 +26,8 @@ ec2_runner_specs:
     type: <runner_type>
     enable_dynamic_labels: <ENABLE_DYNAMIC_LABELS>
     ec2_dynamic_labels_policy: <EC2_DYNAMIC_LABELS_POLICY>
+    lambda_event_source_mapping_batch_size: <BATCH_SIZE>
+    lambda_event_source_mapping_maximum_batching_window_in_seconds: <BATCHING_WINDOW_SECONDS>
     ami_name: <AMI_NAME_PATTERN>
     ami_owner: <ACCOUNT_ID>
     ami_kms_key_arn: <KMS_ARN>

@@ -159,22 +159,24 @@ module "runners" {
           "http_tokens" : "optional",
           "instance_metadata_tags" : "enabled"
         }
-        delay_webhook_event             = 0
-        runner_ec2_tags                 = var.tenant_configs.tags
-        runner_os                       = val["runner_os"]
-        runner_architecture             = val["runner_architecture"]
-        runner_extra_labels             = val["extra_labels"]
-        enable_ssm_on_runners           = true
-        instance_types                  = val["instance_types"]
-        runners_maximum_count           = val["max_instances"]
-        scale_down_schedule_expression  = "cron(*/5 * * * ? *)"
-        minimum_running_time_in_minutes = val["min_run_time"]
-        runner_group_name               = var.runner_configs.runner_group_name
-        enable_runner_binaries_syncer   = false
-        enable_userdata                 = val["enable_userdata"]
-        scale_errors                    = var.runner_configs.scale_errors
-        userdata_template               = "${local.user_data_prefix}/user_data_${val["runner_os"]}.tftpl"
-        userdata_pre_install            = "# No pre-install steps."
+        delay_webhook_event                                            = 0
+        runner_ec2_tags                                                = var.tenant_configs.tags
+        runner_os                                                      = val["runner_os"]
+        runner_architecture                                            = val["runner_architecture"]
+        runner_extra_labels                                            = val["extra_labels"]
+        enable_ssm_on_runners                                          = true
+        instance_types                                                 = val["instance_types"]
+        runners_maximum_count                                          = val["max_instances"]
+        scale_down_schedule_expression                                 = "cron(*/5 * * * ? *)"
+        minimum_running_time_in_minutes                                = val["min_run_time"]
+        runner_group_name                                              = var.runner_configs.runner_group_name
+        enable_runner_binaries_syncer                                  = false
+        enable_userdata                                                = val["enable_userdata"]
+        scale_errors                                                   = var.runner_configs.scale_errors
+        lambda_event_source_mapping_batch_size                         = val["lambda_event_source_mapping_batch_size"]
+        lambda_event_source_mapping_maximum_batching_window_in_seconds = val["lambda_event_source_mapping_maximum_batching_window_in_seconds"]
+        userdata_template                                              = "${local.user_data_prefix}/user_data_${val["runner_os"]}.tftpl"
+        userdata_pre_install                                           = "# No pre-install steps."
         userdata_post_install = templatefile(
           local.userdata_template_post_install,
           {

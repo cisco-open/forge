@@ -49,17 +49,19 @@ run "platform_ec2_deployment_interface_contract" {
       "ami_filter = object({",
       "name  = list(string)",
       "state = list(string)",
-      "ami_kms_key_arn           = string",
-      "ami_owners                = list(string)",
-      "runner_labels             = list(string)",
-      "runner_os                 = string",
-      "runner_architecture       = string",
-      "extra_labels              = list(string)",
-      "enable_dynamic_labels     = optional(bool, false)",
-      "ec2_dynamic_labels_policy = optional(any, null)",
-      "max_instances             = number",
-      "min_run_time              = number",
-      "instance_types            = list(string)",
+      "ami_kms_key_arn                                                = string",
+      "ami_owners                                                     = list(string)",
+      "runner_labels                                                  = list(string)",
+      "runner_os                                                      = string",
+      "runner_architecture                                            = string",
+      "extra_labels                                                   = list(string)",
+      "enable_dynamic_labels                                          = optional(bool, false)",
+      "ec2_dynamic_labels_policy                                      = optional(any, null)",
+      "lambda_event_source_mapping_batch_size                         = optional(number, 10)",
+      "lambda_event_source_mapping_maximum_batching_window_in_seconds = optional(number, 0)",
+      "max_instances                                                  = number",
+      "min_run_time                                                   = number",
+      "instance_types                                                 = list(string)",
       "license_specifications = optional(list(object({",
       "license_configuration_arn = string",
       "})), null)",
@@ -98,6 +100,8 @@ run "platform_ec2_deployment_interface_contract" {
       "variable \"tenant_configs\"",
       "ecr_registries = list(string)",
       "tags           = map(string)",
+      "lambda_event_source_mapping_batch_size                         = val[\"lambda_event_source_mapping_batch_size\"]",
+      "lambda_event_source_mapping_maximum_batching_window_in_seconds = val[\"lambda_event_source_mapping_maximum_batching_window_in_seconds\"]",
       "output \"ec2_runners_ami_name_map\"",
       "value = {",
       "for runner_key, runner in module.runners.runners_map : runner_key => data.aws_ami.runner_ami[runner_key].name",
@@ -149,7 +153,7 @@ run "platform_ec2_deployment_interface_contract" {
     condition = (
       output.expected_input_variable_count == 4
       && output.expected_output_value_count == 6
-      && output.expected_interface_literal_count == 95
+      && output.expected_interface_literal_count == 99
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

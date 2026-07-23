@@ -20,17 +20,19 @@ variable "ec2_deployment_specs" {
         name  = list(string)
         state = list(string)
       })
-      ami_kms_key_arn           = string
-      ami_owners                = list(string)
-      runner_labels             = list(string)
-      runner_os                 = string
-      runner_architecture       = string
-      extra_labels              = list(string)
-      enable_dynamic_labels     = optional(bool, false)
-      ec2_dynamic_labels_policy = optional(any, null)
-      max_instances             = number
-      min_run_time              = number
-      instance_types            = list(string)
+      ami_kms_key_arn                                                = string
+      ami_owners                                                     = list(string)
+      runner_labels                                                  = list(string)
+      runner_os                                                      = string
+      runner_architecture                                            = string
+      extra_labels                                                   = list(string)
+      enable_dynamic_labels                                          = optional(bool, false)
+      ec2_dynamic_labels_policy                                      = optional(any, null)
+      lambda_event_source_mapping_batch_size                         = optional(number, 10)
+      lambda_event_source_mapping_maximum_batching_window_in_seconds = optional(number, 0)
+      max_instances                                                  = number
+      min_run_time                                                   = number
+      instance_types                                                 = list(string)
       license_specifications = optional(list(object({
         license_configuration_arn = string
       })), null)
@@ -94,6 +96,11 @@ variable "ec2_deployment_specs" {
                         pool.
     - ec2_dynamic_labels_policy: Optional policy for `ghr-ec2-*` labels for
                         this runner pool.
+    - lambda_event_source_mapping_batch_size: Optional maximum number of queued
+                        jobs passed to the scale-up Lambda per invocation.
+    - lambda_event_source_mapping_maximum_batching_window_in_seconds: Optional
+                        maximum time to collect queued jobs before invoking the
+                        scale-up Lambda.
     - max_instances   : Maximum number of EC2 runners in this pool.
     - min_run_time    : Minimum job run time (in minutes) before a runner
                         is eligible for scale-down.
