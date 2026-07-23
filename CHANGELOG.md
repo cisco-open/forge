@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.3.0](https://github.com/cisco-open/forge/compare/v4.2.1...v4.3.0) (2026-07-23)
+
+
+### Features
+
+* **runners:** allow per-runner Lambda batch tuning ([#493](https://github.com/cisco-open/forge/issues/493)) ([3ae2625](https://github.com/cisco-open/forge/commit/3ae2625c15d842539a4bbf42a1d4b181c4407f38))
+* **runners:** allow per-runner queue redrive tuning ([#495](https://github.com/cisco-open/forge/issues/495)) ([89beed4](https://github.com/cisco-open/forge/commit/89beed4c069ecced358dcf7a1ccf5be77699b8fb))
+
 ## [4.2.1](https://github.com/cisco-open/forge/compare/v4.2.0...v4.2.1) (2026-07-22)
 
 
