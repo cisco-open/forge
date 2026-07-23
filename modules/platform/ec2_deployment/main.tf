@@ -148,10 +148,7 @@ module "runners" {
         enableDynamicLabels    = val["enable_dynamic_labels"]
         ec2DynamicLabelsPolicy = val["ec2_dynamic_labels_policy"]
       }
-      redrive_build_queue = {
-        enabled         = true
-        maxReceiveCount = 10
-      }
+      redrive_build_queue = val["redrive_build_queue"]
       runner_config = {
         runner_metadata_options = {
           "http_endpoint" : "enabled",

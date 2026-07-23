@@ -34,9 +34,13 @@ variable "runner_configs" {
       ec2_dynamic_labels_policy                                      = optional(any, null)
       lambda_event_source_mapping_batch_size                         = optional(number, 10)
       lambda_event_source_mapping_maximum_batching_window_in_seconds = optional(number, 0)
-      max_instances                                                  = number
-      min_run_time                                                   = number
-      instance_types                                                 = list(string)
+      redrive_build_queue = optional(object({
+        enabled         = optional(bool, true)
+        maxReceiveCount = optional(number, 10)
+      }), {})
+      max_instances  = number
+      min_run_time   = number
+      instance_types = list(string)
       license_specifications = optional(list(object({
         license_configuration_arn = string
       })), null)

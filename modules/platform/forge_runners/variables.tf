@@ -30,9 +30,13 @@ variable "ec2_deployment_specs" {
       ec2_dynamic_labels_policy                                      = optional(any, null)
       lambda_event_source_mapping_batch_size                         = optional(number, 10)
       lambda_event_source_mapping_maximum_batching_window_in_seconds = optional(number, 0)
-      max_instances                                                  = number
-      min_run_time                                                   = number
-      instance_types                                                 = list(string)
+      redrive_build_queue = optional(object({
+        enabled         = optional(bool, true)
+        maxReceiveCount = optional(number, 10)
+      }), {})
+      max_instances  = number
+      min_run_time   = number
+      instance_types = list(string)
       license_specifications = optional(list(object({
         license_configuration_arn = string
       })), null)
@@ -101,6 +105,10 @@ variable "ec2_deployment_specs" {
     - lambda_event_source_mapping_maximum_batching_window_in_seconds: Optional
                         maximum time to collect queued jobs before invoking the
                         scale-up Lambda.
+    - redrive_build_queue: Optional dead-letter queue redrive configuration.
+                        Controls whether redrive is enabled and how many times a
+                        message can be received before moving to the dead-letter
+                        queue.
     - max_instances   : Maximum number of EC2 runners in this pool.
     - min_run_time    : Minimum job run time (in minutes) before a runner
                         is eligible for scale-down.

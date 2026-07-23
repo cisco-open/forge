@@ -23,6 +23,9 @@ ec2_runner_specs:
     enable_dynamic_labels: true
     lambda_event_source_mapping_batch_size: 10
     lambda_event_source_mapping_maximum_batching_window_in_seconds: 0
+    redrive_build_queue:
+      enabled: true
+      maxReceiveCount: 10
     ami_name: forge-gh-runner-amd64-v*
     ami_owner: '123456789012'
     ami_kms_key_arn: ''

@@ -150,9 +150,13 @@ run "platform_forge_runners_interface_contract" {
       "ec2_dynamic_labels_policy                                      = optional(any, null)",
       "lambda_event_source_mapping_batch_size                         = optional(number, 10)",
       "lambda_event_source_mapping_maximum_batching_window_in_seconds = optional(number, 0)",
-      "max_instances                                                  = number",
-      "min_run_time                                                   = number",
-      "instance_types                                                 = list(string)",
+      "redrive_build_queue = optional(object({",
+      "enabled         = optional(bool, true)",
+      "maxReceiveCount = optional(number, 10)",
+      "}), {})",
+      "max_instances  = number",
+      "min_run_time   = number",
+      "instance_types = list(string)",
       "license_specifications = optional(list(object({",
       "license_configuration_arn = string",
       "})), null)",
@@ -207,6 +211,7 @@ run "platform_forge_runners_interface_contract" {
       "- ec2_dynamic_labels_policy: Optional policy for `ghr-ec2-*` labels for",
       "- lambda_event_source_mapping_batch_size: Optional maximum number of queued",
       "- lambda_event_source_mapping_maximum_batching_window_in_seconds: Optional",
+      "- redrive_build_queue: Optional dead-letter queue redrive configuration.",
       "- max_instances   : Maximum number of EC2 runners in this pool.",
       "- min_run_time    : Minimum job run time (in minutes) before a runner",
       "is eligible for scale-down.",
@@ -309,7 +314,7 @@ run "platform_forge_runners_interface_contract" {
     condition = (
       output.expected_input_variable_count == 10
       && output.expected_output_value_count == 5
-      && output.expected_interface_literal_count == 250
+      && output.expected_interface_literal_count == 255
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }
