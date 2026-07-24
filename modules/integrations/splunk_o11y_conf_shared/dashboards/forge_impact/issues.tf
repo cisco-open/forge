@@ -71,6 +71,10 @@ EOF
   unit_prefix             = "Metric"
 
   color_scale {
+    color = "green"
+    lt    = 90
+  }
+  color_scale {
     color = "orange"
     gte   = 90
     lt    = 99
@@ -106,6 +110,10 @@ resource "signalfx_list_chart" "top_tenants_ec2_cpu" {
   time_range              = 3600
   unit_prefix             = "Metric"
 
+  color_scale {
+    color = "green"
+    lt    = 90
+  }
   color_scale {
     color = "orange"
     gte   = 90

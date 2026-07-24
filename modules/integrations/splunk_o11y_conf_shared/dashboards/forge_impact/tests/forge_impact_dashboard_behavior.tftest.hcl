@@ -45,8 +45,12 @@ run "forge_impact_dashboard_contract" {
       && strcontains(signalfx_list_chart.top_tenants_ec2_memory.program_text, "system.memory.usage")
       && strcontains(signalfx_list_chart.top_tenants_ec2_memory.program_text, ".top(count=10)")
       && signalfx_list_chart.top_tenants_ec2_memory.color_by == "Scale"
+      && length(signalfx_list_chart.top_tenants_ec2_memory.color_scale) == 3
+      && one([for scale in signalfx_list_chart.top_tenants_ec2_memory.color_scale : scale.lt if scale.color == "green"]) == 90
       && strcontains(signalfx_list_chart.top_tenants_ec2_cpu.program_text, "CPUUtilization")
       && signalfx_list_chart.top_tenants_ec2_cpu.color_by == "Scale"
+      && length(signalfx_list_chart.top_tenants_ec2_cpu.color_scale) == 3
+      && one([for scale in signalfx_list_chart.top_tenants_ec2_cpu.color_scale : scale.lt if scale.color == "green"]) == 90
       && strcontains(signalfx_list_chart.top_tenants_k8s_pending_pods.program_text, "k8s.pod.phase")
       && strcontains(signalfx_list_chart.top_tenants_k8s_failed_pods.program_text, "k8s.pod.phase")
       && strcontains(signalfx_list_chart.top_tenants_sqs_backlog.program_text, "ApproximateNumberOfMessagesVisible")
