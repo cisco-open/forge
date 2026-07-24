@@ -101,3 +101,32 @@ def test_platform_tenant_template_keeps_ec2_and_arc_runner_inputs() -> None:
         'module_path: modules/platform/forge_runners',
     ]:
         assert required in f'{template}\n{release}'
+
+
+def test_dependency_monitor_example_is_regional_and_ordered() -> None:
+    integration_root = (
+        EXAMPLES / 'deployments' / 'integrations' / 'terragrunt'
+    )
+    global_config = integration_root.joinpath(
+        '_global_settings',
+        'splunk_dependency_monitor.hcl',
+    ).read_text(encoding='utf-8')
+    regional_config = integration_root.joinpath(
+        'environments',
+        'prod',
+        'regions',
+        'eu-west-1',
+        'splunk_dependency_monitor',
+        'config.yml',
+    ).read_text(encoding='utf-8')
+
+    for required in [
+        'find_in_parent_folders("splunk_o11y_conf_shared")',
+        'find_in_parent_folders("splunk_secrets")',
+        'aws_region   = local.region',
+    ]:
+        assert required in global_config
+
+    assert "github_api_version: '2022-11-28'" in regional_config
+    assert 'name_prefix:' not in regional_config
+    assert 'tenant_configs:' not in regional_config

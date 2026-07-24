@@ -1,23 +1,145 @@
-# Splunk Observability Shared Dashboards
+# Splunk Observability Shared Configuration
 
-This module creates the shared Splunk Observability dashboard group, dashboards, and detectors for Forge metrics.
+This module creates the shared Splunk Observability Cloud dashboard group,
+operational dashboards, and detectors for Forge. It consumes telemetry that is
+already present in Splunk Observability; it does not install collectors or
+configure the Splunk AWS integration.
 
-## Why This Module Exists
-
-Forge operators need dashboards that connect capacity, cost, and health signals to concrete subsystems. This module builds the metrics-side views for EC2 runners, Kubernetes runners, Lambda, SQS, DynamoDB, EBS, billing, OpenCost, and platform impact.
+For day-2 use, see the
+[Splunk Observability Dashboard Runbook](../../../docs/operations/splunk-o11y-dashboard-runbook.md)
+and
+[Splunk Observability Dashboard Panel Reference](../../../docs/operations/splunk-o11y-dashboard-panel-reference.md).
 
 ## What It Manages
 
-- A Forge dashboard group in Splunk Observability.
-- Dashboard modules for EC2, Kubernetes, Lambda, SQS, DynamoDB, EBS, billing, OpenCost, and Forge impact.
-- Kubernetes detector modules and notification wiring.
-- Dynamic variables that let dashboards filter by tenant and environment.
+The module creates the configured dashboard group and the following dashboards:
 
-## Operational Notes
+| Dashboard | Purpose | Configuration source |
+| --- | --- | --- |
+| `Forge Tenant Impact` | First-response tenant issue leaderboards across Lambda, EC2, Kubernetes, SQS, and EBS | `dashboard_variables.forge_impact` |
+| `Forge Runner Usage` | EC2 and Kubernetes runner counts, runtime, and adoption by tenant | `dashboard_variables.forge_impact` |
+| `Forge Tenant - EC2 Runners` | EC2 runner CPU, memory, disk, network, status checks, and missing-agent visibility | `dashboard_variables.runner_ec2` |
+| `Forge Tenant - K8S Runners` | Tenant ARC pod health, capacity, resource use, restarts, and termination reasons | `dashboard_variables.runner_k8s` |
+| `Forge Control Plane - Kubernetes` | Cluster platform pods, nodes, Karpenter/networking components, Prometheus, and OTel health | `dashboard_variables.runner_k8s` and `k8s_platform_namespaces` |
+| `Forge Tenant - Lambdas` | Invocation, error, throttle, duration, tenant-impact, function, and version views | `dashboard_variables.lambda` |
+| `Forge Control Plane - Lambdas` | Invocation, error, throttle, and duration views for functions without a tenant tag | `dashboard_variables.lambda_control_plane` |
+| `Forge Control Plane - Kinesis` | Throughput, throttling, consumer lag, operations, and latency for streams without a tenant tag | `dashboard_variables.kinesis_control_plane` |
+| `Forge Tenant - SQS` | Queue traffic, backlog, oldest-message age, and dead-letter queue health | `dashboard_variables.sqs` |
+| `Forge Control Plane - SQS` | Traffic, backlog, age, state, and DLQ health for queues without a tenant tag | `dashboard_variables.sqs_control_plane` |
+| `Forge Tenant - S3` | Daily bucket size, object count, and storage-class inventory for tenant-tagged buckets | `dashboard_variables.s3` |
+| `Forge Control Plane - S3` | Daily bucket size, object count, and storage-class inventory for buckets without a tenant tag | `dashboard_variables.s3_control_plane` |
+| `Forge Control Plane - AWS Service Limits` | Trusted Advisor limit-usage percentage for each supported AWS service used by Forge | `dashboard_variables.aws_service_limits` |
+| `Forge Tenant - DynamoDB` | Capacity, throttling, errors, returned items, and request latency | `dashboard_variables.dynamodb` |
+| `Forge Tenant - EBS` | Volume throughput, operations, latency, queueing, state, and IOPS limits | `dashboard_variables.ebs` |
+| `Forge Billing and Cost - AWS` | AWS cost and net-cost trends by service and tenant | `dashboard_variables.billing` |
+| `Forge Billing and Cost - OpenCost` | Kubernetes CPU and memory allocation cost by tenant | `dashboard_variables.runner_k8s` |
+| `Forge External Dependency Health` | Regional GitHub and AWS SSM availability, latency, API rate-limit budget, and probe execution | `dashboard_variables.dependency_probes` |
+| `Forge AWS Regional Platform Health` | Regional Lambda throttle rate/count and queued-build SQS backlog, age, and DLQ activity | `dashboard_variables.aws_regional_health` |
 
-- Keep dashboard variables aligned with metric dimensions emitted by collectors and AWS integrations.
-- Detector thresholds should be tuned with production noise in mind.
-- Use this alongside the Splunk Cloud log dashboards for full triage context.
+It also creates:
+
+- Kubernetes detectors for missing telemetry, Splunk OTel collector health,
+  pending tenant pods, and unhealthy platform pods.
+- One dependency detector per tenant in
+  `dashboard_variables.dependency_probes.tenant_names`. Each detector has rules
+  for missing probe telemetry, unavailable SSM parameters, unavailable GitHub
+  authentication or organization runner APIs, and a low GitHub API rate-limit
+  budget.
+- One AWS regional platform detector for stable queued-build age, backlog, and
+  DLQ thresholds. Lambda throttle panels remain diagnostic-only because their
+  observed baselines differ materially by region.
+
+## Dashboard Variable Ownership
+
+Every independently scoped dashboard uses its own `dashboard_variables`
+property. In particular, `forge_impact`, `dependency_probes`,
+`aws_regional_health`, `lambda_control_plane`, `kinesis_control_plane`,
+`sqs_control_plane`, `s3`, `s3_control_plane`, and `aws_service_limits` do not
+fall back to `runner_k8s` or another dashboard's tenants or dynamic variables.
+
+`Forge Control Plane - Kubernetes` and the OpenCost dashboard intentionally
+reuse `runner_k8s` because they operate on the same configured Forge clusters
+and tenant namespaces. The Kubernetes dashboards and detectors derive their
+cluster allow-list from the `k8s.cluster.name` dynamic variable's
+`values_suggested`. Forge Impact derives its cluster scope from the
+`k8s.cluster.name` values configured under `forge_impact`.
+
+`tenant_names` supplies the tenant selector and, where the underlying
+SignalFlow embeds tenant scope, the allowed tenant set. `dynamic_variables`
+adds dashboard variables such as AWS region, environment, or Kubernetes
+cluster. Keep both aligned with dimensions actually emitted by the relevant
+telemetry source.
+
+The tenant selector on the resource and cost dashboards is optional and starts
+without a selected tenant, so the initial view remains aggregate. The
+configured tenant names are exposed as the restricted selector suggestions for
+drill-down.
+
+## Detector Routing
+
+- `detector_name_prefix` prefixes all detector names.
+- When `detector_notifications` is `null`, detectors notify
+  `Team,<team>`.
+- Set `detector_notifications` to an explicit list to route alerts to those
+  destinations.
+- Set `detector_notifications` to `[]` to create detectors without
+  notifications.
+- Kubernetes detector thresholds are configured through
+  `k8s_detector_config` and `k8s_otel_collector_config`.
+- Dependency detectors are always enabled with fixed durations and a fixed
+  GitHub rate-limit threshold.
+- AWS regional platform detectors are always enabled for the configured
+  account, region, and product-family scope. They use the queued-build
+  thresholds documented in the dashboard and do not alert on Lambda throttle
+  count or region-specific throttle-rate baselines.
+
+## Telemetry and Deployment Prerequisites
+
+- AWS service and billing dashboards require the corresponding metrics and
+  tenant tag dimensions from the Splunk AWS integration and billing pipeline.
+- The S3 dashboards use the daily `BucketSizeBytes` and `NumberOfObjects`
+  metrics. S3 request, latency, transfer, and error charts are omitted until
+  those optional request metrics are observed for Forge buckets.
+- AWS service limits use `AWS/TrustedAdvisor` `ServiceLimitUsage`, scoped by
+  AWS account and the Trusted Advisor `Region` dimension. The dashboard has one
+  chart for each supported Forge service observed in that metric.
+- AWS regional platform health requires `Throttles`, `Invocations`,
+  `ApproximateAgeOfOldestMessage`, `ApproximateNumberOfMessagesVisible`, and
+  `NumberOfMessagesSent`, with `aws_account_id`, `aws_region`, and
+  `aws_tag_ProductFamilyName` dimensions.
+- Kubernetes dashboards and detectors require Kubernetes and collector metrics
+  from the Splunk OpenTelemetry Collector.
+- OpenCost dashboards require the OpenCost allocation and node-price metrics.
+- Dependency dashboards and detectors require the
+  `forge.dependency.*` metrics sent directly by the regional
+  `splunk_dependency_monitor` module. The `TenantName`, `AWSRegion`,
+  `Provider`, and `CheckName` dimensions must be preserved.
+- The deploying AWS account must contain
+  `/cicd/common/splunk_o11y_username` and
+  `/cicd/common/splunk_o11y_password` in AWS Secrets Manager. The module reads
+  those credentials to configure the SignalFx provider.
+- Deploy this module after `splunk_secrets`. See the
+  [integration configuration template](../../../examples/templates/integrations/splunk_o11y_conf_shared/config.yml)
+  for the complete dashboard-variable shape.
+
+## Operational Guidance
+
+- Start with `Forge Tenant Impact` to identify the affected tenant and
+  subsystem, then open the matching resource dashboard.
+- Use `Forge Runner Usage` for capacity and adoption analysis, not incident
+  severity.
+- Use `Forge Control Plane - Kubernetes` for shared cluster, scheduling,
+  networking, Prometheus, and collector problems; use
+  `Forge Tenant - K8S Runners` for tenant workload symptoms.
+- Use `Forge AWS Regional Platform Health` for regional control-plane Lambda
+  throttling and queued-build SQS saturation; use the tenant Lambda and SQS
+  dashboards for resource-level drill-down.
+- A no-data alert can indicate a collection or ingestion failure rather than a
+  Forge workload outage.
+- Tune detector durations and thresholds against production behavior to avoid
+  alert fatigue.
+- Correlate these metric dashboards with the Splunk Cloud log dashboards for
+  full incident context.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -32,22 +154,33 @@ Forge operators need dashboards that connect capacity, cost, and health signals 
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.53.0 |
-| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.3 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.56.0 |
+| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.33.0 |
 
 ## Modules
 
 | Name | Source | Version |
 | ---- | ------ | ------- |
+| <a name="module_dashboard_aws_regional_health"></a> [dashboard\_aws\_regional\_health](#module\_dashboard\_aws\_regional\_health) | ./dashboards/aws_regional_health | n/a |
+| <a name="module_dashboard_aws_service_limits"></a> [dashboard\_aws\_service\_limits](#module\_dashboard\_aws\_service\_limits) | ./dashboards/aws_service_limits | n/a |
 | <a name="module_dashboard_billing"></a> [dashboard\_billing](#module\_dashboard\_billing) | ./dashboards/billing | n/a |
+| <a name="module_dashboard_dependency_probes"></a> [dashboard\_dependency\_probes](#module\_dashboard\_dependency\_probes) | ./dashboards/dependency_probes | n/a |
 | <a name="module_dashboard_dynamodb"></a> [dashboard\_dynamodb](#module\_dashboard\_dynamodb) | ./dashboards/dynamodb | n/a |
 | <a name="module_dashboard_ebs"></a> [dashboard\_ebs](#module\_dashboard\_ebs) | ./dashboards/ebs | n/a |
 | <a name="module_dashboard_forge_impact"></a> [dashboard\_forge\_impact](#module\_dashboard\_forge\_impact) | ./dashboards/forge_impact | n/a |
+| <a name="module_dashboard_k8s_control_plane"></a> [dashboard\_k8s\_control\_plane](#module\_dashboard\_k8s\_control\_plane) | ./dashboards/k8s_control_plane | n/a |
+| <a name="module_dashboard_kinesis_control_plane"></a> [dashboard\_kinesis\_control\_plane](#module\_dashboard\_kinesis\_control\_plane) | ./dashboards/kinesis_control_plane | n/a |
 | <a name="module_dashboard_lambda"></a> [dashboard\_lambda](#module\_dashboard\_lambda) | ./dashboards/lambda | n/a |
+| <a name="module_dashboard_lambda_control_plane"></a> [dashboard\_lambda\_control\_plane](#module\_dashboard\_lambda\_control\_plane) | ./dashboards/lambda_control_plane | n/a |
 | <a name="module_dashboard_opencost"></a> [dashboard\_opencost](#module\_dashboard\_opencost) | ./dashboards/opencost | n/a |
 | <a name="module_dashboard_runner_ec2"></a> [dashboard\_runner\_ec2](#module\_dashboard\_runner\_ec2) | ./dashboards/runner_ec2 | n/a |
 | <a name="module_dashboard_runner_k8s"></a> [dashboard\_runner\_k8s](#module\_dashboard\_runner\_k8s) | ./dashboards/runner_k8s | n/a |
+| <a name="module_dashboard_s3"></a> [dashboard\_s3](#module\_dashboard\_s3) | ./dashboards/s3 | n/a |
+| <a name="module_dashboard_s3_control_plane"></a> [dashboard\_s3\_control\_plane](#module\_dashboard\_s3\_control\_plane) | ./dashboards/s3_control_plane | n/a |
 | <a name="module_dashboard_sqs"></a> [dashboard\_sqs](#module\_dashboard\_sqs) | ./dashboards/sqs | n/a |
+| <a name="module_dashboard_sqs_control_plane"></a> [dashboard\_sqs\_control\_plane](#module\_dashboard\_sqs\_control\_plane) | ./dashboards/sqs_control_plane | n/a |
+| <a name="module_detector_aws_regional_health"></a> [detector\_aws\_regional\_health](#module\_detector\_aws\_regional\_health) | ./detectors/aws_regional_health | n/a |
+| <a name="module_detector_dependency_probes"></a> [detector\_dependency\_probes](#module\_detector\_dependency\_probes) | ./detectors/dependency_probes | n/a |
 | <a name="module_detector_k8s"></a> [detector\_k8s](#module\_detector\_k8s) | ./detectors/k8s | n/a |
 
 ## Resources
@@ -65,7 +198,7 @@ Forge operators need dashboards that connect capacity, cost, and health signals 
 | <a name="input_aws_profile"></a> [aws\_profile](#input\_aws\_profile) | AWS profile to use. | `string` | n/a | yes |
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | Default AWS region. | `string` | n/a | yes |
 | <a name="input_dashboard_group_name"></a> [dashboard\_group\_name](#input\_dashboard\_group\_name) | Name to use for the Splunk Observability dashboard group. | `string` | `"ForgeCICD Dashboards"` | no |
-| <a name="input_dashboard_variables"></a> [dashboard\_variables](#input\_dashboard\_variables) | Variables for Dashboards | <pre>object({<br/>    runner_k8s = object({<br/>      tenant_names = list(string)<br/>      dynamic_variables = list(object({<br/>        property               = string<br/>        alias                  = string<br/>        description            = string<br/>        values                 = list(string)<br/>        value_required         = bool<br/>        values_suggested       = list(string)<br/>        restricted_suggestions = bool<br/>        }<br/>      ))<br/>    })<br/>    runner_ec2 = object({<br/>      tenant_names = list(string)<br/>      dynamic_variables = list(object({<br/>        property               = string<br/>        alias                  = string<br/>        description            = string<br/>        values                 = list(string)<br/>        value_required         = bool<br/>        values_suggested       = list(string)<br/>        restricted_suggestions = bool<br/>        }<br/>      ))<br/>    })<br/>    billing = object({<br/>      tenant_names = list(string)<br/>      dynamic_variables = list(object({<br/>        property               = string<br/>        alias                  = string<br/>        description            = string<br/>        values                 = list(string)<br/>        value_required         = bool<br/>        values_suggested       = list(string)<br/>        restricted_suggestions = bool<br/>        }<br/>      ))<br/>    })<br/>    sqs = object({<br/>      tenant_names = list(string)<br/>      dynamic_variables = list(object({<br/>        property               = string<br/>        alias                  = string<br/>        description            = string<br/>        values                 = list(string)<br/>        value_required         = bool<br/>        values_suggested       = list(string)<br/>        restricted_suggestions = bool<br/>        }<br/>      ))<br/>    })<br/>    ebs = object({<br/>      tenant_names = list(string)<br/>      dynamic_variables = list(object({<br/>        property               = string<br/>        alias                  = string<br/>        description            = string<br/>        values                 = list(string)<br/>        value_required         = bool<br/>        values_suggested       = list(string)<br/>        restricted_suggestions = bool<br/>        }<br/>      ))<br/>    })<br/>    lambda = object({<br/>      tenant_names = list(string)<br/>      dynamic_variables = list(object({<br/>        property               = string<br/>        alias                  = string<br/>        description            = string<br/>        values                 = list(string)<br/>        value_required         = bool<br/>        values_suggested       = list(string)<br/>        restricted_suggestions = bool<br/>        }<br/>      ))<br/>    })<br/>    dynamodb = object({<br/>      tenant_names = list(string)<br/>      dynamic_variables = list(object({<br/>        property               = string<br/>        alias                  = string<br/>        description            = string<br/>        values                 = list(string)<br/>        value_required         = bool<br/>        values_suggested       = list(string)<br/>        restricted_suggestions = bool<br/>        }<br/>      ))<br/>    })<br/>    forge_impact = optional(object({<br/>      tenant_names = list(string)<br/>      dynamic_variables = list(object({<br/>        property               = string<br/>        alias                  = string<br/>        description            = string<br/>        values                 = list(string)<br/>        value_required         = bool<br/>        values_suggested       = list(string)<br/>        restricted_suggestions = bool<br/>        }<br/>      ))<br/>    }))<br/>  })</pre> | n/a | yes |
+| <a name="input_dashboard_variables"></a> [dashboard\_variables](#input\_dashboard\_variables) | Variables for Dashboards | <pre>object({<br/>    runner_k8s = object({<br/>      tenant_names = list(string)<br/>      dynamic_variables = list(object({<br/>        property               = string<br/>        alias                  = string<br/>        description            = string<br/>        values                 = list(string)<br/>        value_required         = bool<br/>        values_suggested       = list(string)<br/>        restricted_suggestions = bool<br/>        }<br/>      ))<br/>    })<br/>    runner_ec2 = object({<br/>      tenant_names = list(string)<br/>      dynamic_variables = list(object({<br/>        property               = string<br/>        alias                  = string<br/>        description            = string<br/>        values                 = list(string)<br/>        value_required         = bool<br/>        values_suggested       = list(string)<br/>        restricted_suggestions = bool<br/>        }<br/>      ))<br/>    })<br/>    billing = object({<br/>      tenant_names = list(string)<br/>      dynamic_variables = list(object({<br/>        property               = string<br/>        alias                  = string<br/>        description            = string<br/>        values                 = list(string)<br/>        value_required         = bool<br/>        values_suggested       = list(string)<br/>        restricted_suggestions = bool<br/>        }<br/>      ))<br/>    })<br/>    sqs = object({<br/>      tenant_names = list(string)<br/>      dynamic_variables = list(object({<br/>        property               = string<br/>        alias                  = string<br/>        description            = string<br/>        values                 = list(string)<br/>        value_required         = bool<br/>        values_suggested       = list(string)<br/>        restricted_suggestions = bool<br/>        }<br/>      ))<br/>    })<br/>    s3 = object({<br/>      tenant_names = list(string)<br/>      dynamic_variables = list(object({<br/>        property               = string<br/>        alias                  = string<br/>        description            = string<br/>        values                 = list(string)<br/>        value_required         = bool<br/>        values_suggested       = list(string)<br/>        restricted_suggestions = bool<br/>        }<br/>      ))<br/>    })<br/>    ebs = object({<br/>      tenant_names = list(string)<br/>      dynamic_variables = list(object({<br/>        property               = string<br/>        alias                  = string<br/>        description            = string<br/>        values                 = list(string)<br/>        value_required         = bool<br/>        values_suggested       = list(string)<br/>        restricted_suggestions = bool<br/>        }<br/>      ))<br/>    })<br/>    lambda = object({<br/>      tenant_names = list(string)<br/>      dynamic_variables = list(object({<br/>        property               = string<br/>        alias                  = string<br/>        description            = string<br/>        values                 = list(string)<br/>        value_required         = bool<br/>        values_suggested       = list(string)<br/>        restricted_suggestions = bool<br/>        }<br/>      ))<br/>    })<br/>    lambda_control_plane = object({<br/>      dynamic_variables = list(object({<br/>        property               = string<br/>        alias                  = string<br/>        description            = string<br/>        values                 = list(string)<br/>        value_required         = bool<br/>        values_suggested       = list(string)<br/>        restricted_suggestions = bool<br/>        }<br/>      ))<br/>    })<br/>    kinesis_control_plane = object({<br/>      dynamic_variables = list(object({<br/>        property               = string<br/>        alias                  = string<br/>        description            = string<br/>        values                 = list(string)<br/>        value_required         = bool<br/>        values_suggested       = list(string)<br/>        restricted_suggestions = bool<br/>        }<br/>      ))<br/>    })<br/>    sqs_control_plane = object({<br/>      dynamic_variables = list(object({<br/>        property               = string<br/>        alias                  = string<br/>        description            = string<br/>        values                 = list(string)<br/>        value_required         = bool<br/>        values_suggested       = list(string)<br/>        restricted_suggestions = bool<br/>        }<br/>      ))<br/>    })<br/>    s3_control_plane = object({<br/>      dynamic_variables = list(object({<br/>        property               = string<br/>        alias                  = string<br/>        description            = string<br/>        values                 = list(string)<br/>        value_required         = bool<br/>        values_suggested       = list(string)<br/>        restricted_suggestions = bool<br/>        }<br/>      ))<br/>    })<br/>    aws_service_limits = object({<br/>      dynamic_variables = list(object({<br/>        property               = string<br/>        alias                  = string<br/>        description            = string<br/>        values                 = list(string)<br/>        value_required         = bool<br/>        values_suggested       = list(string)<br/>        restricted_suggestions = bool<br/>        }<br/>      ))<br/>    })<br/>    dynamodb = object({<br/>      tenant_names = list(string)<br/>      dynamic_variables = list(object({<br/>        property               = string<br/>        alias                  = string<br/>        description            = string<br/>        values                 = list(string)<br/>        value_required         = bool<br/>        values_suggested       = list(string)<br/>        restricted_suggestions = bool<br/>        }<br/>      ))<br/>    })<br/>    dependency_probes = object({<br/>      tenant_names = list(string)<br/>      dynamic_variables = list(object({<br/>        property               = string<br/>        alias                  = string<br/>        description            = string<br/>        values                 = list(string)<br/>        value_required         = bool<br/>        values_suggested       = list(string)<br/>        restricted_suggestions = bool<br/>        }<br/>      ))<br/>    })<br/>    aws_regional_health = object({<br/>      dynamic_variables = list(object({<br/>        property               = string<br/>        alias                  = string<br/>        description            = string<br/>        values                 = list(string)<br/>        value_required         = bool<br/>        values_suggested       = list(string)<br/>        restricted_suggestions = bool<br/>        }<br/>      ))<br/>    })<br/>    forge_impact = object({<br/>      tenant_names = list(string)<br/>      dynamic_variables = list(object({<br/>        property               = string<br/>        alias                  = string<br/>        description            = string<br/>        values                 = list(string)<br/>        value_required         = bool<br/>        values_suggested       = list(string)<br/>        restricted_suggestions = bool<br/>        }<br/>      ))<br/>    })<br/>  })</pre> | n/a | yes |
 | <a name="input_default_tags"></a> [default\_tags](#input\_default\_tags) | A map of tags to apply to resources. | `map(string)` | n/a | yes |
 | <a name="input_detector_name_prefix"></a> [detector\_name\_prefix](#input\_detector\_name\_prefix) | Prefix to use for Splunk Observability detector names. | `string` | `"ForgeCICD"` | no |
 | <a name="input_detector_notifications"></a> [detector\_notifications](#input\_detector\_notifications) | Detector notification destinations. When null, detectors notify the configured Splunk Observability team. Set to [] to create detectors without notifications. | `list(string)` | `null` | no |

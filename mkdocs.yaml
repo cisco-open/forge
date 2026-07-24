@@ -80,6 +80,8 @@ nav:
       - Troubleshooting Without Splunk: operations/troubleshooting-without-splunk.md
       - Splunk Dashboard Runbook: operations/splunk-dashboard-runbook.md
       - Splunk Dashboard Panel Reference: operations/splunk-dashboard-panel-reference.md
+      - Splunk Observability Dashboard Runbook: operations/splunk-o11y-dashboard-runbook.md
+      - Splunk Observability Dashboard Panel Reference: operations/splunk-o11y-dashboard-panel-reference.md
       - Required Checks: operations/required-checks.md
       - Copyable Blueprints: operations/blueprints.md
       - Templates:
