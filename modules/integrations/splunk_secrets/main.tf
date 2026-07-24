@@ -58,6 +58,16 @@ locals {
       recovery_days = 7
     },
     {
+      name          = "${local.cicd_secrets_prefix}/splunk_o11y_ingest_token_dependency_monitor"
+      description   = "Splunk O11y ingest token for the Splunk dependency monitor"
+      recovery_days = 7
+    },
+    {
+      name          = "${local.cicd_secrets_prefix}/splunk_cloud_hec_token_dependency_monitor"
+      description   = "Splunk Cloud HEC token for the Splunk dependency monitor"
+      recovery_days = 7
+    },
+    {
       name          = "${local.cicd_secrets_prefix}/splunk_cloud_hec_token_s3_integration"
       description   = "Splunk Cloud HEC token for S3 Integration"
       recovery_days = 7

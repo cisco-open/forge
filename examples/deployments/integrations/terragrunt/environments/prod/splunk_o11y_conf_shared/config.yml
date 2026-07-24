@@ -18,15 +18,152 @@ dashboard_variables:
   sqs:
     tenant_names: [acme]
     dynamic_variables: []
+  s3:
+    tenant_names: [acme]
+    dynamic_variables: []
   ebs:
     tenant_names: [acme]
     dynamic_variables: []
   lambda:
     tenant_names: [acme]
     dynamic_variables: []
+  lambda_control_plane:
+    dynamic_variables:
+      - property: aws_account_id
+        alias: AWS account
+        description: Forge AWS accounts containing control-plane resources.
+        values: []
+        value_required: false
+        values_suggested: ['111111111111']
+        restricted_suggestions: true
+      - property: aws_region
+        alias: AWS region
+        description: Forge AWS regions containing control-plane resources.
+        values: []
+        value_required: false
+        values_suggested: [eu-west-1]
+        restricted_suggestions: true
+      - property: aws_tag_ProductFamilyName
+        alias: Product family
+        description: Forge AWS product-family tag for control-plane resources.
+        values: []
+        value_required: false
+        values_suggested: [Forge MT]
+        restricted_suggestions: true
+  kinesis_control_plane:
+    dynamic_variables:
+      - property: aws_account_id
+        alias: AWS account
+        description: Forge AWS accounts containing control-plane resources.
+        values: []
+        value_required: false
+        values_suggested: ['111111111111']
+        restricted_suggestions: true
+      - property: aws_region
+        alias: AWS region
+        description: Forge AWS regions containing control-plane resources.
+        values: []
+        value_required: false
+        values_suggested: [eu-west-1]
+        restricted_suggestions: true
+      - property: aws_tag_ProductFamilyName
+        alias: Product family
+        description: Forge AWS product-family tag for control-plane resources.
+        values: []
+        value_required: false
+        values_suggested: [Forge MT]
+        restricted_suggestions: true
+  sqs_control_plane:
+    dynamic_variables:
+      - property: aws_account_id
+        alias: AWS account
+        description: Forge AWS accounts containing control-plane resources.
+        values: []
+        value_required: false
+        values_suggested: ['111111111111']
+        restricted_suggestions: true
+      - property: aws_region
+        alias: AWS region
+        description: Forge AWS regions containing control-plane resources.
+        values: []
+        value_required: false
+        values_suggested: [eu-west-1]
+        restricted_suggestions: true
+      - property: aws_tag_ProductFamilyName
+        alias: Product family
+        description: Forge AWS product-family tag for control-plane resources.
+        values: []
+        value_required: false
+        values_suggested: [Forge MT]
+        restricted_suggestions: true
+  s3_control_plane:
+    dynamic_variables:
+      - property: aws_account_id
+        alias: AWS account
+        description: Forge AWS accounts containing control-plane S3 buckets.
+        values: []
+        value_required: false
+        values_suggested: ['111111111111']
+        restricted_suggestions: true
+      - property: aws_region
+        alias: AWS region
+        description: Forge AWS regions containing control-plane S3 buckets.
+        values: []
+        value_required: false
+        values_suggested: [eu-west-1]
+        restricted_suggestions: true
+      - property: aws_tag_ProductFamilyName
+        alias: Product family
+        description: Forge AWS product-family tag for control-plane S3 buckets.
+        values: []
+        value_required: false
+        values_suggested: [Forge MT]
+        restricted_suggestions: true
+  aws_service_limits:
+    dynamic_variables:
+      - property: aws_account_id
+        alias: AWS account
+        description: Forge AWS accounts included in Trusted Advisor service-limit usage.
+        values: []
+        value_required: false
+        values_suggested: ['111111111111']
+        restricted_suggestions: true
+      - property: Region
+        alias: AWS region
+        description: Trusted Advisor regions included in AWS service-limit usage.
+        values: []
+        value_required: false
+        values_suggested: [eu-west-1]
+        restricted_suggestions: true
   dynamodb:
     tenant_names: [acme]
     dynamic_variables: []
+  dependency_probes:
+    tenant_names: [acme]
+    dynamic_variables: []
+  aws_regional_health:
+    dynamic_variables:
+      - property: aws_account_id
+        alias: AWS account
+        description: Forge AWS accounts included in regional platform health.
+        values: []
+        value_required: false
+        values_suggested: ['111111111111']
+        restricted_suggestions: true
+      - property: aws_region
+        alias: AWS region
+        description: Forge AWS regions included in regional platform health.
+        values: []
+        value_required: false
+        values_suggested: [eu-west-1]
+        restricted_suggestions: true
+      - property: aws_tag_ProductFamilyName
+        alias: Product family
+        description: Forge AWS product-family tag included in regional platform health.
+        values: []
+        value_required: false
+        values_suggested: [Forge MT]
+        restricted_suggestions: true
   forge_impact:
     tenant_names: [acme]
     dynamic_variables: []

@@ -6,6 +6,10 @@ Observability is part of your operating model.
 For day-2 operations, use the
 [Splunk Dashboard Runbook](../operations/splunk-dashboard-runbook.md) and
 [Splunk Dashboard Panel Reference](../operations/splunk-dashboard-panel-reference.md).
+For metrics and detectors, use the
+[Splunk Observability Dashboard Runbook](../operations/splunk-o11y-dashboard-runbook.md)
+and
+[Splunk Observability Dashboard Panel Reference](../operations/splunk-o11y-dashboard-panel-reference.md).
 
 ForgeMT baseline platform logs go to CloudWatch. Splunk adds optional
 dashboards, saved searches, redelivery logic, billing ingestion, S3 log
@@ -22,17 +26,35 @@ Kinesis when those modules are deployed.
 | `splunk_o11y_*`                        | Splunk Observability AWS and EKS telemetry.                             |
 | `splunk_opencost_eks`                  | OpenCost data for EKS.                                                  |
 | `splunk_aws_billing`                   | Billing telemetry.                                                      |
+| `splunk_dependency_monitor`            | Regional tenant GitHub and AWS dependency probes.                       |
 | `splunk_stuck_workflow_job_dispatcher` | Dispatches stuck workflow job handling from Splunk search results.      |
 
 ## Dashboard Surfaces
 
-| Surface                         | Use it for                                                                                                            |
-| ------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Splunk Cloud dashboards         | Logs, field extraction, workflow jobs, runner lifecycle, trust failures, stuck-job redelivery, and ingestion quality. |
-| Splunk Observability dashboards | Metrics, resource pressure, cost, runner capacity, Lambda, SQS, DynamoDB, EBS, and OpenCost.                          |
+| Surface                         | Use it for                                                                                                                                                                                                                                      |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Splunk Cloud dashboards         | Logs, field extraction, workflow jobs, runner lifecycle, dependency probes, trust failures, and stuck-job redelivery.                                                                                                                           |
+| Splunk Observability dashboards | Metrics, dependency availability, rate-limit budget, regional AWS platform health, tenant and control-plane Lambda/SQS/S3 health, control-plane Kinesis and AWS service limits, resource pressure, runner capacity, AWS services, and OpenCost. |
 
 Use Splunk Cloud logs to explain what happened. Use Splunk Observability
 metrics to explain whether resource pressure contributed to it.
+
+The regional AWS platform surface is managed by:
+
+```text
+modules/integrations/splunk_o11y_conf_shared/dashboards/aws_regional_health
+modules/integrations/splunk_o11y_conf_shared/detectors/aws_regional_health
+```
+
+It is separate from `Forge External Dependency Health`: regional platform
+health covers Lambda throttling and queued-build SQS saturation, while external
+dependency health covers GitHub and regional SSM probes.
+
+The S3 dashboards adapt the built-in AWS S3 inventory panels to the daily
+`BucketSizeBytes` and `NumberOfObjects` metrics present for `forge-ops-prod`.
+The AWS service-limits dashboard adapts the built-in Trusted Advisor
+`ServiceLimitUsage` calculation and provides one limit-usage chart for each
+supported AWS service used by Forge.
 
 ## Deploy Path
 
@@ -42,6 +64,7 @@ Use:
 examples/deployments/integrations
 examples/templates/integrations
 modules/integrations/splunk_*
+modules/integrations/splunk_dependency_monitor
 ```
 
 Deploy root:
@@ -63,23 +86,26 @@ examples/deployments/integrations/terragrunt
 | 7    | `environments/prod/splunk_cloud_data_manager`                     | Splunk Cloud log ingestion configuration.             |
 | 8    | `environments/prod/splunk_cloud_conf_shared`                      | Shared Splunk Cloud saved searches and configuration. |
 | 9    | `environments/prod/splunk_o11y_conf_shared`                       | Shared Splunk Observability dashboards and detectors. |
-| 10   | `environments/prod/splunk_aws_billing`                            | Billing telemetry, only if you publish billing data.  |
-| 11   | `environments/prod/splunk_cloud_s3_runner_logs`                   | Runner log ingestion from S3, only if enabled.        |
-| 12   | `environments/prod/splunk_stuck_workflow_job_dispatcher`          | Alert and redelivery workflow for stuck GitHub jobs.  |
+| 10   | `environments/prod/regions/eu-west-1/splunk_dependency_monitor`   | Regional GitHub and AWS dependency probes.            |
+| 11   | `environments/prod/splunk_aws_billing`                            | Billing telemetry, only if you publish billing data.  |
+| 12   | `environments/prod/splunk_cloud_s3_runner_logs`                   | Runner log ingestion from S3, only if enabled.        |
+| 13   | `environments/prod/splunk_stuck_workflow_job_dispatcher`          | Alert and redelivery workflow for stuck GitHub jobs.  |
 
 You do not have to deploy every Splunk module. Pick the rows that match your
 Splunk contract.
 
 ## What You Edit
 
-| File                                                            | Change                                                              |
-| --------------------------------------------------------------- | ------------------------------------------------------------------- |
-| `_global_settings/_global.yml`                                  | Team, product, project, GitHub org, and owner defaults.             |
-| `environments/prod/_environment_wide_settings/_environment.yml` | AWS account, default region, AWS profile, and remote state.         |
-| `environments/prod/splunk_secrets/config.yml`                   | Secret names and placeholder values managed by Terraform.           |
-| `environments/prod/splunk_*/*config.yml`                        | Splunk realm, URLs, indexes, tokens, roles, buckets, and schedules. |
-| `environments/prod/regions/eu-west-1/splunk_*/*config.yml`      | Regional EKS, OTel, OpenCost, or AWS integration values.            |
-| `release_versions.yml`                                          | Splunk module sources, refs, and `module_path` values.              |
+| File                                                                       | Change                                                                                                              |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `_global_settings/_global.yml`                                             | Team, product, project, GitHub org, and owner defaults.                                                             |
+| `environments/prod/_environment_wide_settings/_environment.yml`            | AWS account, default region, AWS profile, and remote state.                                                         |
+| `environments/prod/splunk_secrets/config.yml`                              | Secret names and placeholder values managed by Terraform.                                                           |
+| `environments/prod/splunk_o11y_conf_shared/config.yml`                     | Dashboard-specific variables, including AWS account, region, and product-family scope for regional platform health. |
+| `environments/prod/splunk_*/*config.yml`                                   | Splunk realm, URLs, indexes, tokens, roles, buckets, and schedules.                                                 |
+| `environments/prod/regions/eu-west-1/splunk_*/*config.yml`                 | Regional EKS, OTel, OpenCost, or AWS integration values.                                                            |
+| `environments/prod/regions/eu-west-1/splunk_dependency_monitor/config.yml` | Regional tenant prefixes and Splunk delivery endpoints.                                                             |
+| `release_versions.yml`                                                     | Splunk module sources, refs, and `module_path` values.                                                              |
 
 The full secret list is in [Splunk Secrets](splunk-secrets.md).
 
@@ -109,6 +135,14 @@ Regional Observability setup:
 
 ```bash
 cd examples/deployments/integrations/terragrunt/environments/prod/regions/eu-west-1/splunk_o11y_aws_integration
+terragrunt plan
+terragrunt apply
+```
+
+Regional dependency monitor:
+
+```bash
+cd examples/deployments/integrations/terragrunt/environments/prod/regions/eu-west-1/splunk_dependency_monitor
 terragrunt plan
 terragrunt apply
 ```

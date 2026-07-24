@@ -105,6 +105,8 @@ run "platform_forge_runners_interface_contract" {
       "validation {",
       "condition     = contains([\"all\", \"selected\"], var.deployment_config.github.repository_selection)",
       "error_message = \"repository_selection must be 'all' or 'selected'.\"",
+      "condition     = trimspace(var.deployment_config.github.ghes_org) != \"\"",
+      "error_message = \"ghes_org must be non-empty.\"",
       "High-level deployment configuration for a Forge runner installation.",
       "- deployment_prefix: Prefix used when naming resources (for example,",
       "log groups, KMS keys, and SSM parameters).",
@@ -314,7 +316,7 @@ run "platform_forge_runners_interface_contract" {
     condition = (
       output.expected_input_variable_count == 10
       && output.expected_output_value_count == 5
-      && output.expected_interface_literal_count == 255
+      && output.expected_interface_literal_count == 257
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }
