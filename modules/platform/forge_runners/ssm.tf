@@ -43,16 +43,6 @@ resource "aws_ssm_parameter" "github_app_installation_id" {
   tags = local.all_security_tags
 }
 
-resource "aws_ssm_parameter" "tenant_name" {
-  #checkov:skip=CKV2_AWS_34:Tenant name is non-secret discovery metadata.
-  name        = "/forge/${var.deployment_config.deployment_prefix}/tenant_name"
-  description = "Forge tenant name for regional service discovery."
-  type        = "String"
-  value       = var.deployment_config.tenant.name
-
-  tags = local.all_security_tags
-}
-
 resource "aws_ssm_parameter" "github_ghes_url" {
   #checkov:skip=CKV2_AWS_34:GitHub URL is non-secret tenant routing metadata.
   name        = "/forge/${var.deployment_config.deployment_prefix}/github_ghes_url"
@@ -70,7 +60,10 @@ resource "aws_ssm_parameter" "github_ghes_org" {
   type        = "String"
   value       = var.deployment_config.github.ghes_org
 
-  tags = local.all_security_tags
+  tags = merge(local.all_security_tags, {
+    ForgeCICDTenantName = var.deployment_config.tenant.name
+    TenantName          = var.deployment_config.tenant.name
+  })
 }
 
 resource "aws_ssm_parameter" "github_app_name" {

@@ -6,8 +6,8 @@ Forge-to-GitHub path.
 
 For every tenant in the current AWS region, the Lambda:
 
-1. Discovers platform-owned
-   `/forge/<deployment_prefix>/tenant_name` parameters in regional SSM.
+1. Discovers the existing platform-owned
+   `/forge/<deployment_prefix>/github_ghes_org` parameters in regional SSM.
 2. Reads the existing GitHub App SecureString parameters and GitHub routing
    parameters from the discovered deployment prefix.
 3. Creates a short-lived GitHub App JWT using the client ID, falling back to
@@ -46,11 +46,9 @@ only.
 The private key, JWT, installation token, client ID, app ID, installation ID,
 and SSM values are never logged or placed in metric dimensions.
 
-The platform `forge_runners` module creates these reusable, non-secret regional
-SSM parameters beside the existing GitHub App parameters:
+The platform `forge_runners` module already creates these reusable, non-secret
+regional SSM parameters beside the GitHub App parameters:
 
-- `/forge/<deployment_prefix>/tenant_name` from
-  `deployment_config.tenant.name`
 - `/forge/<deployment_prefix>/github_ghes_url` from
   `deployment_config.github.ghes_url` (`https://github.com` when empty)
 - `/forge/<deployment_prefix>/github_ghes_org` from
@@ -58,13 +56,15 @@ SSM parameters beside the existing GitHub App parameters:
 
 On every scheduled invocation, the dependency-monitor Lambda uses
 `DescribeParameters` with the `/forge/` name prefix and selects only parameters
-whose name ends in `/tenant_name`. It fetches those tenant values without
-decryption, derives each deployment prefix from the parameter path, and then
-reads that prefix's GitHub App parameters. A newly deployed regional tenant is
+whose name ends in `/github_ghes_org`. It derives each deployment prefix from
+the parameter path and reads the existing parameter's `ForgeCICDTenantName` or
+`TenantName` tag for the tenant dimension, falling back to the GitHub
+organization value for older deployments. A newly deployed regional tenant is
 therefore discovered without changing or reapplying this module.
 
-The discovery call returns metadata, not SecureString values. The Lambda only
-decrypts the six GitHub parameters explicitly allowed by its IAM policy. A
+The module creates no tenant-discovery parameters. The discovery call returns
+metadata and reads the existing non-secret organization parameter. The Lambda
+only decrypts the GitHub App parameters explicitly allowed by its IAM policy. A
 `github_ghes_url` of `https://github.com` selects `https://api.github.com`; a
 configured GHES URL selects its `/api/v3` endpoint. This module only reads
 platform-owned parameters; it does not create or own tenant configuration.

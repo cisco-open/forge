@@ -278,13 +278,12 @@ Action:
 The regional SSM check reads these parameters under
 `/forge/<deployment_prefix>`:
 
-- `tenant_name` for regional discovery
 - `github_app_key`
 - `github_app_client_id`
 - `github_app_id`
 - `github_app_installation_id`
 - `github_ghes_url`
-- `github_ghes_org`
+- `github_ghes_org` for regional discovery
 
 ## Detector Reference
 

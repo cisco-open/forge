@@ -19,7 +19,8 @@ run "integrations_forge_dependency_monitor_source_inventory" {
       "data \"aws_caller_identity\" \"current\"",
       "data \"aws_region\" \"current\"",
       "ssm:DescribeParameters",
-      "parameter/forge/*/tenant_name",
+      "ssm:ListTagsForResource",
+      "parameter/forge/*/github_ghes_org",
       "GITHUB_API_VERSION",
       "SPLUNK_HEC_URL",
       "SPLUNK_METRICS_URL",
@@ -32,7 +33,7 @@ run "integrations_forge_dependency_monitor_source_inventory" {
   }
 
   assert {
-    condition     = output.expected_literal_count == 15
+    condition     = output.expected_literal_count == 16
     error_message = "Source inventory count must remain pinned."
   }
 }

@@ -350,13 +350,17 @@ def test_tenants_are_discovered_from_regional_ssm(monkeypatch, aws):
             return [
                 {
                     'Parameters': [
-                        {'Name': '/forge/tenant-b-usw2-sl/tenant_name'},
-                        {'Name': '/forge/tenant-a-usw2-sl/tenant_name'},
                         {
                             'Name': (
                                 '/forge/tenant-a-usw2-sl/github_ghes_org'
                             )
                         },
+                        {
+                            'Name': (
+                                '/forge/tenant-b-usw2-sl/github_ghes_org'
+                            )
+                        },
+                        {'Name': '/forge/tenant-a-usw2-sl/github_app_id'},
                     ]
                 }
             ]
@@ -370,10 +374,21 @@ def test_tenants_are_discovered_from_regional_ssm(monkeypatch, aws):
             calls.append(('get', Names, WithDecryption))
             return {
                 'Parameters': [
-                    {'Name': Names[0], 'Value': 'tenant-a'},
-                    {'Name': Names[1], 'Value': 'tenant-b'},
+                    {'Name': Names[0], 'Value': 'github-org-a'},
+                    {'Name': Names[1], 'Value': 'github-org-b'},
                 ],
                 'InvalidParameters': [],
+            }
+
+        def list_tags_for_resource(self, *, ResourceType, ResourceId):
+            calls.append(('tags', ResourceType, ResourceId))
+            tenant = (
+                'tenant-a' if 'tenant-a-' in ResourceId else 'tenant-b'
+            )
+            return {
+                'TagList': [
+                    {'Key': 'ForgeCICDTenantName', 'Value': tenant},
+                ]
             }
 
     monkeypatch.setattr(
@@ -414,10 +429,20 @@ def test_tenants_are_discovered_from_regional_ssm(monkeypatch, aws):
         (
             'get',
             [
-                '/forge/tenant-a-usw2-sl/tenant_name',
-                '/forge/tenant-b-usw2-sl/tenant_name',
+                '/forge/tenant-a-usw2-sl/github_ghes_org',
+                '/forge/tenant-b-usw2-sl/github_ghes_org',
             ],
             False,
+        ),
+        (
+            'tags',
+            'Parameter',
+            '/forge/tenant-a-usw2-sl/github_ghes_org',
+        ),
+        (
+            'tags',
+            'Parameter',
+            '/forge/tenant-b-usw2-sl/github_ghes_org',
         ),
     ]
 

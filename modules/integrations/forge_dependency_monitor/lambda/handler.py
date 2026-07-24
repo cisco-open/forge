@@ -29,7 +29,7 @@ AWS_REGION = os.environ.get('AWS_REGION', '')
 GITHUB_API_VERSION = os.environ.get('GITHUB_API_VERSION', '2022-11-28')
 GITHUB_TIMEOUT_SECONDS = int(os.environ.get('GITHUB_TIMEOUT_SECONDS', '10'))
 TENANT_PARAMETER_ROOT = '/forge/'
-TENANT_PARAMETER_SUFFIX = '/tenant_name'
+TENANT_PARAMETER_SUFFIX = '/github_ghes_org'
 
 queued_datapoints: list[dict[str, Any]] = []
 queued_events: list[dict[str, Any]] = []
@@ -100,7 +100,7 @@ def create_github_app_jwt(issuer: str, private_key: Any) -> str:
 
 
 def discover_tenants() -> list[dict[str, Any]]:
-    """Discover regional Forge tenants from platform-owned SSM metadata."""
+    """Discover regional Forge tenants from existing GitHub SSM parameters."""
     ssm = aws_client('ssm')
     paginator = ssm.get_paginator('describe_parameters')
     parameter_names = []
@@ -145,12 +145,29 @@ def discover_tenants() -> list[dict[str, Any]]:
     configs = []
     for parameter_name in parameter_names:
         match = re.fullmatch(
-            r'/forge/(?P<deployment_prefix>[^/]+)/tenant_name',
+            r'/forge/(?P<deployment_prefix>[^/]+)/github_ghes_org',
             parameter_name,
         )
-        tenant = values_by_name.get(parameter_name, '')
-        if match is None or not tenant:
+        github_org = values_by_name.get(parameter_name, '')
+        if match is None or not github_org:
             raise ValueError('Forge tenant discovery metadata is invalid')
+
+        tag_response = ssm.list_tags_for_resource(
+            ResourceType='Parameter',
+            ResourceId=parameter_name,
+        )
+        parameter_tags = {
+            tag['Key']: tag['Value']
+            for tag in tag_response.get('TagList', [])
+        }
+        tenant = next(
+            (
+                parameter_tags[key]
+                for key in ('ForgeCICDTenantName', 'TenantName')
+                if parameter_tags.get(key)
+            ),
+            github_org,
+        )
         configs.append(
             {
                 'tenant': tenant,

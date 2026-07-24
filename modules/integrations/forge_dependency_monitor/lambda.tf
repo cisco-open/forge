@@ -77,7 +77,6 @@ data "aws_iam_policy_document" "dependency_monitor" {
       "ssm:GetParameters",
     ]
     resources = [
-      "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/forge/*/tenant_name",
       "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/forge/*/github_app_key",
       "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/forge/*/github_app_client_id",
       "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/forge/*/github_app_id",
@@ -85,6 +84,13 @@ data "aws_iam_policy_document" "dependency_monitor" {
       "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/forge/*/github_ghes_url",
       "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/forge/*/github_ghes_org",
     ]
+  }
+
+  statement {
+    sid       = "ReadTenantTags"
+    effect    = "Allow"
+    actions   = ["ssm:ListTagsForResource"]
+    resources = ["arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/forge/*/github_ghes_org"]
   }
 
   statement {
