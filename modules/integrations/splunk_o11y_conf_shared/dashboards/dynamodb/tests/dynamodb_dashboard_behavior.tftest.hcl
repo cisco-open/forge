@@ -23,11 +23,13 @@ run "dynamodb_dashboard_contract" {
     condition = (
       signalfx_time_chart.read_capacity_percentage.name == "Percentage of read capacity consumed"
       && signalfx_time_chart.read_capacity_percentage.time_range == 3600
+      && signalfx_time_chart.write_throttle_events.time_range == 3600
+      && signalfx_time_chart.system_errors_ts.time_range == 3600
       && strcontains(signalfx_time_chart.read_capacity_percentage.program_text, "ConsumedReadCapacityUnits")
       && signalfx_single_value_chart.throttled_requests_single.name == "Throttled requests"
       && strcontains(signalfx_time_chart.throttled_requests_ts.program_text, "ThrottledRequests")
     )
-    error_message = "DynamoDB charts must keep capacity and throttling SignalFlow metrics."
+    error_message = "DynamoDB charts must keep one-hour capacity, error, and throttling visibility."
   }
 }
 

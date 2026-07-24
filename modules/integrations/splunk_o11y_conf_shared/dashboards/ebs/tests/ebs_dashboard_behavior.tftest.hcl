@@ -22,13 +22,13 @@ run "ebs_dashboard_contract" {
   assert {
     condition = (
       signalfx_time_chart.byte_utilization_pct.name == "Byte utilization %"
-      && signalfx_time_chart.byte_utilization_pct.time_range == 900
+      && signalfx_time_chart.byte_utilization_pct.time_range == 3600
       && strcontains(signalfx_time_chart.byte_utilization_pct.program_text, "EBSByteBalance%")
       && signalfx_time_chart.latency_op.name == "Latency/op (ms)"
       && signalfx_time_chart.latency_op.time_range == 7200
       && signalfx_single_value_chart.state.name == "State"
     )
-    error_message = "EBS charts must keep utilization, latency, and volume state behavior."
+    error_message = "EBS charts must keep one-hour utilization visibility, latency, and volume state behavior."
   }
 }
 

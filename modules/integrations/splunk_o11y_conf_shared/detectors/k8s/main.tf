@@ -56,13 +56,13 @@ resource "signalfx_detector" "k8s_otel_collector_health" {
 
   program_text = <<-EOF
 running_collector_pods = data('k8s.pod.phase', filter=(${local.k8s_otel_collector_filter}), rollup='latest').between(1.5, 2.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name']).fill(value=0, duration='${var.k8s_otel_collector_config.stale_metrics_duration}')
-pending_collector_pods = data('k8s.pod.phase', filter=(${local.k8s_otel_collector_filter}), rollup='latest').between(0, 1.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name'])
-unhealthy_collector_pods = data('k8s.pod.phase', filter=(${local.k8s_otel_collector_filter}), rollup='latest').between(3.5, 5.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name'])
-collector_restarts = data('k8s.container.restarts', filter=(${local.k8s_otel_collector_filter}), rollup='latest').sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name', 'k8s.container.name'])
+pending_collector_pods = data('k8s.pod.phase', filter=(${local.k8s_otel_collector_filter}), rollup='latest').between(0, 1.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name']).fill(value=0, duration='${var.k8s_otel_collector_config.pod_issue_duration}')
+unhealthy_collector_pods = data('k8s.pod.phase', filter=(${local.k8s_otel_collector_filter}), rollup='latest').between(3.5, 5.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name']).fill(value=0, duration='${var.k8s_otel_collector_config.pod_issue_duration}')
+collector_restarts = data('k8s.container.restarts', filter=(${local.k8s_otel_collector_filter}), rollup='latest').delta().sum(over='${var.k8s_otel_collector_config.restart_duration}').sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name', 'k8s.container.name']).fill(value=0, duration='${var.k8s_otel_collector_config.restart_duration}')
 detect(when(running_collector_pods < ${var.k8s_otel_collector_config.min_running_pods}, '${var.k8s_otel_collector_config.no_running_duration}')).publish('No running Splunk OTel collector pods')
 detect(when(pending_collector_pods > 0, '${var.k8s_otel_collector_config.pod_issue_duration}')).publish('Splunk OTel collector pod pending')
 detect(when(unhealthy_collector_pods > 0, '${var.k8s_otel_collector_config.pod_issue_duration}')).publish('Splunk OTel collector pod failed or unknown')
-detect(when(collector_restarts > ${var.k8s_otel_collector_config.restart_threshold}, '${var.k8s_otel_collector_config.restart_duration}')).publish('Splunk OTel collector container restarting')
+detect(when(collector_restarts > ${var.k8s_otel_collector_config.restart_threshold})).publish('Splunk OTel collector container restarting')
 EOF
 
   rule {
@@ -103,12 +103,12 @@ resource "signalfx_detector" "k8s_other_namespace_pods_unhealthy" {
   time_range  = 3600
 
   program_text = <<-EOF
-other_pending_pods = data('k8s.pod.phase', filter=(${local.k8s_other_namespace_filter}), rollup='latest').between(0, 1.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name'])
-other_unhealthy_pods = data('k8s.pod.phase', filter=(${local.k8s_other_namespace_filter}), rollup='latest').between(3.5, 5.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name'])
-other_container_restarts = data('k8s.container.restarts', filter=(${local.k8s_other_namespace_filter}), rollup='latest').sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name', 'k8s.container.name'])
+other_pending_pods = data('k8s.pod.phase', filter=(${local.k8s_other_namespace_filter}), rollup='latest').between(0, 1.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name']).fill(value=0, duration='${var.k8s_detector_config.pending_pods_duration}')
+other_unhealthy_pods = data('k8s.pod.phase', filter=(${local.k8s_other_namespace_filter}), rollup='latest').between(3.5, 5.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name']).fill(value=0, duration='${var.k8s_detector_config.failed_pods_duration}')
+other_container_restarts = data('k8s.container.restarts', filter=(${local.k8s_other_namespace_filter}), rollup='latest').delta().sum(over='${var.k8s_detector_config.container_restarts_duration}').sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name', 'k8s.container.name']).fill(value=0, duration='${var.k8s_detector_config.container_restarts_duration}')
 detect(when(other_pending_pods > ${var.k8s_detector_config.pending_pods_threshold}, '${var.k8s_detector_config.pending_pods_duration}')).publish('Other namespace pod pending')
 detect(when(other_unhealthy_pods > ${var.k8s_detector_config.failed_pods_threshold}, '${var.k8s_detector_config.failed_pods_duration}')).publish('Other namespace pod failed or unknown')
-detect(when(other_container_restarts > ${var.k8s_detector_config.container_restarts_threshold}, '${var.k8s_detector_config.container_restarts_duration}')).publish('Other namespace container restarting')
+detect(when(other_container_restarts > ${var.k8s_detector_config.container_restarts_threshold})).publish('Other namespace container restarting')
 EOF
 
   rule {
@@ -142,7 +142,7 @@ resource "signalfx_detector" "k8s_tenant_pods_pending" {
   time_range  = 3600
 
   program_text = <<-EOF
-pending_pods = data('k8s.pod.phase', filter=(${local.k8s_tenant_filter}), rollup='latest').between(0, 1.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name'])
+pending_pods = data('k8s.pod.phase', filter=(${local.k8s_tenant_filter}), rollup='latest').between(0, 1.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name']).fill(value=0, duration='${var.k8s_detector_config.pending_pods_duration}')
 detect(when(pending_pods > ${var.k8s_detector_config.pending_pods_threshold}, '${var.k8s_detector_config.pending_pods_duration}')).publish('Tenant pod pending')
 EOF
 
@@ -163,7 +163,7 @@ resource "signalfx_detector" "k8s_tenant_pods_failed" {
   time_range  = 3600
 
   program_text = <<-EOF
-failed_pods = data('k8s.pod.phase', filter=(${local.k8s_tenant_filter}), rollup='latest').between(3.5, 4.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name'])
+failed_pods = data('k8s.pod.phase', filter=(${local.k8s_tenant_filter}), rollup='latest').between(3.5, 4.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name']).fill(value=0, duration='${var.k8s_detector_config.failed_pods_duration}')
 detect(when(failed_pods > ${var.k8s_detector_config.failed_pods_threshold}, '${var.k8s_detector_config.failed_pods_duration}')).publish('Tenant pod failed')
 EOF
 
@@ -184,8 +184,8 @@ resource "signalfx_detector" "k8s_tenant_container_restarts" {
   time_range  = 3600
 
   program_text = <<-EOF
-container_restarts = data('k8s.container.restarts', filter=(${local.k8s_tenant_filter}), rollup='latest').sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name', 'k8s.container.name'])
-detect(when(container_restarts > ${var.k8s_detector_config.container_restarts_threshold}, '${var.k8s_detector_config.container_restarts_duration}')).publish('Tenant container restarting')
+container_restarts = data('k8s.container.restarts', filter=(${local.k8s_tenant_filter}), rollup='latest').delta().sum(over='${var.k8s_detector_config.container_restarts_duration}').sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name', 'k8s.container.name']).fill(value=0, duration='${var.k8s_detector_config.container_restarts_duration}')
+detect(when(container_restarts > ${var.k8s_detector_config.container_restarts_threshold})).publish('Tenant container restarting')
 EOF
 
   rule {
@@ -205,8 +205,8 @@ resource "signalfx_detector" "k8s_platform_pods_unhealthy" {
   time_range  = 3600
 
   program_text = <<-EOF
-platform_pending_pods = data('k8s.pod.phase', filter=(${local.k8s_platform_filter}), rollup='latest').between(0, 1.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name'])
-platform_failed_pods = data('k8s.pod.phase', filter=(${local.k8s_platform_filter}), rollup='latest').between(3.5, 5.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name'])
+platform_pending_pods = data('k8s.pod.phase', filter=(${local.k8s_platform_filter}), rollup='latest').between(0, 1.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name']).fill(value=0, duration='${var.k8s_detector_config.platform_pods_duration}')
+platform_failed_pods = data('k8s.pod.phase', filter=(${local.k8s_platform_filter}), rollup='latest').between(3.5, 5.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name']).fill(value=0, duration='${var.k8s_detector_config.platform_pods_duration}')
 detect(when(platform_pending_pods > ${var.k8s_detector_config.platform_unhealthy_threshold}, '${var.k8s_detector_config.platform_pods_duration}')).publish('Platform pod pending')
 detect(when(platform_failed_pods > ${var.k8s_detector_config.platform_unhealthy_threshold}, '${var.k8s_detector_config.platform_pods_duration}')).publish('Platform pod failed or unknown')
 EOF

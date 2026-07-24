@@ -26,8 +26,14 @@ run "runner_ec2_dashboard_contract" {
       && signalfx_time_chart.chart_cpu_utilization.name == "CPU utilization (%)"
       && signalfx_time_chart.chart_cpu_utilization.time_range == 3600
       && signalfx_list_chart.chart_top_instances_by_cpu_utilization.sort_by == "-value"
+      && signalfx_list_chart.chart_top_instances_by_cpu_utilization.time_range == 3600
+      && signalfx_time_chart.chart_status_check_failures.time_range == 3600
+      && signalfx_list_chart.chart_total_network_errors.name == "Network errors/sec"
+      && strcontains(signalfx_list_chart.chart_total_network_errors.program_text, "rollup='rate'")
+      && !strcontains(signalfx_list_chart.chart_total_network_errors.program_text, ".count(")
+      && strcontains(signalfx_list_chart.chart_top_memory_page_swaps_sec.program_text, "data('vmpage_io.swap.in', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks'), rollup='rate')")
     )
-    error_message = "EC2 runner charts must keep active host, CPU utilization, and top-instance behavior."
+    error_message = "EC2 runner charts must keep one-hour visibility, active host, CPU utilization, top-instance, and rate-based network and swap behavior."
   }
 }
 

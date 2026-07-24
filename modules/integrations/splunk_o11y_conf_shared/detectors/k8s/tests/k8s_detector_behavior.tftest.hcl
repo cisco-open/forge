@@ -65,6 +65,8 @@ run "k8s_detector_scope_and_threshold_contract" {
       && strcontains(signalfx_detector.k8s_otel_collector_health.program_text, "filter('k8s.namespace.name', 'splunk-otel')")
       && strcontains(signalfx_detector.k8s_otel_collector_health.program_text, "filter('k8s.pod.name', 'splunk-otel-collector*')")
       && strcontains(signalfx_detector.k8s_otel_collector_health.program_text, "running_collector_pods < 2")
+      && strcontains(signalfx_detector.k8s_otel_collector_health.program_text, ".delta().sum(over='15m')")
+      && strcontains(signalfx_detector.k8s_otel_collector_health.program_text, ".fill(value=0, duration='5m')")
       && length(signalfx_detector.k8s_otel_collector_health.rule) == 4
     )
     error_message = "K8s collector detector must keep collector namespace, pod filter, min-running threshold, and all collector rules."
@@ -73,6 +75,8 @@ run "k8s_detector_scope_and_threshold_contract" {
   assert {
     condition = (
       strcontains(signalfx_detector.k8s_tenant_pods_pending.program_text, "filter('k8s.namespace.name', 'tenant-a') or filter('k8s.namespace.name', 'tenant-b')")
+      && strcontains(signalfx_detector.k8s_tenant_pods_pending.program_text, ".fill(value=0, duration='10m')")
+      && strcontains(signalfx_detector.k8s_tenant_container_restarts.program_text, ".delta().sum(over='10m')")
       && strcontains(signalfx_detector.k8s_other_namespace_pods_unhealthy.program_text, "not filter('k8s.namespace.name', 'kube-system', 'karpenter', 'splunk-otel', 'tenant-a', 'tenant-b')")
       && strcontains(signalfx_detector.k8s_platform_pods_unhealthy.program_text, "filter('k8s.namespace.name', 'kube-system') or filter('k8s.namespace.name', 'karpenter')")
     )

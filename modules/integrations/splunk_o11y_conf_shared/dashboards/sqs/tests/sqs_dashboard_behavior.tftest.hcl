@@ -23,11 +23,18 @@ run "sqs_dashboard_contract" {
     condition = (
       signalfx_single_value_chart.queues.name == "# Queues"
       && strcontains(signalfx_single_value_chart.queues.program_text, "ApproximateAgeOfOldestMessage")
+      && strcontains(signalfx_time_chart.messages_by_state.program_text, "filter('stat', 'mean')")
+      && strcontains(signalfx_time_chart.message_processing_trend.program_text, "filter('stat', 'sum')")
+      && strcontains(signalfx_time_chart.message_processing_trend.program_text, "rollup='sum'")
+      && signalfx_time_chart.message_processing_trend.time_range == 3600
+      && strcontains(signalfx_list_chart.top_queues_by_message_sent.program_text, ".sum(over='30m')")
+      && strcontains(signalfx_list_chart.top_queues_by_message_received.program_text, ".sum(over='30m')")
+      && strcontains(signalfx_list_chart.oldest_message_age.program_text, ".max(by=['QueueName'])")
       && signalfx_time_chart.message_processing_trend.name == "Message processing trend"
       && strcontains(signalfx_time_chart.dead_letter_backlog_trend.program_text, "ApproximateNumberOfMessagesVisible")
       && signalfx_list_chart.dead_letter_visible_messages.sort_by == "-value"
     )
-    error_message = "SQS charts must keep queue-count, processing-trend, and dead-letter queue behavior."
+    error_message = "SQS charts must keep one-hour visibility, ingestion-delay-safe counters, oldest-age, and dead-letter queue behavior."
   }
 }
 

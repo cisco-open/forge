@@ -14,7 +14,7 @@ EOF
 
   show_data_markers = true
 
-  time_range = 900
+  time_range = 3600
 
   histogram_options {
     color_theme = "gold"
@@ -42,7 +42,7 @@ EOF
 
   axes_precision = 0
 
-  time_range = 900
+  time_range = 3600
 
   histogram_options {
     color_theme = "gold"
