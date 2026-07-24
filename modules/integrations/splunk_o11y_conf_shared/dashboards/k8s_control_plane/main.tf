@@ -23,12 +23,12 @@ locals {
 
 resource "signalfx_time_chart" "platform_pod_health" {
   name        = "Platform pod health"
-  description = "Shows running, pending, and failed pods in configured Kubernetes control-plane namespaces."
+  description = "Shows running, pending, failed, and unknown pods in configured Kubernetes control-plane namespaces."
 
   program_text = <<-EOF
-A = data('kubernetes.pod_phase', filter=(${local.k8s_platform_filter}) and filter('k8s.pod.phase', 'Running'), rollup='latest').sum(by=['k8s.cluster.name', 'k8s.namespace.name']).publish(label='Running')
-B = data('kubernetes.pod_phase', filter=(${local.k8s_platform_filter}) and filter('k8s.pod.phase', 'Pending'), rollup='latest').sum(by=['k8s.cluster.name', 'k8s.namespace.name']).publish(label='Pending')
-C = data('kubernetes.pod_phase', filter=(${local.k8s_platform_filter}) and filter('k8s.pod.phase', 'Failed'), rollup='latest').sum(by=['k8s.cluster.name', 'k8s.namespace.name']).publish(label='Failed')
+A = data('k8s.pod.phase', filter=(${local.k8s_platform_filter}), rollup='latest').between(1.5, 2.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name', 'k8s.namespace.name']).publish(label='Running')
+B = data('k8s.pod.phase', filter=(${local.k8s_platform_filter}), rollup='latest').between(0, 1.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name', 'k8s.namespace.name']).publish(label='Pending')
+C = data('k8s.pod.phase', filter=(${local.k8s_platform_filter}), rollup='latest').between(3.5, 5.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name', 'k8s.namespace.name']).publish(label='Failed or unknown')
 EOF
 
   plot_type                 = "LineChart"
@@ -57,12 +57,12 @@ EOF
 
 resource "signalfx_time_chart" "otel_collector_pods" {
   name        = "Splunk OTel collector pod health"
-  description = "Shows running, pending, and failed Splunk OpenTelemetry Collector pods."
+  description = "Shows running, pending, failed, and unknown Splunk OpenTelemetry Collector pods."
 
   program_text = <<-EOF
-A = data('kubernetes.pod_phase', filter=(${local.k8s_otel_collector_filter}) and filter('k8s.pod.phase', 'Running'), rollup='latest').sum(by=['k8s.cluster.name']).publish(label='Running')
-B = data('kubernetes.pod_phase', filter=(${local.k8s_otel_collector_filter}) and filter('k8s.pod.phase', 'Pending'), rollup='latest').sum(by=['k8s.cluster.name']).publish(label='Pending')
-C = data('kubernetes.pod_phase', filter=(${local.k8s_otel_collector_filter}) and filter('k8s.pod.phase', 'Failed'), rollup='latest').sum(by=['k8s.cluster.name']).publish(label='Failed')
+A = data('k8s.pod.phase', filter=(${local.k8s_otel_collector_filter}), rollup='latest').between(1.5, 2.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name']).publish(label='Running')
+B = data('k8s.pod.phase', filter=(${local.k8s_otel_collector_filter}), rollup='latest').between(0, 1.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name']).publish(label='Pending')
+C = data('k8s.pod.phase', filter=(${local.k8s_otel_collector_filter}), rollup='latest').between(3.5, 5.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name']).publish(label='Failed or unknown')
 EOF
 
   plot_type                 = "LineChart"

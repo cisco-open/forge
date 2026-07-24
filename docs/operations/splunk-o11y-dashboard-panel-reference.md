@@ -128,15 +128,15 @@ availability score.
 
 ## Forge Control Plane - Kubernetes
 
-| Chart                                    | Operational question                                                        |
-| ---------------------------------------- | --------------------------------------------------------------------------- |
-| Platform pod health                      | Are configured platform namespace pods running, pending, or failed?         |
-| Splunk OTel collector pod health         | Are collector pods running and stable?                                      |
-| Node pressure conditions                 | Are nodes reporting memory, disk, PID, or network pressure?                 |
-| OTel exporter queue utilization          | Is the collector exporter queue approaching capacity?                       |
-| OTel refused and failed metric points    | Is the collector dropping, refusing, or failing metric points?              |
-| Ready nodes by cluster                   | Has a cluster lost ready nodes or scheduling capacity?                      |
-| Unavailable platform deployment replicas | Which shared platform deployment has fewer available than desired replicas? |
+| Chart                                    | Operational question                                                         |
+| ---------------------------------------- | ---------------------------------------------------------------------------- |
+| Platform pod health                      | Are configured platform namespace pods running, pending, failed, or unknown? |
+| Splunk OTel collector pod health         | Are collector pods running and stable?                                       |
+| Node pressure conditions                 | Are nodes reporting memory, disk, PID, or network pressure?                  |
+| OTel exporter queue utilization          | Is the collector exporter queue approaching capacity?                        |
+| OTel refused and failed metric points    | Is the collector dropping, refusing, or failing metric points?               |
+| Ready nodes by cluster                   | Has a cluster lost ready nodes or scheduling capacity?                       |
+| Unavailable platform deployment replicas | Which shared platform deployment has fewer available than desired replicas?  |
 
 The platform namespace scope includes `k8s_platform_namespaces` plus
 `monitoring`, `prometheus`, and `splunk-otel-collector`.
