@@ -6,6 +6,7 @@ import json
 
 import boto3
 import pytest
+from botocore.exceptions import ClientError
 from conftest import AWS_REGION, requires_aws
 from support import load_handler_module
 
@@ -43,11 +44,59 @@ def test_non_ec2_runner_name_is_ignored(monkeypatch, aws):
     assert json.loads(result['body']) == {'message': 'ignored non-EC2 runner'}
 
 
-def test_missing_runner_name_raises(monkeypatch, aws):
+def test_missing_runner_name_is_ignored(monkeypatch, aws):
     mod = load_handler_module('ec2_update_runner_tags')
 
-    with pytest.raises(ValueError, match='runner_name missing'):
-        mod.lambda_handler(_event(''), None)
+    result = mod.lambda_handler(_event(''), None)
+
+    assert result['statusCode'] == 200
+    assert json.loads(result['body']) == {
+        'message': 'ignored missing runner',
+    }
+
+
+def test_missing_ec2_instance_is_ignored(monkeypatch, aws):
+    mod = load_handler_module('ec2_update_runner_tags')
+
+    def _missing_instance(**_kwargs):
+        raise ClientError(
+            {
+                'Error': {
+                    'Code': 'InvalidInstanceID.NotFound',
+                    'Message': 'The instance ID does not exist',
+                },
+            },
+            'DescribeInstances',
+        )
+
+    monkeypatch.setattr(mod.ec2, 'describe_instances', _missing_instance)
+
+    result = mod.lambda_handler(_event('i-0123456789abcdef0'), None)
+
+    assert result['statusCode'] == 200
+    assert json.loads(result['body']) == {
+        'message': 'ignored missing EC2 instance',
+    }
+
+
+def test_unexpected_ec2_error_still_raises(monkeypatch, aws):
+    mod = load_handler_module('ec2_update_runner_tags')
+
+    def _access_denied(**_kwargs):
+        raise ClientError(
+            {
+                'Error': {
+                    'Code': 'UnauthorizedOperation',
+                    'Message': 'not authorized',
+                },
+            },
+            'DescribeInstances',
+        )
+
+    monkeypatch.setattr(mod.ec2, 'describe_instances', _access_denied)
+
+    with pytest.raises(ClientError):
+        mod.lambda_handler(_event('i-0123456789abcdef0'), None)
 
 
 def test_ec2_runner_instance_is_tagged_with_job_metadata(monkeypatch, aws):
