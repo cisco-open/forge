@@ -43,6 +43,26 @@ resource "aws_ssm_parameter" "github_app_installation_id" {
   tags = local.all_security_tags
 }
 
+resource "aws_ssm_parameter" "github_ghes_url" {
+  #checkov:skip=CKV2_AWS_34:GitHub URL is non-secret tenant routing metadata.
+  name        = "/forge/${var.deployment_config.deployment_prefix}/github_ghes_url"
+  description = "GitHub.com or GHES base URL for GHA ephemeral runners for Tenant ${var.deployment_config.tenant.name}."
+  type        = "String"
+  value       = var.deployment_config.github.ghes_url == "" ? "https://github.com" : var.deployment_config.github.ghes_url
+
+  tags = local.all_security_tags
+}
+
+resource "aws_ssm_parameter" "github_ghes_org" {
+  #checkov:skip=CKV2_AWS_34:GitHub organization is non-secret tenant routing metadata.
+  name        = "/forge/${var.deployment_config.deployment_prefix}/github_ghes_org"
+  description = "GitHub organization for GHA ephemeral runners for Tenant ${var.deployment_config.tenant.name}."
+  type        = "String"
+  value       = var.deployment_config.github.ghes_org
+
+  tags = local.all_security_tags
+}
+
 resource "aws_ssm_parameter" "github_app_name" {
   #checkov:skip=CKV_AWS_337:Customer-managed KMS for GitHub App SSM parameters is deferred until tenant bootstrap and manual secret update flows are regression-tested.
   name        = "/forge/${var.deployment_config.deployment_prefix}/github_app_name"
