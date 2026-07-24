@@ -227,7 +227,7 @@ EOF
     label        = "B"
   }
   viz_options {
-    display_name = "{{aws_function_name}} - {{aws_function_version}}"
+    display_name = "Invocation share by version"
     label        = "C"
     value_suffix = "%"
   }
@@ -294,9 +294,9 @@ EOF
 
   viz_options {
     axis         = "left"
-    display_name = "{{aws_function_name}} - {{aws_function_version}}"
+    display_name = "Errors"
     label        = "A"
-    value_suffix = "-errors"
+    value_suffix = " errors"
   }
 }
 
@@ -374,7 +374,7 @@ EOF
   }
 
   viz_options {
-    display_name = "{{aws_function_name}} - {{aws_function_version}}"
+    display_name = "Average duration"
     label        = "A"
     value_unit   = "Millisecond"
   }
@@ -459,7 +459,7 @@ EOF
 
   viz_options {
     axis         = "left"
-    display_name = "{{aws_function_name}} - {{aws_function_version}}"
+    display_name = "Throttles"
     label        = "A"
   }
 
@@ -526,9 +526,9 @@ EOF
 
   viz_options {
     axis         = "left"
-    display_name = "{{aws_function_name}} - {{aws_function_version}}"
+    display_name = "Invocations"
     label        = "A"
-    value_suffix = "-invocations"
+    value_suffix = " invocations"
   }
 
 }
@@ -713,7 +713,7 @@ EOF
   }
 
   viz_options {
-    display_name = "{{aws_tag_TenantName}}"
+    display_name = "Errors"
     label        = "A"
     value_suffix = " errors"
   }
@@ -739,7 +739,7 @@ EOF
   }
 
   viz_options {
-    display_name = "{{aws_tag_TenantName}}"
+    display_name = "Throttles"
     label        = "A"
     value_suffix = " throttles"
   }
@@ -773,7 +773,7 @@ EOF
   }
 
   viz_options {
-    display_name = "{{aws_function_name}} - {{aws_function_version}}"
+    display_name = "Errors"
     label        = "A"
     value_suffix = " errors"
   }
@@ -807,7 +807,7 @@ EOF
   }
 
   viz_options {
-    display_name = "{{aws_function_name}} - {{aws_function_version}}"
+    display_name = "Throttles"
     label        = "A"
     value_suffix = " throttles"
   }

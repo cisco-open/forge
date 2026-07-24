@@ -61,6 +61,21 @@ run "lambda_dashboard_contract" {
     )
     error_message = "Lambda triage charts must rank noisy tenants globally and expose tenant-filtered per-function detail."
   }
+
+  assert {
+    condition = (
+      one([for option in signalfx_list_chart.percent_invocations_by_version.viz_options : option if option.label == "C"]).display_name == "Invocation share by version"
+      && one(signalfx_time_chart.errors_by_version.viz_options).display_name == "Errors"
+      && one(signalfx_list_chart.avg_duration_by_version.viz_options).display_name == "Average duration"
+      && one(signalfx_time_chart.throttles_by_version.viz_options).display_name == "Throttles"
+      && one(signalfx_time_chart.invocations_by_version.viz_options).display_name == "Invocations"
+      && one(signalfx_list_chart.top_tenants_by_errors.viz_options).display_name == "Errors"
+      && one(signalfx_list_chart.top_tenants_by_throttles.viz_options).display_name == "Throttles"
+      && one(signalfx_list_chart.top_lambdas_by_errors.viz_options).display_name == "Errors"
+      && one(signalfx_list_chart.top_lambdas_by_throttles.viz_options).display_name == "Throttles"
+    )
+    error_message = "Lambda plot names must be static metric labels; tenant, function, and version identity belongs in dimension columns."
+  }
 }
 
 run "lambda_dashboard_wiring_contract" {
