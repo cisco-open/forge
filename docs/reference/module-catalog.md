@@ -48,23 +48,24 @@ that operating concern.
 
 ## Integration Modules
 
-| Module                                                            | Role                                                    | Required? | Example root                        | Validation                                        |
-| ----------------------------------------------------------------- | ------------------------------------------------------- | --------- | ----------------------------------- | ------------------------------------------------- |
-| `modules/integrations/github_webhook_relay_destination`           | Optional webhook forwarding destination.                | No        | `examples/deployments/integrations` | Receiver gets expected GitHub events.             |
-| `modules/integrations/github_webhook_relay_destination_receivers` | Optional receiver modules for relay consumers.          | No        | `examples/deployments/integrations` | Receiver-specific smoke event.                    |
-| `modules/integrations/splunk_aws_billing`                         | Splunk billing ingestion.                               | No        | `examples/deployments/integrations` | Billing data lands in target index.               |
-| `modules/integrations/splunk_cloud_conf_shared`                   | Splunk Cloud saved searches, dashboards, shared config. | No        | `examples/deployments/integrations` | Dashboards and searches exist.                    |
-| `modules/integrations/splunk_cloud_data_manager`                  | Splunk Data Manager integration.                        | No        | `examples/deployments/integrations` | Data Manager inputs are active.                   |
-| `modules/integrations/splunk_cloud_data_manager_common`           | Shared Data Manager resources.                          | No        | `examples/deployments/integrations` | Shared resources are referenced by consumers.     |
-| `modules/integrations/splunk_cloud_s3_runner_logs`                | S3 runner log ingestion to Splunk.                      | No        | `examples/deployments/integrations` | Runner log object produces Splunk event.          |
-| `modules/integrations/splunk_o11y_aws_integration`                | Splunk Observability AWS integration.                   | No        | `examples/deployments/integrations` | AWS metrics appear in Splunk Observability.       |
-| `modules/integrations/splunk_o11y_aws_integration_common`         | Shared Splunk Observability AWS resources.              | No        | `examples/deployments/integrations` | Shared integration resources exist.               |
-| `modules/integrations/splunk_o11y_conf_shared`                    | Splunk Observability dashboards and detectors.          | No        | `examples/deployments/integrations` | Dashboards and detectors exist.                   |
-| `modules/integrations/splunk_opencost_eks`                        | OpenCost data path for EKS.                             | No        | `examples/deployments/integrations` | OpenCost metrics reach target backend.            |
-| `modules/integrations/splunk_otel_eks`                            | Splunk OpenTelemetry collector on EKS.                  | No        | `examples/deployments/integrations` | Collector pods run and export telemetry.          |
-| `modules/integrations/splunk_secrets`                             | Splunk secret placeholders and secret metadata.         | No        | `examples/deployments/integrations` | Secrets exist only when Splunk is used.           |
-| `modules/integrations/splunk_stuck_workflow_job_dispatcher`       | Stuck workflow redelivery backed by Splunk data.        | No        | `examples/deployments/integrations` | Dispatcher can identify and redeliver stuck jobs. |
-| `modules/integrations/teleport`                                   | Teleport access/audit integration.                      | No        | `examples/deployments/integrations` | Agent joins and access is audited.                |
+| Module                                                            | Role                                                    | Required? | Example root                        | Validation                                         |
+| ----------------------------------------------------------------- | ------------------------------------------------------- | --------- | ----------------------------------- | -------------------------------------------------- |
+| `modules/integrations/github_webhook_relay_destination`           | Optional webhook forwarding destination.                | No        | `examples/deployments/integrations` | Receiver gets expected GitHub events.              |
+| `modules/integrations/github_webhook_relay_destination_receivers` | Optional receiver modules for relay consumers.          | No        | `examples/deployments/integrations` | Receiver-specific smoke event.                     |
+| `modules/integrations/splunk_dependency_monitor`                  | Regional GitHub and AWS dependency probes.              | No        | `examples/deployments/integrations` | Regional HEC events and O11y metrics are received. |
+| `modules/integrations/splunk_aws_billing`                         | Splunk billing ingestion.                               | No        | `examples/deployments/integrations` | Billing data lands in target index.                |
+| `modules/integrations/splunk_cloud_conf_shared`                   | Splunk Cloud saved searches, dashboards, shared config. | No        | `examples/deployments/integrations` | Dashboards and searches exist.                     |
+| `modules/integrations/splunk_cloud_data_manager`                  | Splunk Data Manager integration.                        | No        | `examples/deployments/integrations` | Data Manager inputs are active.                    |
+| `modules/integrations/splunk_cloud_data_manager_common`           | Shared Data Manager resources.                          | No        | `examples/deployments/integrations` | Shared resources are referenced by consumers.      |
+| `modules/integrations/splunk_cloud_s3_runner_logs`                | S3 runner log ingestion to Splunk.                      | No        | `examples/deployments/integrations` | Runner log object produces Splunk event.           |
+| `modules/integrations/splunk_o11y_aws_integration`                | Splunk Observability AWS integration.                   | No        | `examples/deployments/integrations` | AWS metrics appear in Splunk Observability.        |
+| `modules/integrations/splunk_o11y_aws_integration_common`         | Shared Splunk Observability AWS resources.              | No        | `examples/deployments/integrations` | Shared integration resources exist.                |
+| `modules/integrations/splunk_o11y_conf_shared`                    | Splunk Observability dashboards and detectors.          | No        | `examples/deployments/integrations` | Dashboards and detectors exist.                    |
+| `modules/integrations/splunk_opencost_eks`                        | OpenCost data path for EKS.                             | No        | `examples/deployments/integrations` | OpenCost metrics reach target backend.             |
+| `modules/integrations/splunk_otel_eks`                            | Splunk OpenTelemetry collector on EKS.                  | No        | `examples/deployments/integrations` | Collector pods run and export telemetry.           |
+| `modules/integrations/splunk_secrets`                             | Splunk secret placeholders and secret metadata.         | No        | `examples/deployments/integrations` | Secrets exist only when Splunk is used.            |
+| `modules/integrations/splunk_stuck_workflow_job_dispatcher`       | Stuck workflow redelivery backed by Splunk data.        | No        | `examples/deployments/integrations` | Dispatcher can identify and redeliver stuck jobs.  |
+| `modules/integrations/teleport`                                   | Teleport access/audit integration.                      | No        | `examples/deployments/integrations` | Agent joins and access is audited.                 |
 
 If your company does not use Splunk, delete the Splunk example folders from
 your operating repo. Use [Troubleshooting Without Splunk](../operations/troubleshooting-without-splunk.md)

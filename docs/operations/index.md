@@ -17,6 +17,7 @@ upgrades, and troubleshooting.
 | Incident             | Triage queued jobs, failed runner registration, IAM, webhooks, or ARC.     | [Troubleshooting](troubleshooting.md)                                       |
 | Incident             | Debug Terraform, OpenTofu, or Terragrunt plan/apply that appears stuck.    | [Terraform/Terragrunt Stuck Runbook](terraform-terragrunt-stuck-runbook.md) |
 | Incident             | Use Splunk dashboards to identify the failing subsystem and severity.      | [Splunk Dashboard Runbook](splunk-dashboard-runbook.md)                     |
+| Incident             | Triage Forge metrics, dependencies, resource pressure, and detectors.      | [Splunk Observability Dashboard Runbook](splunk-o11y-dashboard-runbook.md)  |
 
 ## Operating Repos
 
@@ -29,6 +30,10 @@ For Splunk-based operations, start with the
 [Splunk Dashboard Runbook](splunk-dashboard-runbook.md). Use the
 [panel reference](splunk-dashboard-panel-reference.md) when you need to map a
 dashboard panel back to its operational question.
+
+For Splunk Observability metrics and detectors, use the
+[Splunk Observability Dashboard Runbook](splunk-o11y-dashboard-runbook.md) and
+[Splunk Observability Dashboard Panel Reference](splunk-o11y-dashboard-panel-reference.md).
 
 For installations that do not deploy Splunk, use
 [Troubleshooting Without Splunk](troubleshooting-without-splunk.md) as the
