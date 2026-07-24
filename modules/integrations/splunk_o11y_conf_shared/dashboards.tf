@@ -35,6 +35,18 @@ module "dashboard_runner_k8s" {
   dashboard_group   = signalfx_dashboard_group.forgecicd.id
 }
 
+module "dashboard_k8s_control_plane" {
+  source = "./dashboards/k8s_control_plane"
+
+  providers = {
+    signalfx = signalfx
+  }
+
+  dynamic_variables   = var.dashboard_variables.runner_k8s.dynamic_variables
+  platform_namespaces = var.k8s_platform_namespaces
+  dashboard_group     = signalfx_dashboard_group.forgecicd.id
+}
+
 module "dashboard_lambda" {
   source = "./dashboards/lambda"
 

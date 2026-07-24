@@ -10,15 +10,14 @@ locals {
   k8s_tenant_namespace_filter = length(var.tenant_names) > 0 ? join(" or ", [
     for namespace in sort(var.tenant_names) : "filter('k8s.namespace.name', '${namespace}')"
   ]) : "filter('k8s.namespace.name', '__forge_tenant_scope_not_configured__')"
-  k8s_tenant_filter         = "(${local.k8s_cluster_filter}) and (${local.k8s_tenant_namespace_filter})"
-  k8s_otel_collector_filter = "(${local.k8s_cluster_filter}) and filter('k8s.namespace.name', 'splunk-otel-collector') and filter('k8s.pod.name', 'splunk-otel-collector*')"
+  k8s_tenant_filter = "(${local.k8s_cluster_filter}) and (${local.k8s_tenant_namespace_filter})"
 }
 
 resource "signalfx_single_value_chart" "k8s_available_pods_by_deployments" {
   name        = "# Available pods by deployments"
   description = "Number of pods ready by deployments"
 
-  program_text = "A = data('k8s.deployment.available', rollup='latest').sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.deployment.name']).sum().publish(label='A')"
+  program_text = "A = data('k8s.deployment.available', filter=(${local.k8s_tenant_filter}), rollup='latest').sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.deployment.name']).sum().publish(label='A')"
 
   color_by         = "Dimension"
   refresh_interval = 5
@@ -34,7 +33,7 @@ resource "signalfx_list_chart" "k8s_top_10_cpu_usage_per_pod" {
   description = "Pod name | Node name"
 
   program_text = <<-EOF
-A = data('container_cpu_utilization', rollup='rate').mean(by=['k8s.namespace.name', 'k8s.pod.name', 'k8s.node.name', 'k8s.cluster.name', 'k8s.pod.uid']).scale(0.01).top(count=10).publish(label='A')
+A = data('container_cpu_utilization', filter=(${local.k8s_tenant_filter}), rollup='rate').mean(by=['k8s.namespace.name', 'k8s.pod.name', 'k8s.node.name', 'k8s.cluster.name', 'k8s.pod.uid']).scale(0.01).top(count=10).publish(label='A')
 EOF
 
   sort_by = "-value"
@@ -84,7 +83,7 @@ resource "signalfx_time_chart" "k8s_network_bytes_per_sec" {
   name        = "Network bytes / sec"
   description = ""
 
-  program_text = "A = data('k8s.pod.network.io', filter=filter('k8s.cluster.name', '*') and filter('k8s.namespace.name', '*') and filter('sf_tags', '*', match_missing=True) and filter('k8s.deployment.name', '*', match_missing=True), rollup='rate', extrapolation='zero').sum(by=['k8s.pod.name', 'k8s.node.name', 'k8s.cluster.name', 'k8s.pod.uid']).publish(label='A')"
+  program_text = "A = data('k8s.pod.network.io', filter=(${local.k8s_tenant_filter}) and filter('sf_tags', '*', match_missing=True) and filter('k8s.deployment.name', '*', match_missing=True), rollup='rate', extrapolation='zero').sum(by=['k8s.namespace.name', 'k8s.pod.name', 'k8s.node.name', 'k8s.cluster.name', 'k8s.pod.uid']).publish(label='A')"
 
   plot_type = "ColumnChart"
 
@@ -127,7 +126,7 @@ resource "signalfx_single_value_chart" "k8s_desired_pods_by_deployments" {
   name        = "# Desired pods by deployments"
   description = "Number of pods that should be created by deployments"
 
-  program_text = "A = data('k8s.deployment.desired', rollup='latest').sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.deployment.name']).sum().publish(label='A')"
+  program_text = "A = data('k8s.deployment.desired', filter=(${local.k8s_tenant_filter}), rollup='latest').sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.deployment.name']).sum().publish(label='A')"
 
   color_by         = "Dimension"
   refresh_interval = 5
@@ -142,7 +141,7 @@ resource "signalfx_list_chart" "k8s_network_errors_per_sec" {
   name        = "Network errors / sec"
   description = ""
 
-  program_text = "A = data('k8s.pod.network.errors', filter=filter('k8s.cluster.name', '*') and filter('k8s.namespace.name', '*') and filter('k8s.deployment.name', '*', match_missing=True) and filter('sf_tags', '*', match_missing=True), rollup='rate').sum(by=['k8s.namespace.name', 'k8s.pod.name', 'k8s.cluster.name', 'k8s.node.name', 'k8s.pod.uid']).publish(label='A')"
+  program_text = "A = data('k8s.pod.network.errors', filter=(${local.k8s_tenant_filter}) and filter('k8s.deployment.name', '*', match_missing=True) and filter('sf_tags', '*', match_missing=True), rollup='rate').sum(by=['k8s.namespace.name', 'k8s.pod.name', 'k8s.cluster.name', 'k8s.node.name', 'k8s.pod.uid']).publish(label='A')"
 
   sort_by = "-value"
 
@@ -192,8 +191,8 @@ resource "signalfx_time_chart" "k8s_memory_usage_pct" {
   description = "With EKS/Fargate metric data can possibly go >100%"
 
   program_text = <<-EOF
-A = data('container.memory.usage', filter=filter('k8s.cluster.name', '*') and filter('k8s.namespace.name', '*') and filter('k8s.deployment.name', '*', match_missing=True) and filter('sf_tags', '*', match_missing=True)).sum(by=['k8s.pod.name', 'k8s.node.name', 'k8s.cluster.name', 'k8s.pod.uid']).publish(label='A', enable=False)
-B = data('k8s.container.memory_limit', filter=filter('k8s.cluster.name', '*') and filter('k8s.namespace.name', '*') and filter('k8s.deployment.name', '*', match_missing=True) and filter('sf_tags', '*', match_missing=True)).sum(by=['k8s.pod.name', 'k8s.node.name', 'k8s.cluster.name', 'k8s.pod.uid']).above(0, inclusive=True).publish(label='B', enable=False)
+A = data('container.memory.usage', filter=(${local.k8s_tenant_filter}) and filter('k8s.deployment.name', '*', match_missing=True) and filter('sf_tags', '*', match_missing=True)).sum(by=['k8s.namespace.name', 'k8s.pod.name', 'k8s.node.name', 'k8s.cluster.name', 'k8s.pod.uid']).publish(label='A', enable=False)
+B = data('k8s.container.memory_limit', filter=(${local.k8s_tenant_filter}) and filter('k8s.deployment.name', '*', match_missing=True) and filter('sf_tags', '*', match_missing=True)).sum(by=['k8s.namespace.name', 'k8s.pod.name', 'k8s.node.name', 'k8s.cluster.name', 'k8s.pod.uid']).above(0, inclusive=True).publish(label='B', enable=False)
 C = (A/B*100).publish(label='C')
 EOF
 
@@ -263,7 +262,7 @@ resource "signalfx_single_value_chart" "k8s_active_pods" {
   name        = "# Active pods"
   description = "This may include \"pause\" containers used internally by k8s"
 
-  program_text = "A = data('k8s.pod.phase').between(1.5, 2.5, low_inclusive=True, high_inclusive=True).count().publish(label='A')"
+  program_text = "A = data('k8s.pod.phase', filter=(${local.k8s_tenant_filter}), rollup='latest').between(1.5, 2.5, low_inclusive=True, high_inclusive=True).count().publish(label='A')"
 
   color_by         = "Dimension"
   refresh_interval = 5
@@ -278,7 +277,7 @@ resource "signalfx_list_chart" "k8s_top_10_pods_by_avg_memory_usage" {
   name        = "Top 10 pods by average memory usage (bytes)"
   description = "Pod name | Node name"
 
-  program_text = "A = data('container.memory.usage', filter=filter('k8s.cluster.name', '*') and filter('k8s.namespace.name', '*') and filter('k8s.deployment.name', '*', match_missing=True) and filter('sf_tags', '*', match_missing=True)).mean(by=['k8s.namespace.name', 'k8s.pod.name', 'k8s.node.name', 'k8s.cluster.name', 'k8s.pod.uid']).top(count=10).publish(label='A')"
+  program_text = "A = data('container.memory.usage', filter=(${local.k8s_tenant_filter}) and filter('k8s.deployment.name', '*', match_missing=True) and filter('sf_tags', '*', match_missing=True)).mean(by=['k8s.namespace.name', 'k8s.pod.name', 'k8s.node.name', 'k8s.cluster.name', 'k8s.pod.uid']).top(count=10).publish(label='A')"
 
   sort_by = "-value"
 
@@ -330,11 +329,11 @@ resource "signalfx_list_chart" "k8s_pods_by_phase" {
   description = ""
 
   program_text = <<-EOF
-B = data('k8s.pod.phase', rollup='latest').between(1.5, 2.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.namespace.name']).publish(label='B')
-A = data('k8s.pod.phase', rollup='latest').between(0, 1.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.namespace.name']).publish(label='A')
-C = data('k8s.pod.phase', rollup='latest').between(2.5, 3.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.namespace.name']).publish(label='C')
-D = data('k8s.pod.phase', rollup='latest').between(3.5, 4.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.namespace.name']).publish(label='D')
-E = data('k8s.pod.phase', rollup='latest').between(4.5, 5.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.namespace.name']).publish(label='E')
+B = data('k8s.pod.phase', filter=(${local.k8s_tenant_filter}), rollup='latest').between(1.5, 2.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.namespace.name']).publish(label='B')
+A = data('k8s.pod.phase', filter=(${local.k8s_tenant_filter}), rollup='latest').between(0, 1.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.namespace.name']).publish(label='A')
+C = data('k8s.pod.phase', filter=(${local.k8s_tenant_filter}), rollup='latest').between(2.5, 3.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.namespace.name']).publish(label='C')
+D = data('k8s.pod.phase', filter=(${local.k8s_tenant_filter}), rollup='latest').between(3.5, 4.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.namespace.name']).publish(label='D')
+E = data('k8s.pod.phase', filter=(${local.k8s_tenant_filter}), rollup='latest').between(4.5, 5.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.namespace.name']).publish(label='E')
 EOF
 
   sort_by = "+sf_originatingMetric"
@@ -393,7 +392,7 @@ resource "signalfx_time_chart" "k8s_memory_usage_bytes" {
   name        = "Memory usage (bytes)"
   description = ""
 
-  program_text = "A = data('container.memory.usage', filter=filter('k8s.node.name', '*')).sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.uid', 'k8s.pod.name', 'k8s.node.name']).publish(label='A')"
+  program_text = "A = data('container.memory.usage', filter=(${local.k8s_tenant_filter}) and filter('k8s.node.name', '*')).sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.uid', 'k8s.pod.name', 'k8s.node.name']).publish(label='A')"
 
   plot_type = "LineChart"
 
@@ -465,11 +464,11 @@ resource "signalfx_time_chart" "k8s_pod_phase_trend" {
   description = "Tracks pending, running, succeeded, failed, and unknown pod counts over time."
 
   program_text = <<-EOF
-A = data('k8s.pod.phase', rollup='latest').between(0, 1.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name', 'k8s.namespace.name']).publish(label='Pending')
-B = data('k8s.pod.phase', rollup='latest').between(1.5, 2.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name', 'k8s.namespace.name']).publish(label='Running')
-C = data('k8s.pod.phase', rollup='latest').between(2.5, 3.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name', 'k8s.namespace.name']).publish(label='Succeeded')
-D = data('k8s.pod.phase', rollup='latest').between(3.5, 4.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name', 'k8s.namespace.name']).publish(label='Failed')
-E = data('k8s.pod.phase', rollup='latest').between(4.5, 5.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name', 'k8s.namespace.name']).publish(label='Unknown')
+A = data('k8s.pod.phase', filter=(${local.k8s_tenant_filter}), rollup='latest').between(0, 1.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name', 'k8s.namespace.name']).publish(label='Pending')
+B = data('k8s.pod.phase', filter=(${local.k8s_tenant_filter}), rollup='latest').between(1.5, 2.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name', 'k8s.namespace.name']).publish(label='Running')
+C = data('k8s.pod.phase', filter=(${local.k8s_tenant_filter}), rollup='latest').between(2.5, 3.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name', 'k8s.namespace.name']).publish(label='Succeeded')
+D = data('k8s.pod.phase', filter=(${local.k8s_tenant_filter}), rollup='latest').between(3.5, 4.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name', 'k8s.namespace.name']).publish(label='Failed')
+E = data('k8s.pod.phase', filter=(${local.k8s_tenant_filter}), rollup='latest').between(4.5, 5.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name', 'k8s.namespace.name']).publish(label='Unknown')
 EOF
 
   plot_type                 = "LineChart"
@@ -498,9 +497,9 @@ EOF
 
 resource "signalfx_time_chart" "k8s_container_restarts" {
   name        = "Container restarts"
-  description = "Highlights restarting runner, hook, DIND, and platform containers by pod."
+  description = "Highlights restarting runner, hook, and DIND containers in Forge tenant namespaces."
 
-  program_text = "A = data('k8s.container.restarts', rollup='latest').sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name', 'k8s.container.name']).top(count=20).publish(label='A')"
+  program_text = "A = data('k8s.container.restarts', filter=(${local.k8s_tenant_filter}), rollup='latest').sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name', 'k8s.container.name']).top(count=20).publish(label='A')"
 
   plot_type        = "LineChart"
   axes_precision   = 0
@@ -527,101 +526,6 @@ resource "signalfx_time_chart" "k8s_container_restarts" {
   viz_options {
     display_name = "Container restarts"
     label        = "A"
-  }
-}
-
-resource "signalfx_time_chart" "k8s_otel_collector_pods" {
-  name        = "Splunk OTel collector pod health"
-  description = "Shows running, pending, failed, and unknown Splunk OpenTelemetry Collector pods."
-
-  program_text = <<-EOF
-A = data('k8s.pod.phase', filter=filter('k8s.namespace.name', 'splunk-otel-collector') and filter('k8s.pod.name', 'splunk-otel-collector*'), rollup='latest').between(1.5, 2.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name']).publish(label='Running')
-B = data('k8s.pod.phase', filter=filter('k8s.namespace.name', 'splunk-otel-collector') and filter('k8s.pod.name', 'splunk-otel-collector*'), rollup='latest').between(0, 1.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name']).publish(label='Pending')
-C = data('k8s.pod.phase', filter=filter('k8s.namespace.name', 'splunk-otel-collector') and filter('k8s.pod.name', 'splunk-otel-collector*'), rollup='latest').between(3.5, 5.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name']).publish(label='Failed or unknown')
-EOF
-
-  plot_type                 = "LineChart"
-  axes_precision            = 0
-  disable_sampling          = true
-  on_chart_legend_dimension = "plot_label"
-  time_range                = 900
-
-  axis_left {
-    label = "Collector pods"
-  }
-}
-
-resource "signalfx_time_chart" "k8s_node_pressure" {
-  name        = "Node pressure conditions"
-  description = "Shows active PID, memory, disk, or network pressure conditions by Kubernetes node."
-
-  program_text = <<-EOF
-A = data('k8s.node.condition', filter=(${local.k8s_cluster_filter}) and (filter('condition', 'PIDPressure') or filter('condition', 'MemoryPressure') or filter('condition', 'DiskPressure') or filter('condition', 'NetworkUnavailable')), rollup='latest').max(by=['k8s.cluster.name', 'k8s.node.name', 'condition']).publish(label='A')
-EOF
-
-  plot_type                 = "LineChart"
-  axes_precision            = 0
-  disable_sampling          = true
-  on_chart_legend_dimension = "condition"
-  time_range                = 86400
-
-  axis_left {
-    label = "Active condition"
-  }
-
-  viz_options {
-    display_name = "{{k8s.node.name}} - {{condition}}"
-    label        = "A"
-  }
-}
-
-resource "signalfx_time_chart" "k8s_otel_exporter_queue_utilization" {
-  name        = "OTel exporter queue utilization"
-  description = "Shows exporter queue size as a percentage of capacity. Sustained growth can precede telemetry loss."
-
-  program_text = <<-EOF
-queue_size = data('otelcol_exporter_queue_size', filter=(${local.k8s_otel_collector_filter}), rollup='latest').mean(by=['k8s.cluster.name', 'k8s.pod.name', 'exporter', 'data_type'])
-queue_capacity = data('otelcol_exporter_queue_capacity', filter=(${local.k8s_otel_collector_filter}), rollup='latest').mean(by=['k8s.cluster.name', 'k8s.pod.name', 'exporter', 'data_type'])
-queue_utilization = ((queue_size / queue_capacity) * 100).top(count=20).publish(label='A')
-EOF
-
-  plot_type                 = "LineChart"
-  axes_precision            = 2
-  disable_sampling          = true
-  on_chart_legend_dimension = "exporter"
-  time_range                = 86400
-
-  axis_left {
-    label     = "Percent"
-    max_value = 100
-    min_value = 0
-  }
-
-  viz_options {
-    display_name = "{{exporter}} {{data_type}} on {{k8s.pod.name}}"
-    label        = "A"
-    value_suffix = "%"
-  }
-}
-
-resource "signalfx_time_chart" "k8s_otel_telemetry_loss" {
-  name        = "OTel refused and failed metric points"
-  description = "Shows metric points refused or failed by receivers and errored by scrapers."
-
-  program_text = <<-EOF
-refused = data('otelcol_receiver_refused_metric_points', filter=(${local.k8s_otel_collector_filter}), rollup='rate').sum(by=['k8s.cluster.name', 'receiver']).publish(label='Refused')
-failed = data('otelcol_receiver_failed_metric_points', filter=(${local.k8s_otel_collector_filter}), rollup='rate').sum(by=['k8s.cluster.name', 'receiver']).publish(label='Failed')
-scraper_errors = data('otelcol_scraper_errored_metric_points', filter=(${local.k8s_otel_collector_filter}), rollup='rate').sum(by=['k8s.cluster.name', 'scraper']).publish(label='Scraper errors')
-EOF
-
-  plot_type                 = "ColumnChart"
-  axes_precision            = 2
-  disable_sampling          = true
-  on_chart_legend_dimension = "plot_label"
-  time_range                = 604800
-
-  axis_left {
-    label = "Metric points / sec"
   }
 }
 
@@ -785,42 +689,10 @@ resource "signalfx_dashboard" "runner_k8s" {
   }
 
   chart {
-    chart_id = signalfx_time_chart.k8s_otel_collector_pods.id
-    row      = 3
-    column   = 9
-    width    = 3
-    height   = 1
-  }
-
-  chart {
-    chart_id = signalfx_time_chart.k8s_node_pressure.id
-    row      = 4
-    column   = 0
-    width    = 6
-    height   = 1
-  }
-
-  chart {
-    chart_id = signalfx_time_chart.k8s_otel_exporter_queue_utilization.id
-    row      = 4
-    column   = 6
-    width    = 6
-    height   = 1
-  }
-
-  chart {
-    chart_id = signalfx_time_chart.k8s_otel_telemetry_loss.id
-    row      = 5
-    column   = 0
-    width    = 6
-    height   = 1
-  }
-
-  chart {
     chart_id = signalfx_time_chart.k8s_pod_status_reasons.id
-    row      = 5
-    column   = 6
-    width    = 6
+    row      = 4
+    column   = 0
+    width    = 12
     height   = 1
   }
 

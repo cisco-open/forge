@@ -4,22 +4,22 @@ This module creates Kubernetes pod and deployment charts for the ARC runner lane
 
 ## Why This Module Exists
 
-Kubernetes runner failures often show up as pending pods, restarts, resource pressure, or collector gaps. This dashboard provides the pod-level view that complements EKS and Karpenter logs.
+Kubernetes runner failures often show up as pending pods, restarts, or resource pressure. This dashboard provides the tenant pod-level view that complements the separate K8S Control Plane dashboard and EKS/Karpenter logs.
 
 ## What It Manages
 
 - Active, desired, available, and phase-based pod charts.
 - CPU, memory, network, and restart views.
 - Top pod lists for resource usage.
-- Node pressure and tenant pod shutdown/termination diagnostics.
-- OTel collector pod, exporter queue, and telemetry-loss visibility.
+- Tenant pod shutdown and termination diagnostics.
 - Dashboard placement in the shared Forge O11y group.
 
 ## Operational Notes
 
 - Use this when ARC scale sets see demand but jobs do not start.
 - Pending pods usually require checking Karpenter, taints/tolerations, resource requests, and storage.
-- Collector health affects dashboard reliability, so treat no-data signals seriously.
+- Every chart is explicitly restricted to configured Forge tenant namespaces and clusters.
+- Use the K8S Control Plane dashboard for Karpenter, networking, node, Prometheus, and collector health.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -55,10 +55,6 @@ No modules.
 | [signalfx_time_chart.k8s_memory_usage_bytes](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.k8s_memory_usage_pct](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.k8s_network_bytes_per_sec](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
-| [signalfx_time_chart.k8s_node_pressure](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
-| [signalfx_time_chart.k8s_otel_collector_pods](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
-| [signalfx_time_chart.k8s_otel_exporter_queue_utilization](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
-| [signalfx_time_chart.k8s_otel_telemetry_loss](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.k8s_pod_phase_trend](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.k8s_pod_status_reasons](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 
