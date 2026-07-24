@@ -2,7 +2,7 @@ resource "signalfx_time_chart" "provisioned_concurrent_executions_by_version" {
   name         = "Provisioned concurrent executions by version"
   description  = "The number of events that are being processed on provisioned concurrency. For each invocation of an alias or version with provisioned concurrency, Lambda emits the current count."
   program_text = <<-EOF
-A = data('ProvisionedConcurrentExecutions', filter=filter('stat', 'upper') and filter('Resource', '*') and filter('ExecutedVersion', '*')).sum(by=['ExecutedVersion']).publish(label='A')
+A = data('ProvisionedConcurrentExecutions', filter=filter('stat', 'upper') and filter('Resource', '*') and filter('ExecutedVersion', '*')).sum(by=['aws_tag_TenantName', 'Resource', 'ExecutedVersion']).publish(label='A')
 EOF
 
   plot_type   = "AreaChart"
@@ -28,7 +28,7 @@ resource "signalfx_time_chart" "provisioned_concurrency_invocations_by_version" 
   name         = "Provisioned concurrency invocations by version"
   description  = "The number of invocations that are run on provisioned concurrency. Lambda increments the count once for each invocation that runs on provisioned concurrency."
   program_text = <<-EOF
-A = data('ProvisionedConcurrencyInvocations', filter=filter('stat', 'sum') and filter('Resource', '*') and filter('ExecutedVersion', '*'), rollup='rate').sum(by=['ExecutedVersion']).publish(label='A')
+A = data('ProvisionedConcurrencyInvocations', filter=filter('stat', 'sum') and filter('Resource', '*') and filter('ExecutedVersion', '*'), rollup='rate').sum(by=['aws_tag_TenantName', 'Resource', 'ExecutedVersion']).publish(label='A')
 EOF
 
   plot_type   = "AreaChart"
@@ -54,6 +54,14 @@ EOF
     property = "FunctionName"
   }
   legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
+  }
+  legend_options_fields {
     enabled  = false
     property = "sf_originatingMetric"
   }
@@ -66,7 +74,7 @@ EOF
     property = "sf_metric"
   }
   legend_options_fields {
-    enabled  = false
+    enabled  = true
     property = "Resource"
   }
   legend_options_fields {
@@ -85,7 +93,7 @@ resource "signalfx_time_chart" "provisioned_concurrency_spillover_invocations_by
   name         = "Provisioned concurrency spillover invocations by version"
   description  = "The number of invocations that are run on nonprovisioned concurrency, when all provisioned concurrency is in use. For a version or alias that is configured to use provisioned concurrency, Lambda increments the count once for each invocation that runs on non-provisioned concurrency."
   program_text = <<-EOF
-A = data('ProvisionedConcurrencySpilloverInvocations', filter=filter('stat', 'sum') and filter('Resource', '*') and filter('ExecutedVersion', '*'), rollup='rate').sum(by=['ExecutedVersion']).publish(label='A')
+A = data('ProvisionedConcurrencySpilloverInvocations', filter=filter('stat', 'sum') and filter('Resource', '*') and filter('ExecutedVersion', '*'), rollup='rate').sum(by=['aws_tag_TenantName', 'Resource', 'ExecutedVersion']).publish(label='A')
 EOF
 
   plot_type   = "AreaChart"
@@ -111,6 +119,10 @@ EOF
     property = "FunctionName"
   }
   legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
+  }
+  legend_options_fields {
     enabled  = false
     property = "sf_originatingMetric"
   }
@@ -123,7 +135,7 @@ EOF
     property = "sf_metric"
   }
   legend_options_fields {
-    enabled  = false
+    enabled  = true
     property = "Resource"
   }
   legend_options_fields {
@@ -163,9 +175,9 @@ resource "signalfx_list_chart" "percent_invocations_by_version" {
   sort_by                 = "-value"
 
   program_text = <<-EOF
+A = data('Invocations', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('Resource', '*') and filter('ExecutedVersion', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName']).publish(label='A', enable=False)
+B = data('Invocations', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('Resource', '*') and filter('ExecutedVersion', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName', 'Resource', 'ExecutedVersion']).publish(label='B', enable=False)
 C = (B/A).scale(100).publish(label='C')
-A = data('Invocations', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('Resource', '*') and filter('ExecutedVersion', '*'), rollup='sum', extrapolation='zero').sum().publish(label='A', enable=False)
-B = data('Invocations', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('Resource', '*') and filter('ExecutedVersion', '*'), rollup='sum', extrapolation='zero').sum(by=['ExecutedVersion']).publish(label='B', enable=False)
 EOF
 
   time_range = 3600
@@ -177,6 +189,10 @@ EOF
   legend_options_fields {
     enabled  = true
     property = "ExecutedVersion"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
   }
   legend_options_fields {
     enabled  = false
@@ -195,7 +211,7 @@ EOF
     property = "namespace"
   }
   legend_options_fields {
-    enabled  = false
+    enabled  = true
     property = "Resource"
   }
   legend_options_fields {
@@ -226,7 +242,7 @@ resource "signalfx_time_chart" "errors_by_version" {
   name         = "Errors by version"
   description  = "The number of invocations that failed due to errors in the function (response code 4XX)."
   program_text = <<-EOF
-A = data('Errors', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('ExecutedVersion', '*') and filter('Resource', '*'), rollup='sum').sum(by=['ExecutedVersion']).publish(label='A')
+A = data('Errors', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('ExecutedVersion', '*') and filter('Resource', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'Resource', 'ExecutedVersion']).publish(label='A')
 EOF
 
   plot_type   = "AreaChart"
@@ -249,6 +265,10 @@ EOF
     property = "FunctionName"
   }
   legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
+  }
+  legend_options_fields {
     enabled  = false
     property = "sf_originatingMetric"
   }
@@ -261,7 +281,7 @@ EOF
     property = "sf_metric"
   }
   legend_options_fields {
-    enabled  = false
+    enabled  = true
     property = "Resource"
   }
   legend_options_fields {
@@ -312,7 +332,7 @@ resource "signalfx_list_chart" "avg_duration_by_version" {
   disable_sampling = true
 
   program_text = <<-EOF
-A = data('Duration', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'mean') and filter('Resource', '*') and filter('ExecutedVersion', '*'), rollup='average').sum(by=['ExecutedVersion']).publish(label='A')
+A = data('Duration', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'mean') and filter('Resource', '*') and filter('ExecutedVersion', '*'), rollup='average').mean(by=['aws_tag_TenantName', 'Resource', 'ExecutedVersion']).publish(label='A')
 EOF
 
   time_range = 3600
@@ -322,8 +342,12 @@ EOF
     property = "AWSUniqueId"
   }
   legend_options_fields {
-    enabled  = false
+    enabled  = true
     property = "FunctionName"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
   }
   legend_options_fields {
     enabled  = false
@@ -338,7 +362,7 @@ EOF
     property = "sf_metric"
   }
   legend_options_fields {
-    enabled  = false
+    enabled  = true
     property = "Resource"
   }
   legend_options_fields {
@@ -383,7 +407,7 @@ resource "signalfx_time_chart" "throttles_by_version" {
   name         = "Throttles by version"
   description  = "The number of Lambda function invocation attempts that were throttled due to invocation rates exceeding the customer’s concurrent limits (error code 429)."
   program_text = <<-EOF
-A = data('Throttles', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('Resource', '*') and filter('ExecutedVersion', '*'), rollup='sum').sum(by=['ExecutedVersion']).publish(label='A')
+A = data('Throttles', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('Resource', '*') and filter('ExecutedVersion', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'Resource', 'ExecutedVersion']).publish(label='A')
 EOF
 
   plot_type   = "AreaChart"
@@ -406,6 +430,10 @@ EOF
     property = "FunctionName"
   }
   legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
+  }
+  legend_options_fields {
     enabled  = false
     property = "sf_originatingMetric"
   }
@@ -418,7 +446,7 @@ EOF
     property = "sf_metric"
   }
   legend_options_fields {
-    enabled  = false
+    enabled  = true
     property = "Resource"
   }
   legend_options_fields {
@@ -446,7 +474,7 @@ resource "signalfx_time_chart" "invocations_by_version" {
   name         = "Invocations by version"
   description  = "The number of times a function is invoked in response to an event or invocation API call."
   program_text = <<-EOF
-A = data('Invocations', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('Resource', '*') and filter('ExecutedVersion', '*'), rollup='sum').sum(by=['ExecutedVersion']).publish(label='A')
+A = data('Invocations', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('Resource', '*') and filter('ExecutedVersion', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'Resource', 'ExecutedVersion']).publish(label='A')
 EOF
 
   plot_type   = "AreaChart"
@@ -485,7 +513,7 @@ EOF
     property = "sf_metric"
   }
   legend_options_fields {
-    enabled  = false
+    enabled  = true
     property = "Resource"
   }
   legend_options_fields {
@@ -679,8 +707,8 @@ resource "signalfx_dashboard" "lambda" {
     property               = "aws_tag_TenantName"
     alias                  = "ForgeCICD Tenant Name"
     description            = ""
-    values                 = []
-    value_required         = false
+    values                 = sort(var.tenant_names)
+    value_required         = length(var.tenant_names) > 0
     values_suggested       = sort(var.tenant_names)
     restricted_suggestions = true
   }

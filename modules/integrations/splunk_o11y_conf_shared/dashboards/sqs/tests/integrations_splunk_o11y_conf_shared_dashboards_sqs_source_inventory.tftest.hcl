@@ -17,6 +17,7 @@ run "integrations_splunk_o11y_conf_shared_dashboards_sqs_source_inventory" {
       "resource \"signalfx_list_chart\" \"top_queues_by_message_received\"",
       "resource \"signalfx_time_chart\" \"message_processing_trend\"",
       "resource \"signalfx_time_chart\" \"messages_deleted\"",
+      "resource \"signalfx_list_chart\" \"visible_backlog_by_tenant\"",
       "resource \"signalfx_time_chart\" \"dead_letter_backlog_trend\"",
       "resource \"signalfx_list_chart\" \"dead_letter_oldest_message_age\"",
       "resource \"signalfx_list_chart\" \"dead_letter_visible_messages\"",
@@ -30,7 +31,7 @@ run "integrations_splunk_o11y_conf_shared_dashboards_sqs_source_inventory" {
   }
 
   assert {
-    condition     = output.expected_literal_count == 13
-    error_message = "Source inventory must keep 13 module-specific Terraform blocks pinned."
+    condition     = output.expected_literal_count == 14
+    error_message = "Source inventory must keep 14 module-specific Terraform blocks pinned."
   }
 }

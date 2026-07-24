@@ -23,6 +23,7 @@ run "integrations_splunk_o11y_conf_shared_dashboards_ebs_source_inventory" {
       "resource \"signalfx_time_chart\" \"avg_queue_length\"",
       "resource \"signalfx_time_chart\" \"idle_time\"",
       "resource \"signalfx_time_chart\" \"write_ops\"",
+      "resource \"signalfx_time_chart\" \"volume_iops_exceeded\"",
       "resource \"signalfx_dashboard\" \"ebs\"",
     ]
   }
@@ -33,7 +34,7 @@ run "integrations_splunk_o11y_conf_shared_dashboards_ebs_source_inventory" {
   }
 
   assert {
-    condition     = output.expected_literal_count == 16
-    error_message = "Source inventory must keep 16 module-specific Terraform blocks pinned."
+    condition     = output.expected_literal_count == 17
+    error_message = "Source inventory must keep 17 module-specific Terraform blocks pinned."
   }
 }

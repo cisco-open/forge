@@ -19,7 +19,7 @@ resource "signalfx_list_chart" "top_queues_by_message_sent" {
   name        = "Top  queues by message sent"
   description = "Ranks queues by messages sent over the last 30 minutes"
 
-  program_text = "A = data('NumberOfMessagesSent', filter=filter('namespace', 'AWS/SQS') and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='30m').sum(by=['QueueName']).top(count=5).publish(label='A')"
+  program_text = "A = data('NumberOfMessagesSent', filter=filter('namespace', 'AWS/SQS') and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='30m').sum(by=['aws_tag_TenantName', 'QueueName']).top(count=5).publish(label='A')"
   sort_by      = "-value"
 
   disable_sampling        = false
@@ -32,6 +32,10 @@ resource "signalfx_list_chart" "top_queues_by_message_sent" {
   legend_options_fields {
     enabled  = true
     property = "QueueName"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
   }
   legend_options_fields {
     enabled  = false
@@ -53,7 +57,7 @@ resource "signalfx_time_chart" "sent_message_size" {
   description = "Tracks the size of sent messages over time."
 
   program_text = <<-EOF
-A = data('SentMessageSize', filter=filter('namespace', 'AWS/SQS') and filter('stat', 'mean'), rollup='average').mean(by=['QueueName']).publish(label='A')
+A = data('SentMessageSize', filter=filter('namespace', 'AWS/SQS') and filter('stat', 'mean'), rollup='average').mean(by=['aws_tag_TenantName', 'QueueName']).publish(label='A')
 EOF
 
   plot_type        = "LineChart"
@@ -92,6 +96,10 @@ EOF
   legend_options_fields {
     enabled  = true
     property = "QueueName"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
   }
   legend_options_fields {
     enabled  = false
@@ -160,7 +168,7 @@ resource "signalfx_list_chart" "oldest_message_age" {
   name        = "Oldest message age"
   description = "Displays the max age of the oldest unprocessed message in seconds"
 
-  program_text = "A = data('ApproximateAgeOfOldestMessage', filter=filter('namespace', 'AWS/SQS') and filter('stat', 'mean'), rollup='latest').max(by=['QueueName']).publish(label='A')"
+  program_text = "A = data('ApproximateAgeOfOldestMessage', filter=filter('namespace', 'AWS/SQS') and filter('stat', 'mean'), rollup='latest').max(by=['aws_tag_TenantName', 'QueueName']).publish(label='A')"
 
   disable_sampling    = false
   hide_missing_values = true
@@ -185,6 +193,10 @@ resource "signalfx_list_chart" "oldest_message_age" {
   legend_options_fields {
     enabled  = true
     property = "QueueName"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
   }
   legend_options_fields {
     enabled  = false
@@ -231,7 +243,7 @@ resource "signalfx_list_chart" "top_queues_by_message_received" {
   name        = "Top queues by message received"
   description = "Ranks queues by messages received over the last 30 minutes"
 
-  program_text = "A = data('NumberOfMessagesReceived', filter=filter('namespace', 'AWS/SQS') and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='30m').sum(by=['QueueName']).top(count=5).publish(label='A')"
+  program_text = "A = data('NumberOfMessagesReceived', filter=filter('namespace', 'AWS/SQS') and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='30m').sum(by=['aws_tag_TenantName', 'QueueName']).top(count=5).publish(label='A')"
 
   sort_by = "-value"
 
@@ -245,6 +257,10 @@ resource "signalfx_list_chart" "top_queues_by_message_received" {
   legend_options_fields {
     enabled  = true
     property = "QueueName"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
   }
   legend_options_fields {
     enabled  = false
@@ -339,6 +355,34 @@ resource "signalfx_time_chart" "messages_deleted" {
     display_name = "Number of messages deleted"
     label        = "A"
     value_suffix = "No of messages"
+  }
+}
+
+resource "signalfx_list_chart" "visible_backlog_by_tenant" {
+  name        = "Visible backlog by tenant"
+  description = "Ranks Forge tenants by messages currently waiting for processing."
+
+  program_text = "A = data('ApproximateNumberOfMessagesVisible', filter=filter('namespace', 'AWS/SQS') and filter('stat', 'mean'), rollup='latest').sum(by=['aws_tag_TenantName']).publish(label='A')"
+  sort_by      = "-value"
+
+  hide_missing_values     = true
+  max_precision           = 0
+  secondary_visualization = "Sparkline"
+  time_range              = 3600
+  unit_prefix             = "Metric"
+
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
+  }
+
+  viz_options {
+    display_name = "Visible messages"
+    label        = "A"
   }
 }
 
@@ -455,8 +499,8 @@ resource "signalfx_dashboard" "sqs" {
     property               = "aws_tag_TenantName"
     alias                  = "ForgeCICD Tenant Name"
     description            = ""
-    values                 = []
-    value_required         = false
+    values                 = sort(var.tenant_names)
+    value_required         = length(var.tenant_names) > 0
     values_suggested       = sort(var.tenant_names)
     restricted_suggestions = true
   }
@@ -542,9 +586,17 @@ resource "signalfx_dashboard" "sqs" {
 
   chart {
     chart_id = signalfx_time_chart.empty_receives.id
+    column   = 6
+    row      = 4
+    width    = 6
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_list_chart.visible_backlog_by_tenant.id
     column   = 0
     row      = 4
-    width    = 12
+    width    = 6
     height   = 1
   }
 

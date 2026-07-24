@@ -29,8 +29,9 @@ run "sqs_dashboard_contract" {
       && signalfx_time_chart.message_processing_trend.time_range == 3600
       && strcontains(signalfx_list_chart.top_queues_by_message_sent.program_text, ".sum(over='30m')")
       && strcontains(signalfx_list_chart.top_queues_by_message_received.program_text, ".sum(over='30m')")
-      && strcontains(signalfx_list_chart.oldest_message_age.program_text, ".max(by=['QueueName'])")
+      && strcontains(signalfx_list_chart.oldest_message_age.program_text, ".max(by=['aws_tag_TenantName', 'QueueName'])")
       && signalfx_time_chart.message_processing_trend.name == "Message processing trend"
+      && strcontains(signalfx_list_chart.visible_backlog_by_tenant.program_text, ".sum(by=['aws_tag_TenantName'])")
       && strcontains(signalfx_time_chart.dead_letter_backlog_trend.program_text, "ApproximateNumberOfMessagesVisible")
       && signalfx_list_chart.dead_letter_visible_messages.sort_by == "-value"
     )
@@ -45,7 +46,9 @@ run "sqs_dashboard_wiring_contract" {
     condition = (
       signalfx_dashboard.sqs.name == "SQS"
       && signalfx_dashboard.sqs.dashboard_group == "forge-dashboard-group"
-      && length(signalfx_dashboard.sqs.chart) == 12
+      && signalfx_dashboard.sqs.variable[0].values == toset(["tenant-a", "tenant-b"])
+      && signalfx_dashboard.sqs.variable[0].value_required
+      && length(signalfx_dashboard.sqs.chart) == 13
     )
     error_message = "SQS dashboard must keep its name, group input, and chart count."
   }

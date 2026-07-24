@@ -30,6 +30,7 @@ run "forge_impact_dashboard_contract" {
     condition = (
       signalfx_list_chart.runner_totals_by_runtime.name == "Total runners by runtime over selected window"
       && strcontains(signalfx_list_chart.runner_totals_by_runtime.program_text, "CPUUtilization")
+      && strcontains(signalfx_list_chart.runner_totals_by_runtime.program_text, "filter('aws_tag_TenantName', 'tenant-a') or filter('aws_tag_TenantName', 'tenant-b')")
       && strcontains(signalfx_list_chart.runner_totals_by_runtime.program_text, "filter('k8s.namespace.name', 'tenant-a') or filter('k8s.namespace.name', 'tenant-b')")
       && signalfx_list_chart.active_ec2_runners_by_tenant.name == "Active EC2 runners by tenant"
       && strcontains(signalfx_list_chart.k8s_runners_by_tenant.program_text, "container.memory.usage")
