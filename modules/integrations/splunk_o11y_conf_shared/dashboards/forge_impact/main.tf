@@ -492,6 +492,9 @@ resource "signalfx_dashboard" "runner_usage" {
   description     = "Forge EC2 and Kubernetes runner adoption, active capacity, and runtime estimates by tenant."
   dashboard_group = var.dashboard_group
 
+  # Release charts from the legacy combined dashboard before assigning them here.
+  depends_on = [signalfx_dashboard.forge_impact]
+
   lifecycle {
     replace_triggered_by = [
       terraform_data.runner_usage_dashboard_parent,

@@ -20,6 +20,10 @@ EOF
   time_range              = 86400
 
   color_scale {
+    color = "blue"
+    lt    = 85
+  }
+  color_scale {
     color = "orange"
     gte   = 85
     lt    = 95
@@ -94,6 +98,10 @@ EOF
     gte   = 10
     lt    = 20
   }
+  color_scale {
+    color = "blue"
+    gte   = 20
+  }
 
   legend_options_fields {
     enabled  = true
@@ -153,6 +161,10 @@ EOF
   sort_by                 = "-value"
   time_range              = 86400
 
+  color_scale {
+    color = "blue"
+    lt    = 85
+  }
   color_scale {
     color = "orange"
     gte   = 85
@@ -225,6 +237,10 @@ EOF
     color = "yellow"
     gte   = 20
     lt    = 40
+  }
+  color_scale {
+    color = "blue"
+    gte   = 40
   }
 
   legend_options_fields {
@@ -378,6 +394,10 @@ EOF
   sort_by                 = "-value"
   time_range              = 86400
 
+  color_scale {
+    color = "blue"
+    lt    = 80
+  }
   color_scale {
     color = "orange"
     gte   = 80

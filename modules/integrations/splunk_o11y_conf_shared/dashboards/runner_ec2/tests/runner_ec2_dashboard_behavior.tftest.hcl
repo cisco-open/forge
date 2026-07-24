@@ -61,14 +61,24 @@ run "runner_ec2_dashboard_contract" {
       && !strcontains(signalfx_time_chart.chart_memory_utilization.program_text, "aws_eks")
       && strcontains(signalfx_list_chart.job_runs_high_peak_cpu.program_text, "filter('aws_tag_ghr_job_url', '*')")
       && strcontains(signalfx_list_chart.job_runs_high_peak_cpu.program_text, ".above(85, inclusive=True).top(count=20)")
+      && length(signalfx_list_chart.job_runs_high_peak_cpu.color_scale) == 3
+      && one([for scale in signalfx_list_chart.job_runs_high_peak_cpu.color_scale : scale.lt if scale.color == "blue"]) == 85
       && strcontains(signalfx_list_chart.job_runs_low_peak_cpu.program_text, ".below(20).bottom(count=20)")
+      && length(signalfx_list_chart.job_runs_low_peak_cpu.color_scale) == 3
+      && one([for scale in signalfx_list_chart.job_runs_low_peak_cpu.color_scale : scale.gte if scale.color == "blue"]) == 20
       && strcontains(signalfx_list_chart.job_runs_high_peak_memory.program_text, "system.memory.usage")
       && strcontains(signalfx_list_chart.job_runs_high_peak_memory.program_text, ".above(85, inclusive=True).top(count=20)")
+      && length(signalfx_list_chart.job_runs_high_peak_memory.color_scale) == 3
+      && one([for scale in signalfx_list_chart.job_runs_high_peak_memory.color_scale : scale.lt if scale.color == "blue"]) == 85
       && strcontains(signalfx_list_chart.job_runs_low_peak_memory.program_text, ".below(40).bottom(count=20)")
+      && length(signalfx_list_chart.job_runs_low_peak_memory.color_scale) == 3
+      && one([for scale in signalfx_list_chart.job_runs_low_peak_memory.color_scale : scale.gte if scale.color == "blue"]) == 40
       && strcontains(signalfx_list_chart.runner_classes_by_mean_peak_cpu.program_text, "aws_tag_ghr_runner_labels")
       && strcontains(signalfx_list_chart.runner_classes_by_mean_peak_memory.program_text, "aws_instance_type")
       && strcontains(signalfx_list_chart.job_runs_high_peak_filesystem.program_text, "system.filesystem.usage")
       && strcontains(signalfx_list_chart.job_runs_high_peak_filesystem.program_text, ".above(80, inclusive=True).top(count=20)")
+      && length(signalfx_list_chart.job_runs_high_peak_filesystem.color_scale) == 3
+      && one([for scale in signalfx_list_chart.job_runs_high_peak_filesystem.color_scale : scale.lt if scale.color == "blue"]) == 80
     )
     error_message = "EC2 runner charts must keep host health plus job-aware CPU, memory, filesystem, and runner-class right-sizing behavior."
   }

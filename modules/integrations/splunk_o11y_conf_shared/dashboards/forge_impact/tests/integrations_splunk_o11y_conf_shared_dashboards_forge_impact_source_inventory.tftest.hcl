@@ -37,6 +37,7 @@ run "integrations_splunk_o11y_conf_shared_dashboards_forge_impact_source_invento
       "terraform_data.runner_usage_dashboard_parent,",
       "resource \"signalfx_dashboard\" \"forge_impact\"",
       "resource \"signalfx_dashboard\" \"runner_usage\"",
+      "depends_on = [signalfx_dashboard.forge_impact]",
     ]
   }
 
@@ -46,8 +47,8 @@ run "integrations_splunk_o11y_conf_shared_dashboards_forge_impact_source_invento
   }
 
   assert {
-    condition     = output.expected_literal_count == 29
-    error_message = "Source inventory must keep 29 module-specific Terraform and lifecycle literals pinned."
+    condition     = output.expected_literal_count == 30
+    error_message = "Source inventory must keep 30 module-specific Terraform and lifecycle literals pinned."
   }
 }
 
