@@ -62,6 +62,7 @@ total = data('system.memory.usage', filter=(${local.ec2_tenant_filter}) and filt
 A = ((used / total) * 100).max(by=['aws_tag_TenantName']).top(count=10).publish(label='A')
 EOF
 
+  color_by                = "Scale"
   hide_missing_values     = true
   max_precision           = 2
   secondary_visualization = "Sparkline"
@@ -97,6 +98,7 @@ resource "signalfx_list_chart" "top_tenants_ec2_cpu" {
 
   program_text = "A = data('CPUUtilization', filter=(${local.ec2_tenant_filter}) and filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), rollup='latest').mean(by=['aws_tag_TenantName', 'aws_instance_id']).max(by=['aws_tag_TenantName']).top(count=10).publish(label='A')"
 
+  color_by                = "Scale"
   hide_missing_values     = true
   max_precision           = 2
   secondary_visualization = "Sparkline"
