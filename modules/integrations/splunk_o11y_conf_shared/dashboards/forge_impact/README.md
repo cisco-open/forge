@@ -1,13 +1,22 @@
 # Splunk Observability Forge Impact Dashboard
 
-This module creates the high-level Forge usage and impact dashboard.
+This module creates the high-level Forge tenant issue and usage dashboard.
 
 ## Why This Module Exists
 
-The platform needs to show adoption and workload shape across tenants, not just raw health. This dashboard summarizes EC2 and Kubernetes runner usage, active capacity, runner hours, and runtime distribution.
+Operators need one place to identify which tenants are most affected before
+opening a subsystem dashboard. The dashboard starts with top-10 tenant
+leaderboards for actionable Lambda, EC2, Kubernetes, SQS, DynamoDB, and EBS
+signals, then retains the adoption and workload-shape section.
 
 ## What It Manages
 
+- Top tenants by Lambda errors and throttles.
+- Top tenants by EC2 runner memory and CPU utilization.
+- Top tenant namespaces by pending, failed, or unknown Kubernetes pods.
+- Top tenants by SQS and dead-letter backlog.
+- Top tenants by DynamoDB throttles and system errors.
+- Top tenants by EBS queue length.
 - Runner totals and minutes by runtime.
 - Active EC2 runners by tenant and instance type.
 - EC2 runner hours and total runners by tenant.
@@ -16,9 +25,14 @@ The platform needs to show adoption and workload shape across tenants, not just 
 
 ## Operational Notes
 
-- Use this for capacity planning and stakeholder reporting.
+- Start here during incidents to identify affected tenants and the subsystem
+  that needs deeper investigation.
+- Tenant properties remain visible in each leaderboard so the same identity can
+  be used in the matching subsystem dashboard.
+- Use the lower section for capacity planning and stakeholder reporting.
 - Tenant names must be consistently emitted as dimensions.
-- This dashboard explains platform usage; use subsystem dashboards for incident triage.
+- Use subsystem dashboards for resource-level diagnosis after identifying the
+  tenant and issue category here.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -32,7 +46,7 @@ The platform needs to show adoption and workload shape across tenants, not just 
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.3 |
+| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.33.0 |
 | <a name="provider_terraform"></a> [terraform](#provider\_terraform) | n/a |
 
 ## Modules
@@ -52,6 +66,17 @@ No modules.
 | [signalfx_list_chart.k8s_runners_by_tenant](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
 | [signalfx_list_chart.runner_minutes_by_runtime](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
 | [signalfx_list_chart.runner_totals_by_runtime](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
+| [signalfx_list_chart.top_tenants_dynamodb_system_errors](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
+| [signalfx_list_chart.top_tenants_dynamodb_throttles](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
+| [signalfx_list_chart.top_tenants_ebs_queue_length](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
+| [signalfx_list_chart.top_tenants_ec2_cpu](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
+| [signalfx_list_chart.top_tenants_ec2_memory](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
+| [signalfx_list_chart.top_tenants_k8s_failed_pods](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
+| [signalfx_list_chart.top_tenants_k8s_pending_pods](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
+| [signalfx_list_chart.top_tenants_lambda_errors](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
+| [signalfx_list_chart.top_tenants_lambda_throttles](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
+| [signalfx_list_chart.top_tenants_sqs_backlog](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
+| [signalfx_list_chart.top_tenants_sqs_dlq_backlog](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
 | [signalfx_list_chart.total_ec2_runners_by_tenant](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
 | [signalfx_list_chart.total_k8s_runners_by_tenant](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
 | [signalfx_time_chart.active_ec2_runners_by_tenant_and_instance_type](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
@@ -62,6 +87,7 @@ No modules.
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_dashboard_group"></a> [dashboard\_group](#input\_dashboard\_group) | Dashboard group name for organizing dashboards. | `string` | n/a | yes |
+| <a name="input_dynamic_variables"></a> [dynamic\_variables](#input\_dynamic\_variables) | Additional dynamic variable definitions for the dashboard. | <pre>list(object({<br/>    property               = string<br/>    alias                  = string<br/>    description            = string<br/>    values                 = list(string)<br/>    value_required         = bool<br/>    values_suggested       = list(string)<br/>    restricted_suggestions = bool<br/>  }))</pre> | `[]` | no |
 | <a name="input_tenant_names"></a> [tenant\_names](#input\_tenant\_names) | Tenant namespaces that run Forge ARC runners. | `list(string)` | n/a | yes |
 
 ## Outputs
