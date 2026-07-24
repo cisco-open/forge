@@ -48,11 +48,18 @@ run "integrations_splunk_o11y_conf_shared_interface_contract" {
       "runner_ec2 = object({",
       "billing = object({",
       "sqs = object({",
+      "s3 = object({",
       "ebs = object({",
       "lambda = object({",
+      "lambda_control_plane = object({",
+      "kinesis_control_plane = object({",
+      "sqs_control_plane = object({",
+      "s3_control_plane = object({",
+      "aws_service_limits = object({",
       "dynamodb = object({",
-      "forge_impact = optional(object({",
-      "}))",
+      "dependency_probes = object({",
+      "aws_regional_health = object({",
+      "forge_impact = object({",
       "description = \"Variables for Dashboards\"",
       "variable \"default_tags\"",
       "type        = map(string)",
@@ -146,7 +153,7 @@ run "integrations_splunk_o11y_conf_shared_interface_contract" {
     condition = (
       output.expected_input_variable_count == 13
       && output.expected_output_value_count == 0
-      && output.expected_interface_literal_count == 90
+      && output.expected_interface_literal_count == 97
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

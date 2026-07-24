@@ -53,6 +53,10 @@ variables {
       tenant_names      = ["tenant-a"]
       dynamic_variables = []
     }
+    s3 = {
+      tenant_names      = ["tenant-a"]
+      dynamic_variables = []
+    }
     ebs = {
       tenant_names      = ["tenant-a"]
       dynamic_variables = []
@@ -61,9 +65,143 @@ variables {
       tenant_names      = ["tenant-a"]
       dynamic_variables = []
     }
+    lambda_control_plane = {
+      dynamic_variables = [
+        {
+          property               = "aws_account_id"
+          alias                  = "AWS account"
+          description            = "Forge AWS accounts."
+          values                 = []
+          value_required         = false
+          values_suggested       = ["111111111111"]
+          restricted_suggestions = true
+        },
+        {
+          property               = "aws_region"
+          alias                  = "AWS region"
+          description            = "Forge AWS regions."
+          values                 = []
+          value_required         = false
+          values_suggested       = ["us-east-1"]
+          restricted_suggestions = true
+        },
+        {
+          property               = "aws_tag_ProductFamilyName"
+          alias                  = "Product family"
+          description            = "Forge AWS product family."
+          values                 = []
+          value_required         = false
+          values_suggested       = ["Forge MT"]
+          restricted_suggestions = true
+        },
+      ]
+    }
+    kinesis_control_plane = {
+      dynamic_variables = [
+        {
+          property               = "aws_account_id"
+          alias                  = "AWS account"
+          description            = "Forge AWS accounts."
+          values                 = []
+          value_required         = false
+          values_suggested       = ["111111111111"]
+          restricted_suggestions = true
+        },
+        {
+          property               = "aws_region"
+          alias                  = "AWS region"
+          description            = "Forge AWS regions."
+          values                 = []
+          value_required         = false
+          values_suggested       = ["us-east-1"]
+          restricted_suggestions = true
+        },
+        {
+          property               = "aws_tag_ProductFamilyName"
+          alias                  = "Product family"
+          description            = "Forge AWS product family."
+          values                 = []
+          value_required         = false
+          values_suggested       = ["Forge MT"]
+          restricted_suggestions = true
+        },
+      ]
+    }
+    sqs_control_plane = {
+      dynamic_variables = [
+        {
+          property               = "aws_account_id"
+          alias                  = "AWS account"
+          description            = "Forge AWS accounts."
+          values                 = []
+          value_required         = false
+          values_suggested       = ["111111111111"]
+          restricted_suggestions = true
+        },
+        {
+          property               = "aws_region"
+          alias                  = "AWS region"
+          description            = "Forge AWS regions."
+          values                 = []
+          value_required         = false
+          values_suggested       = ["us-east-1"]
+          restricted_suggestions = true
+        },
+        {
+          property               = "aws_tag_ProductFamilyName"
+          alias                  = "Product family"
+          description            = "Forge AWS product family."
+          values                 = []
+          value_required         = false
+          values_suggested       = ["Forge MT"]
+          restricted_suggestions = true
+        },
+      ]
+    }
+    s3_control_plane = {
+      dynamic_variables = []
+    }
+    aws_service_limits = {
+      dynamic_variables = []
+    }
     dynamodb = {
       tenant_names      = ["tenant-a"]
       dynamic_variables = []
+    }
+    dependency_probes = {
+      tenant_names      = ["tenant-a"]
+      dynamic_variables = []
+    }
+    aws_regional_health = {
+      dynamic_variables = [
+        {
+          property               = "aws_account_id"
+          alias                  = "AWS account"
+          description            = "Forge AWS accounts."
+          values                 = []
+          value_required         = false
+          values_suggested       = ["111111111111"]
+          restricted_suggestions = true
+        },
+        {
+          property               = "aws_region"
+          alias                  = "AWS region"
+          description            = "Forge AWS regions."
+          values                 = []
+          value_required         = false
+          values_suggested       = ["us-east-1"]
+          restricted_suggestions = true
+        },
+        {
+          property               = "aws_tag_ProductFamilyName"
+          alias                  = "Product family"
+          description            = "Forge AWS product family."
+          values                 = []
+          value_required         = false
+          values_suggested       = ["Forge MT"]
+          restricted_suggestions = true
+        },
+      ]
     }
     forge_impact = {
       tenant_names      = ["tenant-a"]

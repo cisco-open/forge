@@ -59,6 +59,51 @@ module "dashboard_lambda" {
   dashboard_group   = signalfx_dashboard_group.forgecicd.id
 }
 
+module "dashboard_lambda_control_plane" {
+  source = "./dashboards/lambda_control_plane"
+
+  providers = {
+    signalfx = signalfx
+  }
+
+  dynamic_variables = var.dashboard_variables.lambda_control_plane.dynamic_variables
+  dashboard_group   = signalfx_dashboard_group.forgecicd.id
+}
+
+module "dashboard_kinesis_control_plane" {
+  source = "./dashboards/kinesis_control_plane"
+
+  providers = {
+    signalfx = signalfx
+  }
+
+  dynamic_variables = var.dashboard_variables.kinesis_control_plane.dynamic_variables
+  dashboard_group   = signalfx_dashboard_group.forgecicd.id
+}
+
+module "dashboard_dependency_probes" {
+  source = "./dashboards/dependency_probes"
+
+  providers = {
+    signalfx = signalfx
+  }
+
+  tenant_names      = var.dashboard_variables.dependency_probes.tenant_names
+  dynamic_variables = var.dashboard_variables.dependency_probes.dynamic_variables
+  dashboard_group   = signalfx_dashboard_group.forgecicd.id
+}
+
+module "dashboard_aws_regional_health" {
+  source = "./dashboards/aws_regional_health"
+
+  providers = {
+    signalfx = signalfx
+  }
+
+  dynamic_variables = var.dashboard_variables.aws_regional_health.dynamic_variables
+  dashboard_group   = signalfx_dashboard_group.forgecicd.id
+}
+
 # Messaging and storage
 module "dashboard_sqs" {
   source = "./dashboards/sqs"
@@ -69,6 +114,40 @@ module "dashboard_sqs" {
 
   tenant_names      = var.dashboard_variables.sqs.tenant_names
   dynamic_variables = var.dashboard_variables.sqs.dynamic_variables
+  dashboard_group   = signalfx_dashboard_group.forgecicd.id
+}
+
+module "dashboard_sqs_control_plane" {
+  source = "./dashboards/sqs_control_plane"
+
+  providers = {
+    signalfx = signalfx
+  }
+
+  dynamic_variables = var.dashboard_variables.sqs_control_plane.dynamic_variables
+  dashboard_group   = signalfx_dashboard_group.forgecicd.id
+}
+
+module "dashboard_s3" {
+  source = "./dashboards/s3"
+
+  providers = {
+    signalfx = signalfx
+  }
+
+  tenant_names      = var.dashboard_variables.s3.tenant_names
+  dynamic_variables = var.dashboard_variables.s3.dynamic_variables
+  dashboard_group   = signalfx_dashboard_group.forgecicd.id
+}
+
+module "dashboard_s3_control_plane" {
+  source = "./dashboards/s3_control_plane"
+
+  providers = {
+    signalfx = signalfx
+  }
+
+  dynamic_variables = var.dashboard_variables.s3_control_plane.dynamic_variables
   dashboard_group   = signalfx_dashboard_group.forgecicd.id
 }
 
@@ -103,13 +182,9 @@ module "dashboard_forge_impact" {
     signalfx = signalfx
   }
 
-  tenant_names      = try(var.dashboard_variables.forge_impact.tenant_names, var.dashboard_variables.runner_k8s.tenant_names)
-  dynamic_variables = try(var.dashboard_variables.forge_impact.dynamic_variables, [])
-  cluster_names = distinct(flatten([
-    for variable in var.dashboard_variables.runner_k8s.dynamic_variables :
-    variable.property == "k8s.cluster.name" ? variable.values : []
-  ]))
-  dashboard_group = signalfx_dashboard_group.forgecicd.id
+  tenant_names      = var.dashboard_variables.forge_impact.tenant_names
+  dynamic_variables = var.dashboard_variables.forge_impact.dynamic_variables
+  dashboard_group   = signalfx_dashboard_group.forgecicd.id
 }
 
 # Cost and usage
@@ -134,5 +209,16 @@ module "dashboard_billing" {
 
   tenant_names      = var.dashboard_variables.billing.tenant_names
   dynamic_variables = var.dashboard_variables.billing.dynamic_variables
+  dashboard_group   = signalfx_dashboard_group.forgecicd.id
+}
+
+module "dashboard_aws_service_limits" {
+  source = "./dashboards/aws_service_limits"
+
+  providers = {
+    signalfx = signalfx
+  }
+
+  dynamic_variables = var.dashboard_variables.aws_service_limits.dynamic_variables
   dashboard_group   = signalfx_dashboard_group.forgecicd.id
 }

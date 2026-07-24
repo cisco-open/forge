@@ -21,6 +21,8 @@ run "integrations_splunk_o11y_conf_shared_dashboards_dynamodb_source_inventory" 
       "resource \"signalfx_time_chart\" \"throttled_requests_ts\"",
       "resource \"signalfx_time_chart\" \"write_capacity_percentage\"",
       "resource \"signalfx_single_value_chart\" \"user_errors_single\"",
+      "resource \"terraform_data\" \"dashboard_parent\"",
+      "terraform_data.dashboard_parent,",
       "resource \"signalfx_dashboard\" \"dynamodb\"",
     ]
   }
@@ -31,7 +33,7 @@ run "integrations_splunk_o11y_conf_shared_dashboards_dynamodb_source_inventory" 
   }
 
   assert {
-    condition     = output.expected_literal_count == 14
-    error_message = "Source inventory must keep 14 module-specific Terraform blocks pinned."
+    condition     = output.expected_literal_count == 16
+    error_message = "Source inventory must keep 16 module-specific Terraform and lifecycle literals pinned."
   }
 }

@@ -274,10 +274,20 @@ EOF
   }
 }
 
+resource "terraform_data" "dashboard_parent" {
+  triggers_replace = var.dashboard_group
+}
+
 resource "signalfx_dashboard" "billing" {
   name            = "Forge Billing and Cost - AWS"
   description     = "AWS billing cost and net cost for Forge, separated from OpenCost allocation estimates."
   dashboard_group = var.dashboard_group
+
+  lifecycle {
+    replace_triggered_by = [
+      terraform_data.dashboard_parent,
+    ]
+  }
 
   time_range = "-31d"
 

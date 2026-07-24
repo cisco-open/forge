@@ -553,10 +553,20 @@ EOF
   }
 }
 
+resource "terraform_data" "dashboard_parent" {
+  triggers_replace = var.dashboard_group
+}
+
 resource "signalfx_dashboard" "runner_k8s" {
   name            = "Forge Tenant - K8S Runners"
   description     = "Kubernetes-based runners: pod states, CPU, memory, and network health."
   dashboard_group = var.dashboard_group
+
+  lifecycle {
+    replace_triggered_by = [
+      terraform_data.dashboard_parent,
+    ]
+  }
 
   variable {
     property               = "k8s.namespace.name"

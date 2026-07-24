@@ -494,11 +494,21 @@ EOF
 }
 
 
+resource "terraform_data" "dashboard_parent" {
+  triggers_replace = var.dashboard_group
+}
+
 resource "signalfx_dashboard" "dynamodb" {
   name        = "Forge Tenant - DynamoDB"
   description = "Forge CICD DynamoDB table performance, capacity, and throttling."
 
   dashboard_group = var.dashboard_group
+
+  lifecycle {
+    replace_triggered_by = [
+      terraform_data.dashboard_parent,
+    ]
+  }
 
   variable {
     property               = "aws_tag_TenantName"
