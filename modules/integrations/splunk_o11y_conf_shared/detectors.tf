@@ -18,3 +18,40 @@ module "detector_k8s" {
   team                      = var.team
   tenant_names              = var.dashboard_variables.runner_k8s.tenant_names
 }
+
+module "detector_dependency_probes" {
+  source = "./detectors/dependency_probes"
+
+  providers = {
+    signalfx = signalfx
+  }
+
+  detector_config = {
+    failure_duration                   = "10m"
+    no_data_duration                   = "15m"
+    no_data_fill_duration              = "4h"
+    rate_limit_duration                = "10m"
+    rate_limit_remaining_pct_threshold = 10
+  }
+  detector_name_prefix = var.detector_name_prefix
+  detector_notifications = (
+    local.detector_notifications
+  )
+  team         = var.team
+  tenant_names = var.dashboard_variables.dependency_probes.tenant_names
+}
+
+module "detector_aws_regional_health" {
+  source = "./detectors/aws_regional_health"
+
+  providers = {
+    signalfx = signalfx
+  }
+
+  detector_name_prefix = var.detector_name_prefix
+  detector_notifications = (
+    local.detector_notifications
+  )
+  dynamic_variables = var.dashboard_variables.aws_regional_health.dynamic_variables
+  team              = var.team
+}

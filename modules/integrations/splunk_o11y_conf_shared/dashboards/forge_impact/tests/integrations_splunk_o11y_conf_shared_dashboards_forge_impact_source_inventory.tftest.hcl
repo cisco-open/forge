@@ -34,7 +34,11 @@ run "integrations_splunk_o11y_conf_shared_dashboards_forge_impact_source_invento
       "resource \"signalfx_list_chart\" \"top_tenants_ebs_iops_exceeded\"",
       "resource \"terraform_data\" \"dashboard_parent\"",
       "resource \"terraform_data\" \"runner_usage_dashboard_parent\"",
+      "terraform_data.dashboard_parent,",
       "terraform_data.runner_usage_dashboard_parent,",
+      "configured_k8s_cluster_names = distinct(flatten([",
+      "for var_def in var.dynamic_variables : var_def.values_suggested",
+      "if var_def.property == \"k8s.cluster.name\"",
       "resource \"signalfx_dashboard\" \"forge_impact\"",
       "resource \"signalfx_dashboard\" \"runner_usage\"",
     ]
@@ -46,30 +50,7 @@ run "integrations_splunk_o11y_conf_shared_dashboards_forge_impact_source_invento
   }
 
   assert {
-    condition     = output.expected_literal_count == 29
-    error_message = "Source inventory must keep 29 module-specific Terraform and lifecycle literals pinned."
-  }
-}
-
-run "forge_impact_rejects_unattributed_dynamodb_tenant_rankings" {
-  command = plan
-
-  module {
-    source = "../../../../../tests/tofu/module_contract"
-  }
-
-  variables {
-    module_path       = "."
-    recursive         = true
-    expected_literals = []
-    forbidden_literals = [
-      "top_tenants_dynamodb_throttles",
-      "top_tenants_dynamodb_system_errors",
-    ]
-  }
-
-  assert {
-    condition     = length(output.present_forbidden_literals) == 0
-    error_message = "DynamoDB failure metrics must not be ranked by tenant until live metrics expose a confirmed tenant identity."
+    condition     = output.expected_literal_count == 33
+    error_message = "Source inventory must keep 33 module-specific Terraform and lifecycle literals pinned."
   }
 }

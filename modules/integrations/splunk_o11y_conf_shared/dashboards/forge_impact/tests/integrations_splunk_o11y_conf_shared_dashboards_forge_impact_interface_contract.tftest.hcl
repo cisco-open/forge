@@ -11,7 +11,6 @@ run "integrations_splunk_o11y_conf_shared_dashboards_forge_impact_interface_cont
       "dashboard_group",
       "dynamic_variables",
       "tenant_names",
-      "cluster_names",
     ]
     expected_output_values = []
     expected_interface_literals = [
@@ -33,8 +32,6 @@ run "integrations_splunk_o11y_conf_shared_dashboards_forge_impact_interface_cont
       "variable \"tenant_names\"",
       "description = \"Tenant namespaces that run Forge ARC runners.\"",
       "type        = list(string)",
-      "variable \"cluster_names\"",
-      "description = \"Forge Kubernetes clusters included in global tenant impact and runner usage.\"",
     ]
   }
 
@@ -65,9 +62,9 @@ run "integrations_splunk_o11y_conf_shared_dashboards_forge_impact_interface_cont
 
   assert {
     condition = (
-      output.expected_input_variable_count == 4
+      output.expected_input_variable_count == 3
       && output.expected_output_value_count == 0
-      && output.expected_interface_literal_count == 20
+      && output.expected_interface_literal_count == 18
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

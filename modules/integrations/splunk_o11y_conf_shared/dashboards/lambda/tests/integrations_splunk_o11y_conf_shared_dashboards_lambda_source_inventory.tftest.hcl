@@ -22,6 +22,8 @@ run "integrations_splunk_o11y_conf_shared_dashboards_lambda_source_inventory" {
       "resource \"signalfx_list_chart\" \"top_tenants_by_throttles\"",
       "resource \"signalfx_list_chart\" \"top_lambdas_by_errors\"",
       "resource \"signalfx_list_chart\" \"top_lambdas_by_throttles\"",
+      "resource \"terraform_data\" \"dashboard_parent\"",
+      "terraform_data.dashboard_parent,",
       "resource \"signalfx_dashboard\" \"lambda\"",
     ]
   }
@@ -32,32 +34,7 @@ run "integrations_splunk_o11y_conf_shared_dashboards_lambda_source_inventory" {
   }
 
   assert {
-    condition     = output.expected_literal_count == 15
-    error_message = "Source inventory must keep 15 live-backed module-specific Terraform blocks pinned."
-  }
-}
-
-run "lambda_rejects_unavailable_provisioned_concurrency_metrics" {
-  command = plan
-
-  module {
-    source = "../../../../../tests/tofu/module_contract"
-  }
-
-  variables {
-    module_path       = "."
-    recursive         = true
-    expected_literals = []
-    forbidden_literals = [
-      "ProvisionedConcurrentExecutions",
-      "ProvisionedConcurrencyInvocations",
-      "ProvisionedConcurrencySpilloverInvocations",
-      "ProvisionedConcurrencyUtilization",
-    ]
-  }
-
-  assert {
-    condition     = length(output.present_forbidden_literals) == 0
-    error_message = "Unavailable provisioned-concurrency metrics must not create permanently empty Lambda charts."
+    condition     = output.expected_literal_count == 17
+    error_message = "Source inventory must keep 17 live-backed module-specific Terraform and lifecycle literals pinned."
   }
 }

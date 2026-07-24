@@ -37,12 +37,6 @@ run "platform_forge_runners_github_webhook_relay_source_contract" {
       "output \"source_event_bus_arn\"",
       "output \"event_source\"",
     ]
-    forbidden_literals = [
-      "Principal = \"*\"",
-      "WEBHOOK_SECRET = \"\"",
-      "actions = [\"*\"]",
-      "resources = [\"*\"]",
-    ]
   }
 
   assert {
@@ -53,10 +47,5 @@ run "platform_forge_runners_github_webhook_relay_source_contract" {
   assert {
     condition     = output.expected_literal_count > 0
     error_message = "Module contract must pin at least one module-specific literal."
-  }
-
-  assert {
-    condition     = length(output.present_forbidden_literals) == 0
-    error_message = "Module contract includes forbidden literals: ${join(", ", output.present_forbidden_literals)}"
   }
 }

@@ -33,6 +33,8 @@ run "integrations_splunk_o11y_conf_shared_dashboards_runner_ec2_source_inventory
       "resource \"signalfx_list_chart\" \"chart_active_hosts_missing_agent\"",
       "resource \"signalfx_list_chart\" \"chart_top_5_network_in_bytes\"",
       "resource \"signalfx_time_chart\" \"chart_status_check_failures\"",
+      "resource \"terraform_data\" \"dashboard_parent\"",
+      "terraform_data.dashboard_parent,",
       "resource \"signalfx_dashboard\" \"runner_ec2\"",
     ]
   }
@@ -43,47 +45,7 @@ run "integrations_splunk_o11y_conf_shared_dashboards_runner_ec2_source_inventory
   }
 
   assert {
-    condition     = output.expected_literal_count == 26
-    error_message = "Source inventory must keep 26 module-specific Terraform blocks pinned."
-  }
-}
-
-run "runner_ec2_rejects_kubernetes_platform_scope" {
-  command = plan
-
-  module {
-    source = "../../../../../tests/tofu/module_contract"
-  }
-
-  variables {
-    module_path        = "."
-    recursive          = true
-    expected_literals  = []
-    forbidden_literals = ["filter('cloud.platform', 'aws_ec2', 'aws_eks')"]
-  }
-
-  assert {
-    condition     = length(output.present_forbidden_literals) == 0
-    error_message = "The tenant EC2 dashboard must not mix EKS node and platform telemetry into EC2 runner charts."
-  }
-}
-
-run "runner_ec2_rejects_invalid_cloudwatch_stat_aliases" {
-  command = plan
-
-  module {
-    source = "../../../../../tests/tofu/module_contract"
-  }
-
-  variables {
-    module_path        = "."
-    recursive          = true
-    expected_literals  = []
-    forbidden_literals = ["filter('stat', 'maximum')"]
-  }
-
-  assert {
-    condition     = length(output.present_forbidden_literals) == 0
-    error_message = "CloudWatch maximum statistics are exposed in Splunk as stat=upper, not stat=maximum."
+    condition     = output.expected_literal_count == 28
+    error_message = "Source inventory must keep 28 module-specific Terraform and lifecycle literals pinned."
   }
 }

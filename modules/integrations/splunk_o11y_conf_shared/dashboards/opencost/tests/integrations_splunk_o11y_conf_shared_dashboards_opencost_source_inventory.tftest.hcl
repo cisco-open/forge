@@ -14,6 +14,8 @@ run "integrations_splunk_o11y_conf_shared_dashboards_opencost_source_inventory" 
       "resource \"signalfx_time_chart\" \"tenant_cpu_cost\"",
       "resource \"signalfx_time_chart\" \"tenant_memory_cost\"",
       "resource \"signalfx_list_chart\" \"top_pod_compute_cost\"",
+      "resource \"terraform_data\" \"dashboard_parent\"",
+      "terraform_data.dashboard_parent,",
       "resource \"signalfx_dashboard\" \"opencost\"",
     ]
   }
@@ -24,7 +26,7 @@ run "integrations_splunk_o11y_conf_shared_dashboards_opencost_source_inventory" 
   }
 
   assert {
-    condition     = output.expected_literal_count == 7
-    error_message = "Source inventory must keep 7 module-specific Terraform blocks pinned."
+    condition     = output.expected_literal_count == 9
+    error_message = "Source inventory must keep 9 module-specific Terraform and lifecycle literals pinned."
   }
 }

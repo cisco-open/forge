@@ -158,6 +158,19 @@ variable "dashboard_variables" {
         }
       ))
     })
+    s3 = object({
+      tenant_names = list(string)
+      dynamic_variables = list(object({
+        property               = string
+        alias                  = string
+        description            = string
+        values                 = list(string)
+        value_required         = bool
+        values_suggested       = list(string)
+        restricted_suggestions = bool
+        }
+      ))
+    })
     ebs = object({
       tenant_names = list(string)
       dynamic_variables = list(object({
@@ -184,6 +197,66 @@ variable "dashboard_variables" {
         }
       ))
     })
+    lambda_control_plane = object({
+      dynamic_variables = list(object({
+        property               = string
+        alias                  = string
+        description            = string
+        values                 = list(string)
+        value_required         = bool
+        values_suggested       = list(string)
+        restricted_suggestions = bool
+        }
+      ))
+    })
+    kinesis_control_plane = object({
+      dynamic_variables = list(object({
+        property               = string
+        alias                  = string
+        description            = string
+        values                 = list(string)
+        value_required         = bool
+        values_suggested       = list(string)
+        restricted_suggestions = bool
+        }
+      ))
+    })
+    sqs_control_plane = object({
+      dynamic_variables = list(object({
+        property               = string
+        alias                  = string
+        description            = string
+        values                 = list(string)
+        value_required         = bool
+        values_suggested       = list(string)
+        restricted_suggestions = bool
+        }
+      ))
+    })
+    s3_control_plane = object({
+      dynamic_variables = list(object({
+        property               = string
+        alias                  = string
+        description            = string
+        values                 = list(string)
+        value_required         = bool
+        values_suggested       = list(string)
+        restricted_suggestions = bool
+        }
+      ))
+    })
+    aws_service_limits = object({
+      dynamic_variables = list(object({
+        property               = string
+        alias                  = string
+        description            = string
+        values                 = list(string)
+        value_required         = bool
+        values_suggested       = list(string)
+        restricted_suggestions = bool
+        }
+      ))
+    })
     dynamodb = object({
       tenant_names = list(string)
       dynamic_variables = list(object({
@@ -197,7 +270,7 @@ variable "dashboard_variables" {
         }
       ))
     })
-    forge_impact = optional(object({
+    dependency_probes = object({
       tenant_names = list(string)
       dynamic_variables = list(object({
         property               = string
@@ -209,7 +282,32 @@ variable "dashboard_variables" {
         restricted_suggestions = bool
         }
       ))
-    }))
+    })
+    aws_regional_health = object({
+      dynamic_variables = list(object({
+        property               = string
+        alias                  = string
+        description            = string
+        values                 = list(string)
+        value_required         = bool
+        values_suggested       = list(string)
+        restricted_suggestions = bool
+        }
+      ))
+    })
+    forge_impact = object({
+      tenant_names = list(string)
+      dynamic_variables = list(object({
+        property               = string
+        alias                  = string
+        description            = string
+        values                 = list(string)
+        value_required         = bool
+        values_suggested       = list(string)
+        restricted_suggestions = bool
+        }
+      ))
+    })
   })
   description = "Variables for Dashboards"
 }
