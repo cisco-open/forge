@@ -1,0 +1,12 @@
+---
+name_prefix: forge-dependency-monitor
+logging_retention_in_days: 14
+log_level: INFO
+schedule_expression: cron(*/5 * * * ? *)
+github_timeout_seconds: 10
+github_api_version: '2022-11-28'
+splunk_http_timeout_seconds: 10
+splunk_dependency_monitor_config:
+  splunk_hec_url: https://http-inputs-example.splunkcloud.com:443/services/collector
+  splunk_index: srea-forge-prod-index
+  splunk_metrics_url: https://ingest.us0.signalfx.com/v2/datapoint

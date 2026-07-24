@@ -34,6 +34,10 @@ dashboard_variables:
     tenant_names:
       - <TENANT_NAME>  # e.g., acme
     dynamic_variables: []
+  dependency_probes:
+    tenant_names:
+      - <TENANT_NAME>  # e.g., acme
+    dynamic_variables: []
   forge_impact:
     tenant_names:
       - <TENANT_NAME>  # e.g., acme

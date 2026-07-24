@@ -18,6 +18,11 @@ spec:
         repo: git@github.com:cisco-open/forge.git
         module_path: modules/integrations/github_webhook_relay_destination_receivers
         ref: main
+      forge_dependency_monitor:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/integrations/forge_dependency_monitor
+        ref: main
       splunk_aws_billing:
         local_path: ../forge
         repo: git@github.com:cisco-open/forge.git

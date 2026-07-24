@@ -37,6 +37,15 @@ and dependency flow:
 - [Splunk Integration](../../integrations/splunk.md)
 - [Splunk Secrets](../../integrations/splunk-secrets.md)
 
+The regional dependency-monitor example is located at:
+
+```text
+environments/prod/regions/eu-west-1/forge_dependency_monitor
+```
+
+Deploy it once per Forge AWS region, after `splunk_o11y_conf_shared` and
+`splunk_secrets`.
+
 Skip both pages if your observability stack is not Splunk.
 
 ______________________________________________________________________

@@ -83,7 +83,8 @@ ForgeMT modules are grouped by operating responsibility:
 | Examples       | `examples/deployments/...` | Functional Terragrunt roots grouped like the module layout.      |
 
 Splunk is optional. If your company does not use Splunk, skip the Splunk
-example folders and all `modules/integrations/splunk_*` modules.
+example folders, all `modules/integrations/splunk_*` modules, and
+`modules/integrations/forge_dependency_monitor`.
 
 ## Quick Start
 

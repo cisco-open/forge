@@ -40,6 +40,19 @@ variable "detector_name_prefix" {
   default     = "ForgeCICD"
 }
 
+variable "dependency_probe_detector_config" {
+  description = "Tenant-level Forge dependency-probe detector configuration."
+  type = object({
+    enabled                            = optional(bool, false)
+    failure_duration                   = optional(string, "10m")
+    no_data_duration                   = optional(string, "15m")
+    no_data_fill_duration              = optional(string, "4h")
+    rate_limit_duration                = optional(string, "10m")
+    rate_limit_remaining_pct_threshold = optional(number, 10)
+  })
+  default = {}
+}
+
 variable "dashboard_group_name" {
   description = "Name to use for the Splunk Observability dashboard group."
   type        = string
@@ -197,7 +210,7 @@ variable "dashboard_variables" {
         }
       ))
     })
-    forge_impact = optional(object({
+    dependency_probes = object({
       tenant_names = list(string)
       dynamic_variables = list(object({
         property               = string
@@ -209,7 +222,20 @@ variable "dashboard_variables" {
         restricted_suggestions = bool
         }
       ))
-    }))
+    })
+    forge_impact = object({
+      tenant_names = list(string)
+      dynamic_variables = list(object({
+        property               = string
+        alias                  = string
+        description            = string
+        values                 = list(string)
+        value_required         = bool
+        values_suggested       = list(string)
+        restricted_suggestions = bool
+        }
+      ))
+    })
   })
   description = "Variables for Dashboards"
 }

@@ -16,6 +16,7 @@ examples/templates/integrations
 | ------------------------- | ----------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | Splunk Cloud              | `splunk_cloud_*`, `splunk_secrets`  | You use Splunk Cloud dashboards, HEC, saved searches, or data manager. | You use another logging platform.                                      |
 | Splunk Observability      | `splunk_o11y_*`                     | You use Splunk Observability for AWS or EKS metrics.                   | You use another metrics platform.                                      |
+| Forge dependency monitor  | `forge_dependency_monitor`          | You need regional tenant GitHub/AWS probes in Splunk Cloud and O11y.   | You do not use the Forge Splunk monitoring path.                       |
 | OpenCost for Splunk       | `splunk_opencost_eks`               | EKS cost data should go to Splunk.                                     | You do not run ARC/EKS or do not use Splunk.                           |
 | Teleport                  | `teleport`                          | Operators need Teleport access/audit for EKS.                          | Access is handled another way.                                         |
 | Webhook relay destination | `github_webhook_relay_destination*` | You centralize GitHub webhook forwarding.                              | The platform source can call receivers directly or no relay is needed. |

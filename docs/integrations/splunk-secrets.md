@@ -24,17 +24,19 @@ ______________________________________________________________________
 
 ## Splunk Secrets
 
-| Secret name                                             | Used for                                                    | Required by                                                         |
-| ------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------- |
-| `/cicd/common/splunk_o11y_ingest_token_eks`             | EKS metrics, traces, and collector ingest.                  | `splunk_otel_eks`                                                   |
-| `/cicd/common/splunk_o11y_ingest_token_aws_integration` | AWS integration metrics and events.                         | `splunk_o11y_aws_integration_common`, `splunk_o11y_aws_integration` |
-| `/cicd/common/splunk_o11y_ingest_token_aws_billing`     | Billing telemetry ingest.                                   | `splunk_aws_billing`                                                |
-| `/cicd/common/splunk_o11y_username`                     | Splunk Observability account login.                         | `splunk_o11y_aws_integration_common`                                |
-| `/cicd/common/splunk_o11y_password`                     | Splunk Observability account password.                      | `splunk_o11y_aws_integration_common`                                |
-| `/cicd/common/splunk_cloud_username`                    | Splunk Cloud Data Manager login.                            | `splunk_cloud_data_manager_common`, `splunk_cloud_data_manager`     |
-| `/cicd/common/splunk_cloud_password`                    | Splunk Cloud Data Manager password.                         | `splunk_cloud_data_manager_common`, `splunk_cloud_data_manager`     |
-| `/cicd/common/splunk_cloud_api_token`                   | Splunk Cloud dashboards, props, saved searches, and config. | `splunk_cloud_conf_shared`                                          |
-| `/cicd/common/splunk_cloud_hec_token_eks`               | EKS log ingestion over HEC.                                 | `splunk_otel_eks`                                                   |
+| Secret name                                                | Used for                                                    | Required by                                                         |
+| ---------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------- |
+| `/cicd/common/splunk_o11y_ingest_token_eks`                | EKS metrics, traces, and collector ingest.                  | `splunk_otel_eks`                                                   |
+| `/cicd/common/splunk_o11y_ingest_token_aws_integration`    | AWS integration metrics and events.                         | `splunk_o11y_aws_integration_common`, `splunk_o11y_aws_integration` |
+| `/cicd/common/splunk_o11y_ingest_token_aws_billing`        | Billing telemetry ingest.                                   | `splunk_aws_billing`                                                |
+| `/cicd/common/splunk_o11y_ingest_token_dependency_monitor` | Dependency-probe metric ingest.                             | `forge_dependency_monitor`                                          |
+| `/cicd/common/splunk_o11y_username`                        | Splunk Observability account login.                         | `splunk_o11y_aws_integration_common`                                |
+| `/cicd/common/splunk_o11y_password`                        | Splunk Observability account password.                      | `splunk_o11y_aws_integration_common`                                |
+| `/cicd/common/splunk_cloud_username`                       | Splunk Cloud Data Manager login.                            | `splunk_cloud_data_manager_common`, `splunk_cloud_data_manager`     |
+| `/cicd/common/splunk_cloud_password`                       | Splunk Cloud Data Manager password.                         | `splunk_cloud_data_manager_common`, `splunk_cloud_data_manager`     |
+| `/cicd/common/splunk_cloud_api_token`                      | Splunk Cloud dashboards, props, saved searches, and config. | `splunk_cloud_conf_shared`                                          |
+| `/cicd/common/splunk_cloud_hec_token_eks`                  | EKS log ingestion over HEC.                                 | `splunk_otel_eks`                                                   |
+| `/cicd/common/splunk_cloud_hec_token_dependency_monitor`   | Dependency-probe event ingestion over HEC.                  | `forge_dependency_monitor`                                          |
 
 ______________________________________________________________________
 

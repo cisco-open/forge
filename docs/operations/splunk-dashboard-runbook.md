@@ -378,94 +378,11 @@ repository, and runner group.
 
 ## Metrics Dashboards
 
-### Forge Impact
-
-Purpose: adoption, usage, active runners, and runner-minutes by EC2/K8S and
-tenant.
-
-Use for platform usage, capacity planning, and maintenance partner
-conversations. Do not use it as the first root-cause dashboard during an
-incident.
-
-### Runner EC2
-
-Purpose: host-level EC2 runner CPU, memory, disk, network, active hosts, OTel
-agent, and EC2 status checks.
-
-Use with Forge EC2 Runner Lifecycle and Forge Runner Capacity.
-
-Problem signs: high CPU, disk, memory, network errors, OTel host loss, or EC2
-status check failures.
-
-### Runner K8S
-
-Purpose: Kubernetes pod availability, CPU/memory, network, pod phase, container
-restarts, and Splunk OTel collector health.
-
-Use with ARC lifecycle dashboards and Forge Kubernetes Storage and Network.
-
-Problem signs: pending pods, restarts, high memory/CPU, network errors, or
-collector degradation.
-
-### Lambda
-
-Purpose: Lambda invocations, errors, throttles, duration, provisioned
-concurrency, and spillover.
-
-Use with Forge Lambda Operations.
-
-Problem signs: errors, throttles, duration spikes, or spillover for Forge
-support Lambdas.
-
-### SQS
-
-Purpose: queue message state, oldest message age, sent/received/deleted counts,
-empty receives, and DLQ backlog.
-
-Use with Webhook Job Log Pipeline, stuck dispatcher, trust validator, and DLQ
-redrive investigations.
-
-Problem signs: visible backlog grows, oldest age rises, or DLQ visible messages
-appear.
-
-### DynamoDB
-
-Purpose: throttles, request latency, consumed capacity, returned item count, and
-user/system errors.
-
-Use with stuck dispatcher and global-lock/control-plane investigations.
-
-Problem signs: throttles, HTTP 500s, high latency, or capacity pressure for
-lock/dedupe tables.
-
-### EBS
-
-Purpose: EBS volume utilization, latency, queue length, throughput, I/O, and
-state.
-
-Use with Kubernetes Storage and Network and EC2 Runner Lifecycle.
-
-Problem signs: high latency, high queue length, low idle time, or abnormal
-volume state.
-
-### Billing
-
-Purpose: AWS cost by service and tenant from billing exports.
-
-Use for cost review and anomaly investigation, not acute availability triage.
-
-Problem signs: one tenant or service spikes unexpectedly, tags are missing, or
-billing export freshness changes.
-
-### OpenCost
-
-Purpose: Kubernetes tenant CPU/memory allocation cost, monthly run rate, trends,
-and top pod cost.
-
-Use with Forge Impact and Runner K8S.
-
-Problem signs: runaway namespace/pod cost, missing tenant dimensions, or sudden
-allocation spike.
+Use the dedicated
+[Splunk Observability Dashboard Runbook](splunk-o11y-dashboard-runbook.md) for
+metrics freshness, dashboard selection, normal/problem/apocalypse guidance,
+dependency and Kubernetes detector rules, notification routing, and escalation
+evidence.
 
 ## Follow-Up Searches
 

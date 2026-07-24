@@ -27,6 +27,9 @@ dashboard_variables:
   dynamodb:
     tenant_names: [acme]
     dynamic_variables: []
+  dependency_probes:
+    tenant_names: [acme]
+    dynamic_variables: []
   forge_impact:
     tenant_names: [acme]
     dynamic_variables: []

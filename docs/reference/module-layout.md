@@ -69,6 +69,7 @@ ______________________________________________________________________
 
 | Module family                                                | Purpose                                                                                                                          | Required? |
 | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| `modules/integrations/forge_dependency_monitor`              | Regional tenant dependency probes delivered to Splunk Cloud and Splunk Observability.                                            | No.       |
 | `modules/integrations/splunk_*`                              | Splunk Cloud, Splunk Observability, dashboards, billing ingest, OpenTelemetry, OpenCost, secrets, and stuck-workflow redelivery. | No.       |
 | `modules/integrations/teleport`                              | Teleport agents and access/audit integration.                                                                                    | No.       |
 | `modules/platform/forge_runners/github_webhook_relay/source` | Internal GitHub webhook ingress used by the Forge tenant runner platform.                                                        | Yes.      |

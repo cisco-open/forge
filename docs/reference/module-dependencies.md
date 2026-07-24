@@ -62,13 +62,16 @@ ______________________________________________________________________
 
 ## Integration Rules
 
-- No Splunk: skip `modules/integrations/splunk_*` and the Splunk secrets.
+- No Splunk: skip `modules/integrations/splunk_*`,
+  `modules/integrations/forge_dependency_monitor`, and the Splunk secrets.
 - No ARC/EKS: skip `splunk_otel_eks`, `splunk_opencost_eks`, `teleport`, and
   tenant `arc_runner_specs`.
 - Existing buckets, roles, or secrets: use those values in `config.yml` and
   skip the matching helper module.
 - Webhook relay destination should exist before the platform source forwards
   events to it.
+- Deploy `splunk_secrets` and `splunk_o11y_conf_shared` before each regional
+  `forge_dependency_monitor` instance.
 
 ______________________________________________________________________
 

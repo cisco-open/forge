@@ -13,6 +13,7 @@ run "integrations_splunk_o11y_conf_shared_interface_contract" {
       "dashboard_group_name",
       "dashboard_variables",
       "default_tags",
+      "dependency_probe_detector_config",
       "detector_name_prefix",
       "detector_notifications",
       "k8s_detector_config",
@@ -51,12 +52,20 @@ run "integrations_splunk_o11y_conf_shared_interface_contract" {
       "ebs = object({",
       "lambda = object({",
       "dynamodb = object({",
-      "forge_impact = optional(object({",
-      "}))",
+      "dependency_probes = object({",
+      "forge_impact = object({",
       "description = \"Variables for Dashboards\"",
       "variable \"default_tags\"",
       "type        = map(string)",
       "description = \"A map of tags to apply to resources.\"",
+      "variable \"dependency_probe_detector_config\"",
+      "description = \"Tenant-level Forge dependency-probe detector configuration.\"",
+      "enabled                            = optional(bool, false)",
+      "failure_duration                   = optional(string, \"10m\")",
+      "no_data_duration                   = optional(string, \"15m\")",
+      "no_data_fill_duration              = optional(string, \"4h\")",
+      "rate_limit_duration                = optional(string, \"10m\")",
+      "rate_limit_remaining_pct_threshold = optional(number, 10)",
       "variable \"detector_name_prefix\"",
       "description = \"Prefix to use for Splunk Observability detector names.\"",
       "default     = \"ForgeCICD\"",
@@ -144,9 +153,9 @@ run "integrations_splunk_o11y_conf_shared_interface_contract" {
 
   assert {
     condition = (
-      output.expected_input_variable_count == 13
+      output.expected_input_variable_count == 14
       && output.expected_output_value_count == 0
-      && output.expected_interface_literal_count == 90
+      && output.expected_interface_literal_count == 98
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

@@ -2,19 +2,20 @@
 
 Start with the symptom and check the narrowest boundary first.
 
-| Symptom                            | Check                                                                                                                                                                                     |
-| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Job stays queued                   | Check workflow labels, runner group access, GitHub App installation, and `workflow_job` delivery. See [Troubleshooting Without Splunk](troubleshooting-without-splunk.md).                |
-| EC2 runner starts then disappears  | Check lifecycle logs, user data, runner service logs, instance profile, and GitHub registration. See [Troubleshooting Without Splunk](troubleshooting-without-splunk.md).                 |
-| ARC scale set does not create pods | Check `autoscalingrunnersets`, `ephemeralrunners`, Kubernetes events, Helm, and Karpenter. See [Troubleshooting Without Splunk](troubleshooting-without-splunk.md).                       |
-| Docker build fails on ARC          | Use `type:dind`; `type:k8s` is not for Docker daemon workloads.                                                                                                                           |
-| AWS assume role fails              | Check caller identity, tenant allowed role list, target role trust, session tags, and STS region. See [Tenant AWS Role Checks](troubleshooting-without-splunk.md#tenant-aws-role-checks). |
-| Webhook signature fails            | See [Webhook Signature Fails](#webhook-signature-fails).                                                                                                                                  |
-| Splunk dashboards missing          | Deploy only if Splunk modules are enabled; then check Splunk API token and saved search module.                                                                                           |
-| Splunk dashboard data missing      | Check [Splunk Dashboard Runbook](splunk-dashboard-runbook.md), then start with Forge Ingestion Quality before diagnosing Forge behavior.                                                  |
-| Unsure which dashboard to use      | Start with [Splunk Dashboard Runbook](splunk-dashboard-runbook.md), then move to the narrow subsystem dashboard.                                                                          |
-| AMI not found                      | See [AMI Not Found](#ami-not-found). Confirm Region, owner, name pattern, architecture, and launch permission.                                                                            |
-| Terraform/Terragrunt appears stuck | See [Terraform/Terragrunt Stuck Runbook](terraform-terragrunt-stuck-runbook.md).                                                                                                          |
+| Symptom                             | Check                                                                                                                                                                                        |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Job stays queued                    | Check workflow labels, runner group access, GitHub App installation, and `workflow_job` delivery. See [Troubleshooting Without Splunk](troubleshooting-without-splunk.md).                   |
+| EC2 runner starts then disappears   | Check lifecycle logs, user data, runner service logs, instance profile, and GitHub registration. See [Troubleshooting Without Splunk](troubleshooting-without-splunk.md).                    |
+| ARC scale set does not create pods  | Check `autoscalingrunnersets`, `ephemeralrunners`, Kubernetes events, Helm, and Karpenter. See [Troubleshooting Without Splunk](troubleshooting-without-splunk.md).                          |
+| Docker build fails on ARC           | Use `type:dind`; `type:k8s` is not for Docker daemon workloads.                                                                                                                              |
+| AWS assume role fails               | Check caller identity, tenant allowed role list, target role trust, session tags, and STS region. See [Tenant AWS Role Checks](troubleshooting-without-splunk.md#tenant-aws-role-checks).    |
+| Webhook signature fails             | See [Webhook Signature Fails](#webhook-signature-fails).                                                                                                                                     |
+| Splunk dashboards missing           | Deploy only if Splunk modules are enabled; then check Splunk API token and saved search module.                                                                                              |
+| Splunk Cloud dashboard data missing | Check [Splunk Dashboard Runbook](splunk-dashboard-runbook.md), then start with Forge Ingestion Quality before diagnosing Forge behavior.                                                     |
+| Splunk O11y dashboard data missing  | Check [Splunk Observability Dashboard Runbook](splunk-o11y-dashboard-runbook.md), prove source freshness, then move to the narrow subsystem dashboard.                                       |
+| Unsure which dashboard to use       | Start with the [Splunk Dashboard Runbook](splunk-dashboard-runbook.md) for logs or the [Splunk Observability Dashboard Runbook](splunk-o11y-dashboard-runbook.md) for metrics and detectors. |
+| AMI not found                       | See [AMI Not Found](#ami-not-found). Confirm Region, owner, name pattern, architecture, and launch permission.                                                                               |
+| Terraform/Terragrunt appears stuck  | See [Terraform/Terragrunt Stuck Runbook](terraform-terragrunt-stuck-runbook.md).                                                                                                             |
 
 ## First Commands
 

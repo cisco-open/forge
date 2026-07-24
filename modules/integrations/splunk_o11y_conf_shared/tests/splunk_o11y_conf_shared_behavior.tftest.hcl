@@ -65,6 +65,10 @@ variables {
       tenant_names      = ["tenant-a"]
       dynamic_variables = []
     }
+    dependency_probes = {
+      tenant_names      = ["tenant-a"]
+      dynamic_variables = []
+    }
     forge_impact = {
       tenant_names      = ["tenant-a"]
       dynamic_variables = []

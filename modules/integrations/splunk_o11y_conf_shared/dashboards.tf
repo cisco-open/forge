@@ -59,6 +59,18 @@ module "dashboard_lambda" {
   dashboard_group   = signalfx_dashboard_group.forgecicd.id
 }
 
+module "dashboard_dependency_probes" {
+  source = "./dashboards/dependency_probes"
+
+  providers = {
+    signalfx = signalfx
+  }
+
+  tenant_names      = var.dashboard_variables.dependency_probes.tenant_names
+  dynamic_variables = var.dashboard_variables.dependency_probes.dynamic_variables
+  dashboard_group   = signalfx_dashboard_group.forgecicd.id
+}
+
 # Messaging and storage
 module "dashboard_sqs" {
   source = "./dashboards/sqs"
@@ -103,10 +115,10 @@ module "dashboard_forge_impact" {
     signalfx = signalfx
   }
 
-  tenant_names      = try(var.dashboard_variables.forge_impact.tenant_names, var.dashboard_variables.runner_k8s.tenant_names)
-  dynamic_variables = try(var.dashboard_variables.forge_impact.dynamic_variables, [])
+  tenant_names      = var.dashboard_variables.forge_impact.tenant_names
+  dynamic_variables = var.dashboard_variables.forge_impact.dynamic_variables
   cluster_names = distinct(flatten([
-    for variable in var.dashboard_variables.runner_k8s.dynamic_variables :
+    for variable in var.dashboard_variables.forge_impact.dynamic_variables :
     variable.property == "k8s.cluster.name" ? variable.values : []
   ]))
   dashboard_group = signalfx_dashboard_group.forgecicd.id
