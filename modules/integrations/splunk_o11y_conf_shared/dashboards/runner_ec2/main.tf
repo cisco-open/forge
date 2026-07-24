@@ -1411,7 +1411,7 @@ resource "signalfx_single_value_chart" "chart_hosts_with_agent_installed" {
   name        = "# Hosts with agent installed"
   description = "Splunk OTel connector installed"
 
-  program_text = "A = data('system.memory.usage', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks'), rollup='average').sum(by=['AWSUniqueId']).count().publish(label='A')"
+  program_text = "A = data('system.memory.usage', filter=filter('cloud.platform', 'aws_ec2') and filter('aws_tag_TenantName', '*'), rollup='average').sum(by=['AWSUniqueId']).count().publish(label='A')"
 
   color_by         = "Dimension"
   max_precision    = 4
@@ -1474,7 +1474,7 @@ resource "signalfx_list_chart" "chart_top_5_network_out_bytes" {
 resource "signalfx_single_value_chart" "chart_active_hosts" {
   name = "# Active hosts"
 
-  program_text = "A = data('^aws.ec2.cpu.utilization', extrapolation='last_value', maxExtrapolations=2).sum(by=['AWSUniqueId']).count().publish(label='A')"
+  program_text = "A = data('^aws.ec2.cpu.utilization', filter=filter('aws_tag_TenantName', '*'), extrapolation='last_value', maxExtrapolations=2).sum(by=['AWSUniqueId']).count().publish(label='A')"
 
   color_by         = "Dimension"
   max_precision    = 4
@@ -1483,6 +1483,51 @@ resource "signalfx_single_value_chart" "chart_active_hosts" {
   viz_options {
     display_name = "# Hosts"
     label        = "A"
+  }
+}
+
+resource "signalfx_list_chart" "chart_active_hosts_missing_agent" {
+  name        = "Active hosts missing Splunk OTel agent"
+  description = "Active EC2 hosts without agent-correlated host.id metadata. Tenant | Instance ID | AMI | Host name"
+
+  program_text = "A = data('^aws.ec2.cpu.utilization', filter=filter('aws_tag_TenantName', '*') and not filter('host.id', '*'), extrapolation='last_value', maxExtrapolations=2).mean(by=['AWSUniqueId', 'aws_tag_TenantName', 'aws_instance_id', 'aws_image_id', 'aws_tag_Name']).publish(label='A')"
+
+  sort_by = "-value"
+
+  color_by                = "Dimension"
+  max_precision           = 2
+  refresh_interval        = 60
+  secondary_visualization = "None"
+
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_instance_id"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_image_id"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_Name"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "AWSUniqueId"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
+  }
+
+  viz_options {
+    display_name = "Missing agent"
+    label        = "A"
+    value_suffix = "%"
   }
 }
 
@@ -1571,7 +1616,7 @@ EOF
 }
 
 resource "signalfx_dashboard" "runner_ec2" {
-  name            = "EC2 Runners"
+  name            = "Forge Tenant - EC2 Runners"
   description     = "EC2-based GitHub Actions runners: CPU, memory, disk, and network."
   dashboard_group = var.dashboard_group
 
@@ -1579,8 +1624,8 @@ resource "signalfx_dashboard" "runner_ec2" {
     property               = "aws_tag_TenantName"
     alias                  = "ForgeCICD Tenant Name"
     description            = ""
-    values                 = sort(var.tenant_names)
-    value_required         = length(var.tenant_names) > 0
+    values                 = []
+    value_required         = false
     values_suggested       = sort(var.tenant_names)
     restricted_suggestions = true
   }
@@ -1638,127 +1683,134 @@ resource "signalfx_dashboard" "runner_ec2" {
     height   = 1
   }
   chart {
-    chart_id = signalfx_time_chart.chart_cpu_utilization.id
+    chart_id = signalfx_list_chart.chart_active_hosts_missing_agent.id
     row      = 1
+    column   = 0
+    width    = 12
+    height   = 2
+  }
+  chart {
+    chart_id = signalfx_time_chart.chart_cpu_utilization.id
+    row      = 3
     column   = 0
     width    = 4
     height   = 1
   }
   chart {
     chart_id = signalfx_list_chart.chart_top_instances_by_cpu_utilization.id
-    row      = 1
+    row      = 3
     column   = 4
     width    = 4
     height   = 1
   }
   chart {
     chart_id = signalfx_list_chart.chart_top_images_by_mean_cpu_utilization.id
-    row      = 1
+    row      = 3
     column   = 8
     width    = 4
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.chart_total_memory_overview_bytes.id
-    row      = 2
+    row      = 4
     column   = 4
     width    = 4
     height   = 1
   }
   chart {
     chart_id = signalfx_list_chart.chart_top_memory_page_swaps_sec.id
-    row      = 2
+    row      = 4
     column   = 8
     width    = 4
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.chart_memory_utilization.id
-    row      = 2
+    row      = 4
     column   = 0
     width    = 4
     height   = 1
   }
   chart {
     chart_id = signalfx_list_chart.chart_disk_metrics_24h_change.id
-    row      = 3
+    row      = 5
     column   = 9
     width    = 3
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.chart_disk_io_bytes.id
-    row      = 3
+    row      = 5
     column   = 6
     width    = 3
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.chart_disk_utilization.id
-    row      = 3
+    row      = 5
     column   = 0
     width    = 3
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.chart_disk_ops.id
-    row      = 3
+    row      = 5
     column   = 3
     width    = 3
     height   = 1
   }
   chart {
     chart_id = signalfx_list_chart.chart_top_5_network_in_bytes.id
-    row      = 4
+    row      = 6
     column   = 6
     width    = 3
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.chart_network_in_bytes_vs_24h_change.id
-    row      = 4
+    row      = 6
     column   = 9
     width    = 3
     height   = 1
   }
   chart {
     chart_id = signalfx_list_chart.chart_disk_summary_utilization.id
-    row      = 4
+    row      = 6
     column   = 0
     width    = 6
     height   = 2
   }
   chart {
     chart_id = signalfx_list_chart.chart_top_5_network_out_bytes.id
-    row      = 5
+    row      = 7
     column   = 6
     width    = 3
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.chart_network_out_bytes_vs_24h_change.id
-    row      = 5
+    row      = 7
     column   = 9
     width    = 3
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.chart_network_out_bytes.id
-    row      = 6
+    row      = 8
     column   = 8
     width    = 4
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.chart_network_in_bytes.id
-    row      = 6
+    row      = 8
     column   = 0
     width    = 4
     height   = 1
   }
   chart {
     chart_id = signalfx_list_chart.chart_total_network_errors.id
-    row      = 6
+    row      = 8
     column   = 4
     width    = 4
     height   = 1
@@ -1766,7 +1818,7 @@ resource "signalfx_dashboard" "runner_ec2" {
 
   chart {
     chart_id = signalfx_time_chart.chart_status_check_failures.id
-    row      = 7
+    row      = 9
     column   = 0
     width    = 12
     height   = 1

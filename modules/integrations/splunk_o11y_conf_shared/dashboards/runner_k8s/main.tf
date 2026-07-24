@@ -554,7 +554,7 @@ EOF
 }
 
 resource "signalfx_dashboard" "runner_k8s" {
-  name            = "K8S Runners"
+  name            = "Forge Tenant - K8S Runners"
   description     = "Kubernetes-based runners: pod states, CPU, memory, and network health."
   dashboard_group = var.dashboard_group
 

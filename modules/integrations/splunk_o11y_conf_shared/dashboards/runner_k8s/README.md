@@ -4,7 +4,7 @@ This module creates Kubernetes pod and deployment charts for the ARC runner lane
 
 ## Why This Module Exists
 
-Kubernetes runner failures often show up as pending pods, restarts, or resource pressure. This dashboard provides the tenant pod-level view that complements the separate K8S Control Plane dashboard and EKS/Karpenter logs.
+Kubernetes runner failures often show up as pending pods, restarts, or resource pressure. This dashboard provides the tenant pod-level view that complements the separate `Forge Control Plane - Kubernetes` dashboard and EKS/Karpenter logs.
 
 ## What It Manages
 
@@ -19,7 +19,7 @@ Kubernetes runner failures often show up as pending pods, restarts, or resource 
 - Use this when ARC scale sets see demand but jobs do not start.
 - Pending pods usually require checking Karpenter, taints/tolerations, resource requests, and storage.
 - Every chart is explicitly restricted to configured Forge tenant namespaces and clusters.
-- Use the K8S Control Plane dashboard for Karpenter, networking, node, Prometheus, and collector health.
+- Use `Forge Control Plane - Kubernetes` for Karpenter, networking, node, Prometheus, and collector health.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements

@@ -495,7 +495,7 @@ EOF
 
 
 resource "signalfx_dashboard" "dynamodb" {
-  name        = "DynamoDBs"
+  name        = "Forge Tenant - DynamoDB"
   description = "Forge CICD DynamoDB table performance, capacity, and throttling."
 
   dashboard_group = var.dashboard_group

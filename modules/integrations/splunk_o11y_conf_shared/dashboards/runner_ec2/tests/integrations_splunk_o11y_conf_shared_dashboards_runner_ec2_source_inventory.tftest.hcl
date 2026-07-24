@@ -29,6 +29,7 @@ run "integrations_splunk_o11y_conf_shared_dashboards_runner_ec2_source_inventory
       "resource \"signalfx_single_value_chart\" \"chart_hosts_with_agent_installed\"",
       "resource \"signalfx_list_chart\" \"chart_top_5_network_out_bytes\"",
       "resource \"signalfx_single_value_chart\" \"chart_active_hosts\"",
+      "resource \"signalfx_list_chart\" \"chart_active_hosts_missing_agent\"",
       "resource \"signalfx_list_chart\" \"chart_top_5_network_in_bytes\"",
       "resource \"signalfx_time_chart\" \"chart_status_check_failures\"",
       "resource \"signalfx_dashboard\" \"runner_ec2\"",
@@ -41,7 +42,7 @@ run "integrations_splunk_o11y_conf_shared_dashboards_runner_ec2_source_inventory
   }
 
   assert {
-    condition     = output.expected_literal_count == 24
-    error_message = "Source inventory must keep 24 module-specific Terraform blocks pinned."
+    condition     = output.expected_literal_count == 25
+    error_message = "Source inventory must keep 25 module-specific Terraform blocks pinned."
   }
 }

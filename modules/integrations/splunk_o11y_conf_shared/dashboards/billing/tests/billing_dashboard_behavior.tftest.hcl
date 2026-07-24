@@ -36,7 +36,7 @@ run "billing_dashboard_wiring_contract" {
 
   assert {
     condition = (
-      signalfx_dashboard.billing.name == "Billing"
+      signalfx_dashboard.billing.name == "Forge Billing and Cost - AWS"
       && signalfx_dashboard.billing.dashboard_group == "forge-dashboard-group"
       && length(signalfx_dashboard.billing.chart) == 8
     )

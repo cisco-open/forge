@@ -42,7 +42,7 @@ run "ebs_dashboard_wiring_contract" {
 
   assert {
     condition = (
-      signalfx_dashboard.ebs.name == "EBS"
+      signalfx_dashboard.ebs.name == "Forge Tenant - EBS"
       && signalfx_dashboard.ebs.dashboard_group == "forge-dashboard-group"
       && signalfx_dashboard.ebs.variable[0].values == toset(["tenant-a", "tenant-b"])
       && signalfx_dashboard.ebs.variable[0].value_required

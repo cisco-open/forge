@@ -38,7 +38,7 @@ run "opencost_dashboard_wiring_contract" {
 
   assert {
     condition = (
-      signalfx_dashboard.opencost.name == "OpenCost Tenant Cost"
+      signalfx_dashboard.opencost.name == "Forge Billing and Cost - OpenCost"
       && signalfx_dashboard.opencost.dashboard_group == "forge-dashboard-group"
       && signalfx_dashboard.opencost.variable[1].property == "k8s.cluster.name"
       && length(signalfx_dashboard.opencost.chart) == 6

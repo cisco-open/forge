@@ -105,7 +105,11 @@ module "dashboard_forge_impact" {
 
   tenant_names      = try(var.dashboard_variables.forge_impact.tenant_names, var.dashboard_variables.runner_k8s.tenant_names)
   dynamic_variables = try(var.dashboard_variables.forge_impact.dynamic_variables, [])
-  dashboard_group   = signalfx_dashboard_group.forgecicd.id
+  cluster_names = distinct(flatten([
+    for variable in var.dashboard_variables.runner_k8s.dynamic_variables :
+    variable.property == "k8s.cluster.name" ? variable.values : []
+  ]))
+  dashboard_group = signalfx_dashboard_group.forgecicd.id
 }
 
 # Cost and usage

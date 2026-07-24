@@ -57,7 +57,7 @@ run "runner_k8s_dashboard_wiring_contract" {
 
   assert {
     condition = (
-      signalfx_dashboard.runner_k8s.name == "K8S Runners"
+      signalfx_dashboard.runner_k8s.name == "Forge Tenant - K8S Runners"
       && signalfx_dashboard.runner_k8s.dashboard_group == "forge-dashboard-group"
       && signalfx_dashboard.runner_k8s.variable[0].values == toset(["tenant-a", "tenant-b"])
       && signalfx_dashboard.runner_k8s.variable[0].value_required

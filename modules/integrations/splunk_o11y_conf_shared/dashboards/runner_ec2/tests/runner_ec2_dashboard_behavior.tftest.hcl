@@ -23,6 +23,17 @@ run "runner_ec2_dashboard_contract" {
     condition = (
       signalfx_single_value_chart.chart_active_hosts.name == "# Active hosts"
       && strcontains(signalfx_single_value_chart.chart_active_hosts.program_text, "^aws.ec2.cpu.utilization")
+      && strcontains(signalfx_single_value_chart.chart_active_hosts.program_text, "filter('aws_tag_TenantName', '*')")
+      && strcontains(signalfx_single_value_chart.chart_hosts_with_agent_installed.program_text, "filter('cloud.platform', 'aws_ec2')")
+      && strcontains(signalfx_single_value_chart.chart_hosts_with_agent_installed.program_text, "filter('aws_tag_TenantName', '*')")
+      && !strcontains(signalfx_single_value_chart.chart_hosts_with_agent_installed.program_text, "aws_eks")
+      && signalfx_list_chart.chart_active_hosts_missing_agent.name == "Active hosts missing Splunk OTel agent"
+      && strcontains(signalfx_list_chart.chart_active_hosts_missing_agent.program_text, "filter=filter('aws_tag_TenantName', '*') and not filter('host.id', '*')")
+      && strcontains(signalfx_list_chart.chart_active_hosts_missing_agent.program_text, "'aws_tag_TenantName', 'aws_instance_id', 'aws_image_id', 'aws_tag_Name'")
+      && alltrue([
+        for property in ["aws_tag_TenantName", "aws_instance_id", "aws_image_id", "aws_tag_Name"] :
+        contains([for field in signalfx_list_chart.chart_active_hosts_missing_agent.legend_options_fields : field.property if field.enabled], property)
+      ])
       && signalfx_time_chart.chart_cpu_utilization.name == "CPU utilization (%)"
       && signalfx_time_chart.chart_cpu_utilization.time_range == 3600
       && signalfx_list_chart.chart_top_instances_by_cpu_utilization.sort_by == "-value"
@@ -46,11 +57,13 @@ run "runner_ec2_dashboard_wiring_contract" {
 
   assert {
     condition = (
-      signalfx_dashboard.runner_ec2.name == "EC2 Runners"
+      signalfx_dashboard.runner_ec2.name == "Forge Tenant - EC2 Runners"
       && signalfx_dashboard.runner_ec2.dashboard_group == "forge-dashboard-group"
-      && signalfx_dashboard.runner_ec2.variable[0].values == toset(["tenant-a", "tenant-b"])
-      && signalfx_dashboard.runner_ec2.variable[0].value_required
-      && length(signalfx_dashboard.runner_ec2.chart) == 23
+      && length(signalfx_dashboard.runner_ec2.variable[0].values) == 0
+      && !signalfx_dashboard.runner_ec2.variable[0].value_required
+      && signalfx_dashboard.runner_ec2.variable[0].values_suggested == toset(["tenant-a", "tenant-b"])
+      && signalfx_dashboard.runner_ec2.variable[0].restricted_suggestions
+      && length(signalfx_dashboard.runner_ec2.chart) == 24
     )
     error_message = "EC2 runner dashboard must keep its name, group input, and chart count."
   }
@@ -58,6 +71,7 @@ run "runner_ec2_dashboard_wiring_contract" {
   assert {
     condition = alltrue([
       contains([for chart in signalfx_dashboard.runner_ec2.chart : chart.chart_id], signalfx_single_value_chart.chart_active_hosts.id),
+      contains([for chart in signalfx_dashboard.runner_ec2.chart : chart.chart_id], signalfx_list_chart.chart_active_hosts_missing_agent.id),
       contains([for chart in signalfx_dashboard.runner_ec2.chart : chart.chart_id], signalfx_time_chart.chart_status_check_failures.id),
     ])
     error_message = "EC2 runner dashboard must keep its first and final chart wiring."

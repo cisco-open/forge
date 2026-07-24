@@ -83,7 +83,7 @@ run "lambda_dashboard_wiring_contract" {
 
   assert {
     condition = (
-      signalfx_dashboard.lambda.name == "Lambdas"
+      signalfx_dashboard.lambda.name == "Forge Tenant - Lambdas"
       && signalfx_dashboard.lambda.dashboard_group == "forge-dashboard-group"
       && signalfx_dashboard.lambda.variable[0].values == toset(["tenant-a", "tenant-b"])
       && signalfx_dashboard.lambda.variable[0].value_required

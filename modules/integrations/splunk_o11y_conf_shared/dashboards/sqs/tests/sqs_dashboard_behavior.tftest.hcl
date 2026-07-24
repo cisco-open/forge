@@ -44,7 +44,7 @@ run "sqs_dashboard_wiring_contract" {
 
   assert {
     condition = (
-      signalfx_dashboard.sqs.name == "SQS"
+      signalfx_dashboard.sqs.name == "Forge Tenant - SQS"
       && signalfx_dashboard.sqs.dashboard_group == "forge-dashboard-group"
       && signalfx_dashboard.sqs.variable[0].values == toset(["tenant-a", "tenant-b"])
       && signalfx_dashboard.sqs.variable[0].value_required

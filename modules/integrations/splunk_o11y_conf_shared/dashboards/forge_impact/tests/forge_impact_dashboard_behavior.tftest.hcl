@@ -2,6 +2,7 @@ mock_provider "signalfx" {}
 
 variables {
   tenant_names    = ["tenant-b", "tenant-a"]
+  cluster_names   = ["forge-cluster-b", "forge-cluster-a"]
   dashboard_group = "forge-dashboard-group"
   dynamic_variables = [
     {
@@ -22,8 +23,9 @@ run "forge_impact_dashboard_contract" {
   assert {
     condition = (
       terraform_data.dashboard_parent.triggers_replace == "forge-dashboard-group"
+      && terraform_data.runner_usage_dashboard_parent.triggers_replace == "forge-dashboard-group"
     )
-    error_message = "Forge impact dashboard must keep the dashboard-group replacement trigger."
+    error_message = "Forge impact and runner usage dashboards must keep independent dashboard-group replacement triggers."
   }
 
   assert {
@@ -31,7 +33,9 @@ run "forge_impact_dashboard_contract" {
       signalfx_list_chart.runner_totals_by_runtime.name == "Total runners by runtime over selected window"
       && strcontains(signalfx_list_chart.runner_totals_by_runtime.program_text, "CPUUtilization")
       && strcontains(signalfx_list_chart.runner_totals_by_runtime.program_text, "filter('aws_tag_TenantName', 'tenant-a') or filter('aws_tag_TenantName', 'tenant-b')")
+      && strcontains(signalfx_list_chart.runner_totals_by_runtime.program_text, "filter('aws_region', 'us-east-1')")
       && strcontains(signalfx_list_chart.runner_totals_by_runtime.program_text, "filter('k8s.namespace.name', 'tenant-a') or filter('k8s.namespace.name', 'tenant-b')")
+      && strcontains(signalfx_list_chart.runner_totals_by_runtime.program_text, "filter('k8s.cluster.name', 'forge-cluster-a') or filter('k8s.cluster.name', 'forge-cluster-b')")
       && signalfx_list_chart.active_ec2_runners_by_tenant.name == "Active EC2 runners by tenant"
       && strcontains(signalfx_list_chart.k8s_runners_by_tenant.program_text, "container.memory.usage")
     )
@@ -55,11 +59,13 @@ run "forge_impact_dashboard_contract" {
       && strcontains(signalfx_list_chart.top_tenants_k8s_failed_pods.program_text, "k8s.pod.phase")
       && strcontains(signalfx_list_chart.top_tenants_sqs_backlog.program_text, "ApproximateNumberOfMessagesVisible")
       && strcontains(signalfx_list_chart.top_tenants_sqs_dlq_backlog.program_text, "*dead-letter*")
-      && strcontains(signalfx_list_chart.top_tenants_dynamodb_throttles.program_text, "ThrottledRequests")
-      && strcontains(signalfx_list_chart.top_tenants_dynamodb_system_errors.program_text, "SystemErrors")
+      && strcontains(signalfx_list_chart.top_tenants_ec2_disk.program_text, "system.filesystem.usage")
+      && strcontains(signalfx_list_chart.top_tenants_ec2_status_failures.program_text, "StatusCheckFailed")
+      && strcontains(signalfx_list_chart.top_tenants_k8s_restarts.program_text, "k8s.container.restarts")
       && strcontains(signalfx_list_chart.top_tenants_ebs_queue_length.program_text, "VolumeQueueLength")
+      && strcontains(signalfx_list_chart.top_tenants_ebs_iops_exceeded.program_text, "VolumeIOPSExceededCheck")
     )
-    error_message = "Forge impact must rank affected tenants across Lambda, EC2, K8S, SQS, DynamoDB, and EBS issue signals."
+    error_message = "Forge impact must rank affected tenants across live-backed Lambda, EC2, K8S, SQS, and EBS issue signals."
   }
 
   assert {
@@ -69,11 +75,12 @@ run "forge_impact_dashboard_contract" {
         signalfx_list_chart.top_tenants_lambda_throttles.program_text,
         signalfx_list_chart.top_tenants_ec2_memory.program_text,
         signalfx_list_chart.top_tenants_ec2_cpu.program_text,
+        signalfx_list_chart.top_tenants_ec2_disk.program_text,
+        signalfx_list_chart.top_tenants_ec2_status_failures.program_text,
         signalfx_list_chart.top_tenants_sqs_backlog.program_text,
         signalfx_list_chart.top_tenants_sqs_dlq_backlog.program_text,
-        signalfx_list_chart.top_tenants_dynamodb_throttles.program_text,
-        signalfx_list_chart.top_tenants_dynamodb_system_errors.program_text,
         signalfx_list_chart.top_tenants_ebs_queue_length.program_text,
+        signalfx_list_chart.top_tenants_ebs_iops_exceeded.program_text,
       ] : strcontains(program_text, "filter('aws_tag_TenantName', 'tenant-a') or filter('aws_tag_TenantName', 'tenant-b')")
     ])
     error_message = "AWS issue leaderboards must be restricted to configured Forge tenants."
@@ -85,24 +92,26 @@ run "forge_impact_dashboard_wiring_contract" {
 
   assert {
     condition = (
-      signalfx_dashboard.forge_impact.name == "ForgeCICD Impact"
+      signalfx_dashboard.forge_impact.name == "Forge Tenant Impact"
       && signalfx_dashboard.forge_impact.dashboard_group == "forge-dashboard-group"
-      && length(signalfx_dashboard.forge_impact.chart) == 22
+      && length(signalfx_dashboard.forge_impact.chart) == 13
+      && signalfx_dashboard.runner_usage.name == "Forge Runner Usage"
+      && length(signalfx_dashboard.runner_usage.chart) == 11
     )
-    error_message = "Forge impact dashboard must keep its name, group input, and chart count."
+    error_message = "Tenant impact and runner usage must remain separate dashboards with pinned chart counts."
   }
 
   assert {
     condition = alltrue([
-      contains([for chart in signalfx_dashboard.forge_impact.chart : chart.chart_id], signalfx_list_chart.active_ec2_runners_by_tenant.id),
-      contains([for chart in signalfx_dashboard.forge_impact.chart : chart.chart_id], signalfx_list_chart.ec2_runner_hours_by_tenant_and_instance_type.id),
       contains([for chart in signalfx_dashboard.forge_impact.chart : chart.chart_id], signalfx_list_chart.top_tenants_lambda_errors.id),
       contains([for chart in signalfx_dashboard.forge_impact.chart : chart.chart_id], signalfx_list_chart.top_tenants_ec2_memory.id),
       contains([for chart in signalfx_dashboard.forge_impact.chart : chart.chart_id], signalfx_list_chart.top_tenants_k8s_failed_pods.id),
       contains([for chart in signalfx_dashboard.forge_impact.chart : chart.chart_id], signalfx_list_chart.top_tenants_sqs_dlq_backlog.id),
-      contains([for chart in signalfx_dashboard.forge_impact.chart : chart.chart_id], signalfx_list_chart.top_tenants_dynamodb_throttles.id),
+      contains([for chart in signalfx_dashboard.forge_impact.chart : chart.chart_id], signalfx_list_chart.top_tenants_ec2_status_failures.id),
       contains([for chart in signalfx_dashboard.forge_impact.chart : chart.chart_id], signalfx_list_chart.top_tenants_ebs_queue_length.id),
+      contains([for chart in signalfx_dashboard.runner_usage.chart : chart.chart_id], signalfx_list_chart.active_ec2_runners_by_tenant.id),
+      contains([for chart in signalfx_dashboard.runner_usage.chart : chart.chart_id], signalfx_list_chart.ec2_runner_hours_by_tenant_and_instance_type.id),
     ])
-    error_message = "Forge impact dashboard must wire cross-service issue leaderboards and retain adoption charts."
+    error_message = "Tenant impact must contain only issue leaderboards, while runner usage retains adoption charts."
   }
 }

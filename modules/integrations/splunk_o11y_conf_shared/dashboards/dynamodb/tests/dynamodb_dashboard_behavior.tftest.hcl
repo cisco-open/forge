@@ -40,7 +40,7 @@ run "dynamodb_dashboard_wiring_contract" {
 
   assert {
     condition = (
-      signalfx_dashboard.dynamodb.name == "DynamoDBs"
+      signalfx_dashboard.dynamodb.name == "Forge Tenant - DynamoDB"
       && signalfx_dashboard.dynamodb.dashboard_group == "forge-dashboard-group"
       && signalfx_dashboard.dynamodb.variable[0].values == toset(["tenant-a", "tenant-b"])
       && signalfx_dashboard.dynamodb.variable[0].value_required

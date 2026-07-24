@@ -227,8 +227,8 @@ EOF
 }
 
 resource "signalfx_dashboard" "opencost" {
-  name            = "OpenCost Tenant Cost"
-  description     = "OpenCost Kubernetes CPU and memory allocation cost by tenant namespace."
+  name            = "Forge Billing and Cost - OpenCost"
+  description     = "OpenCost Kubernetes CPU and memory allocation estimates by Forge tenant namespace; these are not AWS billing charges."
   dashboard_group = var.dashboard_group
 
   time_range = "-24h"
