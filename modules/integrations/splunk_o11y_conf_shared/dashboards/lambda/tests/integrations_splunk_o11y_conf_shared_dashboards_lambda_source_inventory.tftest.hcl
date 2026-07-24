@@ -23,6 +23,10 @@ run "integrations_splunk_o11y_conf_shared_dashboards_lambda_source_inventory" {
       "resource \"signalfx_single_value_chart\" \"total_errors\"",
       "resource \"signalfx_time_chart\" \"provisioned_concurrency_utilization\"",
       "resource \"signalfx_single_value_chart\" \"total_invocations\"",
+      "resource \"signalfx_list_chart\" \"top_tenants_by_errors\"",
+      "resource \"signalfx_list_chart\" \"top_tenants_by_throttles\"",
+      "resource \"signalfx_list_chart\" \"top_lambdas_by_errors\"",
+      "resource \"signalfx_list_chart\" \"top_lambdas_by_throttles\"",
       "resource \"signalfx_dashboard\" \"lambda\"",
     ]
   }
@@ -33,7 +37,7 @@ run "integrations_splunk_o11y_conf_shared_dashboards_lambda_source_inventory" {
   }
 
   assert {
-    condition     = output.expected_literal_count == 16
-    error_message = "Source inventory must keep 16 module-specific Terraform blocks pinned."
+    condition     = output.expected_literal_count == 20
+    error_message = "Source inventory must keep 20 module-specific Terraform blocks pinned."
   }
 }

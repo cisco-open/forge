@@ -175,20 +175,20 @@ resource "signalfx_list_chart" "percent_invocations_by_version" {
   sort_by                 = "-value"
 
   program_text = <<-EOF
-A = data('Invocations', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('Resource', '*') and filter('ExecutedVersion', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName']).publish(label='A', enable=False)
-B = data('Invocations', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('Resource', '*') and filter('ExecutedVersion', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName', 'Resource', 'ExecutedVersion']).publish(label='B', enable=False)
+A = data('Invocations', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_function_version', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName']).publish(label='A', enable=False)
+B = data('Invocations', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_function_version', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_function_version']).publish(label='B', enable=False)
 C = (B/A).scale(100).publish(label='C')
 EOF
 
   time_range = 3600
 
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "sf_metric"
   }
   legend_options_fields {
     enabled  = true
-    property = "ExecutedVersion"
+    property = "aws_function_version"
   }
   legend_options_fields {
     enabled  = true
@@ -199,8 +199,8 @@ EOF
     property = "AWSUniqueId"
   }
   legend_options_fields {
-    enabled  = false
-    property = "FunctionName"
+    enabled  = true
+    property = "aws_function_name"
   }
   legend_options_fields {
     enabled  = false
@@ -211,18 +211,13 @@ EOF
     property = "namespace"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "Resource"
   }
   legend_options_fields {
     enabled  = false
     property = "stat"
   }
-  legend_options_fields {
-    enabled  = false
-    property = "aws_function_version"
-  }
-
   viz_options {
     display_name = "A"
     label        = "A"
@@ -232,7 +227,7 @@ EOF
     label        = "B"
   }
   viz_options {
-    display_name = "Version"
+    display_name = "Invocation share by version"
     label        = "C"
     value_suffix = "%"
   }
@@ -242,7 +237,7 @@ resource "signalfx_time_chart" "errors_by_version" {
   name         = "Errors by version"
   description  = "The number of invocations that failed due to errors in the function (response code 4XX)."
   program_text = <<-EOF
-A = data('Errors', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('ExecutedVersion', '*') and filter('Resource', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'Resource', 'ExecutedVersion']).publish(label='A')
+A = data('Errors', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_function_version', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_function_version']).publish(label='A')
 EOF
 
   plot_type   = "AreaChart"
@@ -252,7 +247,7 @@ EOF
   stacked     = false
 
   axes_precision            = 0
-  on_chart_legend_dimension = "ExecutedVersion"
+  on_chart_legend_dimension = "aws_function_version"
 
   time_range = 3600
 
@@ -262,7 +257,7 @@ EOF
   }
   legend_options_fields {
     enabled  = true
-    property = "FunctionName"
+    property = "aws_function_name"
   }
   legend_options_fields {
     enabled  = true
@@ -281,7 +276,7 @@ EOF
     property = "sf_metric"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "Resource"
   }
   legend_options_fields {
@@ -289,19 +284,19 @@ EOF
     property = "stat"
   }
   legend_options_fields {
-    enabled  = false
+    enabled  = true
     property = "aws_function_version"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "ExecutedVersion"
   }
 
   viz_options {
     axis         = "left"
-    display_name = "Errors by version"
+    display_name = "Errors"
     label        = "A"
-    value_suffix = "-errors"
+    value_suffix = " errors"
   }
 }
 
@@ -332,7 +327,7 @@ resource "signalfx_list_chart" "avg_duration_by_version" {
   disable_sampling = true
 
   program_text = <<-EOF
-A = data('Duration', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'mean') and filter('Resource', '*') and filter('ExecutedVersion', '*'), rollup='average').mean(by=['aws_tag_TenantName', 'Resource', 'ExecutedVersion']).publish(label='A')
+A = data('Duration', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'mean') and filter('aws_function_version', '*'), rollup='average').mean(by=['aws_tag_TenantName', 'aws_function_name', 'aws_function_version']).publish(label='A')
 EOF
 
   time_range = 3600
@@ -343,7 +338,7 @@ EOF
   }
   legend_options_fields {
     enabled  = true
-    property = "FunctionName"
+    property = "aws_function_name"
   }
   legend_options_fields {
     enabled  = true
@@ -362,7 +357,7 @@ EOF
     property = "sf_metric"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "Resource"
   }
   legend_options_fields {
@@ -370,16 +365,16 @@ EOF
     property = "stat"
   }
   legend_options_fields {
-    enabled  = false
+    enabled  = true
     property = "aws_function_version"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "ExecutedVersion"
   }
 
   viz_options {
-    display_name = "Version"
+    display_name = "Average duration"
     label        = "A"
     value_unit   = "Millisecond"
   }
@@ -407,7 +402,7 @@ resource "signalfx_time_chart" "throttles_by_version" {
   name         = "Throttles by version"
   description  = "The number of Lambda function invocation attempts that were throttled due to invocation rates exceeding the customer’s concurrent limits (error code 429)."
   program_text = <<-EOF
-A = data('Throttles', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('Resource', '*') and filter('ExecutedVersion', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'Resource', 'ExecutedVersion']).publish(label='A')
+A = data('Throttles', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_function_version', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_function_version']).publish(label='A')
 EOF
 
   plot_type   = "AreaChart"
@@ -417,7 +412,7 @@ EOF
   stacked     = true
 
   axes_precision            = 0
-  on_chart_legend_dimension = "ExecutedVersion"
+  on_chart_legend_dimension = "aws_function_version"
 
   time_range = 3600
 
@@ -427,7 +422,7 @@ EOF
   }
   legend_options_fields {
     enabled  = true
-    property = "FunctionName"
+    property = "aws_function_name"
   }
   legend_options_fields {
     enabled  = true
@@ -446,7 +441,7 @@ EOF
     property = "sf_metric"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "Resource"
   }
   legend_options_fields {
@@ -458,13 +453,13 @@ EOF
     property = "aws_function_version"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "ExecutedVersion"
   }
 
   viz_options {
     axis         = "left"
-    display_name = "Throttles by version"
+    display_name = "Throttles"
     label        = "A"
   }
 
@@ -474,7 +469,7 @@ resource "signalfx_time_chart" "invocations_by_version" {
   name         = "Invocations by version"
   description  = "The number of times a function is invoked in response to an event or invocation API call."
   program_text = <<-EOF
-A = data('Invocations', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('Resource', '*') and filter('ExecutedVersion', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'Resource', 'ExecutedVersion']).publish(label='A')
+A = data('Invocations', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_function_version', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_function_version']).publish(label='A')
 EOF
 
   plot_type   = "AreaChart"
@@ -485,7 +480,7 @@ EOF
 
 
   axes_precision            = 0
-  on_chart_legend_dimension = "ExecutedVersion"
+  on_chart_legend_dimension = "aws_function_version"
   time_range                = 3600
 
   histogram_options {
@@ -498,7 +493,7 @@ EOF
   }
   legend_options_fields {
     enabled  = true
-    property = "FunctionName"
+    property = "aws_function_name"
   }
   legend_options_fields {
     enabled  = false
@@ -513,7 +508,7 @@ EOF
     property = "sf_metric"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "Resource"
   }
   legend_options_fields {
@@ -521,19 +516,19 @@ EOF
     property = "stat"
   }
   legend_options_fields {
-    enabled  = false
+    enabled  = true
     property = "aws_function_version"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "ExecutedVersion"
   }
 
   viz_options {
     axis         = "left"
-    display_name = "Invocations by version"
+    display_name = "Invocations"
     label        = "A"
-    value_suffix = "-invocations"
+    value_suffix = " invocations"
   }
 
 }
@@ -698,6 +693,126 @@ EOF
   }
 }
 
+resource "signalfx_list_chart" "top_tenants_by_errors" {
+  name                    = "Top 10 tenants by Lambda errors"
+  description             = "Last hour. Use the tenant value to filter this dashboard, then inspect the per-Lambda charts below."
+  unit_prefix             = "Metric"
+  color_by                = "Dimension"
+  secondary_visualization = "Sparkline"
+  sort_by                 = "-value"
+
+  program_text = <<-EOF
+A = data('Errors', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_function_version', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName']).sum(over='1h').above(0).top(count=10).publish(label='A')
+EOF
+
+  time_range = 3600
+
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
+  }
+
+  viz_options {
+    display_name = "Errors"
+    label        = "A"
+    value_suffix = " errors"
+  }
+}
+
+resource "signalfx_list_chart" "top_tenants_by_throttles" {
+  name                    = "Top 10 tenants by Lambda throttles"
+  description             = "Last hour. Use the tenant value to filter this dashboard, then inspect the per-Lambda charts below."
+  unit_prefix             = "Metric"
+  color_by                = "Dimension"
+  secondary_visualization = "Sparkline"
+  sort_by                 = "-value"
+
+  program_text = <<-EOF
+A = data('Throttles', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_function_version', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName']).sum(over='1h').above(0).top(count=10).publish(label='A')
+EOF
+
+  time_range = 3600
+
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
+  }
+
+  viz_options {
+    display_name = "Throttles"
+    label        = "A"
+    value_suffix = " throttles"
+  }
+}
+
+resource "signalfx_list_chart" "top_lambdas_by_errors" {
+  name                    = "Top 10 Lambdas by errors"
+  description             = "Last hour. Select one tenant in the dashboard filter to isolate that tenant's failing functions."
+  unit_prefix             = "Metric"
+  color_by                = "Dimension"
+  secondary_visualization = "Sparkline"
+  sort_by                 = "-value"
+
+  program_text = <<-EOF
+A = data('Errors', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_function_version', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_function_version']).sum(over='1h').above(0).top(count=10).publish(label='A')
+EOF
+
+  time_range = 3600
+
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_function_name"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_function_version"
+  }
+
+  viz_options {
+    display_name = "Errors"
+    label        = "A"
+    value_suffix = " errors"
+  }
+}
+
+resource "signalfx_list_chart" "top_lambdas_by_throttles" {
+  name                    = "Top 10 Lambdas by throttles"
+  description             = "Last hour. Select one tenant in the dashboard filter to isolate that tenant's throttled functions."
+  unit_prefix             = "Metric"
+  color_by                = "Dimension"
+  secondary_visualization = "Sparkline"
+  sort_by                 = "-value"
+
+  program_text = <<-EOF
+A = data('Throttles', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_function_version', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_function_version']).sum(over='1h').above(0).top(count=10).publish(label='A')
+EOF
+
+  time_range = 3600
+
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_function_name"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_function_version"
+  }
+
+  viz_options {
+    display_name = "Throttles"
+    label        = "A"
+    value_suffix = " throttles"
+  }
+}
+
 resource "signalfx_dashboard" "lambda" {
   name            = "Lambdas"
   description     = "Forge CICD Lambda invocation rate, errors, duration, and concurrency."
@@ -731,9 +846,41 @@ resource "signalfx_dashboard" "lambda" {
   time_range = "-1h"
 
   chart {
-    chart_id = signalfx_time_chart.invocations.id
+    chart_id = signalfx_list_chart.top_tenants_by_errors.id
     column   = 0
     row      = 1
+    width    = 6
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_list_chart.top_tenants_by_throttles.id
+    column   = 6
+    row      = 1
+    width    = 6
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_list_chart.top_lambdas_by_errors.id
+    column   = 0
+    row      = 2
+    width    = 6
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_list_chart.top_lambdas_by_throttles.id
+    column   = 6
+    row      = 2
+    width    = 6
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_time_chart.invocations.id
+    column   = 0
+    row      = 3
     width    = 3
     height   = 1
   }
@@ -781,7 +928,7 @@ resource "signalfx_dashboard" "lambda" {
   chart {
     chart_id = signalfx_time_chart.invocations_by_version.id
     column   = 3
-    row      = 1
+    row      = 3
     width    = 3
     height   = 1
   }
@@ -789,7 +936,7 @@ resource "signalfx_dashboard" "lambda" {
   chart {
     chart_id = signalfx_time_chart.provisioned_concurrency_invocations_by_version.id
     column   = 6
-    row      = 1
+    row      = 3
     width    = 3
     height   = 1
   }
@@ -797,7 +944,7 @@ resource "signalfx_dashboard" "lambda" {
   chart {
     chart_id = signalfx_time_chart.provisioned_concurrent_executions_by_version.id
     column   = 9
-    row      = 1
+    row      = 3
     width    = 3
     height   = 1
   }
@@ -805,7 +952,7 @@ resource "signalfx_dashboard" "lambda" {
   chart {
     chart_id = signalfx_list_chart.avg_duration_by_version.id
     column   = 0
-    row      = 2
+    row      = 4
     width    = 4
     height   = 1
   }
@@ -813,7 +960,7 @@ resource "signalfx_dashboard" "lambda" {
   chart {
     chart_id = signalfx_time_chart.errors_by_version.id
     column   = 4
-    row      = 2
+    row      = 4
     width    = 4
     height   = 1
   }
@@ -821,7 +968,7 @@ resource "signalfx_dashboard" "lambda" {
   chart {
     chart_id = signalfx_time_chart.throttles_by_version.id
     column   = 8
-    row      = 2
+    row      = 4
     width    = 4
     height   = 1
   }
@@ -829,7 +976,7 @@ resource "signalfx_dashboard" "lambda" {
   chart {
     chart_id = signalfx_list_chart.percent_invocations_by_version.id
     column   = 0
-    row      = 3
+    row      = 5
     width    = 4
     height   = 1
   }
@@ -837,7 +984,7 @@ resource "signalfx_dashboard" "lambda" {
   chart {
     chart_id = signalfx_time_chart.provisioned_concurrency_spillover_invocations_by_version.id
     column   = 4
-    row      = 3
+    row      = 5
     width    = 4
     height   = 1
   }
@@ -845,7 +992,7 @@ resource "signalfx_dashboard" "lambda" {
   chart {
     chart_id = signalfx_time_chart.provisioned_concurrency_utilization.id
     column   = 8
-    row      = 3
+    row      = 5
     width    = 4
     height   = 1
   }

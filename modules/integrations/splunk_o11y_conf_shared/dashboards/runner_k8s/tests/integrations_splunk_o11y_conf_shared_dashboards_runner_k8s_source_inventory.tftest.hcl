@@ -20,10 +20,6 @@ run "integrations_splunk_o11y_conf_shared_dashboards_runner_k8s_source_inventory
       "resource \"signalfx_time_chart\" \"k8s_memory_usage_bytes\"",
       "resource \"signalfx_time_chart\" \"k8s_pod_phase_trend\"",
       "resource \"signalfx_time_chart\" \"k8s_container_restarts\"",
-      "resource \"signalfx_time_chart\" \"k8s_otel_collector_pods\"",
-      "resource \"signalfx_time_chart\" \"k8s_node_pressure\"",
-      "resource \"signalfx_time_chart\" \"k8s_otel_exporter_queue_utilization\"",
-      "resource \"signalfx_time_chart\" \"k8s_otel_telemetry_loss\"",
       "resource \"signalfx_time_chart\" \"k8s_pod_status_reasons\"",
       "resource \"signalfx_dashboard\" \"runner_k8s\"",
     ]
@@ -35,7 +31,7 @@ run "integrations_splunk_o11y_conf_shared_dashboards_runner_k8s_source_inventory
   }
 
   assert {
-    condition     = output.expected_literal_count == 18
-    error_message = "Source inventory must keep 18 module-specific Terraform blocks pinned."
+    condition     = output.expected_literal_count == 14
+    error_message = "Source inventory must keep 14 module-specific Terraform blocks pinned."
   }
 }

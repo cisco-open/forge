@@ -19,6 +19,17 @@ run "integrations_splunk_o11y_conf_shared_dashboards_forge_impact_source_invento
       "resource \"signalfx_list_chart\" \"k8s_runners_by_tenant\"",
       "resource \"signalfx_list_chart\" \"total_k8s_runners_by_tenant\"",
       "resource \"signalfx_list_chart\" \"k8s_runner_hours_by_tenant\"",
+      "resource \"signalfx_list_chart\" \"top_tenants_lambda_errors\"",
+      "resource \"signalfx_list_chart\" \"top_tenants_lambda_throttles\"",
+      "resource \"signalfx_list_chart\" \"top_tenants_ec2_memory\"",
+      "resource \"signalfx_list_chart\" \"top_tenants_ec2_cpu\"",
+      "resource \"signalfx_list_chart\" \"top_tenants_k8s_pending_pods\"",
+      "resource \"signalfx_list_chart\" \"top_tenants_k8s_failed_pods\"",
+      "resource \"signalfx_list_chart\" \"top_tenants_sqs_backlog\"",
+      "resource \"signalfx_list_chart\" \"top_tenants_sqs_dlq_backlog\"",
+      "resource \"signalfx_list_chart\" \"top_tenants_dynamodb_throttles\"",
+      "resource \"signalfx_list_chart\" \"top_tenants_dynamodb_system_errors\"",
+      "resource \"signalfx_list_chart\" \"top_tenants_ebs_queue_length\"",
       "resource \"terraform_data\" \"dashboard_parent\"",
       "resource \"signalfx_dashboard\" \"forge_impact\"",
     ]
@@ -30,7 +41,7 @@ run "integrations_splunk_o11y_conf_shared_dashboards_forge_impact_source_invento
   }
 
   assert {
-    condition     = output.expected_literal_count == 13
-    error_message = "Source inventory must keep 13 module-specific Terraform blocks pinned."
+    condition     = output.expected_literal_count == 24
+    error_message = "Source inventory must keep 24 module-specific Terraform blocks pinned."
   }
 }

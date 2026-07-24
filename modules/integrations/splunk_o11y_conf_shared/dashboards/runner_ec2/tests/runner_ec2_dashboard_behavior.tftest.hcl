@@ -27,13 +27,17 @@ run "runner_ec2_dashboard_contract" {
       && signalfx_time_chart.chart_cpu_utilization.time_range == 3600
       && signalfx_list_chart.chart_top_instances_by_cpu_utilization.sort_by == "-value"
       && signalfx_list_chart.chart_top_instances_by_cpu_utilization.time_range == 3600
+      && signalfx_list_chart.chart_disk_summary_utilization.description == "Percent of disk space utilized on all volumes on active hosts with agent installed. Tenant | Instance id | Host"
+      && strcontains(signalfx_list_chart.chart_disk_summary_utilization.program_text, ".sum(by=['aws_tag_TenantName', 'host.name', 'host.id', 'AWSUniqueId'])")
+      && contains([for field in signalfx_list_chart.chart_disk_summary_utilization.legend_options_fields : field.property if field.enabled], "aws_tag_TenantName")
+      && one([for option in signalfx_list_chart.chart_disk_summary_utilization.viz_options : option.display_name if option.label == "C"]) == "Disk utilization"
       && signalfx_time_chart.chart_status_check_failures.time_range == 3600
       && signalfx_list_chart.chart_total_network_errors.name == "Network errors/sec"
       && strcontains(signalfx_list_chart.chart_total_network_errors.program_text, "rollup='rate'")
       && !strcontains(signalfx_list_chart.chart_total_network_errors.program_text, ".count(")
       && strcontains(signalfx_list_chart.chart_top_memory_page_swaps_sec.program_text, "data('vmpage_io.swap.in', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks'), rollup='rate')")
     )
-    error_message = "EC2 runner charts must keep one-hour visibility, active host, CPU utilization, top-instance, and rate-based network and swap behavior."
+    error_message = "EC2 runner charts must keep one-hour visibility, tenant-aware disk identity, active host, CPU utilization, top-instance, and rate-based network and swap behavior."
   }
 }
 
