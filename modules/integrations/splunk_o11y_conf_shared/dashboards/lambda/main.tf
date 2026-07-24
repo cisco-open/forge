@@ -14,7 +14,7 @@ EOF
   axes_precision            = 0
   on_chart_legend_dimension = "ExecutedVersion"
 
-  time_range = 900
+  time_range = 3600
 
   viz_options {
     axis         = "left"
@@ -39,7 +39,7 @@ EOF
 
   axes_precision            = 0
   on_chart_legend_dimension = "ExecutedVersion"
-  time_range                = 900
+  time_range                = 3600
 
   legend_options_fields {
     enabled  = false
@@ -96,7 +96,7 @@ EOF
 
   axes_precision            = 0
   on_chart_legend_dimension = "ExecutedVersion"
-  time_range                = 900
+  time_range                = 3600
 
   legend_options_fields {
     enabled  = false
@@ -140,12 +140,12 @@ EOF
 
 resource "signalfx_single_value_chart" "total_spillover_invocations" {
   name        = "Total spillover invocations"
-  description = "Over 5m | Spillover invocations are run on nonprovisioned concurrency, when all provisioned concurrency is in use."
+  description = "Over 30m | Spillover invocations are run on nonprovisioned concurrency, when all provisioned concurrency is in use."
   unit_prefix = "Metric"
   color_by    = "Dimension"
 
   program_text = <<-EOF
-A = data('ProvisionedConcurrencySpilloverInvocations', filter=filter('stat', 'sum') and filter('Resource', '*') and filter('ExecutedVersion', '*'), rollup='rate').sum(over='5m').sum().publish(label='A')
+A = data('ProvisionedConcurrencySpilloverInvocations', filter=filter('stat', 'sum') and filter('Resource', '*') and filter('ExecutedVersion', '*'), rollup='rate').sum(over='30m').sum().publish(label='A')
 EOF
 
   viz_options {
@@ -168,7 +168,7 @@ A = data('Invocations', filter=filter('namespace', 'AWS/Lambda') and filter('sta
 B = data('Invocations', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('Resource', '*') and filter('ExecutedVersion', '*'), rollup='sum', extrapolation='zero').sum(by=['ExecutedVersion']).publish(label='B', enable=False)
 EOF
 
-  time_range = 900
+  time_range = 3600
 
   legend_options_fields {
     enabled  = true
@@ -238,7 +238,7 @@ EOF
   axes_precision            = 0
   on_chart_legend_dimension = "ExecutedVersion"
 
-  time_range = 900
+  time_range = 3600
 
   legend_options_fields {
     enabled  = false
@@ -287,17 +287,17 @@ EOF
 
 resource "signalfx_single_value_chart" "total_throttles" {
   name        = "Total throttles"
-  description = "Over 5m"
+  description = "Over 30m"
   unit_prefix = "Metric"
   color_by    = "Dimension"
 
   program_text = <<-EOF
-A = data('Throttles', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('Resource', '*') and (not filter('ExecutedVersion', '*')), rollup='sum', extrapolation='zero').sum(over='5m').sum().publish(label='A')
+A = data('Throttles', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('Resource', '*') and (not filter('ExecutedVersion', '*')), rollup='sum', extrapolation='zero').sum(over='30m').sum().publish(label='A')
 EOF
 
   viz_options {
     color        = "yellow"
-    display_name = "Throttles - sum(5m) - sum"
+    display_name = "Throttles - sum(30m) - sum"
     label        = "A"
   }
 }
@@ -315,7 +315,7 @@ resource "signalfx_list_chart" "avg_duration_by_version" {
 A = data('Duration', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'mean') and filter('Resource', '*') and filter('ExecutedVersion', '*'), rollup='average').sum(by=['ExecutedVersion']).publish(label='A')
 EOF
 
-  time_range = 900
+  time_range = 3600
 
   legend_options_fields {
     enabled  = false
@@ -395,7 +395,7 @@ EOF
   axes_precision            = 0
   on_chart_legend_dimension = "ExecutedVersion"
 
-  time_range = 900
+  time_range = 3600
 
   legend_options_fields {
     enabled  = false
@@ -458,7 +458,7 @@ EOF
 
   axes_precision            = 0
   on_chart_legend_dimension = "ExecutedVersion"
-  time_range                = 900
+  time_range                = 3600
 
   histogram_options {
     color_theme = "gold"
@@ -526,7 +526,7 @@ EOF
   axes_precision            = 0
   on_chart_legend_dimension = "plot_label"
 
-  time_range = 900
+  time_range = 3600
 
   histogram_options {
     color_theme = "gold"
@@ -578,12 +578,12 @@ EOF
 
 resource "signalfx_single_value_chart" "total_errors" {
   name        = "Total errors"
-  description = "Over 5m"
+  description = "Over 30m"
   unit_prefix = "Metric"
   color_by    = "Dimension"
 
   program_text = <<-EOF
-A = data('Errors', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('Resource', '*') and (not filter('ExecutedVersion', '*')), rollup='sum', extrapolation='zero').sum(over='5m').sum().publish(label='A')
+A = data('Errors', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('Resource', '*') and (not filter('ExecutedVersion', '*')), rollup='sum', extrapolation='zero').sum(over='30m').sum().publish(label='A')
 EOF
 
   viz_options {
@@ -610,7 +610,7 @@ EOF
   axes_precision            = 0
   on_chart_legend_dimension = "ExecutedVersion"
 
-  time_range = 900
+  time_range = 3600
 
   legend_options_fields {
     enabled  = false
@@ -655,17 +655,17 @@ EOF
 
 resource "signalfx_single_value_chart" "total_invocations" {
   name        = "Total invocations"
-  description = "Over 5m"
+  description = "Over 30m"
   unit_prefix = "Metric"
   color_by    = "Dimension"
 
   program_text = <<-EOF
-A = data('Invocations', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('Resource', '*') and (not filter('ExecutedVersion', '*')), rollup='sum').sum(over='5m').sum().publish(label='A')
+A = data('Invocations', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('Resource', '*') and (not filter('ExecutedVersion', '*')), rollup='sum').sum(over='30m').sum().publish(label='A')
 EOF
 
   viz_options {
     color        = "chartreuse"
-    display_name = "Invocations - sum(5m) - sum"
+    display_name = "Invocations - sum(30m) - sum"
     label        = "A"
   }
 }

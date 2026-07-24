@@ -2,7 +2,7 @@ resource "signalfx_single_value_chart" "queues" {
   name        = "# Queues"
   description = "Shows how many SQS queues are being monitored"
 
-  program_text = "A = data('ApproximateAgeOfOldestMessage', rollup='latest').count(by=['QueueName']).count().publish(label='A')"
+  program_text = "A = data('ApproximateAgeOfOldestMessage', filter=filter('namespace', 'AWS/SQS') and filter('stat', 'mean'), rollup='latest').count(by=['QueueName']).count().publish(label='A')"
 
   max_precision   = 4
   unit_prefix     = "Metric"
@@ -17,15 +17,15 @@ resource "signalfx_single_value_chart" "queues" {
 
 resource "signalfx_list_chart" "top_queues_by_message_sent" {
   name        = "Top  queues by message sent"
-  description = "Ranks queues by number of sent messages"
+  description = "Ranks queues by messages sent over the last 30 minutes"
 
-  program_text = "A = data('NumberOfMessagesSent', rollup='latest').sum(by=['QueueName']).top(count=5).publish(label='A')"
+  program_text = "A = data('NumberOfMessagesSent', filter=filter('namespace', 'AWS/SQS') and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='30m').sum(by=['QueueName']).top(count=5).publish(label='A')"
   sort_by      = "-value"
 
   disable_sampling        = false
   hide_missing_values     = true
   max_precision           = 4
-  time_range              = 900
+  time_range              = 3600
   unit_prefix             = "Metric"
   secondary_visualization = "None"
 
@@ -43,7 +43,7 @@ resource "signalfx_list_chart" "top_queues_by_message_sent" {
   }
 
   viz_options {
-    display_name = "Top queues by visible messages"
+    display_name = "Top queues by messages sent"
     label        = "A"
   }
 }
@@ -53,14 +53,14 @@ resource "signalfx_time_chart" "sent_message_size" {
   description = "Tracks the size of sent messages over time."
 
   program_text = <<-EOF
-A = data('SentMessageSize', filter=filter('namespace', 'AWS/SQS')).sum(over=Args.get('ui.dashboard_window', '15m')).publish(label='A')
+A = data('SentMessageSize', filter=filter('namespace', 'AWS/SQS') and filter('stat', 'mean'), rollup='average').mean(by=['QueueName']).publish(label='A')
 EOF
 
   plot_type        = "LineChart"
   disable_sampling = true
   show_event_lines = false
   stacked          = false
-  time_range       = 900
+  time_range       = 3600
   unit_prefix      = "Metric"
 
   axes_precision = 0
@@ -110,16 +110,16 @@ resource "signalfx_time_chart" "messages_by_state" {
   description = "Shows delayed, visible, and in-flight message breakdown."
 
   program_text = <<-EOF
-A = data('ApproximateNumberOfMessagesDelayed', rollup='latest').sum().publish(label='A')
-B = data('ApproximateNumberOfMessagesVisible', rollup='latest').sum().publish(label='B')
-C = data('ApproximateNumberOfMessagesNotVisible', rollup='latest').sum().publish(label='C')
+A = data('ApproximateNumberOfMessagesDelayed', filter=filter('namespace', 'AWS/SQS') and filter('stat', 'mean'), rollup='latest').sum().publish(label='A')
+B = data('ApproximateNumberOfMessagesVisible', filter=filter('namespace', 'AWS/SQS') and filter('stat', 'mean'), rollup='latest').sum().publish(label='B')
+C = data('ApproximateNumberOfMessagesNotVisible', filter=filter('namespace', 'AWS/SQS') and filter('stat', 'mean'), rollup='latest').sum().publish(label='C')
 EOF
 
   plot_type        = "AreaChart"
   disable_sampling = false
   show_event_lines = false
   stacked          = true
-  time_range       = 900
+  time_range       = 3600
   unit_prefix      = "Metric"
   axes_precision   = 0
 
@@ -160,11 +160,11 @@ resource "signalfx_list_chart" "oldest_message_age" {
   name        = "Oldest message age"
   description = "Displays the max age of the oldest unprocessed message in seconds"
 
-  program_text = "A = data('ApproximateAgeOfOldestMessage', filter=filter('namespace', 'AWS/SQS') and filter('stat', 'mean')).sum(by=['QueueName']).publish(label='A')"
+  program_text = "A = data('ApproximateAgeOfOldestMessage', filter=filter('namespace', 'AWS/SQS') and filter('stat', 'mean'), rollup='latest').max(by=['QueueName']).publish(label='A')"
 
   disable_sampling    = false
   hide_missing_values = true
-  time_range          = 900
+  time_range          = 3600
   unit_prefix         = "Metric"
 
   secondary_visualization = "None"
@@ -191,7 +191,7 @@ resource "signalfx_list_chart" "oldest_message_age" {
     property = "stat"
   }
   viz_options {
-    display_name = "ApproximateAgeOfOldestMessage - Sum by QueueName"
+    display_name = "ApproximateAgeOfOldestMessage - Max by QueueName"
     label        = "A"
   }
 }
@@ -200,13 +200,13 @@ resource "signalfx_time_chart" "empty_receives" {
   name        = "# Empty receives"
   description = "Tracks ReceiveMessage API calls returning zero messages"
 
-  program_text = "A = data('NumberOfEmptyReceives', rollup='latest').sum().publish(label='A')"
+  program_text = "A = data('NumberOfEmptyReceives', filter=filter('namespace', 'AWS/SQS') and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum().publish(label='A')"
 
   plot_type        = "LineChart"
   disable_sampling = false
   show_event_lines = false
   stacked          = false
-  time_range       = 900
+  time_range       = 3600
   unit_prefix      = "Metric"
   axes_precision   = 0
 
@@ -229,16 +229,16 @@ resource "signalfx_time_chart" "empty_receives" {
 
 resource "signalfx_list_chart" "top_queues_by_message_received" {
   name        = "Top queues by message received"
-  description = "Ranks queues by number of received messages"
+  description = "Ranks queues by messages received over the last 30 minutes"
 
-  program_text = "A = data('NumberOfMessagesReceived', rollup='latest').sum(by=['QueueName']).top(count=5).publish(label='A')"
+  program_text = "A = data('NumberOfMessagesReceived', filter=filter('namespace', 'AWS/SQS') and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='30m').sum(by=['QueueName']).top(count=5).publish(label='A')"
 
   sort_by = "-value"
 
   disable_sampling        = false
   hide_missing_values     = true
   max_precision           = 4
-  time_range              = 900
+  time_range              = 3600
   unit_prefix             = "Metric"
   secondary_visualization = "None"
 
@@ -256,7 +256,7 @@ resource "signalfx_list_chart" "top_queues_by_message_received" {
   }
 
   viz_options {
-    display_name = "Top queues by visible messages"
+    display_name = "Top queues by messages received"
     label        = "A"
   }
 }
@@ -266,15 +266,15 @@ resource "signalfx_time_chart" "message_processing_trend" {
   description = "Tracks messages sent, received, and deleted over time."
 
   program_text = <<-EOF
-A = data('NumberOfMessagesSent', rollup='latest').sum().publish(label='A')
-B = data('NumberOfMessagesReceived', rollup='latest').sum().publish(label='B')
-C = data('NumberOfMessagesDeleted', rollup='latest').sum().publish(label='C')
+A = data('NumberOfMessagesSent', filter=filter('namespace', 'AWS/SQS') and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum().publish(label='A')
+B = data('NumberOfMessagesReceived', filter=filter('namespace', 'AWS/SQS') and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum().publish(label='B')
+C = data('NumberOfMessagesDeleted', filter=filter('namespace', 'AWS/SQS') and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum().publish(label='C')
 EOF
 
   plot_type        = "AreaChart"
   disable_sampling = false
   show_event_lines = false
-  time_range       = 900
+  time_range       = 3600
   unit_prefix      = "Metric"
   axes_precision   = 0
 
@@ -316,13 +316,13 @@ resource "signalfx_time_chart" "messages_deleted" {
   name        = "# Messages deleted"
   description = "Displays messages successfully deleted from queues"
 
-  program_text = "A = data('NumberOfMessagesDeleted', rollup='latest').sum().publish(label='A')"
+  program_text = "A = data('NumberOfMessagesDeleted', filter=filter('namespace', 'AWS/SQS') and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum().publish(label='A')"
 
   plot_type        = "LineChart"
   disable_sampling = false
   show_event_lines = false
   stacked          = false
-  time_range       = 900
+  time_range       = 3600
   unit_prefix      = "Metric"
   axes_precision   = 0
 
@@ -357,7 +357,7 @@ EOF
   on_chart_legend_dimension = "plot_label"
   show_event_lines          = false
   stacked                   = true
-  time_range                = 900
+  time_range                = 3600
   unit_prefix               = "Metric"
 
   axis_left {
@@ -389,7 +389,7 @@ resource "signalfx_list_chart" "dead_letter_oldest_message_age" {
   hide_missing_values     = true
   max_precision           = 4
   secondary_visualization = "None"
-  time_range              = 900
+  time_range              = 3600
   unit_prefix             = "Metric"
 
   legend_options_fields {
@@ -423,7 +423,7 @@ resource "signalfx_list_chart" "dead_letter_visible_messages" {
   hide_missing_values     = true
   max_precision           = 4
   secondary_visualization = "None"
-  time_range              = 900
+  time_range              = 3600
   unit_prefix             = "Metric"
 
   legend_options_fields {

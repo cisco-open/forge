@@ -22,12 +22,15 @@ run "lambda_dashboard_contract" {
   assert {
     condition = (
       signalfx_time_chart.invocations.name == "Invocations"
-      && signalfx_time_chart.invocations.time_range == 900
+      && signalfx_time_chart.invocations.time_range == 3600
       && strcontains(signalfx_time_chart.invocations.program_text, "Invocations")
       && signalfx_single_value_chart.total_errors.name == "Total errors"
+      && strcontains(signalfx_single_value_chart.total_errors.program_text, ".sum(over='30m')")
+      && strcontains(signalfx_single_value_chart.total_throttles.program_text, ".sum(over='30m')")
+      && strcontains(signalfx_single_value_chart.total_invocations.program_text, ".sum(over='30m')")
       && strcontains(signalfx_time_chart.errors_by_version.program_text, "Errors")
     )
-    error_message = "Lambda charts must keep invocation and error SignalFlow behavior."
+    error_message = "Lambda charts must keep one-hour visibility and ingestion-delay-safe invocation, error, and throttle behavior."
   }
 }
 

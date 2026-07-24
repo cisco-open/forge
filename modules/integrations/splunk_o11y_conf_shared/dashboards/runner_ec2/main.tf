@@ -257,7 +257,7 @@ resource "signalfx_list_chart" "chart_top_instances_by_cpu_utilization" {
   color_by                = "Scale"
   refresh_interval        = 60
   max_precision           = 4
-  time_range              = 900
+  time_range              = 3600
   secondary_visualization = "None"
 
   color_scale {
@@ -509,7 +509,7 @@ EOF
   unit_prefix             = "Binary"
   max_precision           = 4
   secondary_visualization = "Sparkline"
-  time_range              = 900
+  time_range              = 3600
   refresh_interval        = 60
 
   color_scale {
@@ -601,7 +601,7 @@ EOF
   sort_by = "-value"
 
   color_by                = "Scale"
-  time_range              = 900
+  time_range              = 3600
   refresh_interval        = 60
   max_precision           = 4
   secondary_visualization = "None"
@@ -1019,11 +1019,11 @@ EOF
 }
 
 resource "signalfx_list_chart" "chart_total_network_errors" {
-  name = "# Total network errors"
+  name = "Network errors/sec"
 
   program_text = <<-EOF
-A = data('system.network.errors', filter=filter('direction', 'receive') and filter('cloud.platform', 'aws_ec2', 'aws_eks')).count(by=['aws_tag_TenantName']).publish(label='A')
-B = data('system.network.errors', filter=filter('direction', 'transmit') and filter('cloud.platform', 'aws_ec2', 'aws_eks')).count(by=['aws_tag_TenantName']).publish(label='B')
+A = data('system.network.errors', filter=filter('direction', 'receive') and filter('cloud.platform', 'aws_ec2', 'aws_eks'), rollup='rate').sum(by=['aws_tag_TenantName']).publish(label='A')
+B = data('system.network.errors', filter=filter('direction', 'transmit') and filter('cloud.platform', 'aws_ec2', 'aws_eks'), rollup='rate').sum(by=['aws_tag_TenantName']).publish(label='B')
 EOF
 
   sort_by = "-value"
@@ -1031,7 +1031,7 @@ EOF
   color_by         = "Metric"
   max_precision    = 4
   refresh_interval = 60
-  time_range       = 900
+  time_range       = 3600
 
   legend_options_fields {
     enabled  = false
@@ -1048,12 +1048,12 @@ EOF
 
   viz_options {
     color        = "blue"
-    display_name = "Errors with bytes in"
+    display_name = "Receive errors/sec"
     label        = "A"
   }
   viz_options {
     color        = "orange"
-    display_name = "Errors with bytes out"
+    display_name = "Transmit errors/sec"
     label        = "B"
   }
 }
@@ -1063,7 +1063,7 @@ resource "signalfx_list_chart" "chart_top_memory_page_swaps_sec" {
   description = "From hosts with agent installed"
 
   program_text = <<-EOF
-A = data('vmpage_io.swap.in', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks')).mean(by=['host.name', 'aws_tag_TenantName']).top(count=5).publish(label='A')
+A = data('vmpage_io.swap.in', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks'), rollup='rate').mean(by=['host.name', 'aws_tag_TenantName']).top(count=5).publish(label='A')
 B = data('vmpage_io.swap.out', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks'), rollup='rate').mean(by=['host.name', 'aws_tag_TenantName']).top(count=5).publish(label='B')
 EOF
 
@@ -1071,7 +1071,7 @@ EOF
 
   color_by         = "Scale"
   max_precision    = 4
-  time_range       = 900
+  time_range       = 3600
   refresh_interval = 60
 
   color_scale {
@@ -1124,7 +1124,7 @@ EOF
   color_by                = "Scale"
   max_precision           = 0
   secondary_visualization = "Sparkline"
-  time_range              = 900
+  time_range              = 3600
 
   color_scale {
     color = "blue"
@@ -1246,7 +1246,7 @@ EOF
   sort_by = "-value"
 
   color_by                = "Scale"
-  time_range              = 900
+  time_range              = 3600
   secondary_visualization = "None"
 
   color_scale {
@@ -1429,7 +1429,7 @@ resource "signalfx_list_chart" "chart_top_5_network_out_bytes" {
 
   color_by                = "Scale"
   unit_prefix             = "Binary"
-  time_range              = 900
+  time_range              = 3600
   max_precision           = 4
   refresh_interval        = 60
   secondary_visualization = "None"
@@ -1494,7 +1494,7 @@ resource "signalfx_list_chart" "chart_top_5_network_in_bytes" {
   unit_prefix             = "Binary"
   max_precision           = 4
   refresh_interval        = 60
-  time_range              = 900
+  time_range              = 3600
   secondary_visualization = "None"
 
   color_scale {
@@ -1545,7 +1545,7 @@ EOF
   disable_sampling          = false
   on_chart_legend_dimension = "plot_label"
   show_event_lines          = false
-  time_range                = 900
+  time_range                = 3600
   unit_prefix               = "Metric"
 
   axis_left {
