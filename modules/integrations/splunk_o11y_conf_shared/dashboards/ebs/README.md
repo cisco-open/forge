@@ -10,6 +10,7 @@ ARC runners and EKS infrastructure depend on storage behaving predictably. This 
 
 - Read/write throughput, operations, and latency charts.
 - Queue length, idle time, byte utilization, and state views.
+- Provisioned IOPS exceeded visibility by tenant and volume.
 - Read/write breakdowns for EBS-backed runner or platform volumes.
 - Dashboard placement in the shared Forge O11y group.
 
@@ -54,6 +55,7 @@ No modules.
 | [signalfx_time_chart.rw_bytes_breakdown](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.total_read_time](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.total_write_time](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
+| [signalfx_time_chart.volume_iops_exceeded](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.write_latency](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.write_ops](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.write_throughput](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |

@@ -28,6 +28,8 @@ run "dynamodb_dashboard_contract" {
       && strcontains(signalfx_time_chart.read_capacity_percentage.program_text, "ConsumedReadCapacityUnits")
       && signalfx_single_value_chart.throttled_requests_single.name == "Throttled requests"
       && strcontains(signalfx_time_chart.throttled_requests_ts.program_text, "ThrottledRequests")
+      && strcontains(signalfx_time_chart.throttled_requests_ts.program_text, ".sum(by=['aws_tag_TenantName', 'TableName'])")
+      && strcontains(signalfx_time_chart.system_errors_ts.program_text, ".sum(by=['aws_tag_TenantName', 'TableName', 'Operation'])")
     )
     error_message = "DynamoDB charts must keep one-hour capacity, error, and throttling visibility."
   }
@@ -40,6 +42,8 @@ run "dynamodb_dashboard_wiring_contract" {
     condition = (
       signalfx_dashboard.dynamodb.name == "DynamoDBs"
       && signalfx_dashboard.dynamodb.dashboard_group == "forge-dashboard-group"
+      && signalfx_dashboard.dynamodb.variable[0].values == toset(["tenant-a", "tenant-b"])
+      && signalfx_dashboard.dynamodb.variable[0].value_required
       && length(signalfx_dashboard.dynamodb.chart) == 13
     )
     error_message = "DynamoDB dashboard must keep its name, group input, and chart count."

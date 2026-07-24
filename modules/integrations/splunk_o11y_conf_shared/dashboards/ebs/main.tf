@@ -1,3 +1,9 @@
+locals {
+  ebs_tenant_filter = length(var.tenant_names) > 0 ? join(" or ", [
+    for tenant_name in sort(var.tenant_names) : "filter('aws_tag_TenantName', '${tenant_name}')"
+  ]) : "filter('aws_tag_TenantName', '__forge_tenant_scope_not_configured__')"
+}
+
 resource "signalfx_time_chart" "byte_utilization_pct" {
   name = "Byte utilization %"
 
@@ -301,12 +307,12 @@ EOF
 
 resource "signalfx_time_chart" "latency_op" {
   name         = "Latency/op (ms)"
-  description  = ""
+  description  = "Compares average read and write latency by Forge tenant and EBS volume."
   program_text = <<-EOF
-A = data('VolumeWriteOps', filter=filter('namespace', 'AWS/EBS') and filter('VolumeId', 'vol-46dcc55f') and filter('stat', 'sum'), extrapolation='zero', rollup='rate').scale(60).publish(label='A')
-B = data('VolumeTotalWriteTime', filter=filter('namespace', 'AWS/EBS') and filter('VolumeId', 'vol-46dcc55f') and filter('stat', 'sum'), extrapolation='zero', rollup='rate').scale(60).publish(label='B', enable=False)
-C = data('VolumeReadOps', filter=filter('namespace', 'AWS/EBS') and filter('VolumeId', 'vol-46dcc55f') and filter('stat', 'sum'), extrapolation='zero', rollup='rate').scale(60).publish(label='C')
-D = data('VolumeTotalReadTime', filter=filter('namespace', 'AWS/EBS') and filter('VolumeId', 'vol-46dcc55f') and filter('stat', 'sum'), extrapolation='zero', rollup='rate').scale(60).publish(label='D', enable=False)
+A = data('VolumeWriteOps', filter=(${local.ebs_tenant_filter}) and filter('namespace', 'AWS/EBS') and filter('VolumeId', '*') and filter('stat', 'sum'), extrapolation='zero', rollup='rate').sum(by=['aws_tag_TenantName', 'aws_region', 'VolumeId']).scale(60).publish(label='A')
+B = data('VolumeTotalWriteTime', filter=(${local.ebs_tenant_filter}) and filter('namespace', 'AWS/EBS') and filter('VolumeId', '*') and filter('stat', 'sum'), extrapolation='zero', rollup='rate').sum(by=['aws_tag_TenantName', 'aws_region', 'VolumeId']).scale(60).publish(label='B', enable=False)
+C = data('VolumeReadOps', filter=(${local.ebs_tenant_filter}) and filter('namespace', 'AWS/EBS') and filter('VolumeId', '*') and filter('stat', 'sum'), extrapolation='zero', rollup='rate').sum(by=['aws_tag_TenantName', 'aws_region', 'VolumeId']).scale(60).publish(label='C')
+D = data('VolumeTotalReadTime', filter=(${local.ebs_tenant_filter}) and filter('namespace', 'AWS/EBS') and filter('VolumeId', '*') and filter('stat', 'sum'), extrapolation='zero', rollup='rate').sum(by=['aws_tag_TenantName', 'aws_region', 'VolumeId']).scale(60).publish(label='D', enable=False)
 E = (B/A).scale(1000).publish(label='E')
 F = (D/C).scale(1000).publish(label='F')
 EOF
@@ -334,6 +340,23 @@ EOF
 
   histogram_options {
     color_theme = "gold"
+  }
+
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_region"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "VolumeId"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
   }
 
   viz_options {
@@ -524,6 +547,31 @@ EOF
     value_suffix = "No of ops"
   }
 }
+
+resource "signalfx_time_chart" "volume_iops_exceeded" {
+  name        = "Volume IOPS exceeded"
+  description = "Shows EBS volumes that exceeded their provisioned IOPS performance during the selected interval."
+
+  program_text = <<-EOF
+A = data('VolumeIOPSExceededCheck', filter=(${local.ebs_tenant_filter}) and filter('namespace', 'AWS/EBS') and filter('stat', 'upper'), rollup='latest').max(by=['aws_tag_TenantName', 'aws_region', 'VolumeId']).publish(label='A')
+EOF
+
+  plot_type                 = "ColumnChart"
+  axes_precision            = 0
+  disable_sampling          = true
+  on_chart_legend_dimension = "VolumeId"
+  time_range                = 86400
+
+  axis_left {
+    label = "Exceeded"
+  }
+
+  viz_options {
+    display_name = "{{aws_tag_TenantName}} - {{VolumeId}}"
+    label        = "A"
+  }
+}
+
 resource "signalfx_dashboard" "ebs" {
   name            = "EBS"
   description     = "EC2/EBS volume throughput, IOPS, and latency for Forge runners."
@@ -533,8 +581,8 @@ resource "signalfx_dashboard" "ebs" {
     property               = "aws_tag_TenantName"
     alias                  = "ForgeCICD Tenant Name"
     description            = ""
-    values                 = []
-    value_required         = false
+    values                 = sort(var.tenant_names)
+    value_required         = length(var.tenant_names) > 0
     values_suggested       = sort(var.tenant_names)
     restricted_suggestions = true
   }
@@ -671,6 +719,14 @@ resource "signalfx_dashboard" "ebs" {
     column   = 4
     row      = 4
     width    = 4
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_time_chart.volume_iops_exceeded.id
+    column   = 0
+    row      = 5
+    width    = 12
     height   = 1
   }
 

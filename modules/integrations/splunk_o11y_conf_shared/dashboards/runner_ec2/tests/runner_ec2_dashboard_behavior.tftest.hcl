@@ -44,6 +44,8 @@ run "runner_ec2_dashboard_wiring_contract" {
     condition = (
       signalfx_dashboard.runner_ec2.name == "EC2 Runners"
       && signalfx_dashboard.runner_ec2.dashboard_group == "forge-dashboard-group"
+      && signalfx_dashboard.runner_ec2.variable[0].values == toset(["tenant-a", "tenant-b"])
+      && signalfx_dashboard.runner_ec2.variable[0].value_required
       && length(signalfx_dashboard.runner_ec2.chart) == 23
     )
     error_message = "EC2 runner dashboard must keep its name, group input, and chart count."

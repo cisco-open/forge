@@ -10,10 +10,7 @@ run "integrations_splunk_o11y_conf_shared_detectors_k8s_contract" {
     expected_literals = [
       "resource \"signalfx_detector\" \"k8s_otel_no_data\"",
       "resource \"signalfx_detector\" \"k8s_otel_collector_health\"",
-      "resource \"signalfx_detector\" \"k8s_other_namespace_pods_unhealthy\"",
       "resource \"signalfx_detector\" \"k8s_tenant_pods_pending\"",
-      "resource \"signalfx_detector\" \"k8s_tenant_pods_failed\"",
-      "resource \"signalfx_detector\" \"k8s_tenant_container_restarts\"",
       "resource \"signalfx_detector\" \"k8s_platform_pods_unhealthy\"",
     ]
   }

@@ -29,6 +29,8 @@ run "lambda_dashboard_contract" {
       && strcontains(signalfx_single_value_chart.total_throttles.program_text, ".sum(over='30m')")
       && strcontains(signalfx_single_value_chart.total_invocations.program_text, ".sum(over='30m')")
       && strcontains(signalfx_time_chart.errors_by_version.program_text, "Errors")
+      && strcontains(signalfx_time_chart.errors_by_version.program_text, ".sum(by=['aws_tag_TenantName', 'Resource', 'ExecutedVersion'])")
+      && strcontains(signalfx_list_chart.avg_duration_by_version.program_text, ".mean(by=['aws_tag_TenantName', 'Resource', 'ExecutedVersion'])")
     )
     error_message = "Lambda charts must keep one-hour visibility and ingestion-delay-safe invocation, error, and throttle behavior."
   }
@@ -41,6 +43,8 @@ run "lambda_dashboard_wiring_contract" {
     condition = (
       signalfx_dashboard.lambda.name == "Lambdas"
       && signalfx_dashboard.lambda.dashboard_group == "forge-dashboard-group"
+      && signalfx_dashboard.lambda.variable[0].values == toset(["tenant-a", "tenant-b"])
+      && signalfx_dashboard.lambda.variable[0].value_required
       && length(signalfx_dashboard.lambda.chart) == 15
     )
     error_message = "Lambda dashboard must keep its name, group input, and chart count."

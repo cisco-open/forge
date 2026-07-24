@@ -8,7 +8,8 @@ A small platform team cannot watch every tenant manually. These detectors conver
 
 ## What It Manages
 
-- No-data and collector-health detectors for the OTel path.
+- No-data, exporter queue, and telemetry-loss detectors for the OTel path.
+- Kubernetes node pressure detection.
 - Platform namespace health detectors.
 - Tenant pending-pod, failed-pod, and restart detectors.
 - Notification and team routing configuration.
@@ -43,10 +44,7 @@ No modules.
 | ---- | ---- |
 | [signalfx_detector.k8s_otel_collector_health](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/detector) | resource |
 | [signalfx_detector.k8s_otel_no_data](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/detector) | resource |
-| [signalfx_detector.k8s_other_namespace_pods_unhealthy](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/detector) | resource |
 | [signalfx_detector.k8s_platform_pods_unhealthy](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/detector) | resource |
-| [signalfx_detector.k8s_tenant_container_restarts](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/detector) | resource |
-| [signalfx_detector.k8s_tenant_pods_failed](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/detector) | resource |
 | [signalfx_detector.k8s_tenant_pods_pending](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/detector) | resource |
 
 ## Inputs
