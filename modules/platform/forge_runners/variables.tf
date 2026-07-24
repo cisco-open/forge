@@ -161,6 +161,11 @@ variable "deployment_config" {
     error_message = "repository_selection must be 'all' or 'selected'."
   }
 
+  validation {
+    condition     = trimspace(var.deployment_config.github.ghes_org) != ""
+    error_message = "ghes_org must be non-empty."
+  }
+
   description = <<-EOT
   High-level deployment configuration for a Forge runner installation.
 
