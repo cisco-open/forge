@@ -187,6 +187,18 @@ module "dashboard_forge_impact" {
   dashboard_group   = signalfx_dashboard_group.forgecicd.id
 }
 
+module "dashboard_runner_usage" {
+  source = "./dashboards/runner_usage"
+
+  providers = {
+    signalfx = signalfx
+  }
+
+  tenant_names      = try(var.dashboard_variables.forge_impact.tenant_names, var.dashboard_variables.runner_k8s.tenant_names)
+  dynamic_variables = try(var.dashboard_variables.forge_impact.dynamic_variables, [])
+  dashboard_group   = signalfx_dashboard_group.forgecicd.id
+}
+
 # Cost and usage
 module "dashboard_opencost" {
   source = "./dashboards/opencost"

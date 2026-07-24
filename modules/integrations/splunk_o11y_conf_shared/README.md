@@ -175,6 +175,7 @@ drill-down.
 | <a name="module_dashboard_opencost"></a> [dashboard\_opencost](#module\_dashboard\_opencost) | ./dashboards/opencost | n/a |
 | <a name="module_dashboard_runner_ec2"></a> [dashboard\_runner\_ec2](#module\_dashboard\_runner\_ec2) | ./dashboards/runner_ec2 | n/a |
 | <a name="module_dashboard_runner_k8s"></a> [dashboard\_runner\_k8s](#module\_dashboard\_runner\_k8s) | ./dashboards/runner_k8s | n/a |
+| <a name="module_dashboard_runner_usage"></a> [dashboard\_runner\_usage](#module\_dashboard\_runner\_usage) | ./dashboards/runner_usage | n/a |
 | <a name="module_dashboard_s3"></a> [dashboard\_s3](#module\_dashboard\_s3) | ./dashboards/s3 | n/a |
 | <a name="module_dashboard_s3_control_plane"></a> [dashboard\_s3\_control\_plane](#module\_dashboard\_s3\_control\_plane) | ./dashboards/s3_control_plane | n/a |
 | <a name="module_dashboard_sqs"></a> [dashboard\_sqs](#module\_dashboard\_sqs) | ./dashboards/sqs | n/a |
