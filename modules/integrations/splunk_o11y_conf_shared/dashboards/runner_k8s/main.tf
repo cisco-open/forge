@@ -407,19 +407,19 @@ resource "signalfx_time_chart" "k8s_memory_usage_bytes" {
   }
 
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "kubernetes_pod_name"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "kubernetes_namespace"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "kubernetes_cluster"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "kubernetes_pod_uid"
   }
   legend_options_fields {

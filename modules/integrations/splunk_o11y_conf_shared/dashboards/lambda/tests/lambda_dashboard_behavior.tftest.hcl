@@ -24,6 +24,10 @@ run "lambda_dashboard_contract" {
       signalfx_time_chart.invocations.name == "Invocations"
       && signalfx_time_chart.invocations.time_range == 3600
       && strcontains(signalfx_time_chart.invocations.program_text, "Invocations")
+      && alltrue([
+        for field in signalfx_time_chart.invocations.legend_options_fields :
+        !field.enabled
+      ])
       && signalfx_single_value_chart.total_errors.name == "Total errors"
       && strcontains(signalfx_single_value_chart.total_errors.program_text, ".sum(over='30m')")
       && strcontains(signalfx_single_value_chart.total_throttles.program_text, ".sum(over='30m')")
@@ -87,7 +91,7 @@ run "lambda_dashboard_wiring_contract" {
       && signalfx_dashboard.lambda.dashboard_group == "forge-dashboard-group"
       && signalfx_dashboard.lambda.variable[0].values == toset(["tenant-a", "tenant-b"])
       && signalfx_dashboard.lambda.variable[0].value_required
-      && length(signalfx_dashboard.lambda.chart) == 19
+      && length(signalfx_dashboard.lambda.chart) == 14
     )
     error_message = "Lambda dashboard must keep its name, group input, and chart count."
   }
@@ -95,12 +99,13 @@ run "lambda_dashboard_wiring_contract" {
   assert {
     condition = alltrue([
       contains([for chart in signalfx_dashboard.lambda.chart : chart.chart_id], signalfx_time_chart.invocations.id),
-      contains([for chart in signalfx_dashboard.lambda.chart : chart.chart_id], signalfx_time_chart.provisioned_concurrency_utilization.id),
+      contains([for chart in signalfx_dashboard.lambda.chart : chart.chart_id], signalfx_time_chart.invocations_by_version.id),
+      contains([for chart in signalfx_dashboard.lambda.chart : chart.chart_id], signalfx_list_chart.percent_invocations_by_version.id),
       contains([for chart in signalfx_dashboard.lambda.chart : chart.chart_id], signalfx_list_chart.top_tenants_by_errors.id),
       contains([for chart in signalfx_dashboard.lambda.chart : chart.chart_id], signalfx_list_chart.top_tenants_by_throttles.id),
       contains([for chart in signalfx_dashboard.lambda.chart : chart.chart_id], signalfx_list_chart.top_lambdas_by_errors.id),
       contains([for chart in signalfx_dashboard.lambda.chart : chart.chart_id], signalfx_list_chart.top_lambdas_by_throttles.id),
     ])
-    error_message = "Lambda dashboard must wire summary, tenant ranking, per-function detail, and provisioned-concurrency charts."
+    error_message = "Lambda dashboard must wire summary, tenant ranking, per-function detail, and invocation-share charts."
   }
 }

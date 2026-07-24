@@ -81,7 +81,7 @@ resource "signalfx_time_chart" "node_pressure" {
   description = "Shows active PID, memory, disk, or network pressure conditions by Kubernetes node."
 
   program_text = <<-EOF
-A = data('k8s.node.condition', filter=(${local.k8s_cluster_filter}) and (filter('condition', 'PIDPressure') or filter('condition', 'MemoryPressure') or filter('condition', 'DiskPressure') or filter('condition', 'NetworkUnavailable')), rollup='latest').max(by=['k8s.cluster.name', 'k8s.node.name', 'condition']).publish(label='A')
+A = data('k8s.node.condition', filter=(${local.k8s_cluster_filter}) and (filter('condition', 'PIDPressure') or filter('condition', 'MemoryPressure') or filter('condition', 'DiskPressure') or filter('condition', 'NetworkUnavailable')), rollup='max').max(by=['k8s.cluster.name', 'k8s.node.name', 'condition']).above(0).publish(label='A')
 EOF
 
   plot_type                 = "LineChart"

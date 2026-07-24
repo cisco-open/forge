@@ -1,171 +1,3 @@
-resource "signalfx_time_chart" "provisioned_concurrent_executions_by_version" {
-  name         = "Provisioned concurrent executions by version"
-  description  = "The number of events that are being processed on provisioned concurrency. For each invocation of an alias or version with provisioned concurrency, Lambda emits the current count."
-  program_text = <<-EOF
-A = data('ProvisionedConcurrentExecutions', filter=filter('stat', 'upper') and filter('Resource', '*') and filter('ExecutedVersion', '*')).sum(by=['aws_tag_TenantName', 'Resource', 'ExecutedVersion']).publish(label='A')
-EOF
-
-  plot_type   = "AreaChart"
-  unit_prefix = "Metric"
-  color_by    = "Dimension"
-  timezone    = "UTC"
-  stacked     = true
-
-  axes_precision            = 0
-  on_chart_legend_dimension = "ExecutedVersion"
-
-  time_range = 3600
-
-  viz_options {
-    axis         = "left"
-    display_name = "Provisioned concurrent executions"
-    label        = "A"
-  }
-
-}
-
-resource "signalfx_time_chart" "provisioned_concurrency_invocations_by_version" {
-  name         = "Provisioned concurrency invocations by version"
-  description  = "The number of invocations that are run on provisioned concurrency. Lambda increments the count once for each invocation that runs on provisioned concurrency."
-  program_text = <<-EOF
-A = data('ProvisionedConcurrencyInvocations', filter=filter('stat', 'sum') and filter('Resource', '*') and filter('ExecutedVersion', '*'), rollup='rate').sum(by=['aws_tag_TenantName', 'Resource', 'ExecutedVersion']).publish(label='A')
-EOF
-
-  plot_type   = "AreaChart"
-  unit_prefix = "Metric"
-  color_by    = "Dimension"
-  timezone    = "UTC"
-  stacked     = true
-
-  axes_precision            = 0
-  on_chart_legend_dimension = "ExecutedVersion"
-  time_range                = 3600
-
-  legend_options_fields {
-    enabled  = false
-    property = "AWSUniqueId"
-  }
-  legend_options_fields {
-    enabled  = true
-    property = "ExecutedVersion"
-  }
-  legend_options_fields {
-    enabled  = true
-    property = "FunctionName"
-  }
-  legend_options_fields {
-    enabled  = true
-    property = "aws_tag_TenantName"
-  }
-  legend_options_fields {
-    enabled  = true
-    property = "aws_tag_TenantName"
-  }
-  legend_options_fields {
-    enabled  = false
-    property = "sf_originatingMetric"
-  }
-  legend_options_fields {
-    enabled  = false
-    property = "namespace"
-  }
-  legend_options_fields {
-    enabled  = false
-    property = "sf_metric"
-  }
-  legend_options_fields {
-    enabled  = true
-    property = "Resource"
-  }
-  legend_options_fields {
-    enabled  = false
-    property = "stat"
-  }
-
-  viz_options {
-    axis         = "left"
-    display_name = "Provisioned concurrent invocations"
-    label        = "A"
-  }
-}
-
-resource "signalfx_time_chart" "provisioned_concurrency_spillover_invocations_by_version" {
-  name         = "Provisioned concurrency spillover invocations by version"
-  description  = "The number of invocations that are run on nonprovisioned concurrency, when all provisioned concurrency is in use. For a version or alias that is configured to use provisioned concurrency, Lambda increments the count once for each invocation that runs on non-provisioned concurrency."
-  program_text = <<-EOF
-A = data('ProvisionedConcurrencySpilloverInvocations', filter=filter('stat', 'sum') and filter('Resource', '*') and filter('ExecutedVersion', '*'), rollup='rate').sum(by=['aws_tag_TenantName', 'Resource', 'ExecutedVersion']).publish(label='A')
-EOF
-
-  plot_type   = "AreaChart"
-  unit_prefix = "Metric"
-  color_by    = "Dimension"
-  timezone    = "UTC"
-  stacked     = true
-
-  axes_precision            = 0
-  on_chart_legend_dimension = "ExecutedVersion"
-  time_range                = 3600
-
-  legend_options_fields {
-    enabled  = false
-    property = "AWSUniqueId"
-  }
-  legend_options_fields {
-    enabled  = true
-    property = "ExecutedVersion"
-  }
-  legend_options_fields {
-    enabled  = true
-    property = "FunctionName"
-  }
-  legend_options_fields {
-    enabled  = true
-    property = "aws_tag_TenantName"
-  }
-  legend_options_fields {
-    enabled  = false
-    property = "sf_originatingMetric"
-  }
-  legend_options_fields {
-    enabled  = false
-    property = "namespace"
-  }
-  legend_options_fields {
-    enabled  = false
-    property = "sf_metric"
-  }
-  legend_options_fields {
-    enabled  = true
-    property = "Resource"
-  }
-  legend_options_fields {
-    enabled  = false
-    property = "stat"
-  }
-
-  viz_options {
-    axis         = "left"
-    display_name = "Provisioned concurrent invocations"
-    label        = "A"
-  }
-}
-
-resource "signalfx_single_value_chart" "total_spillover_invocations" {
-  name        = "Total spillover invocations"
-  description = "Over 30m | Spillover invocations are run on nonprovisioned concurrency, when all provisioned concurrency is in use."
-  unit_prefix = "Metric"
-  color_by    = "Dimension"
-
-  program_text = <<-EOF
-A = data('ProvisionedConcurrencySpilloverInvocations', filter=filter('stat', 'sum') and filter('Resource', '*') and filter('ExecutedVersion', '*'), rollup='rate').sum(over='30m').sum().publish(label='A')
-EOF
-
-  viz_options {
-    display_name = "Provisioned concurrent invocations"
-    label        = "A"
-  }
-}
-
 resource "signalfx_list_chart" "percent_invocations_by_version" {
   name                    = "% invocations by version"
   description             = "The % of total invocations handled by version"
@@ -560,7 +392,7 @@ EOF
     property = "AWSUniqueId"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "FunctionName"
   }
   legend_options_fields {
@@ -588,7 +420,7 @@ EOF
     property = "aws_function_version"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "ExecutedVersion"
   }
 
@@ -613,66 +445,6 @@ EOF
     color        = "brown"
     display_name = "Errors"
     label        = "A"
-  }
-}
-
-resource "signalfx_time_chart" "provisioned_concurrency_utilization" {
-  name         = "Provisioned concurrency utilization"
-  description  = "The number of events that are being processed on provisioned concurrency, divided by the total amount of provisioned concurrency allocated. For example, .5 indicates that 50 percent of allocated provisioned concurrency is in use. For each invocation of an alias or version with provisioned concurrency, Lambda emits the current count."
-  program_text = <<-EOF
-A = data('ProvisionedConcurrencyUtilization', filter=filter('stat', 'upper') and filter('Resource', '*') and filter('ExecutedVersion', '*')).scale(100).publish(label='A')
-EOF
-
-  plot_type   = "LineChart"
-  unit_prefix = "Metric"
-  color_by    = "Dimension"
-  timezone    = "UTC"
-  stacked     = false
-
-  axes_include_zero         = true
-  axes_precision            = 0
-  on_chart_legend_dimension = "ExecutedVersion"
-
-  time_range = 3600
-
-  legend_options_fields {
-    enabled  = false
-    property = "AWSUniqueId"
-  }
-  legend_options_fields {
-    enabled  = true
-    property = "FunctionName"
-  }
-  legend_options_fields {
-    enabled  = true
-    property = "ExecutedVersion"
-  }
-  legend_options_fields {
-    enabled  = false
-    property = "sf_originatingMetric"
-  }
-  legend_options_fields {
-    enabled  = false
-    property = "namespace"
-  }
-  legend_options_fields {
-    enabled  = false
-    property = "sf_metric"
-  }
-  legend_options_fields {
-    enabled  = false
-    property = "Resource"
-  }
-  legend_options_fields {
-    enabled  = false
-    property = "stat"
-  }
-
-  viz_options {
-    axis         = "left"
-    display_name = "Provisioned concurrency utilization"
-    label        = "A"
-    value_suffix = "%"
   }
 }
 
@@ -815,7 +587,7 @@ EOF
 
 resource "signalfx_dashboard" "lambda" {
   name            = "Forge Tenant - Lambdas"
-  description     = "Forge CICD Lambda invocation rate, errors, duration, and concurrency."
+  description     = "Forge CICD Lambda invocation rate, errors, throttles, duration, tenant impact, and function-version detail."
   dashboard_group = var.dashboard_group
 
   variable {
@@ -881,7 +653,7 @@ resource "signalfx_dashboard" "lambda" {
     chart_id = signalfx_time_chart.invocations.id
     column   = 0
     row      = 3
-    width    = 3
+    width    = 6
     height   = 1
   }
 
@@ -902,50 +674,26 @@ resource "signalfx_dashboard" "lambda" {
   }
 
   chart {
-    chart_id = signalfx_single_value_chart.total_spillover_invocations.id
+    chart_id = signalfx_single_value_chart.total_errors.id
     column   = 6
     row      = 0
-    width    = 2
-    height   = 1
-  }
-
-  chart {
-    chart_id = signalfx_single_value_chart.total_errors.id
-    column   = 8
-    row      = 0
-    width    = 2
+    width    = 3
     height   = 1
   }
 
   chart {
     chart_id = signalfx_single_value_chart.total_throttles.id
-    column   = 10
+    column   = 9
     row      = 0
-    width    = 2
+    width    = 3
     height   = 1
   }
 
   chart {
     chart_id = signalfx_time_chart.invocations_by_version.id
-    column   = 3
-    row      = 3
-    width    = 3
-    height   = 1
-  }
-
-  chart {
-    chart_id = signalfx_time_chart.provisioned_concurrency_invocations_by_version.id
     column   = 6
     row      = 3
-    width    = 3
-    height   = 1
-  }
-
-  chart {
-    chart_id = signalfx_time_chart.provisioned_concurrent_executions_by_version.id
-    column   = 9
-    row      = 3
-    width    = 3
+    width    = 6
     height   = 1
   }
 
@@ -977,23 +725,7 @@ resource "signalfx_dashboard" "lambda" {
     chart_id = signalfx_list_chart.percent_invocations_by_version.id
     column   = 0
     row      = 5
-    width    = 4
-    height   = 1
-  }
-
-  chart {
-    chart_id = signalfx_time_chart.provisioned_concurrency_spillover_invocations_by_version.id
-    column   = 4
-    row      = 5
-    width    = 4
-    height   = 1
-  }
-
-  chart {
-    chart_id = signalfx_time_chart.provisioned_concurrency_utilization.id
-    column   = 8
-    row      = 5
-    width    = 4
+    width    = 12
     height   = 1
   }
 }

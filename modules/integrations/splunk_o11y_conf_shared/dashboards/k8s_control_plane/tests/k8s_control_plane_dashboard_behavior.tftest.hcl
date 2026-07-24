@@ -47,6 +47,8 @@ run "k8s_control_plane_dashboard_contract" {
       && strcontains(signalfx_time_chart.platform_pod_health.program_text, "filter('k8s.namespace.name', 'prometheus')")
       && strcontains(signalfx_time_chart.platform_pod_health.program_text, "filter('k8s.namespace.name', 'splunk-otel-collector')")
       && strcontains(signalfx_time_chart.node_pressure.program_text, "k8s.node.condition")
+      && strcontains(signalfx_time_chart.node_pressure.program_text, "rollup='max'")
+      && strcontains(signalfx_time_chart.node_pressure.program_text, ".max(by=['k8s.cluster.name', 'k8s.node.name', 'condition']).above(0)")
       && one(signalfx_time_chart.node_pressure.viz_options).display_name == "Node pressure"
       && strcontains(signalfx_time_chart.otel_exporter_queue_utilization.program_text, "otelcol_exporter_queue_capacity")
       && one(signalfx_time_chart.otel_exporter_queue_utilization.viz_options).display_name == "OTel exporter queue utilization"

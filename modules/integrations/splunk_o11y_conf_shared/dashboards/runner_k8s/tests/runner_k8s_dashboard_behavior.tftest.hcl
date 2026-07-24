@@ -26,6 +26,14 @@ run "runner_k8s_dashboard_contract" {
       && signalfx_list_chart.k8s_top_10_cpu_usage_per_pod.sort_by == "-value"
       && signalfx_time_chart.k8s_memory_usage_pct.name == "Memory usage (%)"
       && strcontains(signalfx_time_chart.k8s_pod_status_reasons.program_text, "filter('k8s.namespace.name', 'tenant-a') or filter('k8s.namespace.name', 'tenant-b')")
+      && alltrue([
+        for property in ["k8s.cluster.name", "k8s.namespace.name", "k8s.pod.name", "k8s.pod.uid", "k8s.node.name"] :
+        contains([for field in signalfx_time_chart.k8s_memory_usage_bytes.legend_options_fields : field.property if field.enabled], property)
+      ])
+      && alltrue([
+        for property in ["kubernetes_cluster", "kubernetes_namespace", "kubernetes_pod_name", "kubernetes_pod_uid"] :
+        !contains([for field in signalfx_time_chart.k8s_memory_usage_bytes.legend_options_fields : field.property if field.enabled], property)
+      ])
     )
     error_message = "K8S runner charts must keep active pod, top CPU, memory percentage, and tenant pod status behavior."
   }

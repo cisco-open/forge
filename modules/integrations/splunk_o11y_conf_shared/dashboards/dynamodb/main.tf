@@ -351,7 +351,7 @@ resource "signalfx_time_chart" "throttled_requests_ts" {
   name         = "Throttled requests"
   description  = "Requests to DynamoDB that exceed the provisioned throughput limits on a resource (such as a table or an index)."
   program_text = <<-EOF
-A = data('ThrottledRequests', filter=filter('namespace', 'AWS/DynamoDB') and filter('stat', 'sum') and filter('TableName', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'TableName']).publish(label='A')
+A = data('ThrottledRequests', filter=filter('namespace', 'AWS/DynamoDB') and filter('stat', 'sum') and filter('TableName', '*') and filter('Operation', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'TableName', 'Operation']).publish(label='A')
 EOF
 
   plot_type   = "AreaChart"
