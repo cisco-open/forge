@@ -567,7 +567,7 @@ EOF
   }
 
   viz_options {
-    display_name = "{{aws_tag_TenantName}} - {{VolumeId}}"
+    display_name = "Volume IOPS exceeded"
     label        = "A"
   }
 }

@@ -30,7 +30,7 @@ run "runner_ec2_dashboard_contract" {
       && signalfx_list_chart.chart_disk_summary_utilization.description == "Percent of disk space utilized on all volumes on active hosts with agent installed. Tenant | Instance id | Host"
       && strcontains(signalfx_list_chart.chart_disk_summary_utilization.program_text, ".sum(by=['aws_tag_TenantName', 'host.name', 'host.id', 'AWSUniqueId'])")
       && contains([for field in signalfx_list_chart.chart_disk_summary_utilization.legend_options_fields : field.property if field.enabled], "aws_tag_TenantName")
-      && one([for option in signalfx_list_chart.chart_disk_summary_utilization.viz_options : option.display_name if option.label == "C"]) == "{{aws_tag_TenantName}} | {{host.id}} | {{host.name}}"
+      && one([for option in signalfx_list_chart.chart_disk_summary_utilization.viz_options : option.display_name if option.label == "C"]) == "Disk utilization"
       && signalfx_time_chart.chart_status_check_failures.time_range == 3600
       && signalfx_list_chart.chart_total_network_errors.name == "Network errors/sec"
       && strcontains(signalfx_list_chart.chart_total_network_errors.program_text, "rollup='rate'")

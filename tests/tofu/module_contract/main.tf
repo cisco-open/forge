@@ -19,8 +19,14 @@ variable "forbidden_literals" {
   default     = []
 }
 
+variable "recursive" {
+  type        = bool
+  description = "Whether to inspect Terraform files recursively below module_path."
+  default     = false
+}
+
 locals {
-  tf_files = sort(fileset(var.module_path, "*.tf"))
+  tf_files = sort(fileset(var.module_path, var.recursive ? "**/*.tf" : "*.tf"))
   tf_text = join("\n", [
     for file_name in local.tf_files : file("${var.module_path}/${file_name}")
   ])

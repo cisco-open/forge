@@ -1396,7 +1396,7 @@ EOF
     value_suffix = "%"
   }
   viz_options {
-    display_name = "{{aws_tag_TenantName}} | {{host.id}} | {{host.name}}"
+    display_name = "Disk utilization"
     label        = "C"
     value_suffix = "%"
   }

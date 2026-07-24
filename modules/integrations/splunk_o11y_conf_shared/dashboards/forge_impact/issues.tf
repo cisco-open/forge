@@ -21,7 +21,7 @@ resource "signalfx_list_chart" "top_tenants_lambda_errors" {
   }
 
   viz_options {
-    display_name = "{{aws_tag_TenantName}}"
+    display_name = "Lambda errors"
     label        = "A"
     value_suffix = " errors"
   }
@@ -46,7 +46,7 @@ resource "signalfx_list_chart" "top_tenants_lambda_throttles" {
   }
 
   viz_options {
-    display_name = "{{aws_tag_TenantName}}"
+    display_name = "Lambda throttles"
     label        = "A"
     value_suffix = " throttles"
   }
@@ -86,7 +86,7 @@ EOF
   }
 
   viz_options {
-    display_name = "{{aws_tag_TenantName}}"
+    display_name = "EC2 memory utilization"
     label        = "A"
     value_suffix = "%"
   }
@@ -122,7 +122,7 @@ resource "signalfx_list_chart" "top_tenants_ec2_cpu" {
   }
 
   viz_options {
-    display_name = "{{aws_tag_TenantName}}"
+    display_name = "EC2 CPU utilization"
     label        = "A"
     value_suffix = "%"
   }
@@ -147,7 +147,7 @@ resource "signalfx_list_chart" "top_tenants_k8s_pending_pods" {
   }
 
   viz_options {
-    display_name = "{{k8s.namespace.name}}"
+    display_name = "K8S pending pods"
     label        = "A"
     value_suffix = " pending"
   }
@@ -172,7 +172,7 @@ resource "signalfx_list_chart" "top_tenants_k8s_failed_pods" {
   }
 
   viz_options {
-    display_name = "{{k8s.namespace.name}}"
+    display_name = "K8S failed or unknown pods"
     label        = "A"
     value_suffix = " failed/unknown"
   }
@@ -197,7 +197,7 @@ resource "signalfx_list_chart" "top_tenants_sqs_backlog" {
   }
 
   viz_options {
-    display_name = "{{aws_tag_TenantName}}"
+    display_name = "SQS visible backlog"
     label        = "A"
     value_suffix = " messages"
   }
@@ -222,7 +222,7 @@ resource "signalfx_list_chart" "top_tenants_sqs_dlq_backlog" {
   }
 
   viz_options {
-    display_name = "{{aws_tag_TenantName}}"
+    display_name = "SQS dead-letter backlog"
     label        = "A"
     value_suffix = " DLQ messages"
   }
@@ -247,7 +247,7 @@ resource "signalfx_list_chart" "top_tenants_dynamodb_throttles" {
   }
 
   viz_options {
-    display_name = "{{aws_tag_TenantName}}"
+    display_name = "DynamoDB throttled requests"
     label        = "A"
     value_suffix = " throttled"
   }
@@ -272,7 +272,7 @@ resource "signalfx_list_chart" "top_tenants_dynamodb_system_errors" {
   }
 
   viz_options {
-    display_name = "{{aws_tag_TenantName}}"
+    display_name = "DynamoDB system errors"
     label        = "A"
     value_suffix = " errors"
   }
@@ -297,7 +297,7 @@ resource "signalfx_list_chart" "top_tenants_ebs_queue_length" {
   }
 
   viz_options {
-    display_name = "{{aws_tag_TenantName}}"
+    display_name = "EBS queue length"
     label        = "A"
   }
 }

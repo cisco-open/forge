@@ -37,3 +37,23 @@ run "integrations_splunk_o11y_conf_shared_contract" {
     error_message = "Module contract must pin at least one module-specific literal."
   }
 }
+
+run "splunk_o11y_dashboards_reject_dynamic_plot_names" {
+  command = plan
+
+  module {
+    source = "../../../tests/tofu/module_contract"
+  }
+
+  variables {
+    module_path        = "dashboards"
+    recursive          = true
+    expected_literals  = []
+    forbidden_literals = ["display_name = \"{{"]
+  }
+
+  assert {
+    condition     = length(output.present_forbidden_literals) == 0
+    error_message = "Dashboard viz_options.display_name values must be static; identity belongs in dimension fields."
+  }
+}

@@ -548,7 +548,7 @@ EOF
   }
 
   viz_options {
-    display_name = "{{k8s.namespace.name}} - {{k8s.pod.status_reason}}"
+    display_name = "Pod status reason"
     label        = "A"
   }
 }
