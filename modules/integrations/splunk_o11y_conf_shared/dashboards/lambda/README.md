@@ -13,12 +13,16 @@ Forge relies heavily on Lambdas for webhooks, scaling, tagging, log archival, tr
 - Version-level percentages and average duration lists using the enriched
   `aws_function_name` and `aws_function_version` properties present on Forge
   Lambda metric streams.
+- Top-10 tenant rankings for errors and throttles, followed by top-10 Lambda
+  detail charts that react to the dashboard tenant filter.
 - Dashboard placement in the shared Forge O11y group.
 
 ## Operational Notes
 
 - Start here when an EventBridge, SQS, webhook, or trust-validation workflow behaves inconsistently.
 - Version-level charts help catch partial deployments or aliases pointing at unexpected code.
+- In a top-tenant chart, use the tenant property to apply a dashboard filter;
+  the per-Lambda error and throttle charts then isolate that tenant.
 - Pair Lambda errors with CloudWatch/Splunk logs for request-level detail.
 
 <!-- BEGIN_TF_DOCS -->

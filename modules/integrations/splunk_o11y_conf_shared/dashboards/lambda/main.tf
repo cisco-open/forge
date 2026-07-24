@@ -693,6 +693,126 @@ EOF
   }
 }
 
+resource "signalfx_list_chart" "top_tenants_by_errors" {
+  name                    = "Top 10 tenants by Lambda errors"
+  description             = "Last hour. Use the tenant value to filter this dashboard, then inspect the per-Lambda charts below."
+  unit_prefix             = "Metric"
+  color_by                = "Dimension"
+  secondary_visualization = "Sparkline"
+  sort_by                 = "-value"
+
+  program_text = <<-EOF
+A = data('Errors', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_function_version', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName']).sum(over='1h').above(0).top(count=10).publish(label='A')
+EOF
+
+  time_range = 3600
+
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
+  }
+
+  viz_options {
+    display_name = "{{aws_tag_TenantName}}"
+    label        = "A"
+    value_suffix = " errors"
+  }
+}
+
+resource "signalfx_list_chart" "top_tenants_by_throttles" {
+  name                    = "Top 10 tenants by Lambda throttles"
+  description             = "Last hour. Use the tenant value to filter this dashboard, then inspect the per-Lambda charts below."
+  unit_prefix             = "Metric"
+  color_by                = "Dimension"
+  secondary_visualization = "Sparkline"
+  sort_by                 = "-value"
+
+  program_text = <<-EOF
+A = data('Throttles', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_function_version', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName']).sum(over='1h').above(0).top(count=10).publish(label='A')
+EOF
+
+  time_range = 3600
+
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
+  }
+
+  viz_options {
+    display_name = "{{aws_tag_TenantName}}"
+    label        = "A"
+    value_suffix = " throttles"
+  }
+}
+
+resource "signalfx_list_chart" "top_lambdas_by_errors" {
+  name                    = "Top 10 Lambdas by errors"
+  description             = "Last hour. Select one tenant in the dashboard filter to isolate that tenant's failing functions."
+  unit_prefix             = "Metric"
+  color_by                = "Dimension"
+  secondary_visualization = "Sparkline"
+  sort_by                 = "-value"
+
+  program_text = <<-EOF
+A = data('Errors', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_function_version', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_function_version']).sum(over='1h').above(0).top(count=10).publish(label='A')
+EOF
+
+  time_range = 3600
+
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_function_name"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_function_version"
+  }
+
+  viz_options {
+    display_name = "{{aws_function_name}} - {{aws_function_version}}"
+    label        = "A"
+    value_suffix = " errors"
+  }
+}
+
+resource "signalfx_list_chart" "top_lambdas_by_throttles" {
+  name                    = "Top 10 Lambdas by throttles"
+  description             = "Last hour. Select one tenant in the dashboard filter to isolate that tenant's throttled functions."
+  unit_prefix             = "Metric"
+  color_by                = "Dimension"
+  secondary_visualization = "Sparkline"
+  sort_by                 = "-value"
+
+  program_text = <<-EOF
+A = data('Throttles', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_function_version', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_function_version']).sum(over='1h').above(0).top(count=10).publish(label='A')
+EOF
+
+  time_range = 3600
+
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_function_name"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_function_version"
+  }
+
+  viz_options {
+    display_name = "{{aws_function_name}} - {{aws_function_version}}"
+    label        = "A"
+    value_suffix = " throttles"
+  }
+}
+
 resource "signalfx_dashboard" "lambda" {
   name            = "Lambdas"
   description     = "Forge CICD Lambda invocation rate, errors, duration, and concurrency."
@@ -726,9 +846,41 @@ resource "signalfx_dashboard" "lambda" {
   time_range = "-1h"
 
   chart {
-    chart_id = signalfx_time_chart.invocations.id
+    chart_id = signalfx_list_chart.top_tenants_by_errors.id
     column   = 0
     row      = 1
+    width    = 6
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_list_chart.top_tenants_by_throttles.id
+    column   = 6
+    row      = 1
+    width    = 6
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_list_chart.top_lambdas_by_errors.id
+    column   = 0
+    row      = 2
+    width    = 6
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_list_chart.top_lambdas_by_throttles.id
+    column   = 6
+    row      = 2
+    width    = 6
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_time_chart.invocations.id
+    column   = 0
+    row      = 3
     width    = 3
     height   = 1
   }
@@ -776,7 +928,7 @@ resource "signalfx_dashboard" "lambda" {
   chart {
     chart_id = signalfx_time_chart.invocations_by_version.id
     column   = 3
-    row      = 1
+    row      = 3
     width    = 3
     height   = 1
   }
@@ -784,7 +936,7 @@ resource "signalfx_dashboard" "lambda" {
   chart {
     chart_id = signalfx_time_chart.provisioned_concurrency_invocations_by_version.id
     column   = 6
-    row      = 1
+    row      = 3
     width    = 3
     height   = 1
   }
@@ -792,7 +944,7 @@ resource "signalfx_dashboard" "lambda" {
   chart {
     chart_id = signalfx_time_chart.provisioned_concurrent_executions_by_version.id
     column   = 9
-    row      = 1
+    row      = 3
     width    = 3
     height   = 1
   }
@@ -800,7 +952,7 @@ resource "signalfx_dashboard" "lambda" {
   chart {
     chart_id = signalfx_list_chart.avg_duration_by_version.id
     column   = 0
-    row      = 2
+    row      = 4
     width    = 4
     height   = 1
   }
@@ -808,7 +960,7 @@ resource "signalfx_dashboard" "lambda" {
   chart {
     chart_id = signalfx_time_chart.errors_by_version.id
     column   = 4
-    row      = 2
+    row      = 4
     width    = 4
     height   = 1
   }
@@ -816,7 +968,7 @@ resource "signalfx_dashboard" "lambda" {
   chart {
     chart_id = signalfx_time_chart.throttles_by_version.id
     column   = 8
-    row      = 2
+    row      = 4
     width    = 4
     height   = 1
   }
@@ -824,7 +976,7 @@ resource "signalfx_dashboard" "lambda" {
   chart {
     chart_id = signalfx_list_chart.percent_invocations_by_version.id
     column   = 0
-    row      = 3
+    row      = 5
     width    = 4
     height   = 1
   }
@@ -832,7 +984,7 @@ resource "signalfx_dashboard" "lambda" {
   chart {
     chart_id = signalfx_time_chart.provisioned_concurrency_spillover_invocations_by_version.id
     column   = 4
-    row      = 3
+    row      = 5
     width    = 4
     height   = 1
   }
@@ -840,7 +992,7 @@ resource "signalfx_dashboard" "lambda" {
   chart {
     chart_id = signalfx_time_chart.provisioned_concurrency_utilization.id
     column   = 8
-    row      = 3
+    row      = 5
     width    = 4
     height   = 1
   }

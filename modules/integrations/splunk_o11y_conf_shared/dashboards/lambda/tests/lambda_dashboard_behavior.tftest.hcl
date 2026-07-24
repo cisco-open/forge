@@ -51,6 +51,16 @@ run "lambda_dashboard_contract" {
     ])
     error_message = "Standard Lambda version charts must use the live enriched function name and version properties instead of the sparse ExecutedVersion dimension."
   }
+
+  assert {
+    condition = (
+      strcontains(signalfx_list_chart.top_tenants_by_errors.program_text, ".sum(by=['aws_tag_TenantName']).sum(over='1h').above(0).top(count=10)")
+      && strcontains(signalfx_list_chart.top_tenants_by_throttles.program_text, ".sum(by=['aws_tag_TenantName']).sum(over='1h').above(0).top(count=10)")
+      && strcontains(signalfx_list_chart.top_lambdas_by_errors.program_text, ".sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_function_version']).sum(over='1h').above(0).top(count=10)")
+      && strcontains(signalfx_list_chart.top_lambdas_by_throttles.program_text, ".sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_function_version']).sum(over='1h').above(0).top(count=10)")
+    )
+    error_message = "Lambda triage charts must rank noisy tenants globally and expose tenant-filtered per-function detail."
+  }
 }
 
 run "lambda_dashboard_wiring_contract" {
@@ -62,7 +72,7 @@ run "lambda_dashboard_wiring_contract" {
       && signalfx_dashboard.lambda.dashboard_group == "forge-dashboard-group"
       && signalfx_dashboard.lambda.variable[0].values == toset(["tenant-a", "tenant-b"])
       && signalfx_dashboard.lambda.variable[0].value_required
-      && length(signalfx_dashboard.lambda.chart) == 15
+      && length(signalfx_dashboard.lambda.chart) == 19
     )
     error_message = "Lambda dashboard must keep its name, group input, and chart count."
   }
@@ -71,7 +81,11 @@ run "lambda_dashboard_wiring_contract" {
     condition = alltrue([
       contains([for chart in signalfx_dashboard.lambda.chart : chart.chart_id], signalfx_time_chart.invocations.id),
       contains([for chart in signalfx_dashboard.lambda.chart : chart.chart_id], signalfx_time_chart.provisioned_concurrency_utilization.id),
+      contains([for chart in signalfx_dashboard.lambda.chart : chart.chart_id], signalfx_list_chart.top_tenants_by_errors.id),
+      contains([for chart in signalfx_dashboard.lambda.chart : chart.chart_id], signalfx_list_chart.top_tenants_by_throttles.id),
+      contains([for chart in signalfx_dashboard.lambda.chart : chart.chart_id], signalfx_list_chart.top_lambdas_by_errors.id),
+      contains([for chart in signalfx_dashboard.lambda.chart : chart.chart_id], signalfx_list_chart.top_lambdas_by_throttles.id),
     ])
-    error_message = "Lambda dashboard must keep its first and final chart wiring."
+    error_message = "Lambda dashboard must wire summary, tenant ranking, per-function detail, and provisioned-concurrency charts."
   }
 }
