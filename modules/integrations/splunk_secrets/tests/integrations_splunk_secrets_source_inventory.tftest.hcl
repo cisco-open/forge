@@ -14,6 +14,8 @@ run "integrations_splunk_secrets_contract" {
       "resource \"time_sleep\" \"wait_60_seconds\"",
       "resource \"aws_secretsmanager_secret_version\" \"cicd_secrets\"",
       "data \"aws_secretsmanager_random_password\" \"secret_seeds\"",
+      "splunk_o11y_ingest_token_dependency_monitor",
+      "splunk_cloud_hec_token_dependency_monitor",
       "provider \"aws\"",
     ]
   }
