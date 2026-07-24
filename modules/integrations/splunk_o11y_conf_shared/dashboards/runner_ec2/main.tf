@@ -1411,7 +1411,7 @@ resource "signalfx_single_value_chart" "chart_hosts_with_agent_installed" {
   name        = "# Hosts with agent installed"
   description = "Splunk OTel connector installed"
 
-  program_text = "A = data('system.memory.usage', filter=filter('cloud.platform', 'aws_ec2'), rollup='average').sum(by=['AWSUniqueId']).count().publish(label='A')"
+  program_text = "A = data('system.memory.usage', filter=filter('cloud.platform', 'aws_ec2') and filter('aws_tag_TenantName', '*'), rollup='average').sum(by=['AWSUniqueId']).count().publish(label='A')"
 
   color_by         = "Dimension"
   max_precision    = 4
@@ -1474,7 +1474,7 @@ resource "signalfx_list_chart" "chart_top_5_network_out_bytes" {
 resource "signalfx_single_value_chart" "chart_active_hosts" {
   name = "# Active hosts"
 
-  program_text = "A = data('^aws.ec2.cpu.utilization', extrapolation='last_value', maxExtrapolations=2).sum(by=['AWSUniqueId']).count().publish(label='A')"
+  program_text = "A = data('^aws.ec2.cpu.utilization', filter=filter('aws_tag_TenantName', '*'), extrapolation='last_value', maxExtrapolations=2).sum(by=['AWSUniqueId']).count().publish(label='A')"
 
   color_by         = "Dimension"
   max_precision    = 4
@@ -1490,7 +1490,7 @@ resource "signalfx_list_chart" "chart_active_hosts_missing_agent" {
   name        = "Active hosts missing Splunk OTel agent"
   description = "Active EC2 hosts without agent-correlated host.id metadata. Tenant | Instance ID | AMI | Host name"
 
-  program_text = "A = data('^aws.ec2.cpu.utilization', filter=not filter('host.id', '*'), extrapolation='last_value', maxExtrapolations=2).mean(by=['AWSUniqueId', 'aws_tag_TenantName', 'aws_instance_id', 'aws_image_id', 'aws_tag_Name']).publish(label='A')"
+  program_text = "A = data('^aws.ec2.cpu.utilization', filter=filter('aws_tag_TenantName', '*') and not filter('host.id', '*'), extrapolation='last_value', maxExtrapolations=2).mean(by=['AWSUniqueId', 'aws_tag_TenantName', 'aws_instance_id', 'aws_image_id', 'aws_tag_Name']).publish(label='A')"
 
   sort_by = "-value"
 
@@ -1624,8 +1624,8 @@ resource "signalfx_dashboard" "runner_ec2" {
     property               = "aws_tag_TenantName"
     alias                  = "ForgeCICD Tenant Name"
     description            = ""
-    values                 = sort(var.tenant_names)
-    value_required         = length(var.tenant_names) > 0
+    values                 = []
+    value_required         = false
     values_suggested       = sort(var.tenant_names)
     restricted_suggestions = true
   }
