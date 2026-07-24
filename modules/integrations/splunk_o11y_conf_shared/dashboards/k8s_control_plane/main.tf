@@ -95,7 +95,7 @@ EOF
   }
 
   viz_options {
-    display_name = "{{k8s.node.name}} - {{condition}}"
+    display_name = "Node pressure"
     label        = "A"
   }
 }
@@ -123,7 +123,7 @@ EOF
   }
 
   viz_options {
-    display_name = "{{exporter}} {{data_type}} on {{k8s.pod.name}}"
+    display_name = "OTel exporter queue utilization"
     label        = "A"
     value_suffix = "%"
   }
