@@ -13,6 +13,8 @@ run "integrations_splunk_o11y_conf_shared_dashboards_k8s_control_plane_source_in
       "resource \"signalfx_time_chart\" \"node_pressure\"",
       "resource \"signalfx_time_chart\" \"otel_exporter_queue_utilization\"",
       "resource \"signalfx_time_chart\" \"otel_telemetry_loss\"",
+      "resource \"terraform_data\" \"dashboard_parent\"",
+      "terraform_data.dashboard_parent,",
       "resource \"signalfx_dashboard\" \"k8s_control_plane\"",
     ]
   }
@@ -23,7 +25,7 @@ run "integrations_splunk_o11y_conf_shared_dashboards_k8s_control_plane_source_in
   }
 
   assert {
-    condition     = output.expected_literal_count == 6
-    error_message = "Source inventory must keep six module-specific Terraform blocks pinned."
+    condition     = output.expected_literal_count == 8
+    error_message = "Source inventory must keep eight module-specific Terraform and lifecycle literals pinned."
   }
 }

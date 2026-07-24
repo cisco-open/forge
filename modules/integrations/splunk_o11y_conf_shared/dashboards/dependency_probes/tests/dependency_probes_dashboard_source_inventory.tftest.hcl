@@ -15,6 +15,7 @@ run "dependency_probes_dashboard_source_inventory" {
       "resource \"signalfx_time_chart\" \"latency\"",
       "resource \"signalfx_time_chart\" \"probe_execution\"",
       "resource \"terraform_data\" \"dashboard_parent\"",
+      "terraform_data.dashboard_parent,",
       "forge.dependency.availability",
       "forge.dependency.latency_ms",
       "forge.dependency.probe_executed",
@@ -27,7 +28,7 @@ run "dependency_probes_dashboard_source_inventory" {
   }
 
   assert {
-    condition     = output.expected_literal_count == 10
+    condition     = output.expected_literal_count == 11
     error_message = "Dependency dashboard source inventory count must remain pinned."
   }
 }

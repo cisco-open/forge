@@ -31,7 +31,8 @@ Forge uses DynamoDB for platform coordination patterns such as global locks and 
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.3 |
+| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.33.0 |
+| <a name="provider_terraform"></a> [terraform](#provider\_terraform) | n/a |
 
 ## Modules
 
@@ -55,6 +56,7 @@ No modules.
 | [signalfx_time_chart.user_errors_ts](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.write_capacity_percentage](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.write_throttle_events](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
+| [terraform_data.dashboard_parent](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data) | resource |
 
 ## Inputs
 

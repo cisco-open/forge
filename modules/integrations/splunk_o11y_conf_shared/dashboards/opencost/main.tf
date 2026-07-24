@@ -226,10 +226,20 @@ EOF
   }
 }
 
+resource "terraform_data" "dashboard_parent" {
+  triggers_replace = var.dashboard_group
+}
+
 resource "signalfx_dashboard" "opencost" {
   name            = "Forge Billing and Cost - OpenCost"
   description     = "OpenCost Kubernetes CPU and memory allocation estimates by Forge tenant namespace; these are not AWS billing charges."
   dashboard_group = var.dashboard_group
+
+  lifecycle {
+    replace_triggered_by = [
+      terraform_data.dashboard_parent,
+    ]
+  }
 
   time_range = "-24h"
 

@@ -150,10 +150,20 @@ EOF
   }
 }
 
+resource "terraform_data" "dashboard_parent" {
+  triggers_replace = var.dashboard_group
+}
+
 resource "signalfx_dashboard" "k8s_control_plane" {
   name            = "Forge Control Plane - Kubernetes"
   description     = "Forge Kubernetes platform pods, node pressure, and telemetry pipeline health."
   dashboard_group = var.dashboard_group
+
+  lifecycle {
+    replace_triggered_by = [
+      terraform_data.dashboard_parent,
+    ]
+  }
 
   dynamic "variable" {
     for_each = local.k8s_cluster_variables
