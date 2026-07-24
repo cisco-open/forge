@@ -115,9 +115,6 @@ module "dashboard_forge_impact" {
 module "dashboard_runner_usage" {
   source = "./dashboards/runner_usage"
 
-  # Release charts from the legacy combined dashboard before assigning them here.
-  depends_on = [module.dashboard_forge_impact]
-
   providers = {
     signalfx = signalfx
   }
