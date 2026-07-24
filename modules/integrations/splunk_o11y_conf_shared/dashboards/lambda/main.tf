@@ -594,8 +594,8 @@ resource "signalfx_dashboard" "lambda" {
     property               = "aws_tag_TenantName"
     alias                  = "ForgeCICD Tenant Name"
     description            = ""
-    values                 = sort(var.tenant_names)
-    value_required         = length(var.tenant_names) > 0
+    values                 = []
+    value_required         = false
     values_suggested       = sort(var.tenant_names)
     restricted_suggestions = true
   }

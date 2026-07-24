@@ -43,8 +43,10 @@ run "dynamodb_dashboard_wiring_contract" {
     condition = (
       signalfx_dashboard.dynamodb.name == "Forge Tenant - DynamoDB"
       && signalfx_dashboard.dynamodb.dashboard_group == "forge-dashboard-group"
-      && signalfx_dashboard.dynamodb.variable[0].values == toset(["tenant-a", "tenant-b"])
-      && signalfx_dashboard.dynamodb.variable[0].value_required
+      && length(signalfx_dashboard.dynamodb.variable[0].values) == 0
+      && !signalfx_dashboard.dynamodb.variable[0].value_required
+      && signalfx_dashboard.dynamodb.variable[0].values_suggested == toset(["tenant-a", "tenant-b"])
+      && signalfx_dashboard.dynamodb.variable[0].restricted_suggestions
       && length(signalfx_dashboard.dynamodb.chart) == 13
     )
     error_message = "DynamoDB dashboard must keep its name, group input, and chart count."

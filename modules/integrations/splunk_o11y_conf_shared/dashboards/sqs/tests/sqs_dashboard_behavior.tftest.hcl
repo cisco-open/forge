@@ -46,8 +46,10 @@ run "sqs_dashboard_wiring_contract" {
     condition = (
       signalfx_dashboard.sqs.name == "Forge Tenant - SQS"
       && signalfx_dashboard.sqs.dashboard_group == "forge-dashboard-group"
-      && signalfx_dashboard.sqs.variable[0].values == toset(["tenant-a", "tenant-b"])
-      && signalfx_dashboard.sqs.variable[0].value_required
+      && length(signalfx_dashboard.sqs.variable[0].values) == 0
+      && !signalfx_dashboard.sqs.variable[0].value_required
+      && signalfx_dashboard.sqs.variable[0].values_suggested == toset(["tenant-a", "tenant-b"])
+      && signalfx_dashboard.sqs.variable[0].restricted_suggestions
       && length(signalfx_dashboard.sqs.chart) == 13
     )
     error_message = "SQS dashboard must keep its name, group input, and chart count."

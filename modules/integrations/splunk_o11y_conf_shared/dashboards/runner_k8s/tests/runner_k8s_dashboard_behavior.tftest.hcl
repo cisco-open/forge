@@ -67,8 +67,10 @@ run "runner_k8s_dashboard_wiring_contract" {
     condition = (
       signalfx_dashboard.runner_k8s.name == "Forge Tenant - K8S Runners"
       && signalfx_dashboard.runner_k8s.dashboard_group == "forge-dashboard-group"
-      && signalfx_dashboard.runner_k8s.variable[0].values == toset(["tenant-a", "tenant-b"])
-      && signalfx_dashboard.runner_k8s.variable[0].value_required
+      && length(signalfx_dashboard.runner_k8s.variable[0].values) == 0
+      && !signalfx_dashboard.runner_k8s.variable[0].value_required
+      && signalfx_dashboard.runner_k8s.variable[0].values_suggested == toset(["tenant-a", "tenant-b"])
+      && signalfx_dashboard.runner_k8s.variable[0].restricted_suggestions
       && length(signalfx_dashboard.runner_k8s.chart) == 13
     )
     error_message = "K8S runner dashboard must keep its name, group input, and chart count."
