@@ -34,7 +34,7 @@ run "integrations_splunk_o11y_conf_shared_dashboards_forge_impact_interface_cont
       "description = \"Tenant namespaces that run Forge ARC runners.\"",
       "type        = list(string)",
       "variable \"cluster_names\"",
-      "description = \"Forge Kubernetes clusters included in global tenant impact and runner usage.\"",
+      "description = \"Forge Kubernetes clusters included in tenant impact.\"",
     ]
   }
 

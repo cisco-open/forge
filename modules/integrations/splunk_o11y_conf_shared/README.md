@@ -47,6 +47,7 @@ Forge operators need dashboards that connect capacity, cost, and health signals 
 | <a name="module_dashboard_opencost"></a> [dashboard\_opencost](#module\_dashboard\_opencost) | ./dashboards/opencost | n/a |
 | <a name="module_dashboard_runner_ec2"></a> [dashboard\_runner\_ec2](#module\_dashboard\_runner\_ec2) | ./dashboards/runner_ec2 | n/a |
 | <a name="module_dashboard_runner_k8s"></a> [dashboard\_runner\_k8s](#module\_dashboard\_runner\_k8s) | ./dashboards/runner_k8s | n/a |
+| <a name="module_dashboard_runner_usage"></a> [dashboard\_runner\_usage](#module\_dashboard\_runner\_usage) | ./dashboards/runner_usage | n/a |
 | <a name="module_dashboard_sqs"></a> [dashboard\_sqs](#module\_dashboard\_sqs) | ./dashboards/sqs | n/a |
 | <a name="module_detector_k8s"></a> [detector\_k8s](#module\_detector\_k8s) | ./detectors/k8s | n/a |
 

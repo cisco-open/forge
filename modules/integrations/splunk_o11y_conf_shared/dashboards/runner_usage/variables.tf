@@ -18,12 +18,12 @@ variable "dynamic_variables" {
 }
 
 variable "tenant_names" {
-  description = "Tenant namespaces that run Forge ARC runners."
+  description = "Tenant namespaces that run Forge runners."
   type        = list(string)
 }
 
 variable "cluster_names" {
-  description = "Forge Kubernetes clusters included in tenant impact."
+  description = "Forge Kubernetes clusters included in runner usage."
   type        = list(string)
   default     = []
 }

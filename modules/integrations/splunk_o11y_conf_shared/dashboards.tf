@@ -112,6 +112,25 @@ module "dashboard_forge_impact" {
   dashboard_group = signalfx_dashboard_group.forgecicd.id
 }
 
+module "dashboard_runner_usage" {
+  source = "./dashboards/runner_usage"
+
+  # Release charts from the legacy combined dashboard before assigning them here.
+  depends_on = [module.dashboard_forge_impact]
+
+  providers = {
+    signalfx = signalfx
+  }
+
+  tenant_names      = try(var.dashboard_variables.forge_impact.tenant_names, var.dashboard_variables.runner_k8s.tenant_names)
+  dynamic_variables = try(var.dashboard_variables.forge_impact.dynamic_variables, [])
+  cluster_names = distinct(flatten([
+    for variable in var.dashboard_variables.runner_k8s.dynamic_variables :
+    variable.property == "k8s.cluster.name" ? variable.values : []
+  ]))
+  dashboard_group = signalfx_dashboard_group.forgecicd.id
+}
+
 # Cost and usage
 module "dashboard_opencost" {
   source = "./dashboards/opencost"
