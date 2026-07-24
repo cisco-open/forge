@@ -1,7 +1,10 @@
 locals {
   k8s_tenant_namespace_filter = length(var.tenant_names) > 0 ? join(" or ", [
     for namespace in sort(var.tenant_names) : "filter('k8s.namespace.name', '${namespace}')"
-  ]) : "filter('k8s.namespace.name', '*')"
+  ]) : "filter('k8s.namespace.name', '__forge_tenant_scope_not_configured__')"
+  ec2_tenant_filter = length(var.tenant_names) > 0 ? join(" or ", [
+    for tenant_name in sort(var.tenant_names) : "filter('aws_tag_TenantName', '${tenant_name}')"
+  ]) : "filter('aws_tag_TenantName', '__forge_tenant_scope_not_configured__')"
 
   k8s_runner_container_filter  = "filter('k8s.container.name', 'runner') and (${local.k8s_tenant_namespace_filter})"
   k8s_runner_pod_dimensions    = "['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name']"
@@ -16,7 +19,7 @@ resource "signalfx_list_chart" "runner_totals_by_runtime" {
   description = "Counts EC2 runner instances and K8S runner pods that reported during the selected dashboard time window."
 
   program_text = <<-EOF
-A = data('CPUUtilization', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=2).max(by=['aws_instance_id']).count(over=${local.dashboard_window}).above(0, inclusive=False).count().publish(label='EC2 runners')
+A = data('CPUUtilization', filter=(${local.ec2_tenant_filter}) and filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=2).max(by=['aws_instance_id']).count(over=${local.dashboard_window}).above(0, inclusive=False).count().publish(label='EC2 runners')
 B = ${local.k8s_runner_container_runtime}.count(over=${local.dashboard_window}).above(0, inclusive=False).count().publish(label='K8S runner pods')
 EOF
 
@@ -47,7 +50,7 @@ resource "signalfx_list_chart" "runner_minutes_by_runtime" {
   description = "Estimates total EC2 and K8S runner runtime minutes during the selected dashboard time window. EC2 instances must have aws_tag_TenantName."
 
   program_text = <<-EOF
-A = data('CPUUtilization', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'mean') and filter('aws_tag_TenantName', '*'), extrapolation='last_value', maxExtrapolations=2).max(by=['aws_instance_id']).count().fill(value=0, duration=${local.runner_usage_window}).integrate().sum(over=${local.runner_usage_window}).scale(${local.runner_minutes_scale}).publish(label='EC2 runner-minutes')
+A = data('CPUUtilization', filter=(${local.ec2_tenant_filter}) and filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=2).max(by=['aws_instance_id']).count().fill(value=0, duration=${local.runner_usage_window}).integrate().sum(over=${local.runner_usage_window}).scale(${local.runner_minutes_scale}).publish(label='EC2 runner-minutes')
 B = ${local.k8s_runner_container_runtime}.count().fill(value=0, duration=${local.runner_usage_window}).integrate().sum(over=${local.runner_usage_window}).scale(${local.runner_minutes_scale}).publish(label='K8S runner-minutes')
 EOF
 
@@ -78,7 +81,7 @@ resource "signalfx_time_chart" "active_ec2_runners_by_tenant_and_instance_type" 
   description = "Tracks active EC2 runner instance count over time by tenant and instance type."
 
   program_text = <<-EOF
-A = data('CPUUtilization', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=2).max(by=['aws_instance_id', 'aws_tag_TenantName', 'aws_instance_type']).count(by=['aws_tag_TenantName', 'aws_instance_type']).publish(label='A')
+A = data('CPUUtilization', filter=(${local.ec2_tenant_filter}) and filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=2).max(by=['aws_instance_id', 'aws_tag_TenantName', 'aws_instance_type']).count(by=['aws_tag_TenantName', 'aws_instance_type']).publish(label='A')
 EOF
 
   plot_type        = "LineChart"
@@ -114,7 +117,7 @@ resource "signalfx_list_chart" "active_ec2_runners_by_tenant" {
   name        = "Active EC2 runners by tenant"
   description = "Counts currently active EC2 runner instances by tenant."
 
-  program_text = "A = data('CPUUtilization', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=2).max(by=['aws_instance_id', 'aws_tag_TenantName']).count(by=['aws_tag_TenantName']).publish(label='A')"
+  program_text = "A = data('CPUUtilization', filter=(${local.ec2_tenant_filter}) and filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=2).max(by=['aws_instance_id', 'aws_tag_TenantName']).count(by=['aws_tag_TenantName']).publish(label='A')"
 
   sort_by = "-value"
 
@@ -142,7 +145,7 @@ resource "signalfx_list_chart" "active_ec2_runners_by_tenant_and_instance_type" 
   name        = "Active EC2 runners by tenant and instance type"
   description = "Counts currently active EC2 runner instances by tenant and EC2 instance type."
 
-  program_text = "A = data('CPUUtilization', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=2).max(by=['aws_instance_id', 'aws_tag_TenantName', 'aws_instance_type']).count(by=['aws_tag_TenantName', 'aws_instance_type']).publish(label='A')"
+  program_text = "A = data('CPUUtilization', filter=(${local.ec2_tenant_filter}) and filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=2).max(by=['aws_instance_id', 'aws_tag_TenantName', 'aws_instance_type']).count(by=['aws_tag_TenantName', 'aws_instance_type']).publish(label='A')"
 
   sort_by = "-value"
 
@@ -174,7 +177,7 @@ resource "signalfx_list_chart" "total_ec2_runners_by_tenant" {
   name        = "Total EC2 runners by tenant over selected window"
   description = "Counts EC2 runner instances that reported during the selected dashboard time window by tenant."
 
-  program_text = "A = data('CPUUtilization', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=2).max(by=['aws_instance_id', 'aws_tag_TenantName']).count(over=${local.dashboard_window}).above(0, inclusive=False).count(by=['aws_tag_TenantName']).publish(label='A')"
+  program_text = "A = data('CPUUtilization', filter=(${local.ec2_tenant_filter}) and filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=2).max(by=['aws_instance_id', 'aws_tag_TenantName']).count(over=${local.dashboard_window}).above(0, inclusive=False).count(by=['aws_tag_TenantName']).publish(label='A')"
 
   sort_by = "-value"
 
@@ -202,7 +205,7 @@ resource "signalfx_list_chart" "ec2_runner_hours_by_tenant" {
   name        = "EC2 runner-minutes by tenant"
   description = "Estimates EC2 runner running minutes by tenant over the selected dashboard time window."
 
-  program_text = "A = data('CPUUtilization', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=2).max(by=['aws_instance_id', 'aws_tag_TenantName']).count(by=['aws_tag_TenantName']).fill(value=0, duration=${local.runner_usage_window}).integrate().sum(over=${local.runner_usage_window}).scale(${local.runner_minutes_scale}).publish(label='A')"
+  program_text = "A = data('CPUUtilization', filter=(${local.ec2_tenant_filter}) and filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=2).max(by=['aws_instance_id', 'aws_tag_TenantName']).count(by=['aws_tag_TenantName']).fill(value=0, duration=${local.runner_usage_window}).integrate().sum(over=${local.runner_usage_window}).scale(${local.runner_minutes_scale}).publish(label='A')"
 
   sort_by = "-value"
 
@@ -230,7 +233,7 @@ resource "signalfx_list_chart" "ec2_runner_hours_by_tenant_and_instance_type" {
   name        = "EC2 runner-minutes by tenant and instance type"
   description = "Estimates EC2 runner running minutes by tenant and instance type over the selected dashboard time window."
 
-  program_text = "A = data('CPUUtilization', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=2).max(by=['aws_instance_id', 'aws_tag_TenantName', 'aws_instance_type']).count(by=['aws_tag_TenantName', 'aws_instance_type']).fill(value=0, duration=${local.runner_usage_window}).integrate().sum(over=${local.runner_usage_window}).scale(${local.runner_minutes_scale}).publish(label='A')"
+  program_text = "A = data('CPUUtilization', filter=(${local.ec2_tenant_filter}) and filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=2).max(by=['aws_instance_id', 'aws_tag_TenantName', 'aws_instance_type']).count(by=['aws_tag_TenantName', 'aws_instance_type']).fill(value=0, duration=${local.runner_usage_window}).integrate().sum(over=${local.runner_usage_window}).scale(${local.runner_minutes_scale}).publish(label='A')"
 
   sort_by = "-value"
 

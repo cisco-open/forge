@@ -19,15 +19,12 @@ locals {
   ])
   k8s_platform_filter = "(${local.k8s_cluster_filter}) and (${local.k8s_platform_namespace_filter})"
 
-  k8s_other_namespace_exclusions = distinct(concat(var.k8s_platform_namespaces, [var.k8s_otel_collector_config.namespace], var.tenant_names))
-  k8s_other_namespace_filter     = "(${local.k8s_cluster_filter}) and filter('k8s.namespace.name', '*') and not filter('k8s.namespace.name', '${join("', '", local.k8s_other_namespace_exclusions)}')"
-
   k8s_otel_collector_filter = "(${local.k8s_cluster_filter}) and filter('k8s.namespace.name', '${var.k8s_otel_collector_config.namespace}') and filter('k8s.pod.name', '${var.k8s_otel_collector_config.pod_name_filter}')"
 }
 
 resource "signalfx_detector" "k8s_otel_no_data" {
   name        = "${var.detector_name_prefix} K8S OTel no data"
-  description = "Detects when Kubernetes pod phase metrics stop arriving from a Forge cluster, which usually means the Splunk OpenTelemetry Collector is down or not sending data."
+  description = "Warns when Kubernetes pod phase metrics stop arriving from a Forge cluster. Investigate collector and ingestion health; missing telemetry alone does not prove Forge service impact."
   max_delay   = 120
   tags        = local.detector_tags
   teams       = [var.team]
@@ -40,7 +37,7 @@ EOF
 
   rule {
     description   = "No Kubernetes pod metrics for ${var.k8s_detector_config.otel_no_data_duration}"
-    severity      = "Critical"
+    severity      = "Warning"
     detect_label  = "No Kubernetes pod metrics"
     notifications = var.detector_notifications
   }
@@ -48,7 +45,7 @@ EOF
 
 resource "signalfx_detector" "k8s_otel_collector_health" {
   name        = "${var.detector_name_prefix} K8S Splunk OTel collector health"
-  description = "Detects missing, pending, failed, unknown, or restarting Splunk OpenTelemetry Collector pods. These issues can mean the collector is not installed, is unhealthy, or is unable to send Kubernetes metrics."
+  description = "Detects sustained Splunk OpenTelemetry Collector unavailability or degradation by cluster. Restore collector capacity and confirm metric ingestion before treating downstream no-data as a Forge outage."
   max_delay   = 120
   tags        = local.detector_tags
   teams       = [var.team]
@@ -56,9 +53,9 @@ resource "signalfx_detector" "k8s_otel_collector_health" {
 
   program_text = <<-EOF
 running_collector_pods = data('k8s.pod.phase', filter=(${local.k8s_otel_collector_filter}), rollup='latest').between(1.5, 2.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name']).fill(value=0, duration='${var.k8s_otel_collector_config.stale_metrics_duration}')
-pending_collector_pods = data('k8s.pod.phase', filter=(${local.k8s_otel_collector_filter}), rollup='latest').between(0, 1.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name']).fill(value=0, duration='${var.k8s_otel_collector_config.pod_issue_duration}')
-unhealthy_collector_pods = data('k8s.pod.phase', filter=(${local.k8s_otel_collector_filter}), rollup='latest').between(3.5, 5.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name']).fill(value=0, duration='${var.k8s_otel_collector_config.pod_issue_duration}')
-collector_restarts = data('k8s.container.restarts', filter=(${local.k8s_otel_collector_filter}), rollup='latest').delta().sum(over='${var.k8s_otel_collector_config.restart_duration}').sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name', 'k8s.container.name']).fill(value=0, duration='${var.k8s_otel_collector_config.restart_duration}')
+pending_collector_pods = data('k8s.pod.phase', filter=(${local.k8s_otel_collector_filter}), rollup='latest').between(0, 1.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name']).fill(value=0, duration='${var.k8s_otel_collector_config.pod_issue_duration}')
+unhealthy_collector_pods = data('k8s.pod.phase', filter=(${local.k8s_otel_collector_filter}), rollup='latest').between(3.5, 5.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name']).fill(value=0, duration='${var.k8s_otel_collector_config.pod_issue_duration}')
+collector_restarts = data('k8s.container.restarts', filter=(${local.k8s_otel_collector_filter}), rollup='latest').delta().sum(over='${var.k8s_otel_collector_config.restart_duration}').sum(by=['k8s.cluster.name']).fill(value=0, duration='${var.k8s_otel_collector_config.restart_duration}')
 detect(when(running_collector_pods < ${var.k8s_otel_collector_config.min_running_pods}, '${var.k8s_otel_collector_config.no_running_duration}')).publish('No running Splunk OTel collector pods')
 detect(when(pending_collector_pods > 0, '${var.k8s_otel_collector_config.pod_issue_duration}')).publish('Splunk OTel collector pod pending')
 detect(when(unhealthy_collector_pods > 0, '${var.k8s_otel_collector_config.pod_issue_duration}')).publish('Splunk OTel collector pod failed or unknown')
@@ -67,82 +64,43 @@ EOF
 
   rule {
     description   = "No running Splunk OpenTelemetry Collector pods for ${var.k8s_otel_collector_config.no_running_duration}"
-    severity      = "Critical"
+    severity      = "Major"
     detect_label  = "No running Splunk OTel collector pods"
     notifications = var.detector_notifications
   }
 
   rule {
     description   = "Splunk OpenTelemetry Collector pod pending for ${var.k8s_otel_collector_config.pod_issue_duration}"
-    severity      = "Major"
+    severity      = "Warning"
     detect_label  = "Splunk OTel collector pod pending"
     notifications = var.detector_notifications
   }
 
   rule {
     description   = "Splunk OpenTelemetry Collector pod failed or unknown for ${var.k8s_otel_collector_config.pod_issue_duration}"
-    severity      = "Critical"
+    severity      = "Major"
     detect_label  = "Splunk OTel collector pod failed or unknown"
     notifications = var.detector_notifications
   }
 
   rule {
     description   = "Splunk OpenTelemetry Collector container restarts for ${var.k8s_otel_collector_config.restart_duration}"
-    severity      = "Major"
-    detect_label  = "Splunk OTel collector container restarting"
-    notifications = var.detector_notifications
-  }
-}
-
-resource "signalfx_detector" "k8s_other_namespace_pods_unhealthy" {
-  name        = "${var.detector_name_prefix} K8S other namespace pods unhealthy"
-  description = "Detects pending, failed, unknown, or restarting pods in namespaces outside the platform and Splunk OpenTelemetry Collector namespaces."
-  max_delay   = 120
-  tags        = local.detector_tags
-  teams       = [var.team]
-  time_range  = 3600
-
-  program_text = <<-EOF
-other_pending_pods = data('k8s.pod.phase', filter=(${local.k8s_other_namespace_filter}), rollup='latest').between(0, 1.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name']).fill(value=0, duration='${var.k8s_detector_config.pending_pods_duration}')
-other_unhealthy_pods = data('k8s.pod.phase', filter=(${local.k8s_other_namespace_filter}), rollup='latest').between(3.5, 5.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name']).fill(value=0, duration='${var.k8s_detector_config.failed_pods_duration}')
-other_container_restarts = data('k8s.container.restarts', filter=(${local.k8s_other_namespace_filter}), rollup='latest').delta().sum(over='${var.k8s_detector_config.container_restarts_duration}').sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name', 'k8s.container.name']).fill(value=0, duration='${var.k8s_detector_config.container_restarts_duration}')
-detect(when(other_pending_pods > ${var.k8s_detector_config.pending_pods_threshold}, '${var.k8s_detector_config.pending_pods_duration}')).publish('Other namespace pod pending')
-detect(when(other_unhealthy_pods > ${var.k8s_detector_config.failed_pods_threshold}, '${var.k8s_detector_config.failed_pods_duration}')).publish('Other namespace pod failed or unknown')
-detect(when(other_container_restarts > ${var.k8s_detector_config.container_restarts_threshold})).publish('Other namespace container restarting')
-EOF
-
-  rule {
-    description   = "Pod pending outside platform namespaces for ${var.k8s_detector_config.pending_pods_duration}"
     severity      = "Warning"
-    detect_label  = "Other namespace pod pending"
-    notifications = var.detector_notifications
-  }
-
-  rule {
-    description   = "Pod failed or unknown outside platform namespaces for ${var.k8s_detector_config.failed_pods_duration}"
-    severity      = "Major"
-    detect_label  = "Other namespace pod failed or unknown"
-    notifications = var.detector_notifications
-  }
-
-  rule {
-    description   = "Container restarts outside platform namespaces for ${var.k8s_detector_config.container_restarts_duration}"
-    severity      = "Major"
-    detect_label  = "Other namespace container restarting"
+    detect_label  = "Splunk OTel collector container restarting"
     notifications = var.detector_notifications
   }
 }
 
 resource "signalfx_detector" "k8s_tenant_pods_pending" {
   name        = "${var.detector_name_prefix} K8S tenant pods pending"
-  description = "Detects tenant pods stuck in Pending, which is the main signal for pods that are not scheduling."
+  description = "Warns when tenant runner pods remain Pending, grouped by tenant and cluster. Check cluster capacity, node pressure, quotas, and scheduling events before escalating."
   max_delay   = 120
   tags        = local.detector_tags
   teams       = [var.team]
   time_range  = 3600
 
   program_text = <<-EOF
-pending_pods = data('k8s.pod.phase', filter=(${local.k8s_tenant_filter}), rollup='latest').between(0, 1.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name']).fill(value=0, duration='${var.k8s_detector_config.pending_pods_duration}')
+pending_pods = data('k8s.pod.phase', filter=(${local.k8s_tenant_filter}), rollup='latest').between(0, 1.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name', 'k8s.namespace.name']).fill(value=0, duration='${var.k8s_detector_config.pending_pods_duration}')
 detect(when(pending_pods > ${var.k8s_detector_config.pending_pods_threshold}, '${var.k8s_detector_config.pending_pods_duration}')).publish('Tenant pod pending')
 EOF
 
@@ -154,73 +112,22 @@ EOF
   }
 }
 
-resource "signalfx_detector" "k8s_tenant_pods_failed" {
-  name        = "${var.detector_name_prefix} K8S tenant pods failed"
-  description = "Detects tenant pods in Failed phase, grouped by cluster, namespace, and pod."
-  max_delay   = 120
-  tags        = local.detector_tags
-  teams       = [var.team]
-  time_range  = 3600
-
-  program_text = <<-EOF
-failed_pods = data('k8s.pod.phase', filter=(${local.k8s_tenant_filter}), rollup='latest').between(3.5, 4.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name']).fill(value=0, duration='${var.k8s_detector_config.failed_pods_duration}')
-detect(when(failed_pods > ${var.k8s_detector_config.failed_pods_threshold}, '${var.k8s_detector_config.failed_pods_duration}')).publish('Tenant pod failed')
-EOF
-
-  rule {
-    description   = "Tenant pod failed for ${var.k8s_detector_config.failed_pods_duration}"
-    severity      = "Major"
-    detect_label  = "Tenant pod failed"
-    notifications = var.detector_notifications
-  }
-}
-
-resource "signalfx_detector" "k8s_tenant_container_restarts" {
-  name        = "${var.detector_name_prefix} K8S tenant container restarts"
-  description = "Detects restarted containers in tenant namespaces, grouped by cluster, namespace, pod, and container."
-  max_delay   = 120
-  tags        = local.detector_tags
-  teams       = [var.team]
-  time_range  = 3600
-
-  program_text = <<-EOF
-container_restarts = data('k8s.container.restarts', filter=(${local.k8s_tenant_filter}), rollup='latest').delta().sum(over='${var.k8s_detector_config.container_restarts_duration}').sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name', 'k8s.container.name']).fill(value=0, duration='${var.k8s_detector_config.container_restarts_duration}')
-detect(when(container_restarts > ${var.k8s_detector_config.container_restarts_threshold})).publish('Tenant container restarting')
-EOF
-
-  rule {
-    description   = "Tenant container restarts for ${var.k8s_detector_config.container_restarts_duration}"
-    severity      = "Major"
-    detect_label  = "Tenant container restarting"
-    notifications = var.detector_notifications
-  }
-}
-
 resource "signalfx_detector" "k8s_platform_pods_unhealthy" {
   name        = "${var.detector_name_prefix} K8S platform pods unhealthy"
-  description = "Detects unhealthy platform pods in kube-system, Karpenter, Calico, and Tigera namespaces."
+  description = "Detects sustained failed or unknown pods in Forge platform namespaces, grouped by cluster and namespace. Restore the affected scheduling or networking component and verify runner capacity."
   max_delay   = 120
   tags        = local.detector_tags
   teams       = [var.team]
   time_range  = 3600
 
   program_text = <<-EOF
-platform_pending_pods = data('k8s.pod.phase', filter=(${local.k8s_platform_filter}), rollup='latest').between(0, 1.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name']).fill(value=0, duration='${var.k8s_detector_config.platform_pods_duration}')
-platform_failed_pods = data('k8s.pod.phase', filter=(${local.k8s_platform_filter}), rollup='latest').between(3.5, 5.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name']).fill(value=0, duration='${var.k8s_detector_config.platform_pods_duration}')
-detect(when(platform_pending_pods > ${var.k8s_detector_config.platform_unhealthy_threshold}, '${var.k8s_detector_config.platform_pods_duration}')).publish('Platform pod pending')
+platform_failed_pods = data('k8s.pod.phase', filter=(${local.k8s_platform_filter}), rollup='latest').between(3.5, 5.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name', 'k8s.namespace.name']).fill(value=0, duration='${var.k8s_detector_config.platform_pods_duration}')
 detect(when(platform_failed_pods > ${var.k8s_detector_config.platform_unhealthy_threshold}, '${var.k8s_detector_config.platform_pods_duration}')).publish('Platform pod failed or unknown')
 EOF
 
   rule {
-    description   = "Platform pod pending for ${var.k8s_detector_config.platform_pods_duration}"
-    severity      = "Critical"
-    detect_label  = "Platform pod pending"
-    notifications = var.detector_notifications
-  }
-
-  rule {
     description   = "Platform pod failed or unknown for ${var.k8s_detector_config.platform_pods_duration}"
-    severity      = "Critical"
+    severity      = "Major"
     detect_label  = "Platform pod failed or unknown"
     notifications = var.detector_notifications
   }

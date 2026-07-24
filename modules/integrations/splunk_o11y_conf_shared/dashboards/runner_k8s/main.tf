@@ -1,3 +1,19 @@
+locals {
+  k8s_dashboard_cluster_names = distinct(flatten([
+    for var_def in var.dynamic_variables : var_def.values_suggested
+    if var_def.property == "k8s.cluster.name"
+  ]))
+  k8s_cluster_filter = length(local.k8s_dashboard_cluster_names) > 0 ? join(" or ", [
+    for cluster_name in local.k8s_dashboard_cluster_names : "filter('k8s.cluster.name', '${cluster_name}')"
+  ]) : "filter('k8s.cluster.name', '__forge_cluster_scope_not_configured__')"
+
+  k8s_tenant_namespace_filter = length(var.tenant_names) > 0 ? join(" or ", [
+    for namespace in sort(var.tenant_names) : "filter('k8s.namespace.name', '${namespace}')"
+  ]) : "filter('k8s.namespace.name', '__forge_tenant_scope_not_configured__')"
+  k8s_tenant_filter         = "(${local.k8s_cluster_filter}) and (${local.k8s_tenant_namespace_filter})"
+  k8s_otel_collector_filter = "(${local.k8s_cluster_filter}) and filter('k8s.namespace.name', 'splunk-otel-collector') and filter('k8s.pod.name', 'splunk-otel-collector*')"
+}
+
 resource "signalfx_single_value_chart" "k8s_available_pods_by_deployments" {
   name        = "# Available pods by deployments"
   description = "Number of pods ready by deployments"
@@ -535,6 +551,104 @@ EOF
   }
 }
 
+resource "signalfx_time_chart" "k8s_node_pressure" {
+  name        = "Node pressure conditions"
+  description = "Shows active PID, memory, disk, or network pressure conditions by Kubernetes node."
+
+  program_text = <<-EOF
+A = data('k8s.node.condition', filter=(${local.k8s_cluster_filter}) and (filter('condition', 'PIDPressure') or filter('condition', 'MemoryPressure') or filter('condition', 'DiskPressure') or filter('condition', 'NetworkUnavailable')), rollup='latest').max(by=['k8s.cluster.name', 'k8s.node.name', 'condition']).publish(label='A')
+EOF
+
+  plot_type                 = "LineChart"
+  axes_precision            = 0
+  disable_sampling          = true
+  on_chart_legend_dimension = "condition"
+  time_range                = 86400
+
+  axis_left {
+    label = "Active condition"
+  }
+
+  viz_options {
+    display_name = "{{k8s.node.name}} - {{condition}}"
+    label        = "A"
+  }
+}
+
+resource "signalfx_time_chart" "k8s_otel_exporter_queue_utilization" {
+  name        = "OTel exporter queue utilization"
+  description = "Shows exporter queue size as a percentage of capacity. Sustained growth can precede telemetry loss."
+
+  program_text = <<-EOF
+queue_size = data('otelcol_exporter_queue_size', filter=(${local.k8s_otel_collector_filter}), rollup='latest').mean(by=['k8s.cluster.name', 'k8s.pod.name', 'exporter', 'data_type'])
+queue_capacity = data('otelcol_exporter_queue_capacity', filter=(${local.k8s_otel_collector_filter}), rollup='latest').mean(by=['k8s.cluster.name', 'k8s.pod.name', 'exporter', 'data_type'])
+queue_utilization = ((queue_size / queue_capacity) * 100).top(count=20).publish(label='A')
+EOF
+
+  plot_type                 = "LineChart"
+  axes_precision            = 2
+  disable_sampling          = true
+  on_chart_legend_dimension = "exporter"
+  time_range                = 86400
+
+  axis_left {
+    label     = "Percent"
+    max_value = 100
+    min_value = 0
+  }
+
+  viz_options {
+    display_name = "{{exporter}} {{data_type}} on {{k8s.pod.name}}"
+    label        = "A"
+    value_suffix = "%"
+  }
+}
+
+resource "signalfx_time_chart" "k8s_otel_telemetry_loss" {
+  name        = "OTel refused and failed metric points"
+  description = "Shows metric points refused or failed by receivers and errored by scrapers."
+
+  program_text = <<-EOF
+refused = data('otelcol_receiver_refused_metric_points', filter=(${local.k8s_otel_collector_filter}), rollup='rate').sum(by=['k8s.cluster.name', 'receiver']).publish(label='Refused')
+failed = data('otelcol_receiver_failed_metric_points', filter=(${local.k8s_otel_collector_filter}), rollup='rate').sum(by=['k8s.cluster.name', 'receiver']).publish(label='Failed')
+scraper_errors = data('otelcol_scraper_errored_metric_points', filter=(${local.k8s_otel_collector_filter}), rollup='rate').sum(by=['k8s.cluster.name', 'scraper']).publish(label='Scraper errors')
+EOF
+
+  plot_type                 = "ColumnChart"
+  axes_precision            = 2
+  disable_sampling          = true
+  on_chart_legend_dimension = "plot_label"
+  time_range                = 604800
+
+  axis_left {
+    label = "Metric points / sec"
+  }
+}
+
+resource "signalfx_time_chart" "k8s_pod_status_reasons" {
+  name        = "Pod termination and shutdown reasons"
+  description = "Diagnostic view of tenant pod status reasons such as Terminated and NodeShutdown."
+
+  program_text = <<-EOF
+A = data('k8s.pod.status_reason', filter=(${local.k8s_tenant_filter}), rollup='latest').sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.status_reason']).publish(label='A')
+EOF
+
+  plot_type                 = "ColumnChart"
+  axes_precision            = 0
+  disable_sampling          = true
+  on_chart_legend_dimension = "k8s.pod.status_reason"
+  time_range                = 86400
+
+  axis_left {
+    label = "Pods"
+  }
+
+  viz_options {
+    display_name = "{{k8s.namespace.name}} - {{k8s.pod.status_reason}}"
+    label        = "A"
+  }
+}
+
 resource "signalfx_dashboard" "runner_k8s" {
   name            = "K8S Runners"
   description     = "Kubernetes-based runners: pod states, CPU, memory, and network health."
@@ -544,8 +658,8 @@ resource "signalfx_dashboard" "runner_k8s" {
     property               = "k8s.namespace.name"
     alias                  = "ForgeCICD Tenant Name"
     description            = ""
-    values                 = []
-    value_required         = false
+    values                 = sort(var.tenant_names)
+    value_required         = length(var.tenant_names) > 0
     values_suggested       = sort(var.tenant_names)
     restricted_suggestions = true
   }
@@ -675,6 +789,38 @@ resource "signalfx_dashboard" "runner_k8s" {
     row      = 3
     column   = 9
     width    = 3
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_time_chart.k8s_node_pressure.id
+    row      = 4
+    column   = 0
+    width    = 6
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_time_chart.k8s_otel_exporter_queue_utilization.id
+    row      = 4
+    column   = 6
+    width    = 6
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_time_chart.k8s_otel_telemetry_loss.id
+    row      = 5
+    column   = 0
+    width    = 6
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_time_chart.k8s_pod_status_reasons.id
+    row      = 5
+    column   = 6
+    width    = 6
     height   = 1
   }
 

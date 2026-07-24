@@ -54,9 +54,9 @@ run "k8s_detector_scope_and_threshold_contract" {
       && contains(signalfx_detector.k8s_otel_no_data.tags, "forgecicd")
       && strcontains(signalfx_detector.k8s_otel_no_data.program_text, "filter('k8s.cluster.name', 'forge-euw1-dev')")
       && strcontains(signalfx_detector.k8s_otel_no_data.program_text, "20m")
-      && contains([for rule in signalfx_detector.k8s_otel_no_data.rule : rule.severity], "Critical")
+      && contains([for rule in signalfx_detector.k8s_otel_no_data.rule : rule.severity], "Warning")
     )
-    error_message = "K8s no-data detector must keep cluster scoping, fill duration, team, tags, and critical severity."
+    error_message = "K8s no-data detector must keep cluster scoping, fill duration, team, tags, and non-paging warning severity."
   }
 
   assert {
@@ -67,19 +67,25 @@ run "k8s_detector_scope_and_threshold_contract" {
       && strcontains(signalfx_detector.k8s_otel_collector_health.program_text, "running_collector_pods < 2")
       && strcontains(signalfx_detector.k8s_otel_collector_health.program_text, ".delta().sum(over='15m')")
       && strcontains(signalfx_detector.k8s_otel_collector_health.program_text, ".fill(value=0, duration='5m')")
+      && !strcontains(signalfx_detector.k8s_otel_collector_health.program_text, "'k8s.pod.name', 'k8s.container.name'")
       && length(signalfx_detector.k8s_otel_collector_health.rule) == 4
+      && length([for rule in signalfx_detector.k8s_otel_collector_health.rule : rule if rule.severity == "Major"]) == 2
+      && length([for rule in signalfx_detector.k8s_otel_collector_health.rule : rule if rule.severity == "Warning"]) == 2
     )
-    error_message = "K8s collector detector must keep collector namespace, pod filter, min-running threshold, and all collector rules."
+    error_message = "K8s collector detector must aggregate by cluster and keep two major availability rules plus two warning degradation rules."
   }
 
   assert {
     condition = (
       strcontains(signalfx_detector.k8s_tenant_pods_pending.program_text, "filter('k8s.namespace.name', 'tenant-a') or filter('k8s.namespace.name', 'tenant-b')")
+      && strcontains(signalfx_detector.k8s_tenant_pods_pending.program_text, "sum(by=['k8s.cluster.name', 'k8s.namespace.name'])")
+      && !strcontains(signalfx_detector.k8s_tenant_pods_pending.program_text, "'k8s.pod.name'")
       && strcontains(signalfx_detector.k8s_tenant_pods_pending.program_text, ".fill(value=0, duration='10m')")
-      && strcontains(signalfx_detector.k8s_tenant_container_restarts.program_text, ".delta().sum(over='10m')")
-      && strcontains(signalfx_detector.k8s_other_namespace_pods_unhealthy.program_text, "not filter('k8s.namespace.name', 'kube-system', 'karpenter', 'splunk-otel', 'tenant-a', 'tenant-b')")
       && strcontains(signalfx_detector.k8s_platform_pods_unhealthy.program_text, "filter('k8s.namespace.name', 'kube-system') or filter('k8s.namespace.name', 'karpenter')")
+      && !strcontains(signalfx_detector.k8s_platform_pods_unhealthy.program_text, "Platform pod pending")
+      && length(signalfx_detector.k8s_platform_pods_unhealthy.rule) == 1
+      && one(signalfx_detector.k8s_platform_pods_unhealthy.rule).severity == "Major"
     )
-    error_message = "K8s detectors must keep separate tenant, other-namespace, and platform namespace filters."
+    error_message = "K8s workload detectors must aggregate tenant pending pods by tenant and retain only the actionable platform failed-or-unknown rule."
   }
 }

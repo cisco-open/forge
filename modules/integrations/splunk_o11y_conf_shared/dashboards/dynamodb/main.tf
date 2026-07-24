@@ -2,7 +2,7 @@ resource "signalfx_time_chart" "write_throttle_events" {
   name         = "Write throttle events"
   description  = "Requests to DynamoDB that exceed the provisioned write capacity units for a table or a global secondary index."
   program_text = <<-EOF
-A = data('WriteThrottleEvents', filter=filter('namespace', 'AWS/DynamoDB') and filter('stat', 'sum') and filter('TableName', '*'), rollup='sum').publish(label='A')
+A = data('WriteThrottleEvents', filter=filter('namespace', 'AWS/DynamoDB') and filter('stat', 'sum') and filter('TableName', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'TableName']).publish(label='A')
 EOF
 
   plot_type   = "AreaChart"
@@ -32,7 +32,7 @@ resource "signalfx_time_chart" "system_errors_ts" {
   name         = "System errors"
   description  = "Requests to DynamoDB or Amazon DynamoDB streams that generate an HTTP 500 status code during the specified time period."
   program_text = <<-EOF
-A = data('SystemErrors', filter=filter('namespace', 'AWS/DynamoDB') and filter('stat', 'sum') and filter('TableName', '*') and filter('Operation', '*'), rollup='sum').publish(label='A')
+A = data('SystemErrors', filter=filter('namespace', 'AWS/DynamoDB') and filter('stat', 'sum') and filter('TableName', '*') and filter('Operation', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'TableName', 'Operation']).publish(label='A')
 EOF
 
   plot_type   = "AreaChart"
@@ -59,8 +59,8 @@ resource "signalfx_time_chart" "read_capacity_percentage" {
   name         = "Percentage of read capacity consumed"
   description  = "The percentage of read capacity units consumed over the specified time period, so you can track how much of your provisioned throughput is used."
   program_text = <<-EOF
-A = data('ProvisionedReadCapacityUnits', filter=filter('namespace', 'AWS/DynamoDB') and filter('stat', 'mean') and filter('TableName', '*')).publish(label='A', enable=False)
-B = data('ConsumedReadCapacityUnits', filter=filter('namespace', 'AWS/DynamoDB') and filter('stat', 'mean') and filter('TableName', '*')).publish(label='B', enable=False)
+A = data('ProvisionedReadCapacityUnits', filter=filter('namespace', 'AWS/DynamoDB') and filter('stat', 'mean') and filter('TableName', '*')).mean(by=['aws_tag_TenantName', 'TableName']).publish(label='A', enable=False)
+B = data('ConsumedReadCapacityUnits', filter=filter('namespace', 'AWS/DynamoDB') and filter('stat', 'mean') and filter('TableName', '*')).mean(by=['aws_tag_TenantName', 'TableName']).publish(label='B', enable=False)
 C = ((B/A)*100).publish(label='C')
 EOF
 
@@ -124,7 +124,7 @@ resource "signalfx_time_chart" "returned_item_count" {
   name         = "Returned item count"
   description  = "The number of items returned by query or scan operations during the specified time period."
   program_text = <<-EOF
-A = data('ReturnedItemCount', filter=filter('namespace', 'AWS/DynamoDB') and filter('TableName', '*') and filter('Operation', '*') and filter('stat', 'count'), rollup='sum').publish(label='A')
+A = data('ReturnedItemCount', filter=filter('namespace', 'AWS/DynamoDB') and filter('TableName', '*') and filter('Operation', '*') and filter('stat', 'count'), rollup='sum').sum(by=['aws_tag_TenantName', 'TableName', 'Operation']).publish(label='A')
 EOF
 
   plot_type   = "LineChart"
@@ -201,7 +201,7 @@ resource "signalfx_time_chart" "avg_request_latency_ts" {
   name         = "Average request latency (ms)"
   description  = "Successful requests to DynamoDB or Amazon DynamoDB streams during the specified time period."
   program_text = <<-EOF
-A = data('SuccessfulRequestLatency', filter=filter('namespace', 'AWS/DynamoDB') and filter('stat', 'mean')).publish(label='A')
+A = data('SuccessfulRequestLatency', filter=filter('namespace', 'AWS/DynamoDB') and filter('stat', 'mean') and filter('TableName', '*') and filter('Operation', '*')).mean(by=['aws_tag_TenantName', 'TableName', 'Operation']).publish(label='A')
 EOF
 
   axes_precision = 0
@@ -279,7 +279,7 @@ resource "signalfx_single_value_chart" "system_errors_single" {
   color_by    = "Dimension"
 
   program_text = <<-EOF
-A = data('SystemErrors', filter=filter('namespace', 'AWS/DynamoDB') and filter('stat', 'sum') and filter('TableName', '*') and filter('Operation', '*'), rollup='sum').publish(label='A')
+A = data('SystemErrors', filter=filter('namespace', 'AWS/DynamoDB') and filter('stat', 'sum') and filter('TableName', '*') and filter('Operation', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'TableName', 'Operation']).publish(label='A')
 EOF
 
   viz_options {
@@ -323,7 +323,7 @@ resource "signalfx_time_chart" "read_throttle_events" {
   name         = "Read throttle events"
   description  = "Requests to DynamoDB that exceed the provisioned read capacity units for a table or a global secondary index."
   program_text = <<-EOF
-A = data('ReadThrottleEvents', filter=filter('stat', 'sum') and filter('TableName', '*'), rollup='sum').publish(label='A')
+A = data('ReadThrottleEvents', filter=filter('namespace', 'AWS/DynamoDB') and filter('stat', 'sum') and filter('TableName', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'TableName']).publish(label='A')
 EOF
 
   plot_type   = "AreaChart"
@@ -351,7 +351,7 @@ resource "signalfx_time_chart" "throttled_requests_ts" {
   name         = "Throttled requests"
   description  = "Requests to DynamoDB that exceed the provisioned throughput limits on a resource (such as a table or an index)."
   program_text = <<-EOF
-A = data('ThrottledRequests', filter=filter('namespace', 'AWS/DynamoDB') and filter('stat', 'sum'), rollup='sum').publish(label='A')
+A = data('ThrottledRequests', filter=filter('namespace', 'AWS/DynamoDB') and filter('stat', 'sum') and filter('TableName', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'TableName']).publish(label='A')
 EOF
 
   plot_type   = "AreaChart"
@@ -411,8 +411,8 @@ resource "signalfx_time_chart" "write_capacity_percentage" {
   name         = "Percentage of write capacity consumed"
   description  = "The percentage of write capacity units consumed over the specified time period, so you can track how much of your provisioned throughput is used."
   program_text = <<-EOF
-A = data('ProvisionedWriteCapacityUnits', filter=filter('namespace', 'AWS/DynamoDB') and filter('stat', 'mean') and filter('TableName', '*')).publish(label='A', enable=False)
-B = data('ConsumedWriteCapacityUnits', filter=filter('namespace', 'AWS/DynamoDB') and filter('stat', 'mean') and filter('TableName', '*')).publish(label='B', enable=False)
+A = data('ProvisionedWriteCapacityUnits', filter=filter('namespace', 'AWS/DynamoDB') and filter('stat', 'mean') and filter('TableName', '*')).mean(by=['aws_tag_TenantName', 'TableName']).publish(label='A', enable=False)
+B = data('ConsumedWriteCapacityUnits', filter=filter('namespace', 'AWS/DynamoDB') and filter('stat', 'mean') and filter('TableName', '*')).mean(by=['aws_tag_TenantName', 'TableName']).publish(label='B', enable=False)
 C = ((B/A)*100).publish(label='C')
 EOF
 
@@ -504,8 +504,8 @@ resource "signalfx_dashboard" "dynamodb" {
     property               = "aws_tag_TenantName"
     alias                  = "ForgeCICD Tenant Name"
     description            = ""
-    values                 = []
-    value_required         = false
+    values                 = sort(var.tenant_names)
+    value_required         = length(var.tenant_names) > 0
     values_suggested       = sort(var.tenant_names)
     restricted_suggestions = true
   }

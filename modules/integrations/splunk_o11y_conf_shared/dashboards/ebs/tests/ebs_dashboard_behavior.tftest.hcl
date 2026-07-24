@@ -26,7 +26,12 @@ run "ebs_dashboard_contract" {
       && strcontains(signalfx_time_chart.byte_utilization_pct.program_text, "EBSByteBalance%")
       && signalfx_time_chart.latency_op.name == "Latency/op (ms)"
       && signalfx_time_chart.latency_op.time_range == 7200
+      && !strcontains(signalfx_time_chart.latency_op.program_text, "vol-46dcc55f")
+      && strcontains(signalfx_time_chart.latency_op.program_text, ".sum(by=['aws_tag_TenantName', 'aws_region', 'VolumeId'])")
       && signalfx_single_value_chart.state.name == "State"
+      && strcontains(signalfx_time_chart.volume_iops_exceeded.program_text, "VolumeIOPSExceededCheck")
+      && strcontains(signalfx_time_chart.volume_iops_exceeded.program_text, "filter('aws_tag_TenantName', 'tenant-a') or filter('aws_tag_TenantName', 'tenant-b')")
+      && strcontains(signalfx_time_chart.volume_iops_exceeded.program_text, "filter('stat', 'upper')")
     )
     error_message = "EBS charts must keep one-hour utilization visibility, latency, and volume state behavior."
   }
@@ -39,7 +44,9 @@ run "ebs_dashboard_wiring_contract" {
     condition = (
       signalfx_dashboard.ebs.name == "EBS"
       && signalfx_dashboard.ebs.dashboard_group == "forge-dashboard-group"
-      && length(signalfx_dashboard.ebs.chart) == 15
+      && signalfx_dashboard.ebs.variable[0].values == toset(["tenant-a", "tenant-b"])
+      && signalfx_dashboard.ebs.variable[0].value_required
+      && length(signalfx_dashboard.ebs.chart) == 16
     )
     error_message = "EBS dashboard must keep its name, group input, and chart count."
   }
@@ -48,6 +55,7 @@ run "ebs_dashboard_wiring_contract" {
     condition = alltrue([
       contains([for chart in signalfx_dashboard.ebs.chart : chart.chart_id], signalfx_single_value_chart.state.id),
       contains([for chart in signalfx_dashboard.ebs.chart : chart.chart_id], signalfx_time_chart.avg_queue_length.id),
+      contains([for chart in signalfx_dashboard.ebs.chart : chart.chart_id], signalfx_time_chart.volume_iops_exceeded.id),
     ])
     error_message = "EBS dashboard must keep its first and final chart wiring."
   }

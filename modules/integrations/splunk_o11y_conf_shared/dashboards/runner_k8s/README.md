@@ -11,7 +11,8 @@ Kubernetes runner failures often show up as pending pods, restarts, resource pre
 - Active, desired, available, and phase-based pod charts.
 - CPU, memory, network, and restart views.
 - Top pod lists for resource usage.
-- OTel collector pod visibility.
+- Node pressure and tenant pod shutdown/termination diagnostics.
+- OTel collector pod, exporter queue, and telemetry-loss visibility.
 - Dashboard placement in the shared Forge O11y group.
 
 ## Operational Notes
@@ -54,8 +55,12 @@ No modules.
 | [signalfx_time_chart.k8s_memory_usage_bytes](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.k8s_memory_usage_pct](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.k8s_network_bytes_per_sec](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
+| [signalfx_time_chart.k8s_node_pressure](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.k8s_otel_collector_pods](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
+| [signalfx_time_chart.k8s_otel_exporter_queue_utilization](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
+| [signalfx_time_chart.k8s_otel_telemetry_loss](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.k8s_pod_phase_trend](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
+| [signalfx_time_chart.k8s_pod_status_reasons](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 
 ## Inputs
 
