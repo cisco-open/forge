@@ -10,7 +10,9 @@ Forge relies heavily on Lambdas for webhooks, scaling, tagging, log archival, tr
 
 - Invocation, error, throttle, and duration charts.
 - Provisioned concurrency and spillover views.
-- Version-level percentages and average duration lists.
+- Version-level percentages and average duration lists using the enriched
+  `aws_function_name` and `aws_function_version` properties present on Forge
+  Lambda metric streams.
 - Dashboard placement in the shared Forge O11y group.
 
 ## Operational Notes

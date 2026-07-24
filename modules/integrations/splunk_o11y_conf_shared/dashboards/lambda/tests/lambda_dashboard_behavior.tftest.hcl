@@ -29,10 +29,27 @@ run "lambda_dashboard_contract" {
       && strcontains(signalfx_single_value_chart.total_throttles.program_text, ".sum(over='30m')")
       && strcontains(signalfx_single_value_chart.total_invocations.program_text, ".sum(over='30m')")
       && strcontains(signalfx_time_chart.errors_by_version.program_text, "Errors")
-      && strcontains(signalfx_time_chart.errors_by_version.program_text, ".sum(by=['aws_tag_TenantName', 'Resource', 'ExecutedVersion'])")
-      && strcontains(signalfx_list_chart.avg_duration_by_version.program_text, ".mean(by=['aws_tag_TenantName', 'Resource', 'ExecutedVersion'])")
+      && strcontains(signalfx_time_chart.errors_by_version.program_text, ".sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_function_version'])")
+      && strcontains(signalfx_list_chart.avg_duration_by_version.program_text, ".mean(by=['aws_tag_TenantName', 'aws_function_name', 'aws_function_version'])")
     )
     error_message = "Lambda charts must keep one-hour visibility and ingestion-delay-safe invocation, error, and throttle behavior."
+  }
+
+  assert {
+    condition = alltrue([
+      for program_text in [
+        signalfx_list_chart.percent_invocations_by_version.program_text,
+        signalfx_time_chart.errors_by_version.program_text,
+        signalfx_list_chart.avg_duration_by_version.program_text,
+        signalfx_time_chart.throttles_by_version.program_text,
+        signalfx_time_chart.invocations_by_version.program_text,
+        ] : (
+        strcontains(program_text, "filter('aws_function_version', '*')")
+        && strcontains(program_text, "aws_function_name")
+        && !strcontains(program_text, "filter('ExecutedVersion', '*')")
+      )
+    ])
+    error_message = "Standard Lambda version charts must use the live enriched function name and version properties instead of the sparse ExecutedVersion dimension."
   }
 }
 
