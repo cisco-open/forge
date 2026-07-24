@@ -34,7 +34,7 @@ run "k8s_control_plane_dashboard_contract" {
       && signalfx_dashboard.k8s_control_plane.dashboard_group == "forge-dashboard-group"
       && length(signalfx_dashboard.k8s_control_plane.variable) == 1
       && signalfx_dashboard.k8s_control_plane.variable[0].property == "k8s.cluster.name"
-      && length(signalfx_dashboard.k8s_control_plane.chart) == 5
+      && length(signalfx_dashboard.k8s_control_plane.chart) == 7
     )
     error_message = "K8S control-plane dashboard must use only the cluster selector and wire all platform charts."
   }
@@ -46,14 +46,21 @@ run "k8s_control_plane_dashboard_contract" {
       && strcontains(signalfx_time_chart.platform_pod_health.program_text, "filter('k8s.namespace.name', 'monitoring')")
       && strcontains(signalfx_time_chart.platform_pod_health.program_text, "filter('k8s.namespace.name', 'prometheus')")
       && strcontains(signalfx_time_chart.platform_pod_health.program_text, "filter('k8s.namespace.name', 'splunk-otel-collector')")
+      && strcontains(signalfx_time_chart.platform_pod_health.program_text, "kubernetes.pod_phase")
+      && strcontains(signalfx_time_chart.platform_pod_health.program_text, "filter('k8s.pod.phase', 'Pending')")
       && strcontains(signalfx_time_chart.node_pressure.program_text, "k8s.node.condition")
       && strcontains(signalfx_time_chart.node_pressure.program_text, "rollup='max'")
       && strcontains(signalfx_time_chart.node_pressure.program_text, ".max(by=['k8s.cluster.name', 'k8s.node.name', 'condition']).above(0)")
       && one(signalfx_time_chart.node_pressure.viz_options).display_name == "Node pressure"
+      && strcontains(signalfx_time_chart.ready_nodes.program_text, "kubernetes.node_ready")
+      && strcontains(signalfx_time_chart.ready_nodes.program_text, ".sum(by=['k8s.cluster.name'])")
+      && strcontains(signalfx_time_chart.unavailable_platform_replicas.program_text, "kubernetes.deployment.desired")
+      && strcontains(signalfx_time_chart.unavailable_platform_replicas.program_text, "kubernetes.deployment.available")
+      && strcontains(signalfx_time_chart.unavailable_platform_replicas.program_text, "(desired - available).above(0)")
       && strcontains(signalfx_time_chart.otel_exporter_queue_utilization.program_text, "otelcol_exporter_queue_capacity")
       && one(signalfx_time_chart.otel_exporter_queue_utilization.viz_options).display_name == "OTel exporter queue utilization"
       && strcontains(signalfx_time_chart.otel_telemetry_loss.program_text, "otelcol_receiver_refused_metric_points")
     )
-    error_message = "K8S control-plane charts must cover configured platform namespaces, node pressure, and OTel pipeline health."
+    error_message = "K8S control-plane charts must cover configured platform namespaces, pod and deployment health, node readiness and pressure, and OTel pipeline health."
   }
 }

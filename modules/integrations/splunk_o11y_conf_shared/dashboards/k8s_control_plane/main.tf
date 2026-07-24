@@ -23,12 +23,12 @@ locals {
 
 resource "signalfx_time_chart" "platform_pod_health" {
   name        = "Platform pod health"
-  description = "Shows running, pending, failed, and unknown pods in configured Kubernetes control-plane namespaces."
+  description = "Shows running, pending, and failed pods in configured Kubernetes control-plane namespaces."
 
   program_text = <<-EOF
-A = data('k8s.pod.phase', filter=(${local.k8s_platform_filter}), rollup='latest').between(1.5, 2.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name', 'k8s.namespace.name']).publish(label='Running')
-B = data('k8s.pod.phase', filter=(${local.k8s_platform_filter}), rollup='latest').between(0, 1.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name', 'k8s.namespace.name']).publish(label='Pending')
-C = data('k8s.pod.phase', filter=(${local.k8s_platform_filter}), rollup='latest').between(3.5, 5.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name', 'k8s.namespace.name']).publish(label='Failed or unknown')
+A = data('kubernetes.pod_phase', filter=(${local.k8s_platform_filter}) and filter('k8s.pod.phase', 'Running'), rollup='latest').sum(by=['k8s.cluster.name', 'k8s.namespace.name']).publish(label='Running')
+B = data('kubernetes.pod_phase', filter=(${local.k8s_platform_filter}) and filter('k8s.pod.phase', 'Pending'), rollup='latest').sum(by=['k8s.cluster.name', 'k8s.namespace.name']).publish(label='Pending')
+C = data('kubernetes.pod_phase', filter=(${local.k8s_platform_filter}) and filter('k8s.pod.phase', 'Failed'), rollup='latest').sum(by=['k8s.cluster.name', 'k8s.namespace.name']).publish(label='Failed')
 EOF
 
   plot_type                 = "LineChart"
@@ -57,12 +57,12 @@ EOF
 
 resource "signalfx_time_chart" "otel_collector_pods" {
   name        = "Splunk OTel collector pod health"
-  description = "Shows running, pending, failed, and unknown Splunk OpenTelemetry Collector pods."
+  description = "Shows running, pending, and failed Splunk OpenTelemetry Collector pods."
 
   program_text = <<-EOF
-A = data('k8s.pod.phase', filter=(${local.k8s_otel_collector_filter}), rollup='latest').between(1.5, 2.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name']).publish(label='Running')
-B = data('k8s.pod.phase', filter=(${local.k8s_otel_collector_filter}), rollup='latest').between(0, 1.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name']).publish(label='Pending')
-C = data('k8s.pod.phase', filter=(${local.k8s_otel_collector_filter}), rollup='latest').between(3.5, 5.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name']).publish(label='Failed or unknown')
+A = data('kubernetes.pod_phase', filter=(${local.k8s_otel_collector_filter}) and filter('k8s.pod.phase', 'Running'), rollup='latest').sum(by=['k8s.cluster.name']).publish(label='Running')
+B = data('kubernetes.pod_phase', filter=(${local.k8s_otel_collector_filter}) and filter('k8s.pod.phase', 'Pending'), rollup='latest').sum(by=['k8s.cluster.name']).publish(label='Pending')
+C = data('kubernetes.pod_phase', filter=(${local.k8s_otel_collector_filter}) and filter('k8s.pod.phase', 'Failed'), rollup='latest').sum(by=['k8s.cluster.name']).publish(label='Failed')
 EOF
 
   plot_type                 = "LineChart"
@@ -154,9 +154,78 @@ resource "terraform_data" "dashboard_parent" {
   triggers_replace = var.dashboard_group
 }
 
+resource "signalfx_time_chart" "ready_nodes" {
+  name        = "Ready nodes by cluster"
+  description = "Shows the number of ready Kubernetes nodes. A drop can indicate node loss or reduced scheduling capacity."
+
+  program_text = <<-EOF
+A = data('kubernetes.node_ready', filter=(${local.k8s_cluster_filter}), rollup='latest').sum(by=['k8s.cluster.name']).publish(label='A')
+EOF
+
+  plot_type                 = "LineChart"
+  axes_precision            = 0
+  disable_sampling          = true
+  on_chart_legend_dimension = "k8s.cluster.name"
+  time_range                = 86400
+
+  axis_left {
+    label     = "Ready nodes"
+    min_value = 0
+  }
+
+  viz_options {
+    display_name = "Ready nodes"
+    label        = "A"
+  }
+}
+
+resource "signalfx_time_chart" "unavailable_platform_replicas" {
+  name        = "Unavailable platform deployment replicas"
+  description = "Shows configured platform deployments where desired replicas exceed available replicas."
+
+  program_text = <<-EOF
+desired = data('kubernetes.deployment.desired', filter=(${local.k8s_platform_filter}), rollup='latest').sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.deployment.name'])
+available = data('kubernetes.deployment.available', filter=(${local.k8s_platform_filter}), rollup='latest').sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.deployment.name'])
+unavailable = (desired - available).above(0).top(count=20).publish(label='A')
+EOF
+
+  plot_type                 = "ColumnChart"
+  axes_precision            = 0
+  disable_sampling          = true
+  on_chart_legend_dimension = "k8s.deployment.name"
+  time_range                = 86400
+
+  axis_left {
+    label     = "Unavailable replicas"
+    min_value = 0
+  }
+
+  legend_options_fields {
+    enabled  = true
+    property = "k8s.cluster.name"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "k8s.namespace.name"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "k8s.deployment.name"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
+  }
+
+  viz_options {
+    display_name = "Unavailable replicas"
+    label        = "A"
+  }
+}
+
 resource "signalfx_dashboard" "k8s_control_plane" {
   name            = "Forge Control Plane - Kubernetes"
-  description     = "Forge Kubernetes platform pods, node pressure, and telemetry pipeline health."
+  description     = "Forge Kubernetes platform pods, deployment availability, node readiness and pressure, and telemetry pipeline health."
   dashboard_group = var.dashboard_group
 
   lifecycle {
@@ -215,6 +284,22 @@ resource "signalfx_dashboard" "k8s_control_plane" {
   chart {
     chart_id = signalfx_time_chart.otel_telemetry_loss.id
     row      = 2
+    column   = 6
+    width    = 6
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_time_chart.ready_nodes.id
+    row      = 3
+    column   = 0
+    width    = 6
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_time_chart.unavailable_platform_replicas.id
+    row      = 3
     column   = 6
     width    = 6
     height   = 1

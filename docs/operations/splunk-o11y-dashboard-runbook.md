@@ -142,20 +142,24 @@ If several tenants share the symptom, move to `Forge Control Plane - Kubernetes`
 Purpose: separate shared cluster and telemetry health from tenant runner
 workload health.
 
-Normal: platform and collector pods run, node pressure conditions are clear,
-the exporter queue has headroom, and refused or failed metric points remain
-zero.
+Normal: platform and collector pods run, desired platform deployment replicas
+are available, ready-node counts follow each cluster baseline, node pressure
+conditions are clear, the exporter queue has headroom, and refused or failed
+metric points remain zero.
 
-Problem: platform or collector pods are pending/failed, one node reports
-pressure, exporter utilization grows, or metric points are refused.
+Problem: platform or collector pods are pending/failed, deployment replicas
+are unavailable, ready-node count drops, one node reports pressure, exporter
+utilization grows, or metric points are refused.
 
 Apocalypse: cluster-wide scheduling, networking, telemetry, or platform pod
 failure affects multiple tenants.
 
-Action: identify the cluster, namespace, pod, node, and pressure condition.
-For exporter saturation, restore the downstream path before diagnosing
-no-data charts. For platform failure, use Kubernetes events and the Splunk
-Cloud storage/network dashboard.
+Action: identify the cluster, namespace, deployment, pod, node, and pressure
+condition. Treat a ready-node drop as reduced scheduling capacity and correlate
+it with pending pods and unavailable platform replicas. For exporter
+saturation, restore the downstream path before diagnosing no-data charts. For
+platform failure, use Kubernetes events and the Splunk Cloud storage/network
+dashboard.
 
 ### Forge Tenant - Lambdas
 
