@@ -490,7 +490,7 @@ resource "signalfx_list_chart" "dead_letter_visible_messages" {
 }
 
 resource "signalfx_dashboard" "sqs" {
-  name        = "SQS"
+  name        = "Forge Tenant - SQS"
   description = "SQS queue counts, message states, sizes, and processing trends."
 
   dashboard_group = var.dashboard_group

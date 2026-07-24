@@ -30,7 +30,7 @@ run "k8s_control_plane_dashboard_contract" {
 
   assert {
     condition = (
-      signalfx_dashboard.k8s_control_plane.name == "K8S Control Plane"
+      signalfx_dashboard.k8s_control_plane.name == "Forge Control Plane - Kubernetes"
       && signalfx_dashboard.k8s_control_plane.dashboard_group == "forge-dashboard-group"
       && length(signalfx_dashboard.k8s_control_plane.variable) == 1
       && signalfx_dashboard.k8s_control_plane.variable[0].property == "k8s.cluster.name"

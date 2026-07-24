@@ -814,7 +814,7 @@ EOF
 }
 
 resource "signalfx_dashboard" "lambda" {
-  name            = "Lambdas"
+  name            = "Forge Tenant - Lambdas"
   description     = "Forge CICD Lambda invocation rate, errors, duration, and concurrency."
   dashboard_group = var.dashboard_group
 

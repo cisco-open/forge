@@ -1571,7 +1571,7 @@ EOF
 }
 
 resource "signalfx_dashboard" "runner_ec2" {
-  name            = "EC2 Runners"
+  name            = "Forge Tenant - EC2 Runners"
   description     = "EC2-based GitHub Actions runners: CPU, memory, disk, and network."
   dashboard_group = var.dashboard_group
 

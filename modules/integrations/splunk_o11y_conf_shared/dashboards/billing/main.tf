@@ -275,8 +275,8 @@ EOF
 }
 
 resource "signalfx_dashboard" "billing" {
-  name            = "Billing"
-  description     = "Forge CICD cost and net cost by service and tenant."
+  name            = "Forge Billing and Cost - AWS"
+  description     = "AWS billing cost and net cost for Forge, separated from OpenCost allocation estimates."
   dashboard_group = var.dashboard_group
 
   time_range = "-31d"

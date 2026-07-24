@@ -151,7 +151,7 @@ EOF
 }
 
 resource "signalfx_dashboard" "k8s_control_plane" {
-  name            = "K8S Control Plane"
+  name            = "Forge Control Plane - Kubernetes"
   description     = "Forge Kubernetes platform pods, node pressure, and telemetry pipeline health."
   dashboard_group = var.dashboard_group
 

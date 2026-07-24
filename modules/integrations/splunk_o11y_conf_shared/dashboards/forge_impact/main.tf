@@ -1,10 +1,27 @@
 locals {
-  k8s_tenant_namespace_filter = length(var.tenant_names) > 0 ? join(" or ", [
-    for namespace in sort(var.tenant_names) : "filter('k8s.namespace.name', '${namespace}')"
-  ]) : "filter('k8s.namespace.name', '__forge_tenant_scope_not_configured__')"
-  ec2_tenant_filter = length(var.tenant_names) > 0 ? join(" or ", [
+  configured_tenant_filter = length(var.tenant_names) > 0 ? join(" or ", [
     for tenant_name in sort(var.tenant_names) : "filter('aws_tag_TenantName', '${tenant_name}')"
   ]) : "filter('aws_tag_TenantName', '__forge_tenant_scope_not_configured__')"
+  configured_aws_scope_filter = length([
+    for variable in var.dynamic_variables : variable
+    if variable.value_required && length(variable.values) > 0
+    ]) > 0 ? join(" and ", [
+    for variable in var.dynamic_variables :
+    "filter('${variable.property}', '${join("', '", sort(variable.values))}')"
+    if variable.value_required && length(variable.values) > 0
+  ]) : "filter('aws_tag_TenantName', '*')"
+  ec2_tenant_filter = "(${local.configured_tenant_filter}) and (${local.configured_aws_scope_filter})"
+
+  configured_k8s_tenant_filter = length(var.tenant_names) > 0 ? join(" or ", [
+    for namespace in sort(var.tenant_names) : "filter('k8s.namespace.name', '${namespace}')"
+  ]) : "filter('k8s.namespace.name', '__forge_tenant_scope_not_configured__')"
+  configured_k8s_cluster_filter = length(var.cluster_names) > 0 ? join(" or ", [
+    for cluster_name in sort(var.cluster_names) : "filter('k8s.cluster.name', '${cluster_name}')"
+  ]) : "filter('k8s.cluster.name', '__forge_cluster_scope_not_configured__')"
+  k8s_tenant_namespace_filter = join(" and ", [
+    "(${local.configured_k8s_tenant_filter})",
+    "(${local.configured_k8s_cluster_filter})",
+  ])
 
   k8s_runner_container_filter  = "filter('k8s.container.name', 'runner') and (${local.k8s_tenant_namespace_filter})"
   k8s_runner_pod_dimensions    = "['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name']"
@@ -350,8 +367,8 @@ resource "terraform_data" "dashboard_parent" {
 }
 
 resource "signalfx_dashboard" "forge_impact" {
-  name            = "ForgeCICD Impact"
-  description     = "Cross-service tenant issue leaderboards followed by Forge adoption and runner usage."
+  name            = "Forge Tenant Impact"
+  description     = "Cross-service tenant issue leaderboards for the first step of workload incident investigation."
   dashboard_group = var.dashboard_group
 
   # Splunk O11y rejects moving an existing dashboard to a new parent group.
@@ -359,21 +376,6 @@ resource "signalfx_dashboard" "forge_impact" {
     replace_triggered_by = [
       terraform_data.dashboard_parent,
     ]
-  }
-
-  dynamic "variable" {
-    for_each = var.dynamic_variables
-    iterator = var_def
-
-    content {
-      property               = var_def.value.property
-      alias                  = var_def.value.alias
-      description            = var_def.value.description
-      values                 = var_def.value.values
-      value_required         = var_def.value.value_required
-      values_suggested       = var_def.value.values_suggested
-      restricted_suggestions = var_def.value.restricted_suggestions
-    }
   }
 
   chart {
@@ -410,22 +412,6 @@ resource "signalfx_dashboard" "forge_impact" {
 
   chart {
     chart_id = signalfx_list_chart.top_tenants_k8s_pending_pods.id
-    row      = 1
-    column   = 4
-    width    = 4
-    height   = 1
-  }
-
-  chart {
-    chart_id = signalfx_list_chart.top_tenants_k8s_failed_pods.id
-    row      = 1
-    column   = 8
-    width    = 4
-    height   = 1
-  }
-
-  chart {
-    chart_id = signalfx_list_chart.top_tenants_sqs_backlog.id
     row      = 2
     column   = 0
     width    = 4
@@ -433,7 +419,7 @@ resource "signalfx_dashboard" "forge_impact" {
   }
 
   chart {
-    chart_id = signalfx_list_chart.top_tenants_sqs_dlq_backlog.id
+    chart_id = signalfx_list_chart.top_tenants_k8s_failed_pods.id
     row      = 2
     column   = 4
     width    = 4
@@ -441,15 +427,7 @@ resource "signalfx_dashboard" "forge_impact" {
   }
 
   chart {
-    chart_id = signalfx_list_chart.top_tenants_dynamodb_throttles.id
-    row      = 2
-    column   = 8
-    width    = 4
-    height   = 1
-  }
-
-  chart {
-    chart_id = signalfx_list_chart.top_tenants_dynamodb_system_errors.id
+    chart_id = signalfx_list_chart.top_tenants_sqs_backlog.id
     row      = 3
     column   = 0
     width    = 6
@@ -457,7 +435,7 @@ resource "signalfx_dashboard" "forge_impact" {
   }
 
   chart {
-    chart_id = signalfx_list_chart.top_tenants_ebs_queue_length.id
+    chart_id = signalfx_list_chart.top_tenants_sqs_dlq_backlog.id
     row      = 3
     column   = 6
     width    = 6
@@ -465,8 +443,60 @@ resource "signalfx_dashboard" "forge_impact" {
   }
 
   chart {
-    chart_id = signalfx_list_chart.active_ec2_runners_by_tenant.id
+    chart_id = signalfx_list_chart.top_tenants_ec2_disk.id
+    row      = 1
+    column   = 4
+    width    = 4
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_list_chart.top_tenants_ec2_status_failures.id
+    row      = 1
+    column   = 8
+    width    = 4
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_list_chart.top_tenants_k8s_restarts.id
+    row      = 2
+    column   = 8
+    width    = 4
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_list_chart.top_tenants_ebs_queue_length.id
     row      = 4
+    column   = 0
+    width    = 6
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_list_chart.top_tenants_ebs_iops_exceeded.id
+    row      = 4
+    column   = 6
+    width    = 6
+    height   = 1
+  }
+}
+
+resource "signalfx_dashboard" "runner_usage" {
+  name            = "Forge Runner Usage"
+  description     = "Forge EC2 and Kubernetes runner adoption, active capacity, and runtime estimates by tenant."
+  dashboard_group = var.dashboard_group
+
+  lifecycle {
+    replace_triggered_by = [
+      terraform_data.dashboard_parent,
+    ]
+  }
+
+  chart {
+    chart_id = signalfx_list_chart.active_ec2_runners_by_tenant.id
+    row      = 0
     column   = 0
     width    = 4
     height   = 1
@@ -474,7 +504,7 @@ resource "signalfx_dashboard" "forge_impact" {
 
   chart {
     chart_id = signalfx_list_chart.active_ec2_runners_by_tenant_and_instance_type.id
-    row      = 4
+    row      = 0
     column   = 4
     width    = 4
     height   = 1
@@ -482,7 +512,7 @@ resource "signalfx_dashboard" "forge_impact" {
 
   chart {
     chart_id = signalfx_list_chart.k8s_runners_by_tenant.id
-    row      = 4
+    row      = 0
     column   = 8
     width    = 4
     height   = 1
@@ -490,7 +520,7 @@ resource "signalfx_dashboard" "forge_impact" {
 
   chart {
     chart_id = signalfx_list_chart.runner_totals_by_runtime.id
-    row      = 5
+    row      = 1
     column   = 0
     width    = 4
     height   = 1
@@ -498,7 +528,7 @@ resource "signalfx_dashboard" "forge_impact" {
 
   chart {
     chart_id = signalfx_list_chart.total_ec2_runners_by_tenant.id
-    row      = 5
+    row      = 1
     column   = 4
     width    = 4
     height   = 1
@@ -506,7 +536,7 @@ resource "signalfx_dashboard" "forge_impact" {
 
   chart {
     chart_id = signalfx_list_chart.total_k8s_runners_by_tenant.id
-    row      = 5
+    row      = 1
     column   = 8
     width    = 4
     height   = 1
@@ -514,7 +544,7 @@ resource "signalfx_dashboard" "forge_impact" {
 
   chart {
     chart_id = signalfx_list_chart.runner_minutes_by_runtime.id
-    row      = 6
+    row      = 2
     column   = 0
     width    = 4
     height   = 1
@@ -522,7 +552,7 @@ resource "signalfx_dashboard" "forge_impact" {
 
   chart {
     chart_id = signalfx_list_chart.ec2_runner_hours_by_tenant.id
-    row      = 6
+    row      = 2
     column   = 4
     width    = 4
     height   = 1
@@ -530,7 +560,7 @@ resource "signalfx_dashboard" "forge_impact" {
 
   chart {
     chart_id = signalfx_list_chart.k8s_runner_hours_by_tenant.id
-    row      = 6
+    row      = 2
     column   = 8
     width    = 4
     height   = 1
@@ -538,7 +568,7 @@ resource "signalfx_dashboard" "forge_impact" {
 
   chart {
     chart_id = signalfx_time_chart.active_ec2_runners_by_tenant_and_instance_type.id
-    row      = 7
+    row      = 3
     column   = 0
     width    = 6
     height   = 1
@@ -546,7 +576,7 @@ resource "signalfx_dashboard" "forge_impact" {
 
   chart {
     chart_id = signalfx_list_chart.ec2_runner_hours_by_tenant_and_instance_type.id
-    row      = 7
+    row      = 3
     column   = 6
     width    = 6
     height   = 1

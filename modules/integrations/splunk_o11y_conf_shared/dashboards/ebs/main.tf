@@ -573,7 +573,7 @@ EOF
 }
 
 resource "signalfx_dashboard" "ebs" {
-  name            = "EBS"
+  name            = "Forge Tenant - EBS"
   description     = "EC2/EBS volume throughput, IOPS, and latency for Forge runners."
   dashboard_group = var.dashboard_group
 

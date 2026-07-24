@@ -21,3 +21,9 @@ variable "tenant_names" {
   description = "Tenant namespaces that run Forge ARC runners."
   type        = list(string)
 }
+
+variable "cluster_names" {
+  description = "Forge Kubernetes clusters included in global tenant impact and runner usage."
+  type        = list(string)
+  default     = []
+}

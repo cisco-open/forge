@@ -236,18 +236,37 @@ resource "signalfx_list_chart" "top_tenants_sqs_dlq_backlog" {
   }
 }
 
-resource "signalfx_list_chart" "top_tenants_dynamodb_throttles" {
-  name        = "Top 10 tenants: DynamoDB throttled requests"
-  description = "DynamoDB throttled requests over the selected window, summed by Forge tenant."
+resource "signalfx_list_chart" "top_tenants_ec2_disk" {
+  name        = "Top 10 tenants: EC2 disk utilization"
+  description = "Highest current filesystem utilization on a Forge EC2 runner host per tenant."
 
-  program_text = "A = data('ThrottledRequests', filter=(${local.ec2_tenant_filter}) and filter('namespace', 'AWS/DynamoDB') and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName']).sum(over=${local.issue_window}).above(0).top(count=10).publish(label='A')"
+  program_text = <<-EOF
+used = data('system.filesystem.usage', filter=(${local.ec2_tenant_filter}) and filter('cloud.platform', 'aws_ec2') and filter('state', 'used'), rollup='latest').sum(by=['aws_tag_TenantName', 'host.id'])
+free = data('system.filesystem.usage', filter=(${local.ec2_tenant_filter}) and filter('cloud.platform', 'aws_ec2') and filter('state', 'free'), rollup='latest').sum(by=['aws_tag_TenantName', 'host.id'])
+A = ((used / (used + free)) * 100).max(by=['aws_tag_TenantName']).top(count=10).publish(label='A')
+EOF
 
+  color_by                = "Scale"
   hide_missing_values     = true
-  max_precision           = 0
+  max_precision           = 2
   secondary_visualization = "Sparkline"
   sort_by                 = "-value"
   time_range              = 3600
   unit_prefix             = "Metric"
+
+  color_scale {
+    color = "green"
+    lt    = 80
+  }
+  color_scale {
+    color = "orange"
+    gte   = 80
+    lt    = 90
+  }
+  color_scale {
+    color = "red"
+    gte   = 90
+  }
 
   legend_options_fields {
     enabled  = true
@@ -255,18 +274,19 @@ resource "signalfx_list_chart" "top_tenants_dynamodb_throttles" {
   }
 
   viz_options {
-    display_name = "DynamoDB throttled requests"
+    display_name = "EC2 disk utilization"
     label        = "A"
-    value_suffix = " throttled"
+    value_suffix = "%"
   }
 }
 
-resource "signalfx_list_chart" "top_tenants_dynamodb_system_errors" {
-  name        = "Top 10 tenants: DynamoDB system errors"
-  description = "DynamoDB HTTP 500 errors over the selected window, summed by Forge tenant."
+resource "signalfx_list_chart" "top_tenants_ec2_status_failures" {
+  name        = "Top 10 tenants: EC2 status check failures"
+  description = "Highest instance or system status-check failure count on a Forge EC2 runner per tenant over the selected window."
 
-  program_text = "A = data('SystemErrors', filter=(${local.ec2_tenant_filter}) and filter('namespace', 'AWS/DynamoDB') and filter('stat', 'sum') and filter('TableName', '*') and filter('Operation', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName']).sum(over=${local.issue_window}).above(0).top(count=10).publish(label='A')"
+  program_text = "A = data('StatusCheckFailed', filter=(${local.ec2_tenant_filter}) and filter('namespace', 'AWS/EC2') and filter('stat', 'sum') and filter('aws_instance_id', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName', 'aws_instance_id']).sum(over=${local.issue_window}).max(by=['aws_tag_TenantName']).above(0).top(count=10).publish(label='A')"
 
+  color_by                = "Scale"
   hide_missing_values     = true
   max_precision           = 0
   secondary_visualization = "Sparkline"
@@ -274,15 +294,59 @@ resource "signalfx_list_chart" "top_tenants_dynamodb_system_errors" {
   time_range              = 3600
   unit_prefix             = "Metric"
 
+  color_scale {
+    color = "green"
+    lt    = 1
+  }
+  color_scale {
+    color = "red"
+    gte   = 1
+  }
+
   legend_options_fields {
     enabled  = true
     property = "aws_tag_TenantName"
   }
 
   viz_options {
-    display_name = "DynamoDB system errors"
+    display_name = "EC2 status check failures"
     label        = "A"
-    value_suffix = " errors"
+    value_suffix = " failed checks"
+  }
+}
+
+resource "signalfx_list_chart" "top_tenants_k8s_restarts" {
+  name        = "Top 10 tenants: K8S container restarts"
+  description = "Positive container restart deltas in Forge tenant namespaces over the selected window."
+
+  program_text = "A = data('k8s.container.restarts', filter=(${local.k8s_tenant_namespace_filter}) and filter('k8s.container.name', '*'), rollup='latest').max(by=['k8s.namespace.name', 'k8s.pod.name', 'k8s.container.name']).delta().sum(by=['k8s.namespace.name']).sum(over=${local.issue_window}).above(0).top(count=10).publish(label='A')"
+
+  color_by                = "Scale"
+  hide_missing_values     = true
+  max_precision           = 0
+  secondary_visualization = "Sparkline"
+  sort_by                 = "-value"
+  time_range              = 3600
+  unit_prefix             = "Metric"
+
+  color_scale {
+    color = "green"
+    lt    = 1
+  }
+  color_scale {
+    color = "red"
+    gte   = 1
+  }
+
+  legend_options_fields {
+    enabled  = true
+    property = "k8s.namespace.name"
+  }
+
+  viz_options {
+    display_name = "K8S container restarts"
+    label        = "A"
+    value_suffix = " restarts"
   }
 }
 
@@ -307,5 +371,40 @@ resource "signalfx_list_chart" "top_tenants_ebs_queue_length" {
   viz_options {
     display_name = "EBS queue length"
     label        = "A"
+  }
+}
+
+resource "signalfx_list_chart" "top_tenants_ebs_iops_exceeded" {
+  name        = "Top 10 tenants: EBS IOPS limit exceeded"
+  description = "Highest EBS provisioned-IOPS exceeded count per Forge tenant over the selected window."
+
+  program_text = "A = data('VolumeIOPSExceededCheck', filter=(${local.ec2_tenant_filter}) and filter('namespace', 'AWS/EBS') and filter('stat', 'sum') and filter('VolumeId', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName', 'VolumeId']).sum(over=${local.issue_window}).max(by=['aws_tag_TenantName']).above(0).top(count=10).publish(label='A')"
+
+  color_by                = "Scale"
+  hide_missing_values     = true
+  max_precision           = 0
+  secondary_visualization = "Sparkline"
+  sort_by                 = "-value"
+  time_range              = 3600
+  unit_prefix             = "Metric"
+
+  color_scale {
+    color = "green"
+    lt    = 1
+  }
+  color_scale {
+    color = "red"
+    gte   = 1
+  }
+
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
+  }
+
+  viz_options {
+    display_name = "EBS IOPS limit exceeded"
+    label        = "A"
+    value_suffix = " exceeded checks"
   }
 }
