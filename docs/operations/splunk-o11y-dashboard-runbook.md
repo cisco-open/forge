@@ -104,22 +104,39 @@ runner dashboard for health. This dashboard is not an incident severity score.
 ### Forge Tenant - EC2 Runners
 
 Purpose: inspect AWS EC2 and host-level telemetry for runner CPU, memory, disk,
-network, status checks, capacity distribution, and OTel agent coverage.
+network, status checks, capacity distribution, OTel agent coverage, and
+job-level right-sizing evidence.
 
 Normal: status checks are zero, memory and filesystem headroom exist, network
-errors and swapping are low, and active AWS hosts also emit host telemetry.
+errors and swapping are low, active AWS hosts also emit host telemetry, and
+repeated job runs fit their configured runner class without sustained
+saturation.
 
 Problem: sustained CPU or memory pressure, high filesystem utilization,
 swapping, network errors, EC2 status failures, or active hosts listed as
-missing the OTel agent.
+missing the OTel agent. Repeated job runs at a high threshold can indicate an
+undersized runner; repeated low CPU and memory peaks can indicate an oversized
+runner.
 
 Apocalypse: status checks, telemetry loss, or resource exhaustion affect many
 tenants or availability zones.
 
-Action: capture tenant, instance ID, image ID, instance type, availability
-zone, and time window. For a missing agent, check the runner image and agent
-service before treating host charts as proof the instance is idle. Correlate
-with EC2 lifecycle and capacity logs.
+Action: capture tenant, repository, workflow, job, runner labels, job URL,
+instance ID, image ID, instance type, availability zone, and time window. For a
+missing agent, check the runner image and agent service before treating host
+charts as proof the instance is idle. Correlate with EC2 lifecycle and capacity
+logs.
+
+For right-sizing, the job-run panels use 24-hour peaks. High CPU and memory
+start at `85%`, low CPU is below `20%`, low memory is below `40%`, and high
+filesystem utilization starts at `80%`. Memory and filesystem evidence exists
+only for hosts running the Splunk OTel agent.
+
+Do not resize from one anomalous execution. Confirm the same tenant,
+repository, workflow, job, runner-label, and instance-type combination across
+repeated runs in both runner-class CPU and memory panels. Use high filesystem
+utilization to review EBS capacity separately from the runner instance class,
+then validate the change against job duration and failure rate.
 
 ### Forge Tenant - K8S Runners
 
