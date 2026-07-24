@@ -351,7 +351,7 @@ resource "signalfx_time_chart" "throttled_requests_ts" {
   name         = "Throttled requests"
   description  = "Requests to DynamoDB that exceed the provisioned throughput limits on a resource (such as a table or an index)."
   program_text = <<-EOF
-A = data('ThrottledRequests', filter=filter('namespace', 'AWS/DynamoDB') and filter('stat', 'sum') and filter('TableName', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'TableName']).publish(label='A')
+A = data('ThrottledRequests', filter=filter('namespace', 'AWS/DynamoDB') and filter('stat', 'sum') and filter('TableName', '*') and filter('Operation', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'TableName', 'Operation']).publish(label='A')
 EOF
 
   plot_type   = "AreaChart"
@@ -504,8 +504,8 @@ resource "signalfx_dashboard" "dynamodb" {
     property               = "aws_tag_TenantName"
     alias                  = "ForgeCICD Tenant Name"
     description            = ""
-    values                 = sort(var.tenant_names)
-    value_required         = length(var.tenant_names) > 0
+    values                 = []
+    value_required         = false
     values_suggested       = sort(var.tenant_names)
     restricted_suggestions = true
   }

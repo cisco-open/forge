@@ -8,10 +8,6 @@ run "integrations_splunk_o11y_conf_shared_dashboards_lambda_source_inventory" {
   variables {
     module_path = "."
     expected_literals = [
-      "resource \"signalfx_time_chart\" \"provisioned_concurrent_executions_by_version\"",
-      "resource \"signalfx_time_chart\" \"provisioned_concurrency_invocations_by_version\"",
-      "resource \"signalfx_time_chart\" \"provisioned_concurrency_spillover_invocations_by_version\"",
-      "resource \"signalfx_single_value_chart\" \"total_spillover_invocations\"",
       "resource \"signalfx_list_chart\" \"percent_invocations_by_version\"",
       "resource \"signalfx_time_chart\" \"errors_by_version\"",
       "resource \"signalfx_single_value_chart\" \"total_throttles\"",
@@ -21,7 +17,6 @@ run "integrations_splunk_o11y_conf_shared_dashboards_lambda_source_inventory" {
       "resource \"signalfx_time_chart\" \"invocations_by_version\"",
       "resource \"signalfx_time_chart\" \"invocations\"",
       "resource \"signalfx_single_value_chart\" \"total_errors\"",
-      "resource \"signalfx_time_chart\" \"provisioned_concurrency_utilization\"",
       "resource \"signalfx_single_value_chart\" \"total_invocations\"",
       "resource \"signalfx_list_chart\" \"top_tenants_by_errors\"",
       "resource \"signalfx_list_chart\" \"top_tenants_by_throttles\"",
@@ -37,7 +32,32 @@ run "integrations_splunk_o11y_conf_shared_dashboards_lambda_source_inventory" {
   }
 
   assert {
-    condition     = output.expected_literal_count == 20
-    error_message = "Source inventory must keep 20 module-specific Terraform blocks pinned."
+    condition     = output.expected_literal_count == 15
+    error_message = "Source inventory must keep 15 live-backed module-specific Terraform blocks pinned."
+  }
+}
+
+run "lambda_rejects_unavailable_provisioned_concurrency_metrics" {
+  command = plan
+
+  module {
+    source = "../../../../../tests/tofu/module_contract"
+  }
+
+  variables {
+    module_path       = "."
+    recursive         = true
+    expected_literals = []
+    forbidden_literals = [
+      "ProvisionedConcurrentExecutions",
+      "ProvisionedConcurrencyInvocations",
+      "ProvisionedConcurrencySpilloverInvocations",
+      "ProvisionedConcurrencyUtilization",
+    ]
+  }
+
+  assert {
+    condition     = length(output.present_forbidden_literals) == 0
+    error_message = "Unavailable provisioned-concurrency metrics must not create permanently empty Lambda charts."
   }
 }

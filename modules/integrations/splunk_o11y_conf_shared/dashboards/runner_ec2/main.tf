@@ -47,12 +47,12 @@ resource "signalfx_time_chart" "chart_total_memory_overview_bytes" {
   description = "From hosts with agent installed"
 
   program_text = <<-EOF
-C = data('system.memory.usage', filter=filter('state', 'free') and filter('cloud.platform', 'aws_ec2', 'aws_eks')).sum().publish(label='C')
-F = data('system.memory.usage', filter=filter('state', 'used') and filter('cloud.platform', 'aws_ec2', 'aws_eks')).sum().publish(label='F')
-A = data('system.memory.usage', filter=filter('state', 'buffered') and filter('cloud.platform', 'aws_ec2', 'aws_eks')).sum().publish(label='A')
-B = data('system.memory.usage', filter=filter('state', 'cached') and filter('cloud.platform', 'aws_ec2', 'aws_eks')).sum().publish(label='B')
-D = data('system.memory.usage', filter=filter('state', 'slab_reclaimable') and filter('cloud.platform', 'aws_ec2', 'aws_eks')).sum().publish(label='D')
-E = data('system.memory.usage', filter=filter('state', 'slab_unreclaimable') and filter('cloud.platform', 'aws_ec2', 'aws_eks')).sum().publish(label='E')
+C = data('system.memory.usage', filter=filter('state', 'free') and filter('cloud.platform', 'aws_ec2')).sum().publish(label='C')
+F = data('system.memory.usage', filter=filter('state', 'used') and filter('cloud.platform', 'aws_ec2')).sum().publish(label='F')
+A = data('system.memory.usage', filter=filter('state', 'buffered') and filter('cloud.platform', 'aws_ec2')).sum().publish(label='A')
+B = data('system.memory.usage', filter=filter('state', 'cached') and filter('cloud.platform', 'aws_ec2')).sum().publish(label='B')
+D = data('system.memory.usage', filter=filter('state', 'slab_reclaimable') and filter('cloud.platform', 'aws_ec2')).sum().publish(label='D')
+E = data('system.memory.usage', filter=filter('state', 'slab_unreclaimable') and filter('cloud.platform', 'aws_ec2')).sum().publish(label='E')
 EOF
 
   plot_type = "AreaChart"
@@ -298,8 +298,8 @@ resource "signalfx_time_chart" "chart_disk_utilization" {
   description = "Percentile distribution across active hosts with agent installed"
 
   program_text = <<-EOF
-B = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks') and filter('state', 'used')).publish(label='B', enable=False)
-C = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks') and filter('state', 'free')).publish(label='C', enable=False)
+B = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2') and filter('state', 'used')).publish(label='B', enable=False)
+C = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2') and filter('state', 'free')).publish(label='C', enable=False)
 D = ((B/(B+C))*100).mean(by=['AWSUniqueId']).publish(label='D', enable=False)
 E = (D).min().publish(label='E')
 F = (D).percentile(pct=10).publish(label='F')
@@ -326,111 +326,111 @@ EOF
   }
 
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "sf_originatingMetric"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "sf_metric"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "aws_instance_id"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "k8s.cluster.name"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "host.image.id"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "os.type"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "type"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "AWSUniqueId"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "host.type"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "cloud.availability_zone"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "mountpoint"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "mode"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "host.name"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "cloud.platform"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "host.id"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "cloud.provider"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "k8s.node.name"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "cloud.account.id"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "device"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "deployment.environment"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "state"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "azure.resourcegroup.name"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "azure.vm.name"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "azure.vm.size"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "azure_resource_id"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "azure.vm.scaleset.name"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "gcp_id"
   }
 
@@ -594,7 +594,7 @@ resource "signalfx_list_chart" "chart_top_images_by_mean_cpu_utilization" {
 
   program_text = <<-EOF
 A = data('CPUUtilization', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=5).mean(by=['aws_image_id', 'aws_tag_TenantName']).top(count=5).publish(label='A',enable=False)
-B = data('cpu.utilization', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks'), extrapolation='last_value', maxExtrapolations=5).dimensions(renames={'aws_image_id':'host.image.id'}).mean(by=['aws_image_id', 'aws_tag_TenantName']).top(count=5).publish(label='B',enable=False)
+B = data('cpu.utilization', filter=filter('cloud.platform', 'aws_ec2'), extrapolation='last_value', maxExtrapolations=5).dimensions(renames={'aws_image_id':'host.image.id'}).mean(by=['aws_image_id', 'aws_tag_TenantName']).top(count=5).publish(label='B',enable=False)
 C = union(A,B).top(count=5).publish("C")
 EOF
 
@@ -726,8 +726,8 @@ resource "signalfx_time_chart" "chart_memory_utilization" {
   description = "Percentile distribution across active hosts with agent installed"
 
   program_text = <<-EOF
-H = data('system.memory.usage', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks') and filter('state', 'used')).sum(by=['host.name']).publish(label='H', enable=False)
-I = data('system.memory.usage', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks') and filter('state', 'used', 'free', 'cached', 'buffered')).sum(by=['host.name']).publish(label='I', enable=False)
+H = data('system.memory.usage', filter=filter('cloud.platform', 'aws_ec2') and filter('state', 'used')).sum(by=['host.name']).publish(label='H', enable=False)
+I = data('system.memory.usage', filter=filter('cloud.platform', 'aws_ec2') and filter('state', 'used', 'free', 'cached', 'buffered')).sum(by=['host.name']).publish(label='I', enable=False)
 J = ((H/I)*100).publish(label='J', enable=False)
 C = (J).min().publish(label='C')
 D = (J).percentile(pct=10).publish(label='D')
@@ -759,107 +759,107 @@ EOF
   }
 
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "sf_originatingMetric"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "sf_metric"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "host.image.id"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "os.type"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "AWSUniqueId"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "host.type"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "cloud.availability_zone"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "cloud.provider"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "cloud.account.id"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "host.name"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "state"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "cloud.platform"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "host.id"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "k8s.cluster.name"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "deployment.environment"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "k8s.node.name"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "azure.resourcegroup.name"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "azure.vm.name"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "azure.vm.size"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "azure_resource_id"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "azure.vm.scaleset.name"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "gcp_id"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "telemetry.sdk.name"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "telemetry.sdk.language"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "telemetry.sdk.version"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "service.name"
   }
 
@@ -911,6 +911,61 @@ EOF
     color        = "yellowgreen"
     display_name = "P10"
     label        = "D"
+    value_suffix = "%"
+  }
+}
+
+resource "signalfx_list_chart" "chart_top_instances_by_memory_utilization" {
+  name        = "Top instances by memory utilization (%)"
+  description = "Highest current memory utilization on Forge EC2 runner hosts. Tenant | Instance ID | Host"
+
+  program_text = <<-EOF
+used = data('system.memory.usage', filter=filter('cloud.platform', 'aws_ec2') and filter('aws_tag_TenantName', '*') and filter('state', 'used'), rollup='latest').sum(by=['aws_tag_TenantName', 'aws_instance_id', 'host.id', 'host.name'])
+total = data('system.memory.usage', filter=filter('cloud.platform', 'aws_ec2') and filter('aws_tag_TenantName', '*') and filter('state', 'used', 'free', 'cached', 'buffered'), rollup='latest').sum(by=['aws_tag_TenantName', 'aws_instance_id', 'host.id', 'host.name'])
+A = ((used / total) * 100).top(count=10).publish(label='A')
+EOF
+
+  color_by                = "Scale"
+  hide_missing_values     = true
+  max_precision           = 2
+  secondary_visualization = "Sparkline"
+  sort_by                 = "-value"
+  time_range              = 3600
+
+  color_scale {
+    color = "green"
+    lt    = 90
+  }
+  color_scale {
+    color = "orange"
+    gte   = 90
+    lt    = 99
+  }
+  color_scale {
+    color = "red"
+    gte   = 99
+  }
+
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_instance_id"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "host.id"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "host.name"
+  }
+
+  viz_options {
+    display_name = "Memory utilization"
+    label        = "A"
     value_suffix = "%"
   }
 }
@@ -1022,8 +1077,8 @@ resource "signalfx_list_chart" "chart_total_network_errors" {
   name = "Network errors/sec"
 
   program_text = <<-EOF
-A = data('system.network.errors', filter=filter('direction', 'receive') and filter('cloud.platform', 'aws_ec2', 'aws_eks'), rollup='rate').sum(by=['aws_tag_TenantName']).publish(label='A')
-B = data('system.network.errors', filter=filter('direction', 'transmit') and filter('cloud.platform', 'aws_ec2', 'aws_eks'), rollup='rate').sum(by=['aws_tag_TenantName']).publish(label='B')
+A = data('system.network.errors', filter=filter('direction', 'receive') and filter('cloud.platform', 'aws_ec2'), rollup='rate').sum(by=['aws_tag_TenantName']).publish(label='A')
+B = data('system.network.errors', filter=filter('direction', 'transmit') and filter('cloud.platform', 'aws_ec2'), rollup='rate').sum(by=['aws_tag_TenantName']).publish(label='B')
 EOF
 
   sort_by = "-value"
@@ -1063,8 +1118,8 @@ resource "signalfx_list_chart" "chart_top_memory_page_swaps_sec" {
   description = "From hosts with agent installed"
 
   program_text = <<-EOF
-A = data('vmpage_io.swap.in', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks'), rollup='rate').mean(by=['host.name', 'aws_tag_TenantName']).top(count=5).publish(label='A')
-B = data('vmpage_io.swap.out', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks'), rollup='rate').mean(by=['host.name', 'aws_tag_TenantName']).top(count=5).publish(label='B')
+A = data('vmpage_io.swap.in', filter=filter('cloud.platform', 'aws_ec2'), rollup='rate').mean(by=['host.name', 'aws_tag_TenantName']).top(count=5).publish(label='A')
+B = data('vmpage_io.swap.out', filter=filter('cloud.platform', 'aws_ec2'), rollup='rate').mean(by=['host.name', 'aws_tag_TenantName']).top(count=5).publish(label='B')
 EOF
 
   sort_by = "-value"
@@ -1239,7 +1294,7 @@ resource "signalfx_list_chart" "chart_active_hosts_by_availability_zone" {
 
   program_text = <<-EOF
 A = data('CPUUtilization', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'mean'), extrapolation='last_value', maxExtrapolations=5).max(over='1h').count(by=['aws_availability_zone', 'aws_tag_TenantName']).publish(label='A',enable=False)
-B = data('cpu.utilization', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks'), extrapolation='last_value', maxExtrapolations=5).dimensions(renames={'aws_availability_zone':'cloud.availability_zone'}).max(over='1h').count(by=['aws_availability_zone', 'aws_tag_TenantName']).publish(label='B',enable=False)
+B = data('cpu.utilization', filter=filter('cloud.platform', 'aws_ec2'), extrapolation='last_value', maxExtrapolations=5).dimensions(renames={'aws_availability_zone':'cloud.availability_zone'}).max(over='1h').count(by=['aws_availability_zone', 'aws_tag_TenantName']).publish(label='B',enable=False)
 C = union(A,B).publish("C")
 EOF
 
@@ -1290,8 +1345,8 @@ resource "signalfx_list_chart" "chart_disk_summary_utilization" {
   description = "Percent of disk space utilized on all volumes on active hosts with agent installed. Tenant | Instance id | Host"
 
   program_text = <<-EOF
-A = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks') and filter('state', 'used')).sum(by=['aws_tag_TenantName', 'host.name', 'host.id', 'AWSUniqueId']).publish(label='A', enable=False)
-B = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks') and filter('state', 'free')).sum(by=['aws_tag_TenantName', 'host.name', 'host.id', 'AWSUniqueId']).publish(label='B', enable=False)
+A = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2') and filter('state', 'used')).sum(by=['aws_tag_TenantName', 'aws_instance_id', 'host.name', 'host.id', 'AWSUniqueId', 'mountpoint', 'device']).publish(label='A', enable=False)
+B = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2') and filter('state', 'free')).sum(by=['aws_tag_TenantName', 'aws_instance_id', 'host.name', 'host.id', 'AWSUniqueId', 'mountpoint', 'device']).publish(label='B', enable=False)
 C = ((A/(A+B))*100).publish(label='C')
 EOF
 
@@ -1326,23 +1381,23 @@ EOF
     property = "aws_tag_TenantName"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "host.image.id"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "os.type"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "type"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "host.type"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "cloud.availability_zone"
   }
   legend_options_fields {
@@ -1350,15 +1405,15 @@ EOF
     property = "mountpoint"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "mode"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "state"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "cloud.platform"
   }
   legend_options_fields {
@@ -1366,11 +1421,11 @@ EOF
     property = "host.id"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "cloud.provider"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "cloud.account.id"
   }
   legend_options_fields {
@@ -1378,15 +1433,15 @@ EOF
     property = "device"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "k8s.cluster.name"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "k8s.node.name"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "deployment.environment"
   }
 
@@ -1584,9 +1639,9 @@ resource "signalfx_time_chart" "chart_status_check_failures" {
   description = "Shows EC2 instance and system status check failures for runner hosts."
 
   program_text = <<-EOF
-A = data('StatusCheckFailed', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'maximum'), rollup='max').sum(by=['aws_tag_TenantName', 'aws_instance_id']).publish(label='Any failure')
-B = data('StatusCheckFailed_Instance', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'maximum'), rollup='max').sum(by=['aws_tag_TenantName', 'aws_instance_id']).publish(label='Instance failure')
-C = data('StatusCheckFailed_System', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'maximum'), rollup='max').sum(by=['aws_tag_TenantName', 'aws_instance_id']).publish(label='System failure')
+A = data('StatusCheckFailed', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'upper'), rollup='max').sum(by=['aws_tag_TenantName', 'aws_instance_id']).publish(label='Any failure')
+B = data('StatusCheckFailed_Instance', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'upper'), rollup='max').sum(by=['aws_tag_TenantName', 'aws_instance_id']).publish(label='Instance failure')
+C = data('StatusCheckFailed_System', filter=filter('namespace', 'AWS/EC2') and filter('stat', 'upper'), rollup='max').sum(by=['aws_tag_TenantName', 'aws_instance_id']).publish(label='System failure')
 EOF
 
   plot_type                 = "LineChart"
@@ -1713,22 +1768,29 @@ resource "signalfx_dashboard" "runner_ec2" {
   chart {
     chart_id = signalfx_time_chart.chart_total_memory_overview_bytes.id
     row      = 4
-    column   = 4
-    width    = 4
+    column   = 6
+    width    = 3
     height   = 1
   }
   chart {
     chart_id = signalfx_list_chart.chart_top_memory_page_swaps_sec.id
     row      = 4
-    column   = 8
-    width    = 4
+    column   = 9
+    width    = 3
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.chart_memory_utilization.id
     row      = 4
     column   = 0
-    width    = 4
+    width    = 3
+    height   = 1
+  }
+  chart {
+    chart_id = signalfx_list_chart.chart_top_instances_by_memory_utilization.id
+    row      = 4
+    column   = 3
+    width    = 3
     height   = 1
   }
   chart {

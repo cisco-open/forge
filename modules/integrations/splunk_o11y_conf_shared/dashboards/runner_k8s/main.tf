@@ -407,19 +407,19 @@ resource "signalfx_time_chart" "k8s_memory_usage_bytes" {
   }
 
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "kubernetes_pod_name"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "kubernetes_namespace"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "kubernetes_cluster"
   }
   legend_options_fields {
-    enabled  = true
+    enabled  = false
     property = "kubernetes_pod_uid"
   }
   legend_options_fields {
@@ -562,8 +562,8 @@ resource "signalfx_dashboard" "runner_k8s" {
     property               = "k8s.namespace.name"
     alias                  = "ForgeCICD Tenant Name"
     description            = ""
-    values                 = sort(var.tenant_names)
-    value_required         = length(var.tenant_names) > 0
+    values                 = []
+    value_required         = false
     values_suggested       = sort(var.tenant_names)
     restricted_suggestions = true
   }

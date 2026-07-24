@@ -44,8 +44,10 @@ run "ebs_dashboard_wiring_contract" {
     condition = (
       signalfx_dashboard.ebs.name == "Forge Tenant - EBS"
       && signalfx_dashboard.ebs.dashboard_group == "forge-dashboard-group"
-      && signalfx_dashboard.ebs.variable[0].values == toset(["tenant-a", "tenant-b"])
-      && signalfx_dashboard.ebs.variable[0].value_required
+      && length(signalfx_dashboard.ebs.variable[0].values) == 0
+      && !signalfx_dashboard.ebs.variable[0].value_required
+      && signalfx_dashboard.ebs.variable[0].values_suggested == toset(["tenant-a", "tenant-b"])
+      && signalfx_dashboard.ebs.variable[0].restricted_suggestions
       && length(signalfx_dashboard.ebs.chart) == 16
     )
     error_message = "EBS dashboard must keep its name, group input, and chart count."
