@@ -2,7 +2,7 @@ resource "helm_release" "managed_prometheus" {
   name             = "prometheus"
   repository       = "https://prometheus-community.github.io/helm-charts"
   chart            = "prometheus"
-  version          = "29.17.0"
+  version          = "29.19.0"
   namespace        = "prometheus-system"
   create_namespace = true
 
@@ -53,7 +53,7 @@ resource "helm_release" "opencost" {
   name             = "opencost"
   repository       = "https://opencost.github.io/opencost-helm-chart"
   chart            = "opencost"
-  version          = "2.5.26"
+  version          = "2.5.28"
   namespace        = "opencost"
   create_namespace = true
 
