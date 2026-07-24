@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import base64
 import json
+from types import SimpleNamespace
 
 import pytest
 from conftest import requires_aws
@@ -341,6 +342,78 @@ def test_skipped_jobs_are_not_archived(monkeypatch, s3_kms, ssm):
     evt['Records'][0]['body'] = json.dumps(body)
     result = mod.lambda_handler(evt, None)
     assert result == {'status': 'ignored'}
+    assert s3_kms['s3'].list_objects_v2(Bucket=alpha).get('Contents', []) == []
+
+
+def test_runnerless_jobs_are_not_archived(monkeypatch, s3_kms, ssm):
+    alpha = s3_kms['buckets']['alpha']
+    mod = _load_archiver(monkeypatch, s3_kms, ssm, bucket=alpha)
+    monkeypatch.setattr(
+        mod,
+        '_download_job_logs',
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError('runnerless jobs must not call GitHub')
+        ),
+    )
+    evt = _completed_event()
+    body = json.loads(evt['Records'][0]['body'])
+    body['detail']['workflow_job']['runner_name'] = None
+    evt['Records'][0]['body'] = json.dumps(body)
+
+    result = mod.lambda_handler(evt, None)
+
+    assert result == {'status': 'ignored', 'reason': 'missing_runner'}
+    assert s3_kms['s3'].list_objects_v2(Bucket=alpha).get('Contents', []) == []
+
+
+def test_job_log_download_retries_404_before_marking_logs_unavailable(
+    monkeypatch, aws
+):
+    mod = load_handler_module('job_log_archiver')
+    responses = []
+    sleeps = []
+
+    def _not_found(**_kwargs):
+        responses.append(404)
+        return SimpleNamespace(status_code=404)
+
+    monkeypatch.setattr(mod.requests, 'get', _not_found)
+    monkeypatch.setattr(mod.time, 'sleep', sleeps.append)
+
+    with pytest.raises(mod.JobLogsNotFound, match='Job logs not found'):
+        mod._download_job_logs(
+            'acme',
+            'app',
+            4242,
+            'ghs_faketoken',
+            'https://api.github.test',
+        )
+
+    assert responses == [404, 404, 404]
+    assert sleeps == [2, 4]
+
+
+def test_missing_job_logs_are_terminal_after_retries(
+    monkeypatch, s3_kms, ssm
+):
+    alpha = s3_kms['buckets']['alpha']
+    mod = _load_archiver(monkeypatch, s3_kms, ssm, bucket=alpha)
+    monkeypatch.setattr(
+        mod,
+        '_download_job_logs',
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            mod.JobLogsNotFound('Job logs not found (job_id=4242)')
+        ),
+    )
+
+    result = mod.lambda_handler(_completed_event(), None)
+
+    assert result == {
+        'status': 'ignored',
+        'reason': 'job_logs_not_found',
+        'job_id': 4242,
+        'run_id': 99,
+    }
     assert s3_kms['s3'].list_objects_v2(Bucket=alpha).get('Contents', []) == []
 
 

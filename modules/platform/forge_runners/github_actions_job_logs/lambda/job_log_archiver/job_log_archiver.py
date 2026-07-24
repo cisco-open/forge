@@ -22,12 +22,17 @@ S3 = boto3.client('s3')
 MAX_S3_TAGS = 10
 GITHUB_RETRY_ATTEMPTS = 3
 GITHUB_RETRY_DELAY = 2
+GITHUB_LOG_NOT_FOUND_RETRY_ATTEMPTS = 3
 METADATA_SUFFIX = '.fields'
 METADATA_TAG_KEY = 'metadata_key'
 MAX_METADATA_FIELDS = 500
 MAX_METADATA_LIST_ITEMS = 100
 MAX_METADATA_VALUE_LENGTH = 1024
 FIELD_NAME_RE = re.compile(r'[^A-Za-z0-9_]+')
+
+
+class JobLogsNotFound(RuntimeError):
+    """GitHub has no downloadable log archive for a completed job."""
 
 
 def _get_secret_value(parameter_name: str) -> str:
@@ -71,11 +76,22 @@ def _download_job_logs(owner: str, repo: str, job_id: int, token: str, api: str)
     headers = {'Authorization': f"token {token}",
                'Accept': 'application/vnd.github+json'}
 
-    r = _retry_request(requests.get, url=url, headers=headers, timeout=60)
-    if r.status_code == 404:
-        raise RuntimeError(f"Job logs not found (job_id={job_id})")
-    r.raise_for_status()
-    return r.content
+    for attempt in range(GITHUB_LOG_NOT_FOUND_RETRY_ATTEMPTS):
+        r = _retry_request(requests.get, url=url, headers=headers, timeout=60)
+        if r.status_code != 404:
+            r.raise_for_status()
+            return r.content
+        if attempt < GITHUB_LOG_NOT_FOUND_RETRY_ATTEMPTS - 1:
+            delay = GITHUB_RETRY_DELAY * (2 ** attempt)
+            LOG.warning(
+                'GitHub job logs are not available yet for job_id=%s; '
+                'retrying in %s seconds',
+                job_id,
+                delay,
+            )
+            time.sleep(delay)
+
+    raise JobLogsNotFound(f"Job logs not found (job_id={job_id})")
 
 
 def _serialize_tags(tags: Dict[str, str]) -> str:
@@ -279,9 +295,21 @@ def lambda_handler(event: Dict[str, Any], _context: Any) -> Dict[str, Any]:  # p
         run_attempt = workflow_job.get('run_attempt')
         workflow_name = workflow_job.get('workflow_name')
 
-        if not all([runner_name, run_id, job_id]):
-            LOG.info('Missing required IDs: runner_name=%s run_id=%s job_id=%s. Workflow job: %s',
-                     runner_name, run_id, job_id, workflow_job)
+        if not runner_name:
+            LOG.info(
+                'Workflow job has no runner, skipping log archival. '
+                'Workflow job: %s',
+                workflow_job,
+            )
+            return {'status': 'ignored', 'reason': 'missing_runner'}
+
+        if not all([run_id, job_id]):
+            LOG.info(
+                'Missing required IDs: run_id=%s job_id=%s. Workflow job: %s',
+                run_id,
+                job_id,
+                workflow_job,
+            )
             raise ValueError('missing_ids')
 
         try:
@@ -317,6 +345,20 @@ def lambda_handler(event: Dict[str, Any], _context: Any) -> Dict[str, Any]:  # p
                 'event_key': event_key,
                 'metadata_key': metadata_key,
                 'size': size
+            }
+        except JobLogsNotFound as e:
+            LOG.warning(
+                'Skipping log archival because GitHub has no logs for '
+                'job_id=%s run_id=%s after retries: %s',
+                job_id,
+                run_id,
+                e,
+            )
+            return {
+                'status': 'ignored',
+                'reason': 'job_logs_not_found',
+                'job_id': job_id,
+                'run_id': run_id,
             }
         except Exception as e:
             raise ValueError(
