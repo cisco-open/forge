@@ -23,8 +23,9 @@ run "forge_impact_dashboard_contract" {
   assert {
     condition = (
       terraform_data.dashboard_parent.triggers_replace == "forge-dashboard-group"
+      && terraform_data.runner_usage_dashboard_parent.triggers_replace == "forge-dashboard-group"
     )
-    error_message = "Forge impact dashboard must keep the dashboard-group replacement trigger."
+    error_message = "Forge impact and runner usage dashboards must keep independent dashboard-group replacement triggers."
   }
 
   assert {

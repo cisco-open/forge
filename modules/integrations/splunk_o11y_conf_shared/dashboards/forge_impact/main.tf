@@ -366,6 +366,10 @@ resource "terraform_data" "dashboard_parent" {
   triggers_replace = var.dashboard_group
 }
 
+resource "terraform_data" "runner_usage_dashboard_parent" {
+  triggers_replace = var.dashboard_group
+}
+
 resource "signalfx_dashboard" "forge_impact" {
   name            = "Forge Tenant Impact"
   description     = "Cross-service tenant issue leaderboards for the first step of workload incident investigation."
@@ -490,7 +494,7 @@ resource "signalfx_dashboard" "runner_usage" {
 
   lifecycle {
     replace_triggered_by = [
-      terraform_data.dashboard_parent,
+      terraform_data.runner_usage_dashboard_parent,
     ]
   }
 
