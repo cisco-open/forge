@@ -1287,12 +1287,12 @@ EOF
 
 resource "signalfx_list_chart" "chart_disk_summary_utilization" {
   name        = "Disk summary utilization (%)"
-  description = "Percent of disk space utilized on all volumes on active hosts with agent installed. Instance id | Host"
+  description = "Percent of disk space utilized on all volumes on active hosts with agent installed. Tenant | Instance id | Host"
 
   program_text = <<-EOF
-A = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks') and filter('state', 'used')).publish(label='A', enable=False)
-B = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks') and filter('state', 'free')).publish(label='B', enable=False)
-C = ((A/(A+B))*100).mean(by=['host.name', 'AWSUniqueId']).publish(label='C')
+A = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks') and filter('state', 'used')).sum(by=['aws_tag_TenantName', 'host.name', 'host.id', 'AWSUniqueId']).publish(label='A', enable=False)
+B = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2', 'aws_eks') and filter('state', 'free')).sum(by=['aws_tag_TenantName', 'host.name', 'host.id', 'AWSUniqueId']).publish(label='B', enable=False)
+C = ((A/(A+B))*100).publish(label='C')
 EOF
 
   sort_by = "-value"
@@ -1320,6 +1320,10 @@ EOF
   legend_options_fields {
     enabled  = true
     property = "AWSUniqueId"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "aws_tag_TenantName"
   }
   legend_options_fields {
     enabled  = true
@@ -1392,7 +1396,7 @@ EOF
     value_suffix = "%"
   }
   viz_options {
-    display_name = "Disk summary urilzation"
+    display_name = "{{aws_tag_TenantName}} | {{host.id}} | {{host.name}}"
     label        = "C"
     value_suffix = "%"
   }
