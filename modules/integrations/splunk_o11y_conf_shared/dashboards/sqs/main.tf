@@ -489,11 +489,21 @@ resource "signalfx_list_chart" "dead_letter_visible_messages" {
   }
 }
 
+resource "terraform_data" "dashboard_parent" {
+  triggers_replace = var.dashboard_group
+}
+
 resource "signalfx_dashboard" "sqs" {
   name        = "Forge Tenant - SQS"
   description = "SQS queue counts, message states, sizes, and processing trends."
 
   dashboard_group = var.dashboard_group
+
+  lifecycle {
+    replace_triggered_by = [
+      terraform_data.dashboard_parent,
+    ]
+  }
 
   variable {
     property               = "aws_tag_TenantName"

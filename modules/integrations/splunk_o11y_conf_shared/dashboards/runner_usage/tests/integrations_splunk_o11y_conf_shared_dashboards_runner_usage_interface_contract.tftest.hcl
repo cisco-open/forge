@@ -8,17 +8,12 @@ run "integrations_splunk_o11y_conf_shared_dashboards_runner_usage_interface_cont
   variables {
     module_path = "."
     expected_input_variables = [
-      "cluster_names",
       "dashboard_group",
       "dynamic_variables",
       "tenant_names",
     ]
     expected_output_values = []
     expected_interface_literals = [
-      "variable \"cluster_names\"",
-      "description = \"Forge Kubernetes clusters included in runner usage.\"",
-      "type        = list(string)",
-      "default     = []",
       "variable \"dashboard_group\"",
       "description = \"Dashboard group name for organizing dashboards.\"",
       "type        = string",
@@ -66,9 +61,9 @@ run "integrations_splunk_o11y_conf_shared_dashboards_runner_usage_interface_cont
 
   assert {
     condition = (
-      output.expected_input_variable_count == 4
+      output.expected_input_variable_count == 3
       && output.expected_output_value_count == 0
-      && output.expected_interface_literal_count == 21
+      && output.expected_interface_literal_count == 17
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

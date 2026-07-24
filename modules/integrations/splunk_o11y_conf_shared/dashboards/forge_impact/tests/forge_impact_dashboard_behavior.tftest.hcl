@@ -2,7 +2,6 @@ mock_provider "signalfx" {}
 
 variables {
   tenant_names    = ["tenant-b", "tenant-a"]
-  cluster_names   = ["forge-cluster-b", "forge-cluster-a"]
   dashboard_group = "forge-dashboard-group"
   dynamic_variables = [
     {
@@ -12,6 +11,15 @@ variables {
       values                 = ["us-east-1"]
       value_required         = true
       values_suggested       = ["us-east-1", "us-west-2"]
+      restricted_suggestions = true
+    },
+    {
+      property               = "k8s.cluster.name"
+      alias                  = "Kubernetes Cluster"
+      description            = "Limit by Kubernetes cluster"
+      values                 = []
+      value_required         = false
+      values_suggested       = ["forge-cluster-a", "forge-cluster-b"]
       restricted_suggestions = true
     }
   ]

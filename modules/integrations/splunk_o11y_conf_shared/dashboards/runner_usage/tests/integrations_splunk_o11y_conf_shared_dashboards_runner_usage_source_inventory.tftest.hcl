@@ -20,6 +20,10 @@ run "integrations_splunk_o11y_conf_shared_dashboards_runner_usage_source_invento
       "resource \"signalfx_list_chart\" \"total_k8s_runners_by_tenant\"",
       "resource \"signalfx_list_chart\" \"k8s_runner_hours_by_tenant\"",
       "resource \"terraform_data\" \"dashboard_parent\"",
+      "terraform_data.dashboard_parent,",
+      "configured_k8s_cluster_names = distinct(flatten([",
+      "for var_def in var.dynamic_variables : var_def.values_suggested",
+      "if var_def.property == \"k8s.cluster.name\"",
       "resource \"signalfx_dashboard\" \"runner_usage\"",
     ]
   }
@@ -30,7 +34,7 @@ run "integrations_splunk_o11y_conf_shared_dashboards_runner_usage_source_invento
   }
 
   assert {
-    condition     = output.expected_literal_count == 13
-    error_message = "Source inventory must keep 13 module-specific Terraform blocks pinned."
+    condition     = output.expected_literal_count == 17
+    error_message = "Source inventory must keep 17 module-specific Terraform and lifecycle literals pinned."
   }
 }
