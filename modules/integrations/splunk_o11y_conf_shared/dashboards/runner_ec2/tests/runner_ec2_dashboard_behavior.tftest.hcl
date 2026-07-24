@@ -59,8 +59,18 @@ run "runner_ec2_dashboard_contract" {
       && strcontains(signalfx_list_chart.chart_top_memory_page_swaps_sec.program_text, "data('vmpage_io.swap.in', filter=filter('cloud.platform', 'aws_ec2'), rollup='rate')")
       && !strcontains(signalfx_time_chart.chart_disk_utilization.program_text, "aws_eks")
       && !strcontains(signalfx_time_chart.chart_memory_utilization.program_text, "aws_eks")
+      && strcontains(signalfx_list_chart.job_runs_high_peak_cpu.program_text, "filter('aws_tag_ghr_job_url', '*')")
+      && strcontains(signalfx_list_chart.job_runs_high_peak_cpu.program_text, ".above(85, inclusive=True).top(count=20)")
+      && strcontains(signalfx_list_chart.job_runs_low_peak_cpu.program_text, ".below(20).bottom(count=20)")
+      && strcontains(signalfx_list_chart.job_runs_high_peak_memory.program_text, "system.memory.usage")
+      && strcontains(signalfx_list_chart.job_runs_high_peak_memory.program_text, ".above(85, inclusive=True).top(count=20)")
+      && strcontains(signalfx_list_chart.job_runs_low_peak_memory.program_text, ".below(40).bottom(count=20)")
+      && strcontains(signalfx_list_chart.runner_classes_by_mean_peak_cpu.program_text, "aws_tag_ghr_runner_labels")
+      && strcontains(signalfx_list_chart.runner_classes_by_mean_peak_memory.program_text, "aws_instance_type")
+      && strcontains(signalfx_list_chart.job_runs_high_peak_filesystem.program_text, "system.filesystem.usage")
+      && strcontains(signalfx_list_chart.job_runs_high_peak_filesystem.program_text, ".above(80, inclusive=True).top(count=20)")
     )
-    error_message = "EC2 runner charts must keep one-hour visibility, tenant-aware disk identity, active host, CPU utilization, top-instance, and rate-based network and swap behavior."
+    error_message = "EC2 runner charts must keep host health plus job-aware CPU, memory, filesystem, and runner-class right-sizing behavior."
   }
 }
 
@@ -75,7 +85,7 @@ run "runner_ec2_dashboard_wiring_contract" {
       && !signalfx_dashboard.runner_ec2.variable[0].value_required
       && signalfx_dashboard.runner_ec2.variable[0].values_suggested == toset(["tenant-a", "tenant-b"])
       && signalfx_dashboard.runner_ec2.variable[0].restricted_suggestions
-      && length(signalfx_dashboard.runner_ec2.chart) == 25
+      && length(signalfx_dashboard.runner_ec2.chart) == 32
     )
     error_message = "EC2 runner dashboard must keep its name, group input, and chart count."
   }
@@ -86,6 +96,10 @@ run "runner_ec2_dashboard_wiring_contract" {
       contains([for chart in signalfx_dashboard.runner_ec2.chart : chart.chart_id], signalfx_list_chart.chart_active_hosts_missing_agent.id),
       contains([for chart in signalfx_dashboard.runner_ec2.chart : chart.chart_id], signalfx_list_chart.chart_top_instances_by_memory_utilization.id),
       contains([for chart in signalfx_dashboard.runner_ec2.chart : chart.chart_id], signalfx_time_chart.chart_status_check_failures.id),
+      contains([for chart in signalfx_dashboard.runner_ec2.chart : chart.chart_id], signalfx_list_chart.job_runs_high_peak_cpu.id),
+      contains([for chart in signalfx_dashboard.runner_ec2.chart : chart.chart_id], signalfx_list_chart.job_runs_low_peak_memory.id),
+      contains([for chart in signalfx_dashboard.runner_ec2.chart : chart.chart_id], signalfx_list_chart.runner_classes_by_mean_peak_cpu.id),
+      contains([for chart in signalfx_dashboard.runner_ec2.chart : chart.chart_id], signalfx_list_chart.job_runs_high_peak_filesystem.id),
     ])
     error_message = "EC2 runner dashboard must keep its first and final chart wiring."
   }

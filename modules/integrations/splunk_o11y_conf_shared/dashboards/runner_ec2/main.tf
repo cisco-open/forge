@@ -1886,4 +1886,54 @@ resource "signalfx_dashboard" "runner_ec2" {
     height   = 1
   }
 
+  chart {
+    chart_id = signalfx_list_chart.job_runs_high_peak_cpu.id
+    row      = 10
+    column   = 0
+    width    = 6
+    height   = 2
+  }
+  chart {
+    chart_id = signalfx_list_chart.job_runs_low_peak_cpu.id
+    row      = 10
+    column   = 6
+    width    = 6
+    height   = 2
+  }
+  chart {
+    chart_id = signalfx_list_chart.job_runs_high_peak_memory.id
+    row      = 12
+    column   = 0
+    width    = 6
+    height   = 2
+  }
+  chart {
+    chart_id = signalfx_list_chart.job_runs_low_peak_memory.id
+    row      = 12
+    column   = 6
+    width    = 6
+    height   = 2
+  }
+  chart {
+    chart_id = signalfx_list_chart.runner_classes_by_mean_peak_cpu.id
+    row      = 14
+    column   = 0
+    width    = 6
+    height   = 2
+  }
+  chart {
+    chart_id = signalfx_list_chart.runner_classes_by_mean_peak_memory.id
+    row      = 14
+    column   = 6
+    width    = 6
+    height   = 2
+  }
+  chart {
+    chart_id = signalfx_list_chart.job_runs_high_peak_filesystem.id
+    row      = 16
+    column   = 0
+    width    = 12
+    height   = 2
+  }
+
 }
