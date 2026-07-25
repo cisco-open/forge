@@ -519,6 +519,69 @@ def test_validate_prepared_forge_role_records_tenant_failures(
     )
 
 
+def test_validate_prepared_forge_role_uses_bounded_tenant_workers(
+    monkeypatch, aws
+):
+    mod = load_handler_module('trust_validator')
+    forge_creds = {
+        'AccessKeyId': 'access',
+        'SecretAccessKey': 'secret',
+        'SessionToken': 'token',
+    }
+    executor_workers = []
+    mapped_roles = []
+
+    class _Executor:
+        def __init__(self, max_workers):
+            executor_workers.append(max_workers)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return None
+
+        def map(self, operation, roles):
+            mapped_roles.extend(roles)
+            return [operation(role) for role in roles]
+
+    monkeypatch.setenv('VALIDATION_MAX_WORKERS', '2')
+    monkeypatch.setattr(
+        mod,
+        'assume_role',
+        lambda **_kwargs: {'Credentials': forge_creds},
+    )
+    monkeypatch.setattr(
+        mod,
+        'build_sts_client_from_creds',
+        lambda _creds: object(),
+    )
+    monkeypatch.setattr(mod, 'ThreadPoolExecutor', _Executor)
+    monkeypatch.setattr(
+        mod,
+        'validate_tenant_role',
+        lambda _client, tenant_arn, _forge_role_arn: {
+            'tenant_role_arn': tenant_arn,
+        },
+    )
+    tenant_roles = [
+        f'arn:aws:iam::111111111111:role/tenant-{index}'
+        for index in range(3)
+    ]
+
+    result = mod.validate_prepared_forge_role_against_tenants(
+        FORGE_ROLE,
+        tenant_roles,
+    )
+
+    assert executor_workers == [2]
+    assert mapped_roles == tenant_roles
+    assert result['tenant_results'] == [
+        {'tenant_role_arn': role}
+        for role in tenant_roles
+    ]
+
+
 def test_validate_handler_accepts_only_sqs_validation_events(monkeypatch, aws):
     mod = load_handler_module('trust_validator')
     monkeypatch.setattr(mod, 'get_lambda_caller_identity', lambda: {})

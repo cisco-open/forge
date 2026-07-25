@@ -65,7 +65,8 @@ module "forge_trust_validator_lambda" {
   trigger_on_package_timestamp = false
 
   environment_variables = {
-    LOG_LEVEL = var.log_level
+    LOG_LEVEL              = var.log_level
+    VALIDATION_MAX_WORKERS = tostring(var.validation_max_workers)
   }
 
   function_tags = var.tags
