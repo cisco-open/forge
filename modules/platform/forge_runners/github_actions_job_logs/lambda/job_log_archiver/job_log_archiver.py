@@ -310,7 +310,12 @@ def lambda_handler(event: Dict[str, Any], _context: Any) -> Dict[str, Any]:  # p
                 job_id,
                 workflow_job,
             )
-            raise ValueError('missing_ids')
+            return {
+                'status': 'ignored',
+                'reason': 'missing_ids',
+                'job_id': job_id,
+                'run_id': run_id,
+            }
 
         try:
             install_token = _github_auth(
