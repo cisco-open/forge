@@ -462,7 +462,10 @@ def test_forge_trust_validator_keeps_delayed_validation_contract() -> None:
         'trust_preparer.py'
     )
     assert preparer_required <= environment_keys(preparer_module)
-    assert environment_keys(validator_module) == {'LOG_LEVEL'}
+    assert environment_keys(validator_module) == {
+        'LOG_LEVEL',
+        'VALIDATION_MAX_WORKERS',
+    }
 
     assert_contains_all(
         preparer_module,
