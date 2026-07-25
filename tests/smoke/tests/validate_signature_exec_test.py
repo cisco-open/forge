@@ -168,13 +168,15 @@ def test_real_validate_signature_rejects_missing_signature(client):
     lam = _deploy_validate_signature(client)
 
     resp, payload = _invoke(lam, _signed_event(signature=''))
-    assert resp.get('FunctionError') == 'Unhandled'
-    assert payload.get('errorMessage') == 'Invalid signature'
+    assert 'FunctionError' not in resp
+    assert payload.get('statusCode') == 401
+    assert json.loads(payload.get('body')) == {'message': 'Invalid signature'}
 
 
 def test_real_validate_signature_rejects_wrong_signature(client):
     lam = _deploy_validate_signature(client)
 
     resp, payload = _invoke(lam, _signed_event(signature='sha256=bad'))
-    assert resp.get('FunctionError') == 'Unhandled'
-    assert payload.get('errorMessage') == 'Invalid signature'
+    assert 'FunctionError' not in resp
+    assert payload.get('statusCode') == 401
+    assert json.loads(payload.get('body')) == {'message': 'Invalid signature'}
