@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.4.1](https://github.com/cisco-open/forge/compare/v4.4.0...v4.4.1) (2026-07-25)
+
+
+### Bug Fixes
+
+* **observability:** link detectors to dashboard charts ([#526](https://github.com/cisco-open/forge/issues/526)) ([ae1f0c6](https://github.com/cisco-open/forge/commit/ae1f0c6702799b63225d1ad89db220dbe8e5fa91))
+
 ## [4.4.0](https://github.com/cisco-open/forge/compare/v4.3.0...v4.4.0) (2026-07-25)
 
 
