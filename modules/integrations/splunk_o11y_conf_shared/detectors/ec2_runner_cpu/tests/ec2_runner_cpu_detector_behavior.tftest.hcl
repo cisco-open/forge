@@ -46,7 +46,7 @@ run "creates_scoped_runner_cpu_detector" {
       signalfx_detector.ec2_runner_cpu.name == "Forge Prod EC2 runner high CPU"
       && signalfx_detector.ec2_runner_cpu.teams == toset(["forge-team"])
       && length(signalfx_detector.ec2_runner_cpu.rule) == 1
-      && toset(signalfx_detector.ec2_runner_cpu.rule[0].notifications) == toset(["Email,forge@example.com"])
+      && toset(one(signalfx_detector.ec2_runner_cpu.rule).notifications) == toset(["Email,forge@example.com"])
     )
     error_message = "The runner CPU detector must keep its name, owner team, and configured alert route."
   }
