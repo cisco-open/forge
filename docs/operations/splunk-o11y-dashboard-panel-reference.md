@@ -80,33 +80,46 @@ availability score.
 
 ## Forge Tenant - EC2 Runners
 
-| Chart                                   | Operational question                                         |
-| --------------------------------------- | ------------------------------------------------------------ |
-| # Disk ops                              | What is the aggregate read/write operation rate?             |
-| Total memory overview (bytes)           | How much host memory is used, cached, buffered, or free?     |
-| Network out (bytes) vs. 24h change (%)  | Did outbound traffic change materially from the prior day?   |
-| Network out (bytes)                     | Which hosts or tenants produce outbound traffic?             |
-| Top instances by CPU utilization (%)    | Which EC2 runners have the highest CPU utilization?          |
-| Disk utilization (%)                    | Which runner filesystems are approaching capacity?           |
-| Disk metrics 24h change (%)             | Which tenants have unusual disk changes?                     |
-| Top images by mean CPU utilization (%)  | Are particular runner images associated with high CPU?       |
-| Network in (bytes)                      | Which hosts or tenants receive the most traffic?             |
-| Memory utilization (%)                  | Which hosts are under memory pressure?                       |
-| Top instances by memory utilization (%) | Which individual runners use the most memory?                |
-| Disk I/O (bytes)                        | Which tenants generate the most disk I/O?                    |
-| Network in (bytes) vs. 24h change (%)   | Did inbound traffic change materially from the prior day?    |
-| Network errors/sec                      | Are host interfaces reporting receive or transmit errors?    |
-| Top memory page swaps/sec               | Which hosts are swapping memory?                             |
-| # Active hosts per instance type        | What instance types make up live runner capacity?            |
-| CPU utilization (%)                     | How is CPU changing by instance?                             |
-| # Active hosts by availability zone     | Is runner capacity distributed across availability zones?    |
-| Disk summary utilization (%)            | Which mountpoints and hosts have the highest utilization?    |
-| # Hosts with agent installed            | How many runner hosts emit host-level OTel metrics?          |
-| Top 5 network out (bytes)               | Which hosts send the most traffic?                           |
-| # Active hosts                          | How many EC2 runners are visible through AWS metrics?        |
-| Active hosts missing Splunk OTel agent  | Which AWS-visible runners lack corresponding host telemetry? |
-| Top 5 network in (bytes)                | Which hosts receive the most traffic?                        |
-| EC2 status check failures               | Are instance or AWS system status checks failing?            |
+| Chart                                                | Operational question                                                                             |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| # Disk ops                                           | What is the aggregate read/write operation rate?                                                 |
+| Total memory overview (bytes)                        | How much host memory is used, cached, buffered, or free?                                         |
+| Network out (bytes) vs. 24h change (%)               | Did outbound traffic change materially from the prior day?                                       |
+| Network out (bytes)                                  | Which hosts or tenants produce outbound traffic?                                                 |
+| Top instances by CPU utilization (%)                 | Which EC2 runners have the highest CPU utilization?                                              |
+| Disk utilization (%)                                 | Which runner filesystems are approaching capacity?                                               |
+| Disk metrics 24h change (%)                          | Which tenants have unusual disk changes?                                                         |
+| Top images by mean CPU utilization (%)               | Are particular runner images associated with high CPU?                                           |
+| Network in (bytes)                                   | Which hosts or tenants receive the most traffic?                                                 |
+| Memory utilization (%)                               | Which hosts are under memory pressure?                                                           |
+| Top instances by memory utilization (%)              | Which individual runners use the most memory?                                                    |
+| Disk I/O (bytes)                                     | Which tenants generate the most disk I/O?                                                        |
+| Network in (bytes) vs. 24h change (%)                | Did inbound traffic change materially from the prior day?                                        |
+| Network errors/sec                                   | Are host interfaces reporting receive or transmit errors?                                        |
+| Top memory page swaps/sec                            | Which hosts are swapping memory?                                                                 |
+| # Active hosts per instance type                     | What instance types make up live runner capacity?                                                |
+| CPU utilization (%)                                  | How is CPU changing by instance?                                                                 |
+| # Active hosts by availability zone                  | Is runner capacity distributed across availability zones?                                        |
+| Disk summary utilization (%)                         | Which mountpoints and hosts have the highest utilization?                                        |
+| # Hosts with agent installed                         | How many runner hosts emit host-level OTel metrics?                                              |
+| Top 5 network out (bytes)                            | Which hosts send the most traffic?                                                               |
+| # Active hosts                                       | How many EC2 runners are visible through AWS metrics?                                            |
+| Active hosts missing Splunk OTel agent               | Which AWS-visible runners lack corresponding host telemetry?                                     |
+| Top 5 network in (bytes)                             | Which hosts receive the most traffic?                                                            |
+| EC2 status check failures                            | Are instance or AWS system status checks failing?                                                |
+| Job runs: high peak CPU utilization (%)              | Which job executions reached at least 85% peak CPU in the last 24 hours?                         |
+| Job runs: low peak CPU utilization (%)               | Which job executions stayed below 20% peak CPU in the last 24 hours?                             |
+| Job runs: high peak memory utilization (%)           | Which job executions on OTel-instrumented hosts reached at least 85% peak memory?                |
+| Job runs: low peak memory utilization (%)            | Which job executions on OTel-instrumented hosts stayed below 40% peak memory?                    |
+| Runner classes: mean job peak CPU utilization (%)    | Which repeated tenant, workflow, job, label, and instance-type combinations use the most CPU?    |
+| Runner classes: mean job peak memory utilization (%) | Which repeated tenant, workflow, job, label, and instance-type combinations use the most memory? |
+| Job runs: high peak filesystem utilization (%)       | Which job filesystems on OTel-instrumented hosts reached at least 80% utilization?               |
+
+The job-run panels require the GitHub runner job URL tag and retain tenant,
+repository, workflow, job, runner-label, instance-type, and drill-down
+dimensions. Memory and filesystem panels also require the Splunk OTel host
+agent. Treat the runner-class panels as repeated sizing evidence; a single
+high or low job execution is not enough to change a runner class.
 
 ## Forge Tenant - K8S Runners
 
