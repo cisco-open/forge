@@ -323,6 +323,14 @@ def lambda_handler(event: Dict[str, Any], _context: Any) -> Dict[str, Any]:  # p
                 **obj_tags,
                 METADATA_TAG_KEY: metadata_key,
             }
+            LOG.info(
+                'Downloading GitHub job logs repository=%s run_id=%s '
+                'job_id=%s run_attempt=%s',
+                repo_full_name,
+                run_id,
+                job_id,
+                run_attempt or 1,
+            )
             body = _download_job_logs(owner, repo, int(
                 job_id), install_token, env['GITHUB_API'])
             _put_json_object(env['BUCKET_NAME'], metadata_key,

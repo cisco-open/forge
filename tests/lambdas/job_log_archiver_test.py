@@ -417,11 +417,21 @@ def test_missing_job_logs_are_terminal_after_retries(
     assert s3_kms['s3'].list_objects_v2(Bucket=alpha).get('Contents', []) == []
 
 
-def test_archival_failure_propagates_for_sqs_retry(monkeypatch, s3_kms, ssm):
+def test_archival_failure_propagates_for_sqs_retry(
+    monkeypatch, s3_kms, ssm, caplog
+):
     alpha = s3_kms['buckets']['alpha']
     mod = _load_archiver(monkeypatch, s3_kms, ssm, bucket=alpha)
+    expected_message = (
+        'Downloading GitHub job logs repository=acme/app '
+        'run_id=99 job_id=4242 run_attempt=1'
+    )
 
     def _boom(*a, **k):
+        assert any(
+            record.getMessage() == expected_message
+            for record in caplog.records
+        )
         raise RuntimeError('github 500')
 
     monkeypatch.setattr(mod, '_download_job_logs', _boom)
