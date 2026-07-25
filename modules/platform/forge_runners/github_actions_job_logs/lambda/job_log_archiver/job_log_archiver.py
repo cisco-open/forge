@@ -1,15 +1,17 @@
 import base64
+import io
 import json
 import logging
 import os
 import re
 import time
-from typing import Any, Dict, Tuple
+from typing import Any, BinaryIO, Dict, Tuple
 from urllib.parse import quote
 
 import boto3
 import jwt
 import requests
+from boto3.s3.transfer import TransferConfig
 from requests.exceptions import RequestException
 
 LOG = logging.getLogger()
@@ -18,6 +20,7 @@ LOG.setLevel(getattr(logging, level_str, logging.INFO))
 
 SSM = boto3.client('ssm')
 S3 = boto3.client('s3')
+S3_TRANSFER_CONFIG = TransferConfig(use_threads=False)
 
 MAX_S3_TAGS = 10
 GITHUB_RETRY_ATTEMPTS = 3
@@ -71,16 +74,44 @@ def _get_installation_token(installation_id: str, jwt_token: str, api: str) -> s
     return r.json()['token']
 
 
-def _download_job_logs(owner: str, repo: str, job_id: int, token: str, api: str) -> bytes:
+class CountingReader(io.RawIOBase):
+    """Count bytes read while preserving a non-seekable streaming interface."""
+
+    def __init__(self, stream: BinaryIO):
+        self._stream = stream
+        self.bytes_read = 0
+
+    def readable(self) -> bool:
+        return True
+
+    def read(self, size: int = -1) -> bytes:
+        chunk = self._stream.read(size)
+        self.bytes_read += len(chunk)
+        return chunk
+
+
+def _download_job_logs(owner: str, repo: str, job_id: int, token: str, api: str) -> requests.Response:
     url = f"{api}/repos/{owner}/{repo}/actions/jobs/{job_id}/logs"
     headers = {'Authorization': f"token {token}",
                'Accept': 'application/vnd.github+json'}
 
     for attempt in range(GITHUB_LOG_NOT_FOUND_RETRY_ATTEMPTS):
-        r = _retry_request(requests.get, url=url, headers=headers, timeout=60)
+        r = _retry_request(
+            requests.get,
+            url=url,
+            headers=headers,
+            timeout=60,
+            stream=True,
+        )
         if r.status_code != 404:
-            r.raise_for_status()
-            return r.content
+            try:
+                r.raise_for_status()
+            except Exception:
+                r.close()
+                raise
+            r.raw.decode_content = True
+            return r
+        r.close()
         if attempt < GITHUB_LOG_NOT_FOUND_RETRY_ATTEMPTS - 1:
             delay = GITHUB_RETRY_DELAY * (2 ** attempt)
             LOG.warning(
@@ -101,14 +132,28 @@ def _serialize_tags(tags: Dict[str, str]) -> str:
     return '&'.join(f"{quote(k, safe='')}={quote(v, safe='')}" for k, v in safe_tags.items())
 
 
-def _put_log_object(bucket: str, key: str, body: bytes, kms_key_arn: str, tags: Dict[str, str]) -> None:
+def _put_log_object(
+    bucket: str,
+    key: str,
+    body: BinaryIO,
+    kms_key_arn: str,
+    tags: Dict[str, str],
+) -> int:
     extra: Dict[str, Any] = {
         'ContentType': 'text/plain',
         'ServerSideEncryption': 'aws:kms',
         'SSEKMSKeyId': kms_key_arn,
         'Tagging': _serialize_tags(tags),
     }
-    S3.put_object(Bucket=bucket, Key=key, Body=body, **extra)
+    counted_body = CountingReader(body)
+    S3.upload_fileobj(
+        counted_body,
+        bucket,
+        key,
+        ExtraArgs=extra,
+        Config=S3_TRANSFER_CONFIG,
+    )
+    return counted_body.bytes_read
 
 
 def _put_json_object(bucket: str, key: str, payload: Dict[str, Any], kms_key_arn: str, tags: Dict[str, str]) -> None:
@@ -328,14 +373,29 @@ def lambda_handler(event: Dict[str, Any], _context: Any) -> Dict[str, Any]:  # p
                 **obj_tags,
                 METADATA_TAG_KEY: metadata_key,
             }
-            body = _download_job_logs(owner, repo, int(
+            LOG.info(
+                'Downloading GitHub job logs repository=%s run_id=%s '
+                'job_id=%s run_attempt=%s',
+                repo_full_name,
+                run_id,
+                job_id,
+                run_attempt or 1,
+            )
+            response = _download_job_logs(owner, repo, int(
                 job_id), install_token, env['GITHUB_API'])
-            _put_json_object(env['BUCKET_NAME'], metadata_key,
-                             _metadata_payload(detail, log_key, event_key),
-                             env['KMS_KEY_ARN'], obj_tags)
-            _put_log_object(env['BUCKET_NAME'], log_key, body,
-                            env['KMS_KEY_ARN'], data_obj_tags)
-            size = len(body)
+            try:
+                _put_json_object(env['BUCKET_NAME'], metadata_key,
+                                 _metadata_payload(detail, log_key, event_key),
+                                 env['KMS_KEY_ARN'], obj_tags)
+                size = _put_log_object(
+                    env['BUCKET_NAME'],
+                    log_key,
+                    response.raw,
+                    env['KMS_KEY_ARN'],
+                    data_obj_tags,
+                )
+            finally:
+                response.close()
             _put_json_object(env['BUCKET_NAME'], event_key,
                              detail, env['KMS_KEY_ARN'], data_obj_tags)
 
@@ -366,8 +426,9 @@ def lambda_handler(event: Dict[str, Any], _context: Any) -> Dict[str, Any]:  # p
                 'run_id': run_id,
             }
         except Exception as e:
-            raise ValueError(
-                'archiver_error: job_id=%s run_id=%s. Error: %s', job_id, run_id, str(e))
+            raise RuntimeError(
+                f'archiver_error: job_id={job_id} run_id={run_id}. Error: {e}'
+            ) from e
     except Exception as e:
         LOG.exception(
             'Unhandled exception in job_log_archiver lambda. Error: %s', str(e))

@@ -200,6 +200,7 @@ def test_job_log_pipeline_wires_runtime_env_and_event_contract() -> None:
     assert 'handler       = "job_log_archiver.lambda_handler"' in archiver_module
     assert 'runtime       = "python3.12"' in dispatcher_module
     assert 'runtime       = "python3.12"' in archiver_module
+    assert 'memory_size   = 2048' in archiver_module
 
     assert_contains_all(
         dispatcher_tf,

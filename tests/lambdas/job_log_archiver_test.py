@@ -8,8 +8,6 @@ Two behaviours matter most (register P1-8, P0-5):
     tenant's bucket.
   * Failure handling: if archival fails, the handler must propagate the error so
     the SQS event-source mapping retries and ultimately routes to the DLQ.
-    Today the handler swallows the exception (returns None) so the message is
-    deleted and logs are lost silently — encoded as xfail(P0-5).
 
 GitHub network calls are monkeypatched out; only AWS (moto) is exercised.
 """
@@ -17,6 +15,7 @@ GitHub network calls are monkeypatched out; only AWS (moto) is exercised.
 from __future__ import annotations
 
 import base64
+import io
 import json
 from types import SimpleNamespace
 
@@ -70,6 +69,17 @@ def _load_archiver(monkeypatch, s3_kms, ssm, *, bucket):
     return mod
 
 
+def _log_response(body=b'log-bytes', status_code=200):
+    raw = io.BytesIO(body)
+    raw.decode_content = False
+    return SimpleNamespace(
+        status_code=status_code,
+        raw=raw,
+        close=lambda: None,
+        raise_for_status=lambda: None,
+    )
+
+
 def test_logs_written_only_to_configured_tenant_bucket(
     monkeypatch, s3_kms, ssm
 ):
@@ -77,7 +87,7 @@ def test_logs_written_only_to_configured_tenant_bucket(
     bravo = s3_kms['buckets']['bravo']
     mod = _load_archiver(monkeypatch, s3_kms, ssm, bucket=alpha)
     monkeypatch.setattr(mod, '_download_job_logs',
-                        lambda *a, **k: b'log-bytes')
+                        lambda *a, **k: _log_response())
 
     mod.lambda_handler(_completed_event(repo='acme/app', job_id=4242), None)
 
@@ -101,7 +111,7 @@ def test_log_object_is_kms_encrypted(monkeypatch, s3_kms, ssm):
     alpha = s3_kms['buckets']['alpha']
     mod = _load_archiver(monkeypatch, s3_kms, ssm, bucket=alpha)
     monkeypatch.setattr(mod, '_download_job_logs',
-                        lambda *a, **k: b'log-bytes')
+                        lambda *a, **k: _log_response())
     mod.lambda_handler(_completed_event(), None)
     s3 = s3_kms['s3']
     key = next(
@@ -116,7 +126,7 @@ def test_metadata_sidecar_contains_flat_fields(monkeypatch, s3_kms, ssm):
     alpha = s3_kms['buckets']['alpha']
     mod = _load_archiver(monkeypatch, s3_kms, ssm, bucket=alpha)
     monkeypatch.setattr(mod, '_download_job_logs',
-                        lambda *a, **k: b'log-bytes')
+                        lambda *a, **k: _log_response())
 
     evt = _completed_event()
     body = json.loads(evt['Records'][0]['body'])
@@ -335,7 +345,8 @@ def test_missing_repository_is_rejected_without_github_or_s3_side_effects(
 def test_skipped_jobs_are_not_archived(monkeypatch, s3_kms, ssm):
     alpha = s3_kms['buckets']['alpha']
     mod = _load_archiver(monkeypatch, s3_kms, ssm, bucket=alpha)
-    monkeypatch.setattr(mod, '_download_job_logs', lambda *a, **k: b'x')
+    monkeypatch.setattr(
+        mod, '_download_job_logs', lambda *a, **k: _log_response(b'x'))
     evt = _completed_event()
     body = json.loads(evt['Records'][0]['body'])
     body['detail']['workflow_job']['conclusion'] = 'skipped'
@@ -407,7 +418,7 @@ def test_job_log_download_retries_404_before_marking_logs_unavailable(
 
     def _not_found(**_kwargs):
         responses.append(404)
-        return SimpleNamespace(status_code=404)
+        return SimpleNamespace(status_code=404, close=lambda: None)
 
     monkeypatch.setattr(mod.requests, 'get', _not_found)
     monkeypatch.setattr(mod.time, 'sleep', sleeps.append)
@@ -423,6 +434,85 @@ def test_job_log_download_retries_404_before_marking_logs_unavailable(
 
     assert responses == [404, 404, 404]
     assert sleeps == [2, 4]
+
+
+def test_job_log_download_enables_streaming_and_content_decoding(
+    monkeypatch, aws
+):
+    mod = load_handler_module('job_log_archiver')
+    calls = []
+    response = _log_response()
+
+    def _ok(**kwargs):
+        calls.append(kwargs)
+        return response
+
+    monkeypatch.setattr(mod.requests, 'get', _ok)
+
+    result = mod._download_job_logs(
+        'acme',
+        'app',
+        4242,
+        'ghs_faketoken',
+        'https://api.github.test',
+    )
+
+    assert result is response
+    assert calls[0]['stream'] is True
+    assert response.raw.decode_content is True
+
+
+def test_log_upload_is_single_threaded_and_counts_streamed_bytes(
+    monkeypatch, aws
+):
+    mod = load_handler_module('job_log_archiver')
+    calls = []
+
+    def _upload(fileobj, bucket, key, **kwargs):
+        calls.append({
+            'bucket': bucket,
+            'key': key,
+            'body': fileobj.read(),
+            **kwargs,
+        })
+
+    monkeypatch.setattr(mod.S3, 'upload_fileobj', _upload)
+
+    size = mod._put_log_object(
+        'logs-bucket',
+        'acme/app/99/1/4242.log',
+        io.BytesIO(b'streamed-log'),
+        'arn:aws:kms:us-west-2:123456789012:key/test',
+        {'status': 'completed'},
+    )
+
+    assert size == len(b'streamed-log')
+    assert calls[0]['body'] == b'streamed-log'
+    assert calls[0]['Config'].use_threads is False
+
+
+def test_managed_upload_failure_propagates_for_sqs_redrive(
+    monkeypatch, s3_kms, ssm
+):
+    alpha = s3_kms['buckets']['alpha']
+    mod = _load_archiver(monkeypatch, s3_kms, ssm, bucket=alpha)
+    response = _log_response()
+    closed = []
+    response.close = lambda: closed.append(True)
+    monkeypatch.setattr(
+        mod, '_download_job_logs', lambda *_args, **_kwargs: response)
+    monkeypatch.setattr(
+        mod.S3,
+        'upload_fileobj',
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            RuntimeError('multipart upload failed')
+        ),
+    )
+
+    with pytest.raises(Exception, match='archiver_error'):
+        mod.lambda_handler(_completed_event(), None)
+
+    assert closed == [True]
 
 
 def test_missing_job_logs_are_terminal_after_retries(
@@ -449,14 +539,24 @@ def test_missing_job_logs_are_terminal_after_retries(
     assert s3_kms['s3'].list_objects_v2(Bucket=alpha).get('Contents', []) == []
 
 
-def test_archival_failure_propagates_for_sqs_retry(monkeypatch, s3_kms, ssm):
+def test_archival_failure_propagates_for_sqs_retry(
+    monkeypatch, s3_kms, ssm, caplog
+):
     alpha = s3_kms['buckets']['alpha']
     mod = _load_archiver(monkeypatch, s3_kms, ssm, bucket=alpha)
+    expected_message = (
+        'Downloading GitHub job logs repository=acme/app '
+        'run_id=99 job_id=4242 run_attempt=1'
+    )
 
     def _boom(*a, **k):
+        assert any(
+            record.getMessage() == expected_message
+            for record in caplog.records
+        )
         raise RuntimeError('github 500')
 
     monkeypatch.setattr(mod, '_download_job_logs', _boom)
-    # A correct handler surfaces the failure to SQS (raises); today it swallows.
+    # The handler must surface the failure to SQS so the message is retried.
     with pytest.raises(Exception):
         mod.lambda_handler(_completed_event(), None)
