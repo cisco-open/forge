@@ -33,6 +33,10 @@ module "dashboard_runner_k8s" {
   tenant_names      = var.dashboard_variables.runner_k8s.tenant_names
   dynamic_variables = var.dashboard_variables.runner_k8s.dynamic_variables
   dashboard_group   = signalfx_dashboard_group.forgecicd.id
+  detector_ids = {
+    otel_no_data        = module.detector_k8s.detector_ids.otel_no_data
+    tenant_pods_pending = module.detector_k8s.detector_ids.tenant_pods_pending
+  }
 }
 
 module "dashboard_k8s_control_plane" {
@@ -45,6 +49,10 @@ module "dashboard_k8s_control_plane" {
   dynamic_variables   = var.dashboard_variables.runner_k8s.dynamic_variables
   platform_namespaces = var.k8s_platform_namespaces
   dashboard_group     = signalfx_dashboard_group.forgecicd.id
+  detector_ids = {
+    otel_collector_health   = module.detector_k8s.detector_ids.otel_collector_health
+    platform_pods_unhealthy = module.detector_k8s.detector_ids.platform_pods_unhealthy
+  }
 }
 
 module "dashboard_lambda" {
@@ -91,6 +99,7 @@ module "dashboard_dependency_probes" {
   tenant_names      = var.dashboard_variables.dependency_probes.tenant_names
   dynamic_variables = var.dashboard_variables.dependency_probes.dynamic_variables
   dashboard_group   = signalfx_dashboard_group.forgecicd.id
+  detector_ids      = module.detector_dependency_probes.detector_ids
 }
 
 module "dashboard_aws_regional_health" {
@@ -102,6 +111,7 @@ module "dashboard_aws_regional_health" {
 
   dynamic_variables = var.dashboard_variables.aws_regional_health.dynamic_variables
   dashboard_group   = signalfx_dashboard_group.forgecicd.id
+  detector_id       = module.detector_aws_regional_health.detector_id
 }
 
 # Messaging and storage

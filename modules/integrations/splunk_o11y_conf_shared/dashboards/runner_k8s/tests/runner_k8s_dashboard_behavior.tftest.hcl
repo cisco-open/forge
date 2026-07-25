@@ -3,6 +3,10 @@ mock_provider "signalfx" {}
 variables {
   tenant_names    = ["tenant-b", "tenant-a"]
   dashboard_group = "forge-dashboard-group"
+  detector_ids = {
+    otel_no_data        = "k8s-no-data-detector-id"
+    tenant_pods_pending = "tenant-pending-detector-id"
+  }
   dynamic_variables = [
     {
       property               = "k8s.cluster.name"
@@ -57,6 +61,15 @@ run "runner_k8s_dashboard_contract" {
       ] : strcontains(program_text, "filter('k8s.namespace.name', 'tenant-a') or filter('k8s.namespace.name', 'tenant-b')")
     ])
     error_message = "Every K8S runner chart must explicitly restrict telemetry to configured Forge tenant namespaces."
+  }
+
+  assert {
+    condition = (
+      strcontains(signalfx_time_chart.k8s_pod_phase_trend.program_text, "alerts(detector_id='k8s-no-data-detector-id')")
+      && strcontains(signalfx_time_chart.k8s_pod_phase_trend.program_text, "alerts(detector_id='tenant-pending-detector-id')")
+      && length(regexall("alerts\\(detector_id=", signalfx_time_chart.k8s_pod_phase_trend.program_text)) == 2
+    )
+    error_message = "The pod-phase trend must link the Kubernetes telemetry and tenant pending-pod detectors."
   }
 }
 

@@ -13,7 +13,9 @@ run "aws_regional_health_detector_interface_contract" {
       "dynamic_variables",
       "team",
     ]
-    expected_output_values = []
+    expected_output_values = [
+      "detector_id",
+    ]
     expected_interface_literals = [
       "variable \"detector_notifications\"",
       "variable \"detector_name_prefix\"",
@@ -26,6 +28,8 @@ run "aws_regional_health_detector_interface_contract" {
       "value_required         = bool",
       "values_suggested       = list(string)",
       "restricted_suggestions = bool",
+      "output \"detector_id\"",
+      "description = \"AWS regional platform detector ID for linking queue-health charts.\"",
     ]
   }
 
@@ -47,8 +51,8 @@ run "aws_regional_health_detector_interface_contract" {
   assert {
     condition = (
       output.expected_input_variable_count == 4
-      && output.expected_output_value_count == 0
-      && output.expected_interface_literal_count == 11
+      && output.expected_output_value_count == 1
+      && output.expected_interface_literal_count == 13
     )
     error_message = "Interface contract counts must remain pinned."
   }

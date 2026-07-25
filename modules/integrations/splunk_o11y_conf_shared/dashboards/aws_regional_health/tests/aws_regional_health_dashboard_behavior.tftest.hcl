@@ -9,6 +9,7 @@ mock_provider "signalfx" {
 
 variables {
   dashboard_group = "forge-dashboard-group"
+  detector_id     = "regional-queue-detector-id"
   dynamic_variables = [
     {
       property               = "aws_account_id"
@@ -81,5 +82,20 @@ run "creates_regional_platform_dashboard" {
       && strcontains(signalfx_time_chart.build_queue_dlq_sends.program_text, "NumberOfMessagesSent")
     )
     error_message = "The managed dashboard must preserve the five live regional Lambda and queued-build signals."
+  }
+
+  assert {
+    condition = (
+      alltrue([
+        for program_text in [
+          signalfx_time_chart.build_queue_oldest_age.program_text,
+          signalfx_time_chart.build_queue_visible_backlog.program_text,
+          signalfx_time_chart.build_queue_dlq_sends.program_text,
+        ] : strcontains(program_text, "alerts(detector_id='regional-queue-detector-id')")
+      ])
+      && !strcontains(signalfx_time_chart.lambda_throttle_attempt_rate.program_text, "alerts(detector_id=")
+      && !strcontains(signalfx_time_chart.lambda_throttle_count.program_text, "alerts(detector_id=")
+    )
+    error_message = "The regional queue detector must link only queue-health charts, not diagnostic Lambda throttle charts."
   }
 }

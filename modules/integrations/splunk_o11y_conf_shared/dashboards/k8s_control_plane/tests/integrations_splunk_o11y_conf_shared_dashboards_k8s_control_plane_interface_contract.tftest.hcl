@@ -9,6 +9,7 @@ run "integrations_splunk_o11y_conf_shared_dashboards_k8s_control_plane_interface
     module_path = "."
     expected_input_variables = [
       "dashboard_group",
+      "detector_ids",
       "dynamic_variables",
       "platform_namespaces",
     ]
@@ -32,6 +33,10 @@ run "integrations_splunk_o11y_conf_shared_dashboards_k8s_control_plane_interface
       "variable \"platform_namespaces\"",
       "description = \"Namespaces that contain platform pods required for runner scheduling, networking, and telemetry.\"",
       "type        = list(string)",
+      "variable \"detector_ids\"",
+      "description = \"Kubernetes detector IDs linked to control-plane health charts.\"",
+      "otel_collector_health   = string",
+      "platform_pods_unhealthy = string",
     ]
   }
 

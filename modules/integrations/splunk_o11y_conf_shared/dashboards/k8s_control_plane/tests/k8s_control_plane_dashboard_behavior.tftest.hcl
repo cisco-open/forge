@@ -3,6 +3,10 @@ mock_provider "signalfx" {}
 variables {
   dashboard_group     = "forge-dashboard-group"
   platform_namespaces = ["karpenter", "kube-system", "monitoring"]
+  detector_ids = {
+    otel_collector_health   = "otel-collector-detector-id"
+    platform_pods_unhealthy = "platform-pods-detector-id"
+  }
   dynamic_variables = [
     {
       property               = "k8s.cluster.name"
@@ -60,5 +64,14 @@ run "k8s_control_plane_dashboard_contract" {
       && strcontains(signalfx_time_chart.otel_telemetry_loss.program_text, "otelcol_receiver_refused_metric_points")
     )
     error_message = "K8S control-plane charts must cover configured platform namespaces, pod and deployment health, node readiness and pressure, and OTel pipeline health."
+  }
+
+  assert {
+    condition = (
+      strcontains(signalfx_time_chart.platform_pod_health.program_text, "alerts(detector_id='platform-pods-detector-id')")
+      && strcontains(signalfx_time_chart.otel_collector_pods.program_text, "alerts(detector_id='otel-collector-detector-id')")
+      && !strcontains(signalfx_time_chart.node_pressure.program_text, "alerts(detector_id=")
+    )
+    error_message = "Only the matching platform and collector pod-health charts may link Kubernetes detectors."
   }
 }

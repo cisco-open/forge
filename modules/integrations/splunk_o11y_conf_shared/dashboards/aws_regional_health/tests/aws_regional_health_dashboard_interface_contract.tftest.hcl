@@ -9,6 +9,7 @@ run "aws_regional_health_dashboard_interface_contract" {
     module_path = "."
     expected_input_variables = [
       "dashboard_group",
+      "detector_id",
       "dynamic_variables",
     ]
     expected_output_values = []
@@ -19,6 +20,8 @@ run "aws_regional_health_dashboard_interface_contract" {
       "property               = string",
       "values_suggested       = list(string)",
       "restricted_suggestions = bool",
+      "variable \"detector_id\"",
+      "description = \"AWS regional platform detector ID linked to queue-health charts.\"",
     ]
   }
 

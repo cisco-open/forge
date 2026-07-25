@@ -62,5 +62,7 @@ No modules.
 
 ## Outputs
 
-No outputs.
+| Name | Description |
+| ---- | ----------- |
+| <a name="output_detector_ids"></a> [detector\_ids](#output\_detector\_ids) | Kubernetes detector IDs for linking the matching dashboard charts. |
 <!-- END_TF_DOCS -->

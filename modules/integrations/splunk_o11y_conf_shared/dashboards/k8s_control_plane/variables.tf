@@ -21,3 +21,11 @@ variable "dashboard_group" {
   description = "Dashboard group name for organizing dashboards."
   type        = string
 }
+
+variable "detector_ids" {
+  description = "Kubernetes detector IDs linked to control-plane health charts."
+  type = object({
+    otel_collector_health   = string
+    platform_pods_unhealthy = string
+  })
+}
