@@ -70,4 +70,21 @@ run "splunk_cloud_shared_dashboard_and_props_contract" {
     )
     error_message = "Splunk shared props must keep JSON runner log sourcetype transforms for tenant, EC2, and ARC metadata."
   }
+
+  assert {
+    condition = (
+      splunk_configs_conf.forgecicd_cloudwatchlogs.variables["REPORT-forgecicd_shared_lambda_fields"] == "forgecicd_shared_lambda_fields"
+      && splunk_configs_conf.forgecicd_shared_lambda_fields.name == "transforms/forgecicd_shared_lambda_fields"
+      && strcontains(splunk_configs_conf.forgecicd_shared_lambda_fields.variables["REGEX"], "splunk-dependency-monitor")
+      && strcontains(splunk_configs_conf.forgecicd_shared_lambda_fields.variables["REGEX"], "splunk-s3-runner-logs-lambda")
+      && strcontains(splunk_configs_conf.forgecicd_shared_lambda_fields.variables["REGEX"], "forge-aws-billing-per-service")
+      && strcontains(splunk_configs_conf.forgecicd_shared_lambda_fields.variables["REGEX"], "forge-aws-billing-per-resource-process")
+      && strcontains(splunk_configs_conf.forgecicd_shared_lambda_fields.variables["REGEX"], "forge-aws-billing-per-resource")
+      && strcontains(splunk_configs_conf.forgecicd_shared_lambda_fields.variables["REGEX"], "webex-webhook-relay-destination-receiver")
+      && strcontains(splunk_configs_conf.forgecicd_shared_lambda_fields.variables["REGEX"], "SplunkDMMetadataEC2InstPatternTags")
+      && strcontains(splunk_configs_conf.forgecicd_shared_lambda_fields.variables["REGEX"], "SplunkDMMetadataEC2Inst")
+      && splunk_configs_conf.forgecicd_shared_lambda_fields.variables["FORMAT"] == "aws_region::$1 forgecicd_log_type::$2"
+    )
+    error_message = "Splunk shared Lambda extraction must cover every Forge-managed shared Lambda and normalize its region and log type fields."
+  }
 }

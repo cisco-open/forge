@@ -63,6 +63,7 @@ run "integrations_splunk_cloud_conf_shared_contract" {
       "resource \"splunk_configs_conf\" \"forgecicd_kube_container_manager_tenant_fields\"",
       "resource \"splunk_configs_conf\" \"forgecicd_kube_container_runner_ci_result\"",
       "resource \"splunk_configs_conf\" \"forgecicd_kube_container_runner_gh_runner_version\"",
+      "resource \"splunk_configs_conf\" \"forgecicd_shared_lambda_fields\"",
       "resource \"splunk_configs_conf\" \"forgecicd_extra_lambda_tenant_fields\"",
       "resource \"splunk_configs_conf\" \"forgecicd_extra_lambda_ec2_tenant_fields\"",
       "resource \"splunk_configs_conf\" \"forgecicd_trust_validation\"",

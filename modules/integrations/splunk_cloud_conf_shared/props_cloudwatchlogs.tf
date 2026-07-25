@@ -3,6 +3,7 @@ resource "splunk_configs_conf" "forgecicd_cloudwatchlogs" {
   name = "props/aws:cloudwatchlogs"
 
   variables = {
+    "REPORT-forgecicd_shared_lambda_fields"                           = "forgecicd_shared_lambda_fields"
     "REPORT-forgecicd_cloudwatchlogs_lambda_tenant_fields"            = "forgecicd_cloudwatchlogs_lambda_tenant_fields"
     "REPORT-forgecicd_cloudwatchlogs_global_lambda_tenant_fields"     = "forgecicd_cloudwatchlogs_global_lambda_tenant_fields"
     "REPORT-forgecicd_dispatch_to_runner_rejection_fields"            = "forgecicd_dispatch_to_runner_rejection_fields"
@@ -97,6 +98,7 @@ resource "splunk_configs_conf" "forgecicd_cloudwatchlogs" {
     ]
   }
   depends_on = [
+    splunk_configs_conf.forgecicd_shared_lambda_fields,
     splunk_configs_conf.forgecicd_cloudwatchlogs_lambda_tenant_fields,
     splunk_configs_conf.forgecicd_cloudwatchlogs_global_lambda_tenant_fields,
     splunk_configs_conf.forgecicd_dispatch_to_runner_rejection_fields,
