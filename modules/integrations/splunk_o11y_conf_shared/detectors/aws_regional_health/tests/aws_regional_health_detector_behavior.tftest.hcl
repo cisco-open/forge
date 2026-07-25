@@ -34,6 +34,15 @@ variables {
       values_suggested       = ["Forge MT"]
       restricted_suggestions = true
     },
+    {
+      property               = "aws_tag_Environment"
+      alias                  = "Environment"
+      description            = "Forge deployment environment."
+      values                 = ["prod"]
+      value_required         = true
+      values_suggested       = ["prod"]
+      restricted_suggestions = true
+    },
   ]
 }
 
@@ -47,6 +56,16 @@ run "creates_regional_platform_detector" {
       && length(signalfx_detector.aws_regional_platform_health.rule) == 3
     )
     error_message = "The regional platform detector must keep its name, team, and three justified queue-health rules."
+  }
+
+  assert {
+    condition = (
+      strcontains(signalfx_detector.aws_regional_platform_health.program_text, "filter('aws_account_id', '111111111111')")
+      && strcontains(signalfx_detector.aws_regional_platform_health.program_text, "filter('aws_region', 'us-east-1')")
+      && strcontains(signalfx_detector.aws_regional_platform_health.program_text, "filter('aws_tag_ProductFamilyName', 'Forge MT')")
+      && strcontains(signalfx_detector.aws_regional_platform_health.program_text, "filter('aws_tag_Environment', 'prod')")
+    )
+    error_message = "The regional platform detector must retain every configured dynamic-property scope."
   }
 
   assert {

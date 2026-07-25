@@ -9,7 +9,7 @@ variable "detector_name_prefix" {
 }
 
 variable "dynamic_variables" {
-  description = "Dynamic metric property definitions used to scope regional platform detectors."
+  description = "Dynamic metric property definitions used to scope the EC2 runner detectors."
   type = list(object({
     property               = string
     alias                  = string
@@ -24,4 +24,9 @@ variable "dynamic_variables" {
 variable "team" {
   description = "Splunk Observability team ID."
   type        = string
+}
+
+variable "tenant_names" {
+  description = "Forge tenant names allowed to contribute runner health signals."
+  type        = list(string)
 }

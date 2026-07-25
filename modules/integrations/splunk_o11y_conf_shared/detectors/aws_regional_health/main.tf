@@ -1,30 +1,21 @@
 locals {
   detector_tags = ["forgecicd", "aws", "regional-platform", "terraform"]
 
-  aws_account_ids = distinct(flatten([
-    for var_def in var.dynamic_variables : var_def.values_suggested
-    if var_def.property == "aws_account_id"
-  ]))
-  aws_regions = distinct(flatten([
-    for var_def in var.dynamic_variables : var_def.values_suggested
-    if var_def.property == "aws_region"
-  ]))
-  product_family_names = distinct(flatten([
-    for var_def in var.dynamic_variables : var_def.values_suggested
-    if var_def.property == "aws_tag_ProductFamilyName"
-  ]))
+  configured_scope_definitions = [
+    for variable in var.dynamic_variables : {
+      property = variable.property
+      required = variable.value_required
+      values   = sort(distinct(concat(variable.values, variable.values_suggested)))
+    }
+  ]
+  configured_scope_filters = [
+    for variable in local.configured_scope_definitions :
+    length(variable.values) > 0 ? "filter('${variable.property}', '${join("', '", variable.values)}')" : "filter('${variable.property}', '__forge_dynamic_scope_not_configured__')"
+    if variable.required || length(variable.values) > 0
+  ]
+  configured_scope_filter = length(local.configured_scope_filters) > 0 ? join(" and ", local.configured_scope_filters) : "filter('sf_metric', '__forge_dynamic_scope_not_configured__')"
 
-  aws_account_filter = length(local.aws_account_ids) > 0 ? join(" or ", [
-    for account_id in sort(local.aws_account_ids) : "filter('aws_account_id', '${account_id}')"
-  ]) : "filter('aws_account_id', '__forge_aws_account_scope_not_configured__')"
-  aws_region_filter = length(local.aws_regions) > 0 ? join(" or ", [
-    for aws_region in sort(local.aws_regions) : "filter('aws_region', '${aws_region}')"
-  ]) : "filter('aws_region', '__forge_aws_region_scope_not_configured__')"
-  product_family_filter = length(local.product_family_names) > 0 ? join(" or ", [
-    for product_family_name in sort(local.product_family_names) : "filter('aws_tag_ProductFamilyName', '${product_family_name}')"
-  ]) : "filter('aws_tag_ProductFamilyName', '__forge_product_family_scope_not_configured__')"
-
-  aws_platform_filter = "(${local.aws_account_filter}) and (${local.aws_region_filter}) and (${local.product_family_filter})"
+  aws_platform_filter = "(${local.configured_scope_filter})"
   build_queue_filter  = "filter('QueueName', '*-queued-builds') and (not filter('QueueName', '*_dead_letter'))"
 }
 

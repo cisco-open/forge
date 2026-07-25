@@ -306,7 +306,7 @@ F = (D).percentile(pct=10).publish(label='F')
 G = (D).percentile(pct=50).publish(label='G')
 H = (D).percentile(pct=90).publish(label='H')
 I = (D).max().publish(label='I')
-A = alerts(autodetect_id='F6cykK5AYAA', filter=filter('aws_tag_ProductFamilyName', 'Forge MT')).publish(label='A')
+A = alerts(detector_id='${var.detector_ids.disk}').publish(label='Forge runner disk alerts')
 EOF
 
   plot_type = "AreaChart"
@@ -317,8 +317,8 @@ EOF
   time_range                = 3600
 
   event_options {
-    display_name = "Autodetect alerts"
-    label        = "A"
+    display_name = "Forge runner disk alerts"
+    label        = "Forge runner disk alerts"
   }
 
   histogram_options {
@@ -734,7 +734,7 @@ D = (J).percentile(pct=10).publish(label='D')
 E = (J).percentile(pct=50).publish(label='E')
 F = (J).percentile(pct=90).publish(label='F')
 G = (J).max().publish(label='G')
-A = alerts(autodetect_id='F7vC_VlAYAI', filter=filter('aws_tag_ProductFamilyName', 'Forge MT')).publish(label='A')
+A = alerts(detector_id='${var.detector_ids.memory}').publish(label='Forge runner memory alerts')
 EOF
 
   plot_type = "AreaChart"
@@ -750,8 +750,8 @@ EOF
   }
 
   event_options {
-    display_name = "Autodetect alerts"
-    label        = "A"
+    display_name = "Forge runner memory alerts"
+    label        = "Forge runner memory alerts"
   }
 
   histogram_options {
@@ -1218,7 +1218,7 @@ resource "signalfx_time_chart" "chart_cpu_utilization" {
   description = "Percentile distribution across all active hosts"
 
   program_text = <<-EOF
-AB = alerts(autodetect_id='F7vDCq0AgAE', filter=filter('aws_tag_ProductFamilyName', 'Forge MT')).publish(label='Autodetect alerts')
+AB = alerts(detector_id='${var.detector_ids.cpu}').publish(label='Forge runner CPU alerts')
 A = data('^aws.ec2.cpu.utilization', extrapolation='last_value', maxExtrapolations=5).publish(label='A', enable=False)
 B = (A).min().publish(label='B')
 C = (A).percentile(pct=10).publish(label='C')
@@ -1238,8 +1238,8 @@ EOF
   }
 
   event_options {
-    display_name = "Autodetect alerts"
-    label        = "Autodetect alerts"
+    display_name = "Forge runner CPU alerts"
+    label        = "Forge runner CPU alerts"
   }
 
   histogram_options {

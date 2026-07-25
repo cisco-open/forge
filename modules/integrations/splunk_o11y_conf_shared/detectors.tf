@@ -55,3 +55,17 @@ module "detector_aws_regional_health" {
   dynamic_variables = var.dashboard_variables.aws_regional_health.dynamic_variables
   team              = var.team
 }
+
+module "detector_ec2_runner_health" {
+  source = "./detectors/ec2_runner_health"
+
+  providers = {
+    signalfx = signalfx
+  }
+
+  detector_name_prefix   = var.detector_name_prefix
+  detector_notifications = local.detector_notifications
+  dynamic_variables      = var.dashboard_variables.runner_ec2.dynamic_variables
+  team                   = var.team
+  tenant_names           = var.dashboard_variables.runner_ec2.tenant_names
+}

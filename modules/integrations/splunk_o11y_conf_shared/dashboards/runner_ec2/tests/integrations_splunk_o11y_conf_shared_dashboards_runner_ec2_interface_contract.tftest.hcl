@@ -9,6 +9,7 @@ run "integrations_splunk_o11y_conf_shared_dashboards_runner_ec2_interface_contra
     module_path = "."
     expected_input_variables = [
       "dashboard_group",
+      "detector_ids",
       "dynamic_variables",
       "tenant_names",
     ]
@@ -17,6 +18,13 @@ run "integrations_splunk_o11y_conf_shared_dashboards_runner_ec2_interface_contra
       "variable \"dashboard_group\"",
       "description = \"Dashboard group name for organizing dashboards.\"",
       "type        = string",
+      "variable \"detector_ids\"",
+      "description = \"Forge EC2 runner health detector IDs linked to the CPU, disk, and memory charts.\"",
+      "type = object({",
+      "cpu    = string",
+      "disk   = string",
+      "memory = string",
+      "})",
       "variable \"dynamic_variables\"",
       "description = \"Additional dynamic variable definitions for the dashboard.\"",
       "type = list(object({",
@@ -62,9 +70,9 @@ run "integrations_splunk_o11y_conf_shared_dashboards_runner_ec2_interface_contra
 
   assert {
     condition = (
-      output.expected_input_variable_count == 3
+      output.expected_input_variable_count == 4
       && output.expected_output_value_count == 0
-      && output.expected_interface_literal_count == 18
+      && output.expected_interface_literal_count == 25
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

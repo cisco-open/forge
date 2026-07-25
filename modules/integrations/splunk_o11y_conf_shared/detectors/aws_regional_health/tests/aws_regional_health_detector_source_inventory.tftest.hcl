@@ -15,9 +15,9 @@ run "aws_regional_health_detector_source_inventory" {
       "Build queue oldest age major",
       "Build queue backlog warning",
       "Queued-build DLQ activity",
-      "__forge_aws_account_scope_not_configured__",
-      "__forge_aws_region_scope_not_configured__",
-      "__forge_product_family_scope_not_configured__",
+      "for variable in var.dynamic_variables",
+      "concat(variable.values, variable.values_suggested)",
+      "__forge_dynamic_scope_not_configured__",
     ]
   }
 

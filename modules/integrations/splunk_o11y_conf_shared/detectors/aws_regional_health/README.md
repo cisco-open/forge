@@ -24,13 +24,15 @@ This detector is an internal submodule of `splunk_o11y_conf_shared`; deploy the
 parent module rather than calling this directory directly. The parent always
 creates the detector and passes:
 
-- account, region, and product-family scope from
+- dynamic metric-property scope from
   `dashboard_variables.aws_regional_health.dynamic_variables`;
 - the configured Splunk Observability team;
 - `detector_name_prefix`; and
 - the shared detector notification routing.
 
-Missing account, region, or product-family suggestions produce non-matching
+The detector code does not know deployment-specific tag property names. It
+uses the configured and suggested values for each supplied dynamic property.
+Missing required values or a missing dynamic scope produce non-matching
 filters, so an incomplete configuration cannot create an organization-wide
 detector accidentally.
 
@@ -72,7 +74,7 @@ No modules.
 | ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_detector_name_prefix"></a> [detector\_name\_prefix](#input\_detector\_name\_prefix) | Prefix to use for Splunk Observability detector names. | `string` | n/a | yes |
 | <a name="input_detector_notifications"></a> [detector\_notifications](#input\_detector\_notifications) | Detector notification destinations. | `list(string)` | n/a | yes |
-| <a name="input_dynamic_variables"></a> [dynamic\_variables](#input\_dynamic\_variables) | AWS account, region, and product-family definitions used to scope regional platform detectors. | <pre>list(object({<br/>    property               = string<br/>    alias                  = string<br/>    description            = string<br/>    values                 = list(string)<br/>    value_required         = bool<br/>    values_suggested       = list(string)<br/>    restricted_suggestions = bool<br/>  }))</pre> | n/a | yes |
+| <a name="input_dynamic_variables"></a> [dynamic\_variables](#input\_dynamic\_variables) | Dynamic metric property definitions used to scope regional platform detectors. | <pre>list(object({<br/>    property               = string<br/>    alias                  = string<br/>    description            = string<br/>    values                 = list(string)<br/>    value_required         = bool<br/>    values_suggested       = list(string)<br/>    restricted_suggestions = bool<br/>  }))</pre> | n/a | yes |
 | <a name="input_team"></a> [team](#input\_team) | Splunk Observability team ID. | `string` | n/a | yes |
 
 ## Outputs
