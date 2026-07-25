@@ -79,7 +79,7 @@ run "creates_scoped_runner_health_detectors" {
         signalfx_detector.ec2_runner_memory.program_text,
       ] :
       strcontains(program_text, "filter('aws_account_id', '111111111111')")
-      && strcontains(program_text, "filter('aws_region', 'us-east-1') or filter('aws_region', 'us-west-2')")
+      && strcontains(program_text, "filter('aws_region', 'us-east-1', 'us-west-2')")
       && strcontains(program_text, "filter('aws_tag_ProductFamilyName', 'Forge MT')")
       && strcontains(program_text, "filter('aws_tag_Environment', 'prod')")
       && strcontains(program_text, "filter('aws_tag_TenantName', 'tenant-a') or filter('aws_tag_TenantName', 'tenant-b')")
