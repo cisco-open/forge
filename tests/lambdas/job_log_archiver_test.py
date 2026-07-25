@@ -366,6 +366,38 @@ def test_runnerless_jobs_are_not_archived(monkeypatch, s3_kms, ssm):
     assert s3_kms['s3'].list_objects_v2(Bucket=alpha).get('Contents', []) == []
 
 
+@pytest.mark.parametrize(('missing_key', 'job_id', 'run_id'), [
+    ('id', None, 99),
+    ('run_id', 4242, None),
+])
+def test_jobs_missing_required_ids_are_ignored_without_side_effects(
+    monkeypatch, s3_kms, ssm, missing_key, job_id, run_id
+):
+    alpha = s3_kms['buckets']['alpha']
+    mod = _load_archiver(monkeypatch, s3_kms, ssm, bucket=alpha)
+    monkeypatch.setattr(
+        mod,
+        '_download_job_logs',
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError('missing IDs must not call GitHub')
+        ),
+    )
+    evt = _completed_event()
+    body = json.loads(evt['Records'][0]['body'])
+    body['detail']['workflow_job'].pop(missing_key)
+    evt['Records'][0]['body'] = json.dumps(body)
+
+    result = mod.lambda_handler(evt, None)
+
+    assert result == {
+        'status': 'ignored',
+        'reason': 'missing_ids',
+        'job_id': job_id,
+        'run_id': run_id,
+    }
+    assert s3_kms['s3'].list_objects_v2(Bucket=alpha).get('Contents', []) == []
+
+
 def test_job_log_download_retries_404_before_marking_logs_unavailable(
     monkeypatch, aws
 ):
