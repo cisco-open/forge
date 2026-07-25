@@ -3,6 +3,5 @@ resource "aws_servicecatalogappregistry_application" "forge" {
   tags = merge(
     var.default_tags,
     var.tags,
-    local.deployment_version_tags,
   )
 }

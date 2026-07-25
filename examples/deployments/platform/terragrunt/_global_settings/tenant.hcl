@@ -39,6 +39,7 @@ locals {
     TenantName              = local.config.locals.deployment_config.tenant.name
     ForgeCICDTenantName     = local.config.locals.deployment_config.tenant.name
     ForgeCICDTenantVpcAlias = local.config.locals.vpc_alias
+    ForgeModuleRef          = local.forge_module_ref
     Service                 = "Forge Runners"
   }
 
@@ -54,9 +55,8 @@ locals {
 }
 
 inputs = {
-  aws_profile      = local.default_aws_profile
-  aws_region       = local.region
-  forge_module_ref = local.forge_module_ref
+  aws_profile = local.default_aws_profile
+  aws_region  = local.region
 
   ec2_deployment_specs = {
     lambda_subnet_ids = local.config.locals.lambda_subnet_ids

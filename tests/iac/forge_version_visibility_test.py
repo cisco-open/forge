@@ -2,22 +2,32 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MODULE = REPO_ROOT / 'modules/platform/forge_runners'
+TENANT_CONFIG = REPO_ROOT / (
+    'examples/deployments/platform/terragrunt/_global_settings/tenant.hcl'
+)
 
 
-def test_forge_module_ref_is_propagated_as_a_non_overridable_tag() -> None:
-    tags = (MODULE / 'tags.tf').read_text(encoding='utf-8')
+def test_forge_module_ref_is_an_ordinary_caller_tag() -> None:
+    tenant_config = TENANT_CONFIG.read_text(encoding='utf-8')
+    module_variables = (MODULE / 'variables.tf').read_text(encoding='utf-8')
 
-    version_tag = 'ForgeModuleRef = var.forge_module_ref'
-    assert version_tag in tags
-    assert tags.index('local.deployment_version_tags,') > tags.index(
-        'var.tags,'
+    assert (
+        'forge_module_ref     = '
+        'local.release_version.spec.iac.modules.forge_runners.ref'
+    ) in tenant_config
+    assert 'ForgeModuleRef          = local.forge_module_ref' in tenant_config
+    assert 'forge_module_ref = local.forge_module_ref' not in tenant_config
+    assert 'variable "forge_module_ref"' not in module_variables
+
+
+def test_app_registry_application_receives_standard_tags() -> None:
+    service_catalog = (MODULE / 'service_catalog.tf').read_text(
+        encoding='utf-8'
     )
-    assert tags.index('local.deployment_version_tags,') < tags.index(
-        'aws_servicecatalogappregistry_application.forge.application_tag'
+    expected_tags = (
+        'tags = merge(\n'
+        '    var.default_tags,\n'
+        '    var.tags,\n'
+        '  )'
     )
-
-
-def test_forge_core_exposes_the_deployed_module_ref() -> None:
-    outputs = (MODULE / 'outputs.tf').read_text(encoding='utf-8')
-
-    assert 'module_ref        = var.forge_module_ref' in outputs
+    assert expected_tags in service_catalog

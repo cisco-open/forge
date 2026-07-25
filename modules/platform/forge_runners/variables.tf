@@ -266,17 +266,6 @@ variable "default_tags" {
   description = "A map of tags to apply to resources."
 }
 
-variable "forge_module_ref" {
-  type        = string
-  description = "Forge module tag, branch, or commit deployed by the calling configuration."
-  default     = "unknown"
-
-  validation {
-    condition     = trimspace(var.forge_module_ref) != ""
-    error_message = "forge_module_ref must be non-empty."
-  }
-}
-
 variable "log_level" {
   type        = string
   description = "Log level for application logging (e.g., INFO, DEBUG, WARN, ERROR)"

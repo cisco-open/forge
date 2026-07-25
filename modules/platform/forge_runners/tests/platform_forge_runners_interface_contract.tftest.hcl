@@ -14,7 +14,6 @@ run "platform_forge_runners_interface_contract" {
       "default_tags",
       "deployment_config",
       "ec2_deployment_specs",
-      "forge_module_ref",
       "github_webhook_relay",
       "log_level",
       "logging_retention_in_days",
@@ -233,11 +232,6 @@ run "platform_forge_runners_interface_contract" {
       "on-demand).",
       "- block_device_mappings: EBS volume configuration for the runner",
       "instances, including size, type, encryption, and KMS.",
-      "variable \"forge_module_ref\"",
-      "description = \"Forge module tag, branch, or commit deployed by the calling configuration.\"",
-      "default     = \"unknown\"",
-      "condition     = trimspace(var.forge_module_ref) != \"\"",
-      "error_message = \"forge_module_ref must be non-empty.\"",
       "variable \"github_webhook_relay\"",
       "Configuration for the (optional) webhook relay source module.",
       "If enabled=true we provision the API Gateway + source EventBridge forwarding rule.",
@@ -263,7 +257,6 @@ run "platform_forge_runners_interface_contract" {
       "value = {",
       "tenant            = var.deployment_config.tenant",
       "runner_group_name = var.deployment_config.github.runner_group_name",
-      "module_ref        = var.forge_module_ref",
       "output \"forge_github_actions_job_logs\"",
       "description = \"GitHub Actions job log archival resources.\"",
       "bucket_arn               = try(module.github_actions_job_logs[0].s3_bucket_arn, null)",
@@ -321,9 +314,9 @@ run "platform_forge_runners_interface_contract" {
 
   assert {
     condition = (
-      output.expected_input_variable_count == 11
+      output.expected_input_variable_count == 10
       && output.expected_output_value_count == 5
-      && output.expected_interface_literal_count == 263
+      && output.expected_interface_literal_count == 257
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

@@ -3,7 +3,6 @@ output "forge_core" {
   value = {
     tenant            = var.deployment_config.tenant
     runner_group_name = var.deployment_config.github.runner_group_name
-    module_ref        = var.forge_module_ref
   }
 }
 
