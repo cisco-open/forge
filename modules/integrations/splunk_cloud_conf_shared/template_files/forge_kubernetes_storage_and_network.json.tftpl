@@ -30,11 +30,23 @@
             },
             "type": "ds.search"
         },
+        "component_job_window_correlation_search": {
+            "name": "Controller and CNI failures correlated with failed jobs",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" ((sourcetype=\"kube:events\" (\"still attached\" OR \"Waiting for a volume\" OR \"NetworkPluginNotReady\" OR \"FailedScheduling\")) OR (sourcetype IN (\"kube:container:csi-provisioner\",\"kube:container:ebs-plugin\",\"kube:container:csi-attacher\",\"kube:container:csi-snapshotter\",\"kube:container:csi-resizer\") (error OR failed OR timeout OR thrott* OR Unauthorized OR AccessDenied OR \"Multi-Attach\")) OR (sourcetype=\"kube:container:controller\" (namespace=karpenter OR source=\"*/karpenter_*\") (ERROR OR WARN OR \"failed listing instance types\" OR \"watch ended with error\" OR \"reconciler error\")) OR (sourcetype IN (\"kube:container:calico-node\",\"kube:container:calico-kube-controllers\",\"kube:container:calico-typha\",\"kube:container:tigera-operator\",\"kube:container:install-cni\") (error OR failed OR timeout OR \"not ready\" OR NetworkPluginNotReady)) OR (forgecicd_log_type=webhook github.status=completed))\n| spath path=github.repository output=repository\n| spath path=github.workflowJobId output=workflow_job_id\n| spath path=github.conclusion output=job_conclusion\n| eval signal_type=case(sourcetype=\"kube:events\",\"kubernetes_event\",match(sourcetype,\"csi-provisioner|ebs-plugin|csi-attacher|csi-snapshotter|csi-resizer\"),\"ebs_csi\",sourcetype=\"kube:container:controller\",\"karpenter\",match(sourcetype,\"calico|tigera|install-cni\"),\"cni\",forgecicd_log_type=\"webhook\" AND job_conclusion!=\"success\",\"failed_job\",true(),\"other\")\n| where signal_type!=\"other\"\n| bin _time span=5m\n| stats count(eval(signal_type=\"kubernetes_event\")) as kubernetes_events count(eval(signal_type=\"ebs_csi\")) as ebs_csi_errors count(eval(signal_type=\"karpenter\")) as karpenter_errors count(eval(signal_type=\"cni\")) as cni_errors count(eval(signal_type=\"failed_job\")) as failed_jobs values(repository) as repositories values(workflow_job_id) as workflow_job_ids by _time forgecicd_tenant aws_region\n| where (kubernetes_events+ebs_csi_errors+karpenter_errors+cni_errors)>0 AND failed_jobs>0\n| eval window_start=strftime(_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - _time\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
         "ebs_wait_search": {
             "name": "EBS provisioning waits",
             "options": {
                 "enableSmartSources": true,
-                "query": "index=\"${splunk_index}\" sourcetype=\"kube:events\" \"Waiting for a volume\"\n| eval sample=substr(_raw,1,260)\n| stats count as events dc(host) as hosts latest(_time) as last_time by sample\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n| head 100\n",
+                "query": "index=\"${splunk_index}\" sourcetype=\"kube:events\" \"Waiting for a volume\"\n| spath path=involvedObject.namespace output=namespace\n| spath path=involvedObject.name output=object_name\n| spath path=involvedObject.kind output=object_kind\n| spath path=reason output=reason\n| rex field=_raw \"(?<pvc>pvc-[0-9a-f-]+)\"\n| eval pod=if(object_kind=\"Pod\",object_name,null()), sample=substr(_raw,1,260)\n| stats count as events dc(host) as hosts min(_time) as first_time max(_time) as last_time latest(sample) as sample by namespace pod pvc reason\n| eval age_minutes=round((now()-first_time)/60,1), active_minutes=round((last_time-first_time)/60,1), first_seen=strftime(first_time,\"%Y-%m-%d %H:%M:%S\"), last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - age_minutes - events\n| head 100\n",
                 "queryParameters": {
                     "earliest": "$global_time.earliest$",
                     "latest": "$global_time.latest$"
@@ -82,7 +94,7 @@
             "name": "Storage, scheduler, and CNI signals",
             "options": {
                 "enableSmartSources": true,
-                "query": "index=\"${splunk_index}\" sourcetype=\"kube:events\"\n(\"still attached\" OR \"Waiting for a volume\" OR \"NetworkPluginNotReady\" OR \"cni\" OR \"insufficient cpu\" OR \"Insufficient\" OR \"FailedScheduling\" OR \"didn't match Pod\" OR \"node affinity\" OR \"Failed\" OR \"failed\" OR \"Back-off\" OR \"ImagePullBackOff\" OR \"ErrImagePull\" OR \"OOMKilled\")\n| eval signature=lower(_raw)\n| eval category=case(\n    match(signature,\"still attached\"), \"pvc_still_attached\",\n    match(signature,\"waiting for a volume\"), \"ebs_volume_provision_wait\",\n    match(signature,\"networkpluginnotready|cni plugin not initialized|cni\"), \"cni_not_ready\",\n    match(signature,\"failedscheduling|insufficient|didn.t match pod|node affinity\"), \"scheduler_capacity_affinity\",\n    match(signature,\"imagepullbackoff|errimagepull\"), \"image_pull\",\n    match(signature,\"back-off\"), \"backoff\",\n    match(signature,\"oomkilled\"), \"oomkilled\",\n    match(signature,\"fail\"), \"failed\",\n    true(), \"other\")\n| where \"$category$\"=\"*\" OR like(category, \"%$category$%\")\n| rex field=_raw \"(?<pvc>pvc-[0-9a-f-]+)\"\n| rex field=_raw \"node (?<node>[^ ]+)\"\n| stats count as events dc(host) as hosts dc(pvc) as pvcs dc(node) as nodes latest(_time) as last_time values(node) as sample_nodes by category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n",
+                "query": "index=\"${splunk_index}\" sourcetype=\"kube:events\"\n(\"still attached\" OR \"Waiting for a volume\" OR \"NetworkPluginNotReady\" OR \"cni\" OR \"insufficient cpu\" OR \"Insufficient\" OR \"FailedScheduling\" OR \"didn't match Pod\" OR \"node affinity\" OR \"Failed\" OR \"failed\" OR \"Back-off\" OR \"ImagePullBackOff\" OR \"ErrImagePull\" OR \"OOMKilled\")\n| spath path=involvedObject.namespace output=namespace\n| spath path=involvedObject.name output=object_name\n| spath path=involvedObject.kind output=object_kind\n| spath path=reason output=reason\n| eval signature=lower(_raw)\n| eval category=case(\n    match(signature,\"still attached\"), \"pvc_still_attached\",\n    match(signature,\"waiting for a volume\"), \"ebs_volume_provision_wait\",\n    match(signature,\"networkpluginnotready|cni plugin not initialized|cni\"), \"cni_not_ready\",\n    match(signature,\"failedscheduling|insufficient|didn.t match pod|node affinity\"), \"scheduler_capacity_affinity\",\n    match(signature,\"imagepullbackoff|errimagepull\"), \"image_pull\",\n    match(signature,\"back-off\"), \"backoff\",\n    match(signature,\"oomkilled\"), \"oomkilled\",\n    match(signature,\"fail\"), \"failed\",\n    true(), \"other\")\n| where \"$category$\"=\"*\" OR like(category, \"%$category$%\")\n| rex field=_raw \"(?<pvc>pvc-[0-9a-f-]+)\"\n| rex field=_raw \"node (?<node>[^ ]+)\"\n| eval pod=if(object_kind=\"Pod\",object_name,null())\n| stats count as events dc(host) as hosts min(_time) as first_time max(_time) as last_time values(node) as sample_nodes by category namespace pod pvc reason\n| eval age_minutes=round((now()-first_time)/60,1), active_minutes=round((last_time-first_time)/60,1), first_seen=strftime(first_time,\"%Y-%m-%d %H:%M:%S\"), last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - age_minutes - events\n| head 200\n",
                 "queryParameters": {
                     "earliest": "$global_time.earliest$",
                     "latest": "$global_time.latest$"
@@ -106,7 +118,19 @@
             "name": "PVC still attached",
             "options": {
                 "enableSmartSources": true,
-                "query": "index=\"${splunk_index}\" sourcetype=\"kube:events\" \"still attached\"\n| rex field=_raw \"(?<pvc>pvc-[0-9a-f-]+)\"\n| rex field=_raw \"node (?<node>[^ ]+)\"\n| stats count as events dc(host) as reporting_hosts latest(_time) as last_time by pvc node\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n| head 100\n",
+                "query": "index=\"${splunk_index}\" sourcetype=\"kube:events\" \"still attached\"\n| spath path=involvedObject.namespace output=namespace\n| spath path=involvedObject.name output=object_name\n| spath path=involvedObject.kind output=object_kind\n| spath path=reason output=reason\n| rex field=_raw \"(?<pvc>pvc-[0-9a-f-]+)\"\n| rex field=_raw \"node (?<node>[^ ]+)\"\n| eval pod=if(object_kind=\"Pod\",object_name,null())\n| stats count as events dc(host) as reporting_hosts min(_time) as first_time max(_time) as last_time by namespace pod pvc node reason\n| eval age_minutes=round((now()-first_time)/60,1), active_minutes=round((last_time-first_time)/60,1), first_seen=strftime(first_time,\"%Y-%m-%d %H:%M:%S\"), last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - age_minutes - events\n| head 100\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "runner_job_correlation_search": {
+            "name": "Kubernetes issues correlated with GitHub jobs",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" ((sourcetype=\"kube:events\" (\"still attached\" OR \"Waiting for a volume\" OR \"NetworkPluginNotReady\" OR \"cni\" OR \"FailedScheduling\" OR \"ImagePullBackOff\" OR \"ErrImagePull\" OR \"OOMKilled\")) OR (forgecicd_log_type=webhook github.status=*))\n| spath path=involvedObject.namespace output=namespace\n| spath path=involvedObject.name output=k8s_object\n| spath path=involvedObject.kind output=k8s_kind\n| spath path=reason output=k8s_reason\n| spath path=github.runnerName output=runner_name\n| spath path=github.workflowJobId output=workflow_job_id\n| spath path=github.workflowJobUrl output=workflow_job_url\n| spath path=github.repository output=repository\n| spath path=github.status output=job_status\n| spath path=github.conclusion output=job_conclusion\n| eval correlation_key=case(k8s_kind=\"Pod\",k8s_object,isnotnull(runner_name),runner_name,true(),null())\n| where isnotnull(correlation_key)\n| eval is_k8s_issue=if(sourcetype=\"kube:events\",1,0), is_job_event=if(forgecicd_log_type=\"webhook\",1,0), is_failed_job=if(job_status=\"completed\" AND job_conclusion!=\"success\",1,0)\n| stats sum(is_k8s_issue) as k8s_events sum(is_job_event) as job_events sum(is_failed_job) as failed_job_events min(eval(if(is_k8s_issue=1,_time,null()))) as first_issue_time max(eval(if(is_k8s_issue=1,_time,null()))) as last_issue_time min(eval(if(is_job_event=1,_time,null()))) as first_job_time max(eval(if(is_job_event=1,_time,null()))) as last_job_time values(namespace) as namespace values(k8s_reason) as reasons values(workflow_job_id) as workflow_job_ids values(workflow_job_url) as workflow_job_urls values(repository) as repositories values(job_status) as job_statuses values(job_conclusion) as job_conclusions by correlation_key\n| where k8s_events>0 AND job_events>0\n| eval issue_age_minutes=round((now()-first_issue_time)/60,1), issue_active_minutes=round((last_issue_time-first_issue_time)/60,1), job_observed_minutes=round((last_job_time-first_job_time)/60,1), first_issue=strftime(first_issue_time,\"%Y-%m-%d %H:%M:%S\"), last_issue=strftime(last_issue_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - issue_age_minutes - failed_job_events - k8s_events\n| head 100\n",
                 "queryParameters": {
                     "earliest": "$global_time.earliest$",
                     "latest": "$global_time.latest$"
@@ -127,7 +151,7 @@
             }
         }
     },
-    "description": "Kubernetes storage, EBS CSI, EKS pod identity, scheduling, CNI, image-pull, Karpenter, Calico/Tigera, and EKS API storage/controller error patterns.",
+    "description": "Kubernetes storage, EBS CSI, EKS pod identity, scheduling, CNI, image-pull, Karpenter, Calico/Tigera, and EKS API errors with per-object aging and GitHub job correlation.",
     "inputs": {
         "input_category": {
             "options": {
@@ -246,6 +270,26 @@
                             "y": 1560
                         },
                         "type": "block"
+                    },
+                    {
+                        "item": "runner_job_correlation_table",
+                        "position": {
+                            "h": 460,
+                            "w": 1200,
+                            "x": 0,
+                            "y": 1980
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "component_job_window_correlation_table",
+                        "position": {
+                            "h": 460,
+                            "w": 1200,
+                            "x": 0,
+                            "y": 2440
+                        },
+                        "type": "block"
                     }
                 ],
                 "type": "grid"
@@ -323,6 +367,18 @@
             "title": "Calico and Tigera Health",
             "type": "splunk.table"
         },
+        "component_job_window_correlation_table": {
+            "dataSources": {
+                "primary": "component_job_window_correlation_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Controller and CNI Errors Correlated with Failed Jobs",
+            "type": "splunk.table"
+        },
         "karpenter_controller_health_table": {
             "dataSources": {
                 "primary": "karpenter_controller_health_search"
@@ -367,6 +423,18 @@
             "showLastUpdated": true,
             "showProgressBar": false,
             "title": "PVC Still Attached",
+            "type": "splunk.table"
+        },
+        "runner_job_correlation_table": {
+            "dataSources": {
+                "primary": "runner_job_correlation_search"
+            },
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Kubernetes Issues Correlated with GitHub Jobs",
             "type": "splunk.table"
         }
     }
