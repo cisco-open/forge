@@ -24,8 +24,10 @@ run "runner_ec2_dashboard_contract" {
       signalfx_single_value_chart.chart_active_hosts.name == "# Active hosts"
       && strcontains(signalfx_single_value_chart.chart_active_hosts.program_text, "^aws.ec2.cpu.utilization")
       && strcontains(signalfx_single_value_chart.chart_active_hosts.program_text, "filter('aws_tag_TenantName', '*')")
+      && signalfx_single_value_chart.chart_hosts_with_agent_installed.name == "OTel host coverage (%)"
       && strcontains(signalfx_single_value_chart.chart_hosts_with_agent_installed.program_text, "filter('cloud.platform', 'aws_ec2')")
       && strcontains(signalfx_single_value_chart.chart_hosts_with_agent_installed.program_text, "filter('aws_tag_TenantName', '*')")
+      && strcontains(signalfx_single_value_chart.chart_hosts_with_agent_installed.program_text, "(otel / active).scale(100)")
       && !strcontains(signalfx_single_value_chart.chart_hosts_with_agent_installed.program_text, "aws_eks")
       && signalfx_list_chart.chart_active_hosts_missing_agent.name == "Active hosts missing Splunk OTel agent"
       && strcontains(signalfx_list_chart.chart_active_hosts_missing_agent.program_text, "filter=filter('aws_tag_TenantName', '*') and not filter('host.id', '*')")

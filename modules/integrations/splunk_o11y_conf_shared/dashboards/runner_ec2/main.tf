@@ -1463,18 +1463,23 @@ EOF
 }
 
 resource "signalfx_single_value_chart" "chart_hosts_with_agent_installed" {
-  name        = "# Hosts with agent installed"
-  description = "Splunk OTel connector installed"
+  name        = "OTel host coverage (%)"
+  description = "Current Forge EC2 hosts reporting OTel memory metrics divided by hosts reporting AWS CPU metrics."
 
-  program_text = "A = data('system.memory.usage', filter=filter('cloud.platform', 'aws_ec2') and filter('aws_tag_TenantName', '*'), rollup='average').sum(by=['AWSUniqueId']).count().publish(label='A')"
+  program_text = <<-EOF
+active = data('^aws.ec2.cpu.utilization', filter=filter('aws_tag_TenantName', '*'), extrapolation='last_value', maxExtrapolations=2).sum(by=['AWSUniqueId']).count()
+otel = data('system.memory.usage', filter=filter('cloud.platform', 'aws_ec2') and filter('aws_tag_TenantName', '*') and filter('state', 'used'), extrapolation='last_value', maxExtrapolations=2).sum(by=['AWSUniqueId']).count()
+A = (otel / active).scale(100).publish(label='A')
+EOF
 
   color_by         = "Dimension"
-  max_precision    = 4
+  max_precision    = 1
   refresh_interval = 60
 
   viz_options {
-    display_name = "Hosts with agent installed"
+    display_name = "OTel host coverage"
     label        = "A"
+    value_suffix = "%"
   }
 }
 
