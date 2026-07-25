@@ -21,6 +21,29 @@ Forge is a multi-tenant CI platform built around ephemeral runners, short-lived 
 - The EC2 and ARC lanes can both be enabled for the same tenant; workflows choose by labels.
 - Changing GitHub App or runner-group settings can affect job routing immediately.
 
+## Deployment version inventory
+
+Deployment version metadata is an ordinary caller-provided tag rather than a
+dedicated module input. The Terragrunt example derives the exact release tag,
+branch, or commit from `release_versions.yml` and adds it to `tags` as
+`ForgeModuleRef`.
+
+Forge propagates `var.default_tags` and `var.tags` to the AppRegistry
+application and all managed AWS resources. Other callers can opt into the same
+inventory by adding `ForgeModuleRef` to their existing `tags` map.
+
+Operators can inventory deployed Lambda resources across a profile and region
+with the Resource Groups Tagging API:
+
+```bash
+aws resourcegroupstaggingapi get-resources \
+  --resource-type-filters lambda:function \
+  --tag-filters Key=ForgeModuleRef
+```
+
+Run the query for each production account and region to reconcile the deployed
+tag with the expected ref in `release_versions.yml`.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 

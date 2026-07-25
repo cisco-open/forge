@@ -28,6 +28,10 @@ locals {
   # ─────────────────────────────────────────────────────────────────────────────
   config = read_terragrunt_config("runner_settings.hcl")
 
+  release_version_file = "${get_repo_root()}/release_versions.yml"
+  release_version      = yamldecode(file(local.release_version_file))
+  forge_module_ref     = local.release_version.spec.iac.modules.forge_runners.ref
+
   # ─────────────────────────────────────────────────────────────────────────────
   # Tags
   # ─────────────────────────────────────────────────────────────────────────────
@@ -35,6 +39,7 @@ locals {
     TenantName              = local.config.locals.deployment_config.tenant.name
     ForgeCICDTenantName     = local.config.locals.deployment_config.tenant.name
     ForgeCICDTenantVpcAlias = local.config.locals.vpc_alias
+    ForgeModuleRef          = local.forge_module_ref
     Service                 = "Forge Runners"
   }
 

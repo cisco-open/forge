@@ -31,6 +31,7 @@ run "platform_forge_runners_contract" {
       "name        = \"/forge/$${var.deployment_config.deployment_prefix}/github_ghes_org\"",
       "value       = var.deployment_config.github.ghes_org",
       "tags = local.all_security_tags",
+      "tags = merge(",
       "resource \"aws_ssm_parameter\" \"github_app_name\"",
       "resource \"aws_ssm_parameter\" \"github_app_webhook_secret\"",
       "resource \"time_rotating\" \"every_30_days\"",
