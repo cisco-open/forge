@@ -469,6 +469,8 @@ B = data('k8s.pod.phase', filter=(${local.k8s_tenant_filter}), rollup='latest').
 C = data('k8s.pod.phase', filter=(${local.k8s_tenant_filter}), rollup='latest').between(2.5, 3.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name', 'k8s.namespace.name']).publish(label='Succeeded')
 D = data('k8s.pod.phase', filter=(${local.k8s_tenant_filter}), rollup='latest').between(3.5, 4.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name', 'k8s.namespace.name']).publish(label='Failed')
 E = data('k8s.pod.phase', filter=(${local.k8s_tenant_filter}), rollup='latest').between(4.5, 5.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name', 'k8s.namespace.name']).publish(label='Unknown')
+alerts(detector_id='${var.detector_ids.otel_no_data}').publish(label='Kubernetes telemetry alerts')
+alerts(detector_id='${var.detector_ids.tenant_pods_pending}').publish(label='Tenant pending-pod alerts')
 EOF
 
   plot_type                 = "LineChart"

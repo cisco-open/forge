@@ -15,3 +15,8 @@ variable "dashboard_group" {
   description = "Splunk Observability dashboard group ID."
   type        = string
 }
+
+variable "detector_id" {
+  description = "AWS regional platform detector ID linked to queue-health charts."
+  type        = string
+}

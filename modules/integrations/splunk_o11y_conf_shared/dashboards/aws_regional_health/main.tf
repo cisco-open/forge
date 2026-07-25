@@ -91,7 +91,10 @@ resource "signalfx_time_chart" "build_queue_oldest_age" {
   name        = "Forge AWS build queue oldest age"
   description = "Maximum oldest queued-build message age by AWS region. Warning above 75s for 10m; Major above 300s for 10m; recover below 60s for 15m."
 
-  program_text = "A = data('ApproximateAgeOfOldestMessage', filter=(${local.aws_platform_filter}) and filter('namespace', 'AWS/SQS') and filter('stat', 'upper') and (${local.build_queue_filter})).max(over='5m').max(by=['aws_region']).publish(label='A')"
+  program_text = <<-EOF
+A = data('ApproximateAgeOfOldestMessage', filter=(${local.aws_platform_filter}) and filter('namespace', 'AWS/SQS') and filter('stat', 'upper') and (${local.build_queue_filter})).max(over='5m').max(by=['aws_region']).publish(label='A')
+alerts(detector_id='${var.detector_id}').publish(label='Regional queue-health alerts')
+EOF
 
   plot_type                 = "LineChart"
   axes_precision            = 0
@@ -120,7 +123,10 @@ resource "signalfx_time_chart" "build_queue_visible_backlog" {
   name        = "Forge AWS build queue visible backlog"
   description = "Visible queued-build messages by AWS region. Warning when above 10 for 10m together with oldest-message age above 75s."
 
-  program_text = "A = data('ApproximateNumberOfMessagesVisible', filter=(${local.aws_platform_filter}) and filter('namespace', 'AWS/SQS') and filter('stat', 'upper') and (${local.build_queue_filter})).max(over='5m').sum(by=['aws_region']).publish(label='A')"
+  program_text = <<-EOF
+A = data('ApproximateNumberOfMessagesVisible', filter=(${local.aws_platform_filter}) and filter('namespace', 'AWS/SQS') and filter('stat', 'upper') and (${local.build_queue_filter})).max(over='5m').sum(by=['aws_region']).publish(label='A')
+alerts(detector_id='${var.detector_id}').publish(label='Regional queue-health alerts')
+EOF
 
   plot_type                 = "LineChart"
   axes_precision            = 0
@@ -148,7 +154,10 @@ resource "signalfx_time_chart" "build_queue_dlq_sends" {
   name        = "Forge AWS queued-build DLQ sends"
   description = "Queued-build dead-letter queue sends by AWS region. Any non-zero value in 5m is a Major condition; escalate only with customer impact."
 
-  program_text = "A = data('NumberOfMessagesSent', filter=(${local.aws_platform_filter}) and filter('namespace', 'AWS/SQS') and filter('stat', 'sum') and filter('QueueName', '*_dead_letter'), rollup='sum').sum(over='5m').sum(by=['aws_region']).publish(label='A')"
+  program_text = <<-EOF
+A = data('NumberOfMessagesSent', filter=(${local.aws_platform_filter}) and filter('namespace', 'AWS/SQS') and filter('stat', 'sum') and filter('QueueName', '*_dead_letter'), rollup='sum').sum(over='5m').sum(by=['aws_region']).publish(label='A')
+alerts(detector_id='${var.detector_id}').publish(label='Regional queue-health alerts')
+EOF
 
   plot_type                 = "ColumnChart"
   axes_precision            = 0

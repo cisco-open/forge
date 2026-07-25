@@ -4,6 +4,10 @@ locals {
     "filter('TenantName', '${tenant_name}')"
   ]) : "filter('TenantName', '__forge_tenant_scope_not_configured__')"
   metric_filter = "(${local.tenant_filter})"
+  detector_alerts = join("\n", [
+    for tenant_name, detector_id in var.detector_ids :
+    "alerts(detector_id='${detector_id}').publish(label='${tenant_name} dependency alerts')"
+  ])
 }
 
 resource "signalfx_list_chart" "github_availability" {
@@ -17,7 +21,10 @@ resource "signalfx_list_chart" "github_availability" {
   time_range              = 3600
   unit_prefix             = "Metric"
 
-  program_text = "A = data('forge.dependency.availability', filter=(${local.metric_filter}) and filter('Provider', 'GitHub'), rollup='latest').min(by=['TenantName', 'AWSRegion', 'CheckName']).publish(label='A')"
+  program_text = <<-EOF
+A = data('forge.dependency.availability', filter=(${local.metric_filter}) and filter('Provider', 'GitHub'), rollup='latest').min(by=['TenantName', 'AWSRegion', 'CheckName']).publish(label='A')
+${local.detector_alerts}
+EOF
 
   color_scale {
     color = "red"
@@ -54,7 +61,10 @@ resource "signalfx_list_chart" "ssm_availability" {
   time_range              = 3600
   unit_prefix             = "Metric"
 
-  program_text = "A = data('forge.dependency.availability', filter=(${local.metric_filter}) and filter('Provider', 'AWS') and filter('CheckName', 'SSMCredentials'), rollup='latest').min(by=['TenantName', 'AWSRegion']).publish(label='A')"
+  program_text = <<-EOF
+A = data('forge.dependency.availability', filter=(${local.metric_filter}) and filter('Provider', 'AWS') and filter('CheckName', 'SSMCredentials'), rollup='latest').min(by=['TenantName', 'AWSRegion']).publish(label='A')
+${local.detector_alerts}
+EOF
 
   color_scale {
     color = "red"
@@ -87,7 +97,10 @@ resource "signalfx_list_chart" "rate_limit_budget" {
   time_range              = 3600
   unit_prefix             = "Metric"
 
-  program_text = "A = data('forge.dependency.rate_limit_remaining_pct', filter=(${local.metric_filter}) and filter('Provider', 'GitHub') and filter('CheckName', 'OrgRunnersApi'), rollup='latest').min(by=['TenantName', 'AWSRegion']).publish(label='A')"
+  program_text = <<-EOF
+A = data('forge.dependency.rate_limit_remaining_pct', filter=(${local.metric_filter}) and filter('Provider', 'GitHub') and filter('CheckName', 'OrgRunnersApi'), rollup='latest').min(by=['TenantName', 'AWSRegion']).publish(label='A')
+${local.detector_alerts}
+EOF
 
   color_scale {
     color = "red"
@@ -154,7 +167,10 @@ resource "signalfx_time_chart" "probe_execution" {
   name        = "Regional probe execution"
   description = "Scheduled dependency-probe executions by tenant and AWS region. Missing series indicate absent telemetry."
 
-  program_text = "A = data('forge.dependency.probe_executed', filter=(${local.metric_filter}) and filter('Provider', 'Forge') and filter('CheckName', 'TenantCycle'), rollup='sum').sum(by=['TenantName', 'AWSRegion']).publish(label='A')"
+  program_text = <<-EOF
+A = data('forge.dependency.probe_executed', filter=(${local.metric_filter}) and filter('Provider', 'Forge') and filter('CheckName', 'TenantCycle'), rollup='sum').sum(by=['TenantName', 'AWSRegion']).publish(label='A')
+${local.detector_alerts}
+EOF
 
   plot_type        = "ColumnChart"
   show_event_lines = false

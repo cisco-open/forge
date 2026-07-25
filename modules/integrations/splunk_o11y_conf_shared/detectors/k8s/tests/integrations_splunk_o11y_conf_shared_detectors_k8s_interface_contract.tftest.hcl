@@ -17,7 +17,9 @@ run "integrations_splunk_o11y_conf_shared_detectors_k8s_interface_contract" {
       "team",
       "tenant_names",
     ]
-    expected_output_values = []
+    expected_output_values = [
+      "detector_ids",
+    ]
     expected_interface_literals = [
       "variable \"detector_name_prefix\"",
       "description = \"Prefix to use for Splunk Observability detector names.\"",
@@ -66,6 +68,8 @@ run "integrations_splunk_o11y_conf_shared_detectors_k8s_interface_contract" {
       "description = \"Team ID.\"",
       "variable \"tenant_names\"",
       "description = \"List of Forge tenant namespaces.\"",
+      "output \"detector_ids\"",
+      "description = \"Kubernetes detector IDs for linking the matching dashboard charts.\"",
     ]
   }
 
@@ -97,8 +101,8 @@ run "integrations_splunk_o11y_conf_shared_detectors_k8s_interface_contract" {
   assert {
     condition = (
       output.expected_input_variable_count == 8
-      && output.expected_output_value_count == 0
-      && output.expected_interface_literal_count == 47
+      && output.expected_output_value_count == 1
+      && output.expected_interface_literal_count == 49
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

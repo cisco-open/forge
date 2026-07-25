@@ -29,6 +29,7 @@ resource "signalfx_time_chart" "platform_pod_health" {
 A = data('k8s.pod.phase', filter=(${local.k8s_platform_filter}), rollup='latest').between(1.5, 2.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name', 'k8s.namespace.name']).publish(label='Running')
 B = data('k8s.pod.phase', filter=(${local.k8s_platform_filter}), rollup='latest').between(0, 1.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name', 'k8s.namespace.name']).publish(label='Pending')
 C = data('k8s.pod.phase', filter=(${local.k8s_platform_filter}), rollup='latest').between(3.5, 5.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name', 'k8s.namespace.name']).publish(label='Failed or unknown')
+alerts(detector_id='${var.detector_ids.platform_pods_unhealthy}').publish(label='Platform pod alerts')
 EOF
 
   plot_type                 = "LineChart"
@@ -63,6 +64,7 @@ resource "signalfx_time_chart" "otel_collector_pods" {
 A = data('k8s.pod.phase', filter=(${local.k8s_otel_collector_filter}), rollup='latest').between(1.5, 2.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name']).publish(label='Running')
 B = data('k8s.pod.phase', filter=(${local.k8s_otel_collector_filter}), rollup='latest').between(0, 1.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name']).publish(label='Pending')
 C = data('k8s.pod.phase', filter=(${local.k8s_otel_collector_filter}), rollup='latest').between(3.5, 5.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.cluster.name']).publish(label='Failed or unknown')
+alerts(detector_id='${var.detector_ids.otel_collector_health}').publish(label='Splunk OTel collector alerts')
 EOF
 
   plot_type                 = "LineChart"

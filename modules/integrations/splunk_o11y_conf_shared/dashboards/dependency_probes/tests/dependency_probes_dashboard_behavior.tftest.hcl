@@ -15,6 +15,10 @@ mock_provider "signalfx" {
 variables {
   dashboard_group = "forge-dashboard-group"
   tenant_names    = ["tenant-b", "tenant-a"]
+  detector_ids = {
+    tenant-a = "tenant-a-detector-id"
+    tenant-b = "tenant-b-detector-id"
+  }
   dynamic_variables = [{
     property               = "AWSRegion"
     alias                  = "AWS region"
@@ -66,5 +70,22 @@ run "creates_dependency_health_dashboard" {
       && strcontains(signalfx_list_chart.github_availability.program_text, "filter('TenantName', 'tenant-b')")
     )
     error_message = "Dependency charts must use direct Splunk metric names and remain scoped to configured tenants."
+  }
+
+  assert {
+    condition = (
+      alltrue([
+        for program_text in [
+          signalfx_list_chart.github_availability.program_text,
+          signalfx_list_chart.ssm_availability.program_text,
+          signalfx_list_chart.rate_limit_budget.program_text,
+          signalfx_time_chart.probe_execution.program_text,
+        ] :
+        strcontains(program_text, "alerts(detector_id='tenant-a-detector-id')")
+        && strcontains(program_text, "alerts(detector_id='tenant-b-detector-id')")
+      ])
+      && !strcontains(signalfx_time_chart.latency.program_text, "alerts(detector_id=")
+    )
+    error_message = "Dependency detectors must link the four matching rule charts without linking the diagnostic-only latency chart."
   }
 }

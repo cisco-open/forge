@@ -21,3 +21,8 @@ variable "tenant_names" {
   description = "Forge tenants available in the dashboard selector."
   type        = list(string)
 }
+
+variable "detector_ids" {
+  description = "Dependency detector IDs keyed by tenant for linking dashboard charts."
+  type        = map(string)
+}
