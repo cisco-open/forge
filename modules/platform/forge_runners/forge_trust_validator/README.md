@@ -15,6 +15,7 @@ Most runner AWS-auth failures happen at the ownership boundary between Forge and
 
 ## Operational Notes
 
+- Scheduled validation runs twice daily. Invoke the preparer Lambda explicitly after tenant IAM trust changes when immediate validation is required.
 - The delay is intentional because IAM trust changes are eventually consistent.
 - Cleanup is load-bearing: temporary trust must be removed even when validation fails.
 - A green `AssumeRole` check is not enough if `sts:TagSession` is missing.
