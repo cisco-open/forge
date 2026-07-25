@@ -11,8 +11,12 @@ locals {
     for var_def in local.opencost_cluster_variables : var_def.values_suggested
   ]))
   opencost_cluster_filter = length(local.opencost_cluster_names) > 0 ? join(" or ", [
-    for cluster_name in local.opencost_cluster_names : "filter('k8s.cluster.name', '${cluster_name}')"
-  ]) : "filter('k8s.cluster.name', '__forge_cluster_scope_not_configured__')"
+    # OpenCost emits the Helm defaultClusterId value as cluster_id. The
+    # Kubernetes dashboard variable supplies the same cluster names, but its
+    # k8s.cluster.name property is not guaranteed to be attached to Prometheus
+    # metrics by the collector.
+    for cluster_name in local.opencost_cluster_names : "filter('cluster_id', '${cluster_name}')"
+  ]) : "filter('cluster_id', '__forge_cluster_scope_not_configured__')"
 }
 
 resource "signalfx_list_chart" "tenant_hourly_compute_cost" {
@@ -254,7 +258,7 @@ resource "signalfx_dashboard" "opencost" {
   }
 
   variable {
-    property               = "k8s.cluster.name"
+    property               = "cluster_id"
     alias                  = "Forge Cluster"
     description            = ""
     values                 = local.opencost_cluster_variable == null ? [] : local.opencost_cluster_variable.values

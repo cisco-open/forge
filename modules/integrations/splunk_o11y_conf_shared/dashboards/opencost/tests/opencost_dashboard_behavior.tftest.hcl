@@ -23,8 +23,7 @@ run "opencost_dashboard_contract" {
     condition = (
       signalfx_list_chart.tenant_hourly_compute_cost.name == "Tenant hourly compute cost"
       && strcontains(signalfx_list_chart.tenant_hourly_compute_cost.program_text, "filter('namespace', 'tenant-a') or filter('namespace', 'tenant-b')")
-      && strcontains(signalfx_list_chart.tenant_hourly_compute_cost.program_text, "filter('k8s.cluster.name', 'forge-euw1-dev') or filter('k8s.cluster.name', 'forge-use1-prod')")
-      && !strcontains(signalfx_list_chart.tenant_hourly_compute_cost.program_text, "cluster_id")
+      && strcontains(signalfx_list_chart.tenant_hourly_compute_cost.program_text, "filter('cluster_id', 'forge-euw1-dev') or filter('cluster_id', 'forge-use1-prod')")
       && strcontains(signalfx_list_chart.tenant_hourly_compute_cost.program_text, "node_cpu_hourly_cost")
       && signalfx_time_chart.tenant_cpu_cost.name == "Tenant CPU cost"
       && strcontains(signalfx_time_chart.tenant_memory_cost.program_text, "node_ram_hourly_cost")
@@ -40,7 +39,7 @@ run "opencost_dashboard_wiring_contract" {
     condition = (
       signalfx_dashboard.opencost.name == "Forge Billing and Cost - OpenCost"
       && signalfx_dashboard.opencost.dashboard_group == "forge-dashboard-group"
-      && signalfx_dashboard.opencost.variable[1].property == "k8s.cluster.name"
+      && signalfx_dashboard.opencost.variable[1].property == "cluster_id"
       && length(signalfx_dashboard.opencost.chart) == 6
     )
     error_message = "OpenCost dashboard must keep its name, group input, and chart count."
