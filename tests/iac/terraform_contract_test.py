@@ -488,7 +488,7 @@ def test_forge_trust_validator_keeps_delayed_validation_contract() -> None:
         [
             'message_retention_seconds  = 86400',
             'visibility_timeout_seconds = 960',
-            'schedule_expression = "cron(*/10 * * * ? *)"',
+            'schedule_expression = "rate(12 hours)"',
             'event_source_arn = aws_sqs_queue.forge_trust_validator.arn',
             'batch_size       = 1',
             'actions = [\n      "iam:GetRole",',

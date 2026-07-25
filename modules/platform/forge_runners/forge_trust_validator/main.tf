@@ -175,8 +175,8 @@ resource "aws_cloudwatch_log_group" "forge_trust_validator_lambda" {
 
 resource "aws_cloudwatch_event_rule" "forge_trust_preparer_lambda" {
   name                = local.forge_trust_preparer_function_name
-  description         = "Trigger Forge trust validation preparation every 10 minutes"
-  schedule_expression = "cron(*/10 * * * ? *)"
+  description         = "Trigger Forge trust validation preparation twice daily"
+  schedule_expression = "rate(12 hours)"
 
   tags     = var.tags
   tags_all = var.tags

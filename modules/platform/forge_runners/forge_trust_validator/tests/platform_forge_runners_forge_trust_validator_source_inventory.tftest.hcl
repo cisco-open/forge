@@ -16,6 +16,8 @@ run "platform_forge_runners_forge_trust_validator_contract" {
       "resource \"aws_cloudwatch_log_group\" \"forge_trust_preparer_lambda\"",
       "resource \"aws_cloudwatch_log_group\" \"forge_trust_validator_lambda\"",
       "resource \"aws_cloudwatch_event_rule\" \"forge_trust_preparer_lambda\"",
+      "description         = \"Trigger Forge trust validation preparation twice daily\"",
+      "schedule_expression = \"rate(12 hours)\"",
       "resource \"aws_cloudwatch_event_target\" \"forge_trust_preparer_lambda\"",
       "resource \"aws_lambda_event_source_mapping\" \"forge_trust_validator_lambda\"",
       "resource \"aws_lambda_permission\" \"forge_trust_preparer_lambda\"",
