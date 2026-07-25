@@ -23,7 +23,11 @@ variable "dashboard_group" {
   type        = string
 }
 
-variable "detector_id" {
-  description = "Forge EC2 runner CPU detector ID linked to the CPU chart."
-  type        = string
+variable "detector_ids" {
+  description = "Forge EC2 runner health detector IDs linked to the CPU, disk, and memory charts."
+  type = object({
+    cpu    = string
+    disk   = string
+    memory = string
+  })
 }

@@ -56,8 +56,8 @@ module "detector_aws_regional_health" {
   team              = var.team
 }
 
-module "detector_ec2_runner_cpu" {
-  source = "./detectors/ec2_runner_cpu"
+module "detector_ec2_runner_health" {
+  source = "./detectors/ec2_runner_health"
 
   providers = {
     signalfx = signalfx

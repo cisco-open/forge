@@ -29,7 +29,7 @@ run "integrations_splunk_o11y_conf_shared_contract" {
       "module \"detector_k8s\"",
       "module \"detector_dependency_probes\"",
       "module \"detector_aws_regional_health\"",
-      "module \"detector_ec2_runner_cpu\"",
+      "module \"detector_ec2_runner_health\"",
       "failure_duration                   = \"10m\"",
       "no_data_duration                   = \"15m\"",
       "no_data_fill_duration              = \"4h\"",

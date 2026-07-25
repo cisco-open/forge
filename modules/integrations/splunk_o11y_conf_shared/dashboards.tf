@@ -21,7 +21,7 @@ module "dashboard_runner_ec2" {
   tenant_names      = var.dashboard_variables.runner_ec2.tenant_names
   dynamic_variables = var.dashboard_variables.runner_ec2.dynamic_variables
   dashboard_group   = signalfx_dashboard_group.forgecicd.id
-  detector_id       = module.detector_ec2_runner_cpu.detector_id
+  detector_ids      = module.detector_ec2_runner_health.detector_ids
 }
 
 module "dashboard_runner_k8s" {

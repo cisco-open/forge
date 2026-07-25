@@ -9,7 +9,7 @@ variable "detector_name_prefix" {
 }
 
 variable "dynamic_variables" {
-  description = "AWS account, region, and product-family definitions used to scope the EC2 runner detector."
+  description = "AWS account, region, and product-family definitions used to scope the EC2 runner detectors."
   type = list(object({
     property               = string
     alias                  = string
@@ -27,6 +27,6 @@ variable "team" {
 }
 
 variable "tenant_names" {
-  description = "Forge tenant names allowed to contribute runner CPU signals."
+  description = "Forge tenant names allowed to contribute runner health signals."
   type        = list(string)
 }

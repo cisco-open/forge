@@ -1,4 +1,4 @@
-run "ec2_runner_cpu_detector_interface_contract" {
+run "ec2_runner_health_detector_interface_contract" {
   command = plan
 
   module {
@@ -14,15 +14,17 @@ run "ec2_runner_cpu_detector_interface_contract" {
       "team",
       "tenant_names",
     ]
-    expected_output_values = ["detector_id"]
+    expected_output_values = ["detector_ids"]
     expected_interface_literals = [
       "variable \"detector_name_prefix\"",
       "variable \"detector_notifications\"",
       "variable \"dynamic_variables\"",
       "variable \"team\"",
       "variable \"tenant_names\"",
-      "output \"detector_id\"",
-      "value       = signalfx_detector.ec2_runner_cpu.id",
+      "output \"detector_ids\"",
+      "cpu    = signalfx_detector.ec2_runner_cpu.id",
+      "disk   = signalfx_detector.ec2_runner_disk.id",
+      "memory = signalfx_detector.ec2_runner_memory.id",
     ]
   }
 
@@ -34,6 +36,6 @@ run "ec2_runner_cpu_detector_interface_contract" {
       && length(output.unexpected_output_values) == 0
       && length(output.missing_interface_literals) == 0
     )
-    error_message = "The EC2 runner CPU detector interface must remain explicit and complete."
+    error_message = "The EC2 runner health detector interface must remain explicit and complete."
   }
 }
