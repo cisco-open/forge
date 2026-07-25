@@ -35,6 +35,15 @@ variables {
       values_suggested       = ["Forge MT"]
       restricted_suggestions = true
     },
+    {
+      property               = "aws_tag_Environment"
+      alias                  = "Environment"
+      description            = "Forge deployment environment."
+      values                 = ["prod"]
+      value_required         = true
+      values_suggested       = ["prod"]
+      restricted_suggestions = true
+    },
   ]
 }
 
@@ -72,9 +81,10 @@ run "creates_scoped_runner_health_detectors" {
       strcontains(program_text, "filter('aws_account_id', '111111111111')")
       && strcontains(program_text, "filter('aws_region', 'us-east-1') or filter('aws_region', 'us-west-2')")
       && strcontains(program_text, "filter('aws_tag_ProductFamilyName', 'Forge MT')")
+      && strcontains(program_text, "filter('aws_tag_Environment', 'prod')")
       && strcontains(program_text, "filter('aws_tag_TenantName', 'tenant-a') or filter('aws_tag_TenantName', 'tenant-b')")
     ])
-    error_message = "Every runner health detector must retain the configured production account, region, product-family, and tenant scopes."
+    error_message = "Every runner health detector must retain all configured dynamic-property and tenant scopes."
   }
 
   assert {
@@ -109,5 +119,35 @@ run "creates_scoped_runner_health_detectors" {
       && strcontains(signalfx_detector.ec2_runner_memory.program_text, "auto_resolve_after='15m'")
     )
     error_message = "Runner memory SignalFlow must use the full memory-state total, stable thresholds, and inactive-stream resolution."
+  }
+}
+
+run "fails_closed_when_required_dynamic_scope_is_empty" {
+  command = plan
+
+  variables {
+    dynamic_variables = [
+      {
+        property               = "deployment.scope"
+        alias                  = "Deployment scope"
+        description            = "Required deployment-specific metric scope."
+        values                 = []
+        value_required         = true
+        values_suggested       = []
+        restricted_suggestions = true
+      },
+    ]
+  }
+
+  assert {
+    condition = alltrue([
+      for program_text in [
+        signalfx_detector.ec2_runner_cpu.program_text,
+        signalfx_detector.ec2_runner_disk.program_text,
+        signalfx_detector.ec2_runner_memory.program_text,
+      ] :
+      strcontains(program_text, "filter('deployment.scope', '__forge_dynamic_scope_not_configured__')")
+    ])
+    error_message = "A required dynamic property without configured values must fail closed for every runner health detector."
   }
 }

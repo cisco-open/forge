@@ -16,6 +16,9 @@ run "ec2_runner_health_detector_source_inventory" {
       "system.memory.usage",
       "filter('type', 'ext4', 'xfs')",
       "auto_resolve_after='15m'",
+      "for variable in var.dynamic_variables",
+      "concat(variable.values, variable.values_suggested)",
+      "__forge_dynamic_scope_not_configured__",
       "__forge_tenant_scope_not_configured__",
     ]
   }
@@ -26,7 +29,7 @@ run "ec2_runner_health_detector_source_inventory" {
   }
 
   assert {
-    condition     = output.expected_literal_count == 9
+    condition     = output.expected_literal_count == 12
     error_message = "The EC2 runner health detector source inventory count must remain pinned."
   }
 }

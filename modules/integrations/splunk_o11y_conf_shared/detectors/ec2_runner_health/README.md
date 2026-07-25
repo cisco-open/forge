@@ -18,13 +18,16 @@ ephemeral runner terminates and its metric stream becomes inactive.
 
 ## Ownership and configuration
 
-This is an internal submodule of `splunk_o11y_conf_shared`; deploy the
-parent module rather than calling this directory directly. The parent scopes
-the detectors to configured Forge AWS accounts, regions, product families, and
-tenant names and supplies the shared team notification routing.
+This is an internal submodule of `splunk_o11y_conf_shared`; deploy the parent
+module rather than calling this directory directly. The parent scopes the
+detectors to every configured dynamic metric property and the Forge tenant
+names, and supplies the shared team notification routing.
 
-Missing scope values produce non-matching filters, preventing an incomplete
-configuration from creating an organization-wide detector.
+The detector code does not know deployment-specific tag property names. It
+uses the configured and suggested values for each supplied dynamic property.
+Missing required values or a missing dynamic scope produce non-matching
+filters, preventing an incomplete configuration from creating an
+organization-wide detector.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -58,7 +61,7 @@ No modules.
 | ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_detector_name_prefix"></a> [detector\_name\_prefix](#input\_detector\_name\_prefix) | Prefix to use for Splunk Observability detector names. | `string` | n/a | yes |
 | <a name="input_detector_notifications"></a> [detector\_notifications](#input\_detector\_notifications) | Detector notification destinations. | `list(string)` | n/a | yes |
-| <a name="input_dynamic_variables"></a> [dynamic\_variables](#input\_dynamic\_variables) | AWS account, region, and product-family definitions used to scope the EC2 runner detectors. | <pre>list(object({<br/>    property               = string<br/>    alias                  = string<br/>    description            = string<br/>    values                 = list(string)<br/>    value_required         = bool<br/>    values_suggested       = list(string)<br/>    restricted_suggestions = bool<br/>  }))</pre> | n/a | yes |
+| <a name="input_dynamic_variables"></a> [dynamic\_variables](#input\_dynamic\_variables) | Dynamic metric property definitions used to scope the EC2 runner detectors. | <pre>list(object({<br/>    property               = string<br/>    alias                  = string<br/>    description            = string<br/>    values                 = list(string)<br/>    value_required         = bool<br/>    values_suggested       = list(string)<br/>    restricted_suggestions = bool<br/>  }))</pre> | n/a | yes |
 | <a name="input_team"></a> [team](#input\_team) | Splunk Observability team ID. | `string` | n/a | yes |
 | <a name="input_tenant_names"></a> [tenant\_names](#input\_tenant\_names) | Forge tenant names allowed to contribute runner health signals. | `list(string)` | n/a | yes |
 

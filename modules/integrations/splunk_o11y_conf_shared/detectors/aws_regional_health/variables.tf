@@ -9,7 +9,7 @@ variable "detector_name_prefix" {
 }
 
 variable "dynamic_variables" {
-  description = "AWS account, region, and product-family definitions used to scope regional platform detectors."
+  description = "Dynamic metric property definitions used to scope regional platform detectors."
   type = list(object({
     property               = string
     alias                  = string
