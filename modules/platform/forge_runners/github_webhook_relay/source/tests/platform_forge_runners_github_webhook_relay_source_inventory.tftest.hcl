@@ -14,6 +14,7 @@ run "platform_forge_runners_github_webhook_relay_source_contract" {
       "resource \"aws_apigatewayv2_integration\" \"lambda\"",
       "resource \"aws_apigatewayv2_route\" \"post_hook\"",
       "resource \"aws_apigatewayv2_stage\" \"default\"",
+      "resource \"aws_cloudwatch_log_group\" \"api_gateway_access\"",
       "resource \"aws_lambda_permission\" \"apigw_invoke\"",
       "resource \"aws_cloudwatch_event_bus\" \"source\"",
       "resource \"aws_cloudwatch_log_delivery_source\" \"info_logs\"",

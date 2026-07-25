@@ -10,6 +10,9 @@ cloudwatch_log_groups_config:
   enabled: <CWL_ENABLED>                    # true or false
   name: <CWL_GROUP_NAME>                    # e.g., forge-cwl-prod
   datasource:
+    cwl-api-gateway:
+      enabled: <CWL_API_GATEWAY_ENABLED>     # true or false
+      index: <CWL_API_GATEWAY_INDEX>         # e.g., forge-prod-index
     cwl-eks:
       enabled: <CWL_EKS_ENABLED>            # true or false
       index: <CWL_EKS_INDEX>                # e.g., forge-prod-index
