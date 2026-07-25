@@ -72,6 +72,7 @@ resource "aws_apigatewayv2_stage" "default" {
 
 resource "aws_cloudwatch_log_group" "api_gateway_access" {
   #checkov:skip=CKV_AWS_158:KMS encryption for webhook relay log groups is deferred until the relay logging path is tested with customer-managed keys.
+  #checkov:skip=CKV_AWS_338:Webhook API access logs intentionally retain at most three days to limit request attribution data and ingestion cost.
   name              = "/aws/apigateway/${local.api_name}"
   retention_in_days = 3
   tags              = var.tags

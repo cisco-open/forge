@@ -309,6 +309,7 @@ def test_webhook_relay_api_gateway_access_logs_are_short_lived() -> None:
     )
     assert 'name              = "/aws/apigateway/${local.api_name}"' in log_group
     assert 'retention_in_days = 3' in log_group
+    assert 'CKV_AWS_338' in log_group
     assert 'CKV_AWS_76' not in stage
 
 
