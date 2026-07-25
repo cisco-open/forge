@@ -1,5 +1,37 @@
 # Changelog
 
+## [4.4.0](https://github.com/cisco-open/forge/compare/v4.3.0...v4.4.0) (2026-07-25)
+
+
+### Features
+
+* **observability:** add AWS regional health dashboard ([#514](https://github.com/cisco-open/forge/issues/514)) ([8cc9f83](https://github.com/cisco-open/forge/commit/8cc9f830d707e21235d0132fee2fe6aa8df970a2))
+* **observability:** add AWS service limits dashboard ([#515](https://github.com/cisco-open/forge/issues/515)) ([35afc93](https://github.com/cisco-open/forge/commit/35afc934797db6e67f58d4da48e8279ed4e11e65))
+* **observability:** add dependency probes dashboard ([#516](https://github.com/cisco-open/forge/issues/516)) ([d1d29a1](https://github.com/cisco-open/forge/commit/d1d29a168e2e9bd8e0a65689da465b0c20456c70))
+* **observability:** add EC2 runner job right-sizing charts ([#513](https://github.com/cisco-open/forge/issues/513)) ([db785b6](https://github.com/cisco-open/forge/commit/db785b6f34069673c242f392482843548ce79c3b))
+* **observability:** add Kinesis control-plane dashboard ([#517](https://github.com/cisco-open/forge/issues/517)) ([8704c96](https://github.com/cisco-open/forge/commit/8704c96eb7ddc3889d3ca40f3975b279a3b46d2d))
+* **observability:** add Lambda control-plane dashboard ([#518](https://github.com/cisco-open/forge/issues/518)) ([90a0329](https://github.com/cisco-open/forge/commit/90a0329d50f7c14afc7d45e84b0536652e347579))
+* **observability:** add regional dependency monitoring ([#507](https://github.com/cisco-open/forge/issues/507)) ([3ff86aa](https://github.com/cisco-open/forge/commit/3ff86aafbe2f8aa5aaa7e50ac9ffc643d9dcc671))
+* **observability:** add S3 control-plane dashboard ([#521](https://github.com/cisco-open/forge/issues/521)) ([1b190ad](https://github.com/cisco-open/forge/commit/1b190ad33daa2e38083bbf6148f0b460fb25c45a))
+* **observability:** add SQS control-plane dashboard ([#519](https://github.com/cisco-open/forge/issues/519)) ([26120e8](https://github.com/cisco-open/forge/commit/26120e85cb8f0ae1ea86140473841e7a6b545da8))
+* **observability:** add tenant S3 dashboard ([#520](https://github.com/cisco-open/forge/issues/520)) ([6f582d6](https://github.com/cisco-open/forge/commit/6f582d69edab1f75525d61f83089b8ec0b6e55ad))
+* **observability:** complete Forge dashboard operator model ([#504](https://github.com/cisco-open/forge/issues/504)) ([04a3a25](https://github.com/cisco-open/forge/commit/04a3a2547c138c04b6c862340ec9936404da95e6))
+* **observability:** improve Forge detector signal quality ([#502](https://github.com/cisco-open/forge/issues/502)) ([170f4a2](https://github.com/cisco-open/forge/commit/170f4a2d2c59bee5cb6f1e2d3100367fe66036d7))
+* **observability:** improve Forge operational dashboards ([#503](https://github.com/cisco-open/forge/issues/503)) ([cde820d](https://github.com/cisco-open/forge/commit/cde820d86fad8afa9827cf664df556fedcb2ae14))
+* **observability:** improve Forge operational insights ([#501](https://github.com/cisco-open/forge/issues/501)) ([e958b8b](https://github.com/cisco-open/forge/commit/e958b8b114de54b7df66eeaa083874ae6828de95))
+* **observability:** improve Kubernetes control-plane health ([#522](https://github.com/cisco-open/forge/issues/522)) ([71f5c4f](https://github.com/cisco-open/forge/commit/71f5c4fd31c50e8f46adc80e6045ed49d621fb40))
+* **platform:** publish GitHub routing metadata ([#510](https://github.com/cisco-open/forge/issues/510)) ([ff1b447](https://github.com/cisco-open/forge/commit/ff1b447d2b9bbaabc74941cfcfe8ba2ba3140c8e))
+* **splunk:** add dependency monitor secrets ([#511](https://github.com/cisco-open/forge/issues/511)) ([993a84c](https://github.com/cisco-open/forge/commit/993a84c4bc6784766e449d9cf236c295c40e2cd4))
+* **splunk:** add regional dependency monitor ([#512](https://github.com/cisco-open/forge/issues/512)) ([a8b0fc9](https://github.com/cisco-open/forge/commit/a8b0fc952a697adbdcaebf7633bb9804eb66b935))
+
+
+### Bug Fixes
+
+* **lambdas:** ignore terminal runner lifecycle errors ([#508](https://github.com/cisco-open/forge/issues/508)) ([12fce19](https://github.com/cisco-open/forge/commit/12fce19258f5c52bff70f0eeeaec8596a269ebeb))
+* **observability:** correct dashboard windows and detector signals ([#499](https://github.com/cisco-open/forge/issues/499)) ([0e20efe](https://github.com/cisco-open/forge/commit/0e20efea816c3cc8924db1a4c761b46a5d6b4af2))
+* **observability:** harden Forge dashboard telemetry ([#505](https://github.com/cisco-open/forge/issues/505)) ([566286f](https://github.com/cisco-open/forge/commit/566286fb382487761cecb3aa41bd9eb1968d0e22))
+* **observability:** stabilize runner usage cluster filters ([#525](https://github.com/cisco-open/forge/issues/525)) ([08d450a](https://github.com/cisco-open/forge/commit/08d450ad27733cf1db0fabf1cd525940f9221d29))
+
 ## [4.3.0](https://github.com/cisco-open/forge/compare/v4.2.1...v4.3.0) (2026-07-23)
 
 
