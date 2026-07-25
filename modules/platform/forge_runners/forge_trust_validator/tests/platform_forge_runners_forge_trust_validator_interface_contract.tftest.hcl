@@ -15,6 +15,7 @@ run "platform_forge_runners_forge_trust_validator_interface_contract" {
       "prefix",
       "tags",
       "tenant_iam_roles",
+      "validation_max_workers",
     ]
     expected_output_values = []
     expected_interface_literals = [
@@ -31,6 +32,12 @@ run "platform_forge_runners_forge_trust_validator_interface_contract" {
       "&& var.iam_propagation_delay_seconds <= 900",
       ")",
       "error_message = \"iam_propagation_delay_seconds must be between 0 and 900.\"",
+      "variable \"validation_max_workers\"",
+      "description = \"Maximum number of tenant trust relationships validated concurrently for each Forge role.\"",
+      "default     = 8",
+      "var.validation_max_workers >= 1",
+      "&& var.validation_max_workers <= 32",
+      "error_message = \"validation_max_workers must be between 1 and 32.\"",
       "variable \"log_level\"",
       "type        = string",
       "description = \"Log level for application logging (e.g., INFO, DEBUG, WARN, ERROR)\"",
@@ -77,9 +84,9 @@ run "platform_forge_runners_forge_trust_validator_interface_contract" {
 
   assert {
     condition = (
-      output.expected_input_variable_count == 7
+      output.expected_input_variable_count == 8
       && output.expected_output_value_count == 0
-      && output.expected_interface_literal_count == 29
+      && output.expected_interface_literal_count == 35
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

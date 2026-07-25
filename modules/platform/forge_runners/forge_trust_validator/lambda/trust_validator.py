@@ -1,4 +1,6 @@
 import json
+import os
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List
 
 import boto3
@@ -6,6 +8,93 @@ from botocore.exceptions import ClientError
 from trust_common import (LOG, assume_role, build_session_policy_for_tenants,
                           build_sts_client_from_creds, cleanup_forge_roles,
                           get_lambda_caller_identity)
+
+
+def validate_tenant_role(
+    sts_as_forge: Any,
+    tenant_arn: str,
+    forge_role_arn: str,
+) -> Dict[str, Any]:
+    LOG.info(
+        'Attempting to assume Tenant role: %s from Forge role: %s',
+        tenant_arn,
+        forge_role_arn,
+    )
+    tenant_entry = {
+        'tenant_role_arn': tenant_arn,
+        'assume_role_success': False,
+        'assume_role_error': None,
+        'tag_session_success': False,
+        'tag_session_error': None,
+    }
+
+    try:
+        sts_as_forge.assume_role(
+            RoleArn=tenant_arn,
+            RoleSessionName='TenantValidation-Basic',
+        )
+        LOG.info(f'Basic AssumeRole successful for {tenant_arn}')
+        tenant_entry['assume_role_success'] = True
+    except ClientError as e:
+        LOG.error(f'Basic AssumeRole failed for {tenant_arn}: {e}')
+        tenant_entry['assume_role_error'] = str(e)
+    except Exception as e:
+        LOG.error(
+            'Unexpected error in Basic AssumeRole for %s: %s',
+            tenant_arn,
+            e,
+        )
+        tenant_entry['assume_role_error'] = f'Unexpected error: {e}'
+
+    if tenant_entry['assume_role_success']:
+        try:
+            tenant_resp = sts_as_forge.assume_role(
+                RoleArn=tenant_arn,
+                RoleSessionName='TenantValidation-Tags',
+                Tags=[
+                    {
+                        'Key': 'CreatedBy',
+                        'Value': 'ForgeTrustValidator',
+                    },
+                    {'Key': 'Validation', 'Value': 'True'},
+                ],
+            )
+
+            tenant_creds = tenant_resp['Credentials']
+            sts_as_tenant = boto3.client(
+                'sts',
+                aws_access_key_id=tenant_creds['AccessKeyId'],
+                aws_secret_access_key=tenant_creds['SecretAccessKey'],
+                aws_session_token=tenant_creds['SessionToken'],
+            )
+            identity = sts_as_tenant.get_caller_identity()
+            LOG.info(
+                'AssumeRole WITH Tags successful for %s. Identity: %s',
+                tenant_arn,
+                identity['Arn'],
+            )
+
+            tenant_entry['tag_session_success'] = True
+        except ClientError as e:
+            LOG.error(
+                'AssumeRole WITH Tags failed for %s: %s',
+                tenant_arn,
+                e,
+            )
+            tenant_entry['tag_session_error'] = str(e)
+        except Exception as e:
+            LOG.error(
+                'Unexpected error in AssumeRole WITH Tags for %s: %s',
+                tenant_arn,
+                e,
+            )
+            tenant_entry['tag_session_error'] = f'Unexpected error: {e}'
+    else:
+        tenant_entry['tag_session_error'] = (
+            'Skipped because basic AssumeRole failed'
+        )
+
+    return tenant_entry
 
 
 def validate_prepared_forge_role_against_tenants(
@@ -37,89 +126,26 @@ def validate_prepared_forge_role_against_tenants(
         forge_creds = forge_assume_resp['Credentials']
         sts_as_forge = build_sts_client_from_creds(forge_creds)
 
-        for tenant_arn in tenant_role_arns:
-            LOG.info(
-                'Attempting to assume Tenant role: %s from Forge role: %s',
-                tenant_arn,
-                forge_role_arn,
-            )
-            tenant_entry = {
-                'tenant_role_arn': tenant_arn,
-                'assume_role_success': False,
-                'assume_role_error': None,
-                'tag_session_success': False,
-                'tag_session_error': None,
-            }
-
-            try:
-                sts_as_forge.assume_role(
-                    RoleArn=tenant_arn,
-                    RoleSessionName='TenantValidation-Basic',
-                )
-                LOG.info(f'Basic AssumeRole successful for {tenant_arn}')
-                tenant_entry['assume_role_success'] = True
-            except ClientError as e:
-                LOG.error(f'Basic AssumeRole failed for {tenant_arn}: {e}')
-                tenant_entry['assume_role_error'] = str(e)
-            except Exception as e:
-                LOG.error(
-                    'Unexpected error in Basic AssumeRole for %s: %s',
+        configured_workers = int(os.environ.get(
+            'VALIDATION_MAX_WORKERS',
+            '8',
+        ))
+        worker_count = max(1, min(configured_workers, len(tenant_role_arns)))
+        LOG.info(
+            'Validating %s tenant roles with %s workers for Forge role %s',
+            len(tenant_role_arns),
+            worker_count,
+            forge_role_arn,
+        )
+        with ThreadPoolExecutor(max_workers=worker_count) as executor:
+            result['tenant_results'] = list(executor.map(
+                lambda tenant_arn: validate_tenant_role(
+                    sts_as_forge,
                     tenant_arn,
-                    e,
-                )
-                tenant_entry['assume_role_error'] = f'Unexpected error: {e}'
-
-            if tenant_entry['assume_role_success']:
-                try:
-                    tenant_resp = sts_as_forge.assume_role(
-                        RoleArn=tenant_arn,
-                        RoleSessionName='TenantValidation-Tags',
-                        Tags=[
-                            {
-                                'Key': 'CreatedBy',
-                                'Value': 'ForgeTrustValidator',
-                            },
-                            {'Key': 'Validation', 'Value': 'True'},
-                        ],
-                    )
-
-                    tenant_creds = tenant_resp['Credentials']
-                    sts_as_tenant = boto3.client(
-                        'sts',
-                        aws_access_key_id=tenant_creds['AccessKeyId'],
-                        aws_secret_access_key=tenant_creds['SecretAccessKey'],
-                        aws_session_token=tenant_creds['SessionToken'],
-                    )
-                    identity = sts_as_tenant.get_caller_identity()
-                    LOG.info(
-                        'AssumeRole WITH Tags successful for %s. Identity: %s',
-                        tenant_arn,
-                        identity['Arn'],
-                    )
-
-                    tenant_entry['tag_session_success'] = True
-                except ClientError as e:
-                    LOG.error(
-                        'AssumeRole WITH Tags failed for %s: %s',
-                        tenant_arn,
-                        e,
-                    )
-                    tenant_entry['tag_session_error'] = str(e)
-                except Exception as e:
-                    LOG.error(
-                        'Unexpected error in AssumeRole WITH Tags for %s: %s',
-                        tenant_arn,
-                        e,
-                    )
-                    tenant_entry['tag_session_error'] = (
-                        f'Unexpected error: {e}'
-                    )
-            else:
-                tenant_entry['tag_session_error'] = (
-                    'Skipped because basic AssumeRole failed'
-                )
-
-            result['tenant_results'].append(tenant_entry)
+                    forge_role_arn,
+                ),
+                tenant_role_arns,
+            ))
 
     except ClientError as e:
         LOG.error(f'IAM/STS error for Forge role {forge_role_arn}: {e}')

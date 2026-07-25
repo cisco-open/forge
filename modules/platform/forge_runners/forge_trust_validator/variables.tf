@@ -35,6 +35,20 @@ variable "iam_propagation_delay_seconds" {
   }
 }
 
+variable "validation_max_workers" {
+  type        = number
+  description = "Maximum number of tenant trust relationships validated concurrently for each Forge role."
+  default     = 8
+
+  validation {
+    condition = (
+      var.validation_max_workers >= 1
+      && var.validation_max_workers <= 32
+    )
+    error_message = "validation_max_workers must be between 1 and 32."
+  }
+}
+
 variable "forge_iam_roles" {
   type        = map(string)
   description = "List of IAM role ARNs for Forge runners."
