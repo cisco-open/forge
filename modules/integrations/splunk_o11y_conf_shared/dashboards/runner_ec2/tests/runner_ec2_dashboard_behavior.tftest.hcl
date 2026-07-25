@@ -3,6 +3,7 @@ mock_provider "signalfx" {}
 variables {
   tenant_names    = ["tenant-b", "tenant-a"]
   dashboard_group = "forge-dashboard-group"
+  detector_id     = "forge-runner-cpu-detector"
   dynamic_variables = [
     {
       property               = "aws_region"
@@ -36,6 +37,8 @@ run "runner_ec2_dashboard_contract" {
       ])
       && signalfx_time_chart.chart_cpu_utilization.name == "CPU utilization (%)"
       && signalfx_time_chart.chart_cpu_utilization.time_range == 3600
+      && strcontains(signalfx_time_chart.chart_cpu_utilization.program_text, "alerts(detector_id='forge-runner-cpu-detector')")
+      && !strcontains(signalfx_time_chart.chart_cpu_utilization.program_text, "autodetect_id=")
       && signalfx_list_chart.chart_top_instances_by_cpu_utilization.sort_by == "-value"
       && signalfx_list_chart.chart_top_instances_by_cpu_utilization.time_range == 3600
       && signalfx_list_chart.chart_disk_summary_utilization.description == "Percent of disk space utilized on all volumes on active hosts with agent installed. Tenant | Instance id | Host"

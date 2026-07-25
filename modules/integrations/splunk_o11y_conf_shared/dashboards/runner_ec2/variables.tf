@@ -22,3 +22,8 @@ variable "dashboard_group" {
   description = "Dashboard group name for organizing dashboards."
   type        = string
 }
+
+variable "detector_id" {
+  description = "Forge EC2 runner CPU detector ID linked to the CPU chart."
+  type        = string
+}
