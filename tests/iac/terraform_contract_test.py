@@ -313,6 +313,46 @@ def test_webhook_relay_api_gateway_access_logs_are_short_lived() -> None:
     assert 'CKV_AWS_76' not in stage
 
 
+def test_runner_webhook_enables_upstream_api_gateway_access_logs() -> None:
+    deployment_tf = read_repo_file(
+        'modules/platform/ec2_deployment/main.tf'
+    )
+    runner_module = hcl_block(deployment_tf, 'module', 'runners')
+    log_group = hcl_block(
+        deployment_tf,
+        'resource',
+        'aws_cloudwatch_log_group',
+        'webhook_api_gateway_access',
+    )
+
+    assert_contains_all(
+        deployment_tf,
+        [
+            'webhook_api_gateway_access_log_format = jsonencode({',
+            'requestId               = "$context.requestId"',
+            'sourceIp                = "$context.identity.sourceIp"',
+            'userAgent               = "$context.identity.userAgent"',
+            'routeKey                = "$context.routeKey"',
+            'status                  = "$context.status"',
+            'integrationErrorMessage = "$context.integrationErrorMessage"',
+        ],
+    )
+    assert_contains_all(
+        runner_module,
+        [
+            'webhook_lambda_apigateway_access_log_settings = {',
+            'destination_arn = aws_cloudwatch_log_group.webhook_api_gateway_access.arn',
+            'format          = local.webhook_api_gateway_access_log_format',
+        ],
+    )
+    assert (
+        'name              = '
+        '"/aws/apigateway/${var.runner_configs.prefix}-github-action-webhook"'
+    ) in log_group
+    assert 'retention_in_days = 3' in log_group
+    assert 'CKV_AWS_338' in log_group
+
+
 def test_splunk_stuck_dispatcher_worker_contract_is_offline_and_scoped() -> None:
     lambda_tf = read_repo_file(
         'modules/integrations/splunk_stuck_workflow_job_dispatcher/lambda.tf'
