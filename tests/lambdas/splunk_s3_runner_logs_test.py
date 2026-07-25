@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
 from conftest import requires_aws
 from support import load_handler_module
 
@@ -186,6 +187,42 @@ def test_ship_lines_retries_only_failed_kinesis_records(monkeypatch, aws):
     assert len(calls) == 2
     assert len(calls[0]['Records']) == 2
     assert len(calls[1]['Records']) == 1
+
+
+def test_ship_lines_raises_when_kinesis_retries_are_exhausted(
+    monkeypatch, aws, caplog
+):
+    mod = _load_splunk(monkeypatch)
+    calls = []
+
+    class _Kinesis:
+        def put_records(self, **kwargs):
+            calls.append(kwargs)
+            return {
+                'FailedRecordCount': 1,
+                'Records': [{
+                    'ErrorCode': 'ProvisionedThroughputExceededException',
+                    'ErrorMessage': 'Rate exceeded for shard shardId-000',
+                }],
+            }
+
+    monkeypatch.setattr(mod, 'kinesis_client', _Kinesis())
+    monkeypatch.setattr(mod.time, 'sleep', lambda _seconds: None)
+
+    with pytest.raises(
+        RuntimeError,
+        match='Kinesis rejected 1 runner-log records after 4 attempts',
+    ):
+        mod.ship_lines_to_kinesis(
+            ['2026-07-03T22:26:04.000Z one'],
+            'forge-gh-logs',
+            'acme/app/99/1/4242.log',
+            {},
+        )
+
+    assert len(calls) == 4
+    assert 'ProvisionedThroughputExceededException' in caplog.text
+    assert 'shardId-000' in caplog.text
 
 
 def test_ship_lines_skips_oversized_payload(monkeypatch, aws):

@@ -275,6 +275,7 @@ def ship_lines_to_kinesis(
         records = [{'Data': b, 'PartitionKey': str(
             i)} for i, (b, _l) in enumerate(buffer)]
         attempt = 0
+        failures: list[dict[str, Any]] = []
         while attempt < 4:
             resp = kinesis_client.put_records(
                 StreamName=KINESIS_STREAM_NAME, Records=records)
@@ -283,6 +284,11 @@ def ship_lines_to_kinesis(
                 total_shipped += len(buffer)
                 break
             # retry failed records
+            failures = [
+                result
+                for result in resp.get('Records', [])
+                if 'ErrorCode' in result
+            ]
             new_records = [
                 rec
                 for rec, result in zip(records, resp.get('Records', []))
@@ -300,7 +306,20 @@ def ship_lines_to_kinesis(
             time.sleep(backoff)
         else:
             LOG.error(
-                'kinesis_put_failed_after_retries remaining=%d', len(records))
+                'kinesis_put_failed_after_retries remaining=%d failures=%s',
+                len(records),
+                [
+                    {
+                        'error_code': failure.get('ErrorCode'),
+                        'error_message': failure.get('ErrorMessage'),
+                    }
+                    for failure in failures
+                ],
+            )
+            raise RuntimeError(
+                f'Kinesis rejected {len(records)} runner-log records '
+                'after 4 attempts'
+            )
         buffer = []
         current_bytes = 0
 
