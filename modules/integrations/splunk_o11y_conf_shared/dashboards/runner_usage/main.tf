@@ -15,10 +15,10 @@ locals {
   configured_k8s_tenant_filter = length(var.tenant_names) > 0 ? join(" or ", [
     for namespace in sort(var.tenant_names) : "filter('k8s.namespace.name', '${namespace}')"
   ]) : "filter('k8s.namespace.name', '__forge_tenant_scope_not_configured__')"
-  configured_k8s_cluster_names = distinct(flatten([
+  configured_k8s_cluster_names = sort(distinct(flatten([
     for var_def in var.dynamic_variables : var_def.values_suggested
     if var_def.property == "k8s.cluster.name"
-  ]))
+  ])))
   configured_k8s_cluster_filter = length(local.configured_k8s_cluster_names) > 0 ? join(" or ", [
     for cluster_name in local.configured_k8s_cluster_names : "filter('k8s.cluster.name', '${cluster_name}')"
   ]) : "filter('k8s.cluster.name', '__forge_cluster_scope_not_configured__')"
