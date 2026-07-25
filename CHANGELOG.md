@@ -1,5 +1,32 @@
 # Changelog
 
+## [4.5.0](https://github.com/cisco-open/forge/compare/v4.4.1...v4.5.0) (2026-07-25)
+
+
+### Features
+
+* **observability:** expose Forge module ref through standard tags ([#541](https://github.com/cisco-open/forge/issues/541)) ([d9bcc1c](https://github.com/cisco-open/forge/commit/d9bcc1cd2c9d39c029860655bb02636efeac0c46))
+* **observability:** own EC2 runner health detectors ([#538](https://github.com/cisco-open/forge/issues/538)) ([b6872e0](https://github.com/cisco-open/forge/commit/b6872e05a6cfdc74e54b8f03448ef7b77f9d583d))
+* **webhook:** enable API Gateway access logs ([#530](https://github.com/cisco-open/forge/issues/530)) ([58dae30](https://github.com/cisco-open/forge/commit/58dae307124867e05114657bfe27493f836e6f38))
+
+
+### Bug Fixes
+
+* **job-logs:** ignore events missing identifiers ([#534](https://github.com/cisco-open/forge/issues/534)) ([ceac8e6](https://github.com/cisco-open/forge/commit/ceac8e6ac74540bc9d730ef5e8caccce623d86fc))
+* **job-logs:** mitigate archiver out-of-memory failures ([#529](https://github.com/cisco-open/forge/issues/529)) ([bcc923b](https://github.com/cisco-open/forge/commit/bcc923bf927131434a48d7724ee20b5252484ca5))
+* **logs:** fail runner-log delivery after retries ([#533](https://github.com/cisco-open/forge/issues/533)) ([cf987bd](https://github.com/cisco-open/forge/commit/cf987bd17c8dde484a7c13b25ee7488e3582bd64))
+* **observability:** align OTel host coverage ([#537](https://github.com/cisco-open/forge/issues/537)) ([2e6af4d](https://github.com/cisco-open/forge/commit/2e6af4d0b73aed058dd3fb0e90d417e7207ac47f))
+* **observability:** correlate Kubernetes runner failures ([#539](https://github.com/cisco-open/forge/issues/539)) ([e7dd558](https://github.com/cisco-open/forge/commit/e7dd558fe665eec2617752c3c95656287cd23cb7))
+* **observability:** extract shared Lambda fields ([#528](https://github.com/cisco-open/forge/issues/528)) ([5652dcd](https://github.com/cisco-open/forge/commit/5652dcd7db8a88e1f921306bcc36c9914b53e682))
+* **opencost:** use exporter cluster dimension ([#536](https://github.com/cisco-open/forge/issues/536)) ([bdb9941](https://github.com/cisco-open/forge/commit/bdb994154e06bfaed45c218e4053dacc234a0f0b))
+* **trust:** reduce validation frequency ([#531](https://github.com/cisco-open/forge/issues/531)) ([5c3a009](https://github.com/cisco-open/forge/commit/5c3a009083436043112cf9c586e31f1f0890b1f3))
+* **webhook:** handle invalid signatures ([#532](https://github.com/cisco-open/forge/issues/532)) ([3871908](https://github.com/cisco-open/forge/commit/38719080eddb9a254505e905151f3e702f32b03e))
+
+
+### Performance Improvements
+
+* **trust:** validate tenant roles concurrently ([#535](https://github.com/cisco-open/forge/issues/535)) ([73a6f95](https://github.com/cisco-open/forge/commit/73a6f950f049f1190c6ef9ce7fc4a0b5e604d445))
+
 ## [4.4.1](https://github.com/cisco-open/forge/compare/v4.4.0...v4.4.1) (2026-07-25)
 
 
