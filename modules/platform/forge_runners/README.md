@@ -21,6 +21,26 @@ Forge is a multi-tenant CI platform built around ephemeral runners, short-lived 
 - The EC2 and ARC lanes can both be enabled for the same tenant; workflows choose by labels.
 - Changing GitHub App or runner-group settings can affect job routing immediately.
 
+## Deployment version inventory
+
+Pass the exact release tag, branch, or commit used in the module source through
+`forge_module_ref`. Forge adds it to all managed AWS resources as the
+`ForgeModuleRef` tag and includes it in the `forge_core` output. Existing
+callers remain compatible but report `unknown` until they pass the value.
+
+Operators can inventory deployed Lambda resources across a profile and region
+with the Resource Groups Tagging API:
+
+```bash
+aws resourcegroupstaggingapi get-resources \
+  --resource-type-filters lambda:function \
+  --tag-filters Key=ForgeModuleRef
+```
+
+Run the query for each production account and region, or read `forge_core`
+from each tenant Terraform state, to reconcile the configured module ref with
+the resources actually deployed.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -86,6 +106,7 @@ Forge is a multi-tenant CI platform built around ephemeral runners, short-lived 
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
+| <a name="input_forge_module_ref"></a> [forge\_module\_ref](#input\_forge\_module\_ref) | Forge module tag, branch, or commit deployed by the calling configuration. | `string` | `"unknown"` | no |
 | <a name="input_arc_deployment_specs"></a> [arc\_deployment\_specs](#input\_arc\_deployment\_specs) | Deployment configuration for Azure Container Apps (ARC) runners.<br/><br/>Top-level fields:<br/>  - cluster\_name   : Name of the EKS cluster used for ARC runners.<br/>  - migrate\_cluster: Optional flag to indicate a one-time migration or<br/>    blue/green cutover of the ARC runner cluster.<br/>  - runner\_specs   : Map of ARC runner pool keys to their sizing and<br/>    container resource settings.<br/><br/>runner\_specs[*] object fields:<br/>  - runner\_size.max\_runners: Maximum concurrent ARC runners for this pool.<br/>  - runner\_size.min\_runners: Minimum number of warm runners.<br/>  - scale\_set\_name         : Logical name for the scale set / pool.<br/>  - scale\_set\_type         : Backing type for the scale set (for example,<br/>    kubernetes or containerapp, depending on integration).<br/>  - scale\_set\_labels       : GitHub runner labels advertised by this ARC<br/>    scale set.<br/>  - container\_images            : Container images used by the ARC runner,<br/>                                  sidecars, and DinD containers.<br/>  - container\_limits\_cpu        : CPU limit for the runner container.<br/>  - container\_limits\_memory     : Memory limit for the runner container.<br/>  - container\_requests\_cpu      : CPU request (baseline reservation).<br/>  - container\_requests\_memory   : Memory request (baseline reservation).<br/>  - volume\_requests\_storage\_size: Size of attached storage for the runner.<br/>  - volume\_requests\_storage\_type: Storage class or type for attached volume. | <pre>object({<br/>    cluster_name    = string<br/>    migrate_cluster = optional(bool, false)<br/>    runner_specs = map(object({<br/>      runner_size = object({<br/>        max_runners = number<br/>        min_runners = number<br/>      })<br/>      scale_set_name   = string<br/>      scale_set_type   = string<br/>      scale_set_labels = list(string)<br/>      container_images = optional(object({<br/>        actions_runner = optional(string, "ghcr.io/actions/actions-runner:latest")<br/>        busybox        = optional(string, "public.ecr.aws/docker/library/busybox:stable")<br/>        dind_rootless  = optional(string, "public.ecr.aws/docker/library/docker:dind-rootless")<br/>      }), {})<br/>      container_limits_cpu         = string<br/>      container_limits_memory      = string<br/>      container_requests_cpu       = string<br/>      container_requests_memory    = string<br/>      volume_requests_storage_size = string<br/>      volume_requests_storage_type = string<br/>    }))<br/>  })</pre> | n/a | yes |
 | <a name="input_aws_profile"></a> [aws\_profile](#input\_aws\_profile) | AWS profile to use. | `string` | n/a | yes |
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | AWS region where Forge runners and supporting infrastructure are deployed. | `string` | n/a | yes |

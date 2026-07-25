@@ -28,6 +28,10 @@ locals {
   # ─────────────────────────────────────────────────────────────────────────────
   config = read_terragrunt_config("runner_settings.hcl")
 
+  release_version_file = "${get_repo_root()}/release_versions.yml"
+  release_version      = yamldecode(file(local.release_version_file))
+  forge_module_ref     = local.release_version.spec.iac.modules.forge_runners.ref
+
   # ─────────────────────────────────────────────────────────────────────────────
   # Tags
   # ─────────────────────────────────────────────────────────────────────────────
@@ -50,8 +54,9 @@ locals {
 }
 
 inputs = {
-  aws_profile = local.default_aws_profile
-  aws_region  = local.region
+  aws_profile      = local.default_aws_profile
+  aws_region       = local.region
+  forge_module_ref = local.forge_module_ref
 
   ec2_deployment_specs = {
     lambda_subnet_ids = local.config.locals.lambda_subnet_ids
