@@ -36,12 +36,47 @@ resource "aws_apigatewayv2_route" "post_hook" {
 }
 
 resource "aws_apigatewayv2_stage" "default" {
-  #checkov:skip=CKV_AWS_76:API Gateway access logging is deferred until the webhook relay log delivery path is tested end-to-end.
   api_id      = aws_apigatewayv2_api.webhook.id
   name        = "$default"
   auto_deploy = true
-  tags        = var.tags
-  tags_all    = var.tags
+
+  access_log_settings {
+    destination_arn = aws_cloudwatch_log_group.api_gateway_access.arn
+    format = jsonencode({
+      apiId                   = "$context.apiId"
+      domainName              = "$context.domainName"
+      errorMessage            = "$context.error.message"
+      errorResponseType       = "$context.error.responseType"
+      httpMethod              = "$context.httpMethod"
+      integrationErrorMessage = "$context.integrationErrorMessage"
+      integrationLatency      = "$context.integrationLatency"
+      integrationStatus       = "$context.integrationStatus"
+      path                    = "$context.path"
+      protocol                = "$context.protocol"
+      requestId               = "$context.requestId"
+      requestTime             = "$context.requestTime"
+      requestTimeEpoch        = "$context.requestTimeEpoch"
+      responseLatency         = "$context.responseLatency"
+      responseLength          = "$context.responseLength"
+      routeKey                = "$context.routeKey"
+      sourceIp                = "$context.identity.sourceIp"
+      stage                   = "$context.stage"
+      status                  = "$context.status"
+      userAgent               = "$context.identity.userAgent"
+    })
+  }
+
+  tags     = var.tags
+  tags_all = var.tags
+}
+
+resource "aws_cloudwatch_log_group" "api_gateway_access" {
+  #checkov:skip=CKV_AWS_158:KMS encryption for webhook relay log groups is deferred until the relay logging path is tested with customer-managed keys.
+  #checkov:skip=CKV_AWS_338:Webhook API access logs intentionally retain at most three days to limit request attribution data and ingestion cost.
+  name              = "/aws/apigateway/${local.api_name}"
+  retention_in_days = 3
+  tags              = var.tags
+  tags_all          = var.tags
 }
 
 resource "aws_lambda_permission" "apigw_invoke" {

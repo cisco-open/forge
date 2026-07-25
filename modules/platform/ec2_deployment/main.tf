@@ -2,7 +2,37 @@ locals {
   # Templatized userdata (cloud-init) file.
   user_data_prefix               = "${path.module}/template_files"
   userdata_template_post_install = "${local.user_data_prefix}/post_install.tftpl"
+  webhook_api_gateway_access_log_format = jsonencode({
+    apiId                   = "$context.apiId"
+    domainName              = "$context.domainName"
+    errorMessage            = "$context.error.message"
+    errorResponseType       = "$context.error.responseType"
+    httpMethod              = "$context.httpMethod"
+    integrationErrorMessage = "$context.integrationErrorMessage"
+    integrationLatency      = "$context.integrationLatency"
+    integrationStatus       = "$context.integrationStatus"
+    path                    = "$context.path"
+    protocol                = "$context.protocol"
+    requestId               = "$context.requestId"
+    requestTime             = "$context.requestTime"
+    requestTimeEpoch        = "$context.requestTimeEpoch"
+    responseLatency         = "$context.responseLatency"
+    responseLength          = "$context.responseLength"
+    routeKey                = "$context.routeKey"
+    sourceIp                = "$context.identity.sourceIp"
+    stage                   = "$context.stage"
+    status                  = "$context.status"
+    userAgent               = "$context.identity.userAgent"
+  })
+}
 
+resource "aws_cloudwatch_log_group" "webhook_api_gateway_access" {
+  #checkov:skip=CKV_AWS_158:KMS encryption for webhook access logs is deferred until the runner webhook path is tested with customer-managed keys.
+  #checkov:skip=CKV_AWS_338:Webhook API access logs intentionally retain at most three days to limit request attribution data and ingestion cost.
+  name              = "/aws/apigateway/${var.runner_configs.prefix}-github-action-webhook"
+  retention_in_days = 3
+  tags              = var.tenant_configs.tags
+  tags_all          = var.tenant_configs.tags
 }
 
 # Enable AWS-managed encryption key.
@@ -121,7 +151,11 @@ module "runners" {
   # Retention period for the logs in days.
   logging_retention_in_days = var.runner_configs.logging_retention_in_days
 
-  webhook_lambda_zip                = "${data.external.download_lambdas.result.path}/webhook.zip"
+  webhook_lambda_zip = "${data.external.download_lambdas.result.path}/webhook.zip"
+  webhook_lambda_apigateway_access_log_settings = {
+    destination_arn = aws_cloudwatch_log_group.webhook_api_gateway_access.arn
+    format          = local.webhook_api_gateway_access_log_format
+  }
   runner_binaries_syncer_lambda_zip = "${data.external.download_lambdas.result.path}/runner-binaries-syncer.zip"
   runners_lambda_zip                = "${data.external.download_lambdas.result.path}/runners.zip"
 

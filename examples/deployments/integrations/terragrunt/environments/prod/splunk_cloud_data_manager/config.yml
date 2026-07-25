@@ -10,6 +10,9 @@ cloudwatch_log_groups_config:
   enabled: true
   name: forge-cwl-prod
   datasource:
+    cwl-api-gateway:
+      enabled: true
+      index: forge-prod-index
     cwl-eks:
       enabled: true
       index: forge-prod-index

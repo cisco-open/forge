@@ -11,6 +11,7 @@ run "platform_ec2_deployment_contract" {
       "module \"ec2_update_runner_ssm_ami\"",
       "module \"ec2_update_runner_tags\"",
       "module \"runners\"",
+      "resource \"aws_cloudwatch_log_group\" \"webhook_api_gateway_access\"",
       "resource \"aws_kms_key\" \"github\"",
       "resource \"aws_kms_alias\" \"github\"",
       "resource \"aws_ssm_parameter\" \"hook_job_started\"",
