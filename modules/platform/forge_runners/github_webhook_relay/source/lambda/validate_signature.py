@@ -25,9 +25,20 @@ def lambda_handler(event, _):
         signature = headers.get('x-hub-signature-256', '')
         body = event['body']
         gh_event = headers.get('x-github-event', 'unknown')
+        delivery_id = headers.get('x-github-delivery', 'unknown')
+        user_agent = headers.get('user-agent', 'unknown')
+        source_ip = (
+            event.get('requestContext', {})
+            .get('http', {})
+            .get('sourceIp', 'unknown')
+        )
         LOG.info(
-            'Received GitHub webhook event=%s body_bytes=%d signature_present=%s',
+            'Received GitHub webhook event=%s delivery_id=%s source_ip=%s '
+            'user_agent=%s body_bytes=%d signature_present=%s',
             gh_event,
+            delivery_id,
+            source_ip,
+            user_agent,
             len(body.encode()),
             bool(signature),
         )
@@ -36,9 +47,19 @@ def lambda_handler(event, _):
                           hashlib.sha256).hexdigest()
         expected_signature = f"sha256={digest}"
         if not hmac.compare_digest(signature, expected_signature):
-            LOG.warning('Signature mismatch for GitHub webhook event=%s',
-                        gh_event)
-            raise ValueError('Invalid signature')
+            LOG.warning(
+                'Signature mismatch for GitHub webhook event=%s '
+                'delivery_id=%s source_ip=%s user_agent=%s',
+                gh_event,
+                delivery_id,
+                source_ip,
+                user_agent,
+            )
+            return {
+                'statusCode': 401,
+                'headers': {'content-type': 'application/json'},
+                'body': json.dumps({'message': 'Invalid signature'}),
+            }
 
         payload = json.loads(body)
         action = payload.get('action', 'none')

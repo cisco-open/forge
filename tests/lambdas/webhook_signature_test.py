@@ -11,7 +11,7 @@ These tests encode the intended security behavior and must pass.
 
 Handler contract used here:
   * accept  -> returns {"statusCode": 200, ...}
-  * reject  -> raises (ValueError("Invalid signature"))
+  * reject  -> returns {"statusCode": 401, ...}
 The secret is read at module load from the environment; the loader re-imports
 the module after each test sets env, so per-test secret config is honoured.
 """
@@ -58,13 +58,13 @@ def test_valid_signature_is_accepted(monkeypatch, event_bus, webhook_secret):
 
 def test_missing_signature_is_rejected(monkeypatch, event_bus, webhook_secret):
     event = make_apigw_v2_event(webhook_body(), signature_256=None)
-    with pytest.raises(Exception):
-        _invoke(
-            monkeypatch,
-            event_bus['name'],
-            secret_env={'WEBHOOK_SECRET': webhook_secret.decode()},
-            event=event,
-        )
+    resp = _invoke(
+        monkeypatch,
+        event_bus['name'],
+        secret_env={'WEBHOOK_SECRET': webhook_secret.decode()},
+        event=event,
+    )
+    assert resp['statusCode'] == 401
 
 
 def test_tampered_body_is_rejected(monkeypatch, event_bus, webhook_secret):
@@ -72,25 +72,23 @@ def test_tampered_body_is_rejected(monkeypatch, event_bus, webhook_secret):
     sig = sign_sha256(webhook_secret, body)
     tampered = body.replace(b'acme/app', b'attacker/app')
     event = make_apigw_v2_event(tampered, sig)
-    with pytest.raises(Exception):
-        _invoke(
-            monkeypatch,
-            event_bus['name'],
-            secret_env={'WEBHOOK_SECRET': webhook_secret.decode()},
-            event=event,
-        )
+    assert _invoke(
+        monkeypatch,
+        event_bus['name'],
+        secret_env={'WEBHOOK_SECRET': webhook_secret.decode()},
+        event=event,
+    )['statusCode'] == 401
 
 
 def test_wrong_secret_is_rejected(monkeypatch, event_bus, webhook_secret):
     body = webhook_body()
     event = make_apigw_v2_event(body, sign_sha256(b'the-wrong-secret', body))
-    with pytest.raises(Exception):
-        _invoke(
-            monkeypatch,
-            event_bus['name'],
-            secret_env={'WEBHOOK_SECRET': webhook_secret.decode()},
-            event=event,
-        )
+    assert _invoke(
+        monkeypatch,
+        event_bus['name'],
+        secret_env={'WEBHOOK_SECRET': webhook_secret.decode()},
+        event=event,
+    )['statusCode'] == 401
 
 
 def test_legacy_sha1_only_is_rejected(monkeypatch, event_bus, webhook_secret):
@@ -98,13 +96,12 @@ def test_legacy_sha1_only_is_rejected(monkeypatch, event_bus, webhook_secret):
     event = make_apigw_v2_event(body, signature_256=None)
     event['headers']['X-Hub-Signature'] = sign_sha1_legacy(
         webhook_secret, body)
-    with pytest.raises(Exception):
-        _invoke(
-            monkeypatch,
-            event_bus['name'],
-            secret_env={'WEBHOOK_SECRET': webhook_secret.decode()},
-            event=event,
-        )
+    assert _invoke(
+        monkeypatch,
+        event_bus['name'],
+        secret_env={'WEBHOOK_SECRET': webhook_secret.decode()},
+        event=event,
+    )['statusCode'] == 401
 
 
 # --------------------------------------------------------------------------- #
@@ -116,13 +113,12 @@ def test_forged_request_rejected_when_deploytime_secret_set(
     # Configure the secret the way the deployment does, and send an UNSIGNED
     # request. A correct handler rejects it.
     event = make_apigw_v2_event(webhook_body(), signature_256=None)
-    with pytest.raises(Exception):
-        _invoke(
-            monkeypatch,
-            event_bus['name'],
-            secret_env={'WEBHOOK_SECRET': webhook_secret.decode()},
-            event=event,
-        )
+    assert _invoke(
+        monkeypatch,
+        event_bus['name'],
+        secret_env={'WEBHOOK_SECRET': webhook_secret.decode()},
+        event=event,
+    )['statusCode'] == 401
 
 
 # --------------------------------------------------------------------------- #
@@ -137,13 +133,12 @@ def test_malformed_signature_is_rejected(
     raw_digest = sign_sha256(webhook_secret, body).split('=', 1)[1]
     # Valid digest but wrong/garbage scheme prefix: endswith() accepts it today.
     event = make_apigw_v2_event(body, f"{prefix}{raw_digest}")
-    with pytest.raises(Exception):
-        _invoke(
-            monkeypatch,
-            event_bus['name'],
-            secret_env={'WEBHOOK_SECRET': webhook_secret.decode()},
-            event=event,
-        )
+    assert _invoke(
+        monkeypatch,
+        event_bus['name'],
+        secret_env={'WEBHOOK_SECRET': webhook_secret.decode()},
+        event=event,
+    )['statusCode'] == 401
 
 
 # --------------------------------------------------------------------------- #
