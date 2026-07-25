@@ -221,7 +221,7 @@ locals {
         options = {
           enableSmartSources = true
           query              = <<-EOT
-            index="${var.splunk_conf.index}" ((forgecicd_log_type=webhook github.status=*) OR ("Successfully dispatched job for"))
+            index="${var.splunk_conf.index}" ((sourcetype="aws:cloudwatchlogs" source="*:/aws/lambda/*-webhook*" forgecicd_log_type=webhook github.status=*) OR (sourcetype="aws:cloudwatchlogs" source="*:/aws/lambda/*-dispatch-to-runner*" "Successfully dispatched job for"))
             | rex field=message "to the queue\(s\) (?<queued_url>https?://\S+)\s-\sJob ID:\s(?<dispatch_workflowJobId>\d+)"
             | rex field=queued_urls_raw max_match=0 "(?<queued_url>https?://[^,\s]+)"
             | spath path=github.workflowJobId output=github_workflow_job_id
@@ -275,7 +275,7 @@ locals {
             | where total_events = queued_count
             | where has_dispatch = 1
             | eval stuck_since=strftime(first_seen, "%Y-%m-%dT%H:%M:%S%Z"), stuck_minutes=round((now() - first_seen) / 60, 1)
-            | where stuck_minutes > 15 AND stuck_minutes <= 1440
+            | where stuck_minutes > 15 AND stuck_minutes <= 10080
             | mvexpand queued_url
             | sort - stuck_minutes
             | table workflowJobId job_name repository workflow_name head_branch head_sha labels workflow_job_url run_id run_attempt run_url created_at started_at stuck_since stuck_minutes queued_url github_delivery forgecicd_tenant aws_region
@@ -292,7 +292,7 @@ locals {
         options = {
           enableSmartSources = true
           query              = <<-EOT
-            index="${var.splunk_conf.index}" ((forgecicd_log_type=webhook github.status=*) OR ("Received event contains runner labels" "Job ID:"))
+            index="${var.splunk_conf.index}" ((sourcetype="aws:cloudwatchlogs" source="*:/aws/lambda/*-webhook*" forgecicd_log_type=webhook github.status=*) OR (sourcetype="aws:cloudwatchlogs" source="*:/aws/lambda/*-dispatch-to-runner*" "Received event contains runner labels" "Job ID:"))
             | rex field=message "Received event contains runner labels '(?<runner_labels>[^']+)' from '(?<warning_repo>[^']+)'.*Job ID:\s(?<warning_workflowJobId>\d+)"
             | spath path=github.workflowJobId output=github_workflow_job_id
             | spath path=github.workflowJobUrl output=workflow_job_url
@@ -345,7 +345,7 @@ locals {
             | where total_events = queued_count
             | where has_runner_label_warning = 1
             | eval stuck_since=strftime(first_seen, "%Y-%m-%dT%H:%M:%S%Z"), stuck_minutes=round((now() - first_seen) / 60, 1)
-            | where stuck_minutes > 15 AND stuck_minutes <= 1440
+            | where stuck_minutes > 15 AND stuck_minutes <= 10080
             | eval labels=coalesce(mvjoin(runner_labels, ", "), mvjoin(github_labels, ", "))
             | sort - stuck_minutes
             | table workflowJobId job_name repository warning_repo workflow_name head_branch head_sha labels workflow_job_url run_id run_attempt run_url created_at started_at stuck_since stuck_minutes github_deliveries forgecicd_tenant

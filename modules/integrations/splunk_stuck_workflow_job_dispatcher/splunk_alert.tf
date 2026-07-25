@@ -2,7 +2,7 @@ locals {
   splunk_webhook_url = "${aws_apigatewayv2_api.splunk.api_endpoint}/splunk/${random_password.webhook_token.result}"
 
   stuck_workflow_job_search = <<-EOT
-    index="${var.splunk_conf.index}" ((forgecicd_log_type=webhook github.status=*) OR ("Successfully dispatched job for"))
+    index="${var.splunk_conf.index}" ((sourcetype="aws:cloudwatchlogs" source="*:/aws/lambda/*-webhook*" forgecicd_log_type=webhook github.status=*) OR (sourcetype="aws:cloudwatchlogs" source="*:/aws/lambda/*-dispatch-to-runner*" "Successfully dispatched job for"))
     | rex field=message "to the queue\(s\) (?<queued_url>https?://\S+)\s-\sJob ID:\s(?<dispatch_workflowJobId>\d+)"
     | rex field=queued_urls_raw max_match=0 "(?<queued_url>https?://[^,\s]+)"
     | spath path=github.workflowJobId output=github_workflow_job_id
