@@ -521,6 +521,7 @@ def test_splunk_runner_logs_caps_parallel_sqs_scaling() -> None:
         'path = "${path.module}/lambda/splunk_s3_runner_logs"'
         in lambda_module
     )
+    assert 'memory_size   = 1024' in lambda_module
     assert 'batch_size                         = 1' in event_source
     assert re.search(r'(?m)^\s*scaling_config\s*{', event_source)
     assert (

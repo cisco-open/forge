@@ -10,6 +10,7 @@ module "splunk_s3_runner_logs_lambda" {
   function_name = "${local.prefix_lambda}-lambda-${var.aws_region}"
   handler       = "splunk_s3_runner_logs.lambda_handler"
   runtime       = "python3.12"
+  memory_size   = 1024
   timeout       = 900
   architectures = ["x86_64"]
 
