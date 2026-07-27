@@ -68,7 +68,7 @@ variable "tenant_names" {
 }
 
 variable "tenant_pods_pending_notifications" {
-  description = "Optional notification override for the legacy aggregate tenant pending-pod detector."
+  description = "Optional notification override for the standalone tenant pending-pod detector."
   type        = list(string)
   default     = null
 }

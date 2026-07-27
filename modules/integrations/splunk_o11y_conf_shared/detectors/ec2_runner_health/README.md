@@ -41,7 +41,7 @@ organization-wide detector.
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | < 10.0.0 |
+| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.33.0 |
 
 ## Modules
 
@@ -62,7 +62,7 @@ No modules.
 | <a name="input_detector_name_prefix"></a> [detector\_name\_prefix](#input\_detector\_name\_prefix) | Prefix to use for Splunk Observability detector names. | `string` | n/a | yes |
 | <a name="input_detector_notifications"></a> [detector\_notifications](#input\_detector\_notifications) | Detector notification destinations. | `list(string)` | n/a | yes |
 | <a name="input_dynamic_variables"></a> [dynamic\_variables](#input\_dynamic\_variables) | Dynamic metric property definitions used to scope the EC2 runner detectors. | <pre>list(object({<br/>    property               = string<br/>    alias                  = string<br/>    description            = string<br/>    values                 = list(string)<br/>    value_required         = bool<br/>    values_suggested       = list(string)<br/>    restricted_suggestions = bool<br/>  }))</pre> | n/a | yes |
-| <a name="input_resource_pressure_notifications"></a> [resource\_pressure\_notifications](#input\_resource\_pressure\_notifications) | Optional notification override for legacy aggregate disk and memory pressure detectors. | `list(string)` | `null` | no |
+| <a name="input_resource_pressure_notifications"></a> [resource\_pressure\_notifications](#input\_resource\_pressure\_notifications) | Optional notification override for the standalone disk and memory pressure detectors. | `list(string)` | `null` | no |
 | <a name="input_team"></a> [team](#input\_team) | Splunk Observability team ID. | `string` | n/a | yes |
 | <a name="input_tenant_names"></a> [tenant\_names](#input\_tenant\_names) | Forge tenant names allowed to contribute runner health signals. | `list(string)` | n/a | yes |
 

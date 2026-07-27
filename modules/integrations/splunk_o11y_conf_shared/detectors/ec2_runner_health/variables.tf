@@ -27,7 +27,7 @@ variable "team" {
 }
 
 variable "resource_pressure_notifications" {
-  description = "Optional notification override for legacy aggregate disk and memory pressure detectors."
+  description = "Optional notification override for the standalone disk and memory pressure detectors."
   type        = list(string)
   default     = null
 }

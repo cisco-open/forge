@@ -14,9 +14,9 @@ the four dependency rules and adds actionable workload-health rules for:
 - EBS provisioned-IOPS exceeded checks.
 
 AWS alerts retain region and resource dimensions, while Kubernetes alerts retain
-cluster context. Legacy aggregate EC2 memory/disk detectors remain available for
-chart compatibility but their notifications are suppressed when tenant-health
-coverage is complete.
+cluster context. Separate EC2 memory/disk detectors remain available for chart
+compatibility but their notifications are suppressed when tenant-health coverage
+is complete.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
