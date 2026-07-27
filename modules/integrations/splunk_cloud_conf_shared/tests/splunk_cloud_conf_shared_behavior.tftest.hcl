@@ -77,6 +77,7 @@ run "splunk_cloud_shared_dashboard_and_props_contract" {
       && splunk_configs_conf.forgecicd_shared_lambda_fields.name == "transforms/forgecicd_shared_lambda_fields"
       && strcontains(splunk_configs_conf.forgecicd_shared_lambda_fields.variables["REGEX"], "splunk-dependency-monitor")
       && strcontains(splunk_configs_conf.forgecicd_shared_lambda_fields.variables["REGEX"], "splunk-s3-runner-logs-lambda")
+      && strcontains(splunk_configs_conf.forgecicd_shared_lambda_fields.variables["REGEX"], "splunk-s3-runner-logs-redrive")
       && strcontains(splunk_configs_conf.forgecicd_shared_lambda_fields.variables["REGEX"], "forge-aws-billing-per-service")
       && strcontains(splunk_configs_conf.forgecicd_shared_lambda_fields.variables["REGEX"], "forge-aws-billing-per-resource-process")
       && strcontains(splunk_configs_conf.forgecicd_shared_lambda_fields.variables["REGEX"], "forge-aws-billing-per-resource")

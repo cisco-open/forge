@@ -14,7 +14,7 @@ module "splunk_s3_runner_logs_lambda" {
   architectures = ["x86_64"]
 
   source_path = [{
-    path = "${path.module}/lambda"
+    path = "${path.module}/lambda/splunk_s3_runner_logs"
   }]
 
   logging_log_group                 = aws_cloudwatch_log_group.splunk_s3_runner_logs_lambda.name
@@ -103,6 +103,8 @@ resource "aws_cloudwatch_log_group" "splunk_s3_runner_logs_lambda" {
 }
 
 resource "aws_lambda_event_source_mapping" "sqs_to_lambda" {
+  # Keep scaling_config unset so Lambda can scale this standard SQS consumer
+  # across the account's available concurrency instead of imposing a queue cap.
   event_source_arn                   = aws_sqs_queue.log_events_queue.arn
   function_name                      = module.splunk_s3_runner_logs_lambda.lambda_function_arn
   batch_size                         = 1

@@ -8,6 +8,7 @@ run "integrations_splunk_cloud_s3_runner_logs_contract" {
   variables {
     module_path = "."
     expected_literals = [
+      "module \"splunk_s3_runner_logs_redrive_lambda\"",
       "module \"splunk_s3_runner_logs_lambda\"",
       "resource \"aws_iam_role\" \"firehose_role\"",
       "resource \"aws_iam_policy\" \"firehose_policy\"",
@@ -18,6 +19,10 @@ run "integrations_splunk_cloud_s3_runner_logs_contract" {
       "resource \"aws_kms_key\" \"splunk_s3_runner_logs\"",
       "resource \"aws_kms_alias\" \"splunk_s3_runner_logs\"",
       "resource \"aws_cloudwatch_log_group\" \"splunk_s3_runner_logs_lambda\"",
+      "resource \"aws_cloudwatch_log_group\" \"splunk_s3_runner_logs_redrive\"",
+      "resource \"aws_cloudwatch_event_rule\" \"splunk_s3_runner_logs_redrive\"",
+      "resource \"aws_cloudwatch_event_target\" \"splunk_s3_runner_logs_redrive\"",
+      "resource \"aws_lambda_permission\" \"splunk_s3_runner_logs_redrive\"",
       "resource \"aws_lambda_event_source_mapping\" \"sqs_to_lambda\"",
       "resource \"aws_s3_bucket_notification\" \"logs\"",
       "resource \"aws_s3_bucket\" \"firehose_backup\"",
@@ -31,6 +36,7 @@ run "integrations_splunk_cloud_s3_runner_logs_contract" {
       "data \"aws_caller_identity\" \"current\"",
       "data \"aws_iam_policy_document\" \"kms_s3\"",
       "data \"aws_iam_policy_document\" \"splunk_s3_runner_logs_lambda\"",
+      "data \"aws_iam_policy_document\" \"splunk_s3_runner_logs_redrive\"",
       "data \"external\" \"s3_buckets\"",
       "data \"aws_secretsmanager_secret\" \"secrets\"",
       "data \"aws_secretsmanager_secret_version\" \"secrets\"",

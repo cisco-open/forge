@@ -52,7 +52,12 @@ LAMBDA_DIRS: dict[str, str] = {
         'job_log_archiver'
     ),
     'splunk_s3_runner_logs': (
-        'modules/integrations/splunk_cloud_s3_runner_logs/lambda'
+        'modules/integrations/splunk_cloud_s3_runner_logs/lambda/'
+        'splunk_s3_runner_logs'
+    ),
+    'redrive_runner_logs': (
+        'modules/integrations/splunk_cloud_s3_runner_logs/lambda/'
+        'redrive_runner_logs'
     ),
     'sec_meta_ec2_tags': (
         'modules/integrations/splunk_cloud_data_manager/'

@@ -185,6 +185,20 @@ CASES = [
         },
     },
     {
+        'id': 'runner-logs-redrive-healthcheck',
+        'function_name': 'forge-smoke-runner-logs-redrive',
+        'source': Path(
+            'modules/integrations/splunk_cloud_s3_runner_logs/lambda/'
+            'redrive_runner_logs/redrive_runner_logs.py'
+        ),
+        'env': {
+            'LOG_LEVEL': 'INFO',
+            'DLQ_ARN': 'arn:aws:sqs:us-east-1:000000000000:unused',
+        },
+        'event': {'healthcheck': True},
+        'expected': {'status': 'healthy'},
+    },
+    {
         'id': 'ec2-update-runner-tags-ignores-non-workflow-job',
         'function_name': 'forge-smoke-ec2-update-runner-tags',
         'source': Path(
@@ -434,6 +448,7 @@ def test_splunk_s3_runner_logs_ships_log_lines_to_kinesis(client):
         function_name='forge-smoke-splunk-s3-runner-logs',
         source=_REPO_ROOT / (
             'modules/integrations/splunk_cloud_s3_runner_logs/lambda/'
+            'splunk_s3_runner_logs/'
             'splunk_s3_runner_logs.py'
         ),
         env={
