@@ -15,3 +15,8 @@ variable "dashboard_group" {
   description = "Splunk Observability dashboard group ID."
   type        = string
 }
+
+variable "detector_id" {
+  description = "AWS control-plane detector ID for linking Lambda health alerts."
+  type        = string
+}

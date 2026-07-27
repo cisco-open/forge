@@ -14,6 +14,7 @@ mock_provider "signalfx" {
 
 variables {
   dashboard_group = "forge-dashboard-group"
+  detector_id     = "aws-control-plane-detector"
   dynamic_variables = [
     {
       property               = "aws_account_id"
@@ -77,5 +78,10 @@ run "creates_lambda_control_plane_dashboard" {
       && strcontains(program_text, "not filter('aws_tag_TenantName', '*')")
     ])
     error_message = "Every Lambda control-plane panel must be fail-closed and exclude tenant-tagged functions."
+  }
+
+  assert {
+    condition     = strcontains(signalfx_time_chart.errors_and_throttles_by_function.program_text, "alerts(detector_id='aws-control-plane-detector')")
+    error_message = "The Lambda error and throttle chart must show AWS control-plane detector events."
   }
 }

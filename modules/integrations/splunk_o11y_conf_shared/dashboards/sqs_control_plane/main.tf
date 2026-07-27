@@ -46,7 +46,10 @@ resource "signalfx_time_chart" "visible_messages" {
   name        = "Visible messages by control-plane queue"
   description = "Visible backlog by Forge control-plane SQS queue and AWS region."
 
-  program_text = "A = data('ApproximateNumberOfMessagesVisible', filter=(${local.control_plane_filter}) and (${local.sqs_dimension_filter}) and filter('stat', 'upper'), rollup='latest').max(over='5m').sum(by=['aws_region', 'QueueName']).publish(label='A')"
+  program_text = <<-EOF
+A = data('ApproximateNumberOfMessagesVisible', filter=(${local.control_plane_filter}) and (${local.sqs_dimension_filter}) and filter('stat', 'upper'), rollup='latest').max(over='5m').sum(by=['aws_region', 'QueueName']).publish(label='A')
+alerts(detector_id='${var.detector_id}').publish(label='Control-plane health alerts')
+EOF
 
   plot_type                 = "LineChart"
   axes_precision            = 0
@@ -79,7 +82,10 @@ resource "signalfx_time_chart" "oldest_message_age" {
   name        = "Oldest message age by control-plane queue"
   description = "Oldest visible message age by Forge control-plane SQS queue and AWS region."
 
-  program_text = "A = data('ApproximateAgeOfOldestMessage', filter=(${local.control_plane_filter}) and (${local.sqs_dimension_filter}) and filter('stat', 'upper'), rollup='latest').max(over='5m').max(by=['aws_region', 'QueueName']).publish(label='A')"
+  program_text = <<-EOF
+A = data('ApproximateAgeOfOldestMessage', filter=(${local.control_plane_filter}) and (${local.sqs_dimension_filter}) and filter('stat', 'upper'), rollup='latest').max(over='5m').max(by=['aws_region', 'QueueName']).publish(label='A')
+alerts(detector_id='${var.detector_id}').publish(label='Control-plane health alerts')
+EOF
 
   plot_type                 = "LineChart"
   axes_precision            = 0
@@ -207,7 +213,10 @@ resource "signalfx_time_chart" "dlq_visible_messages" {
   name        = "Control-plane DLQ visible messages"
   description = "Visible messages in Forge control-plane dead-letter queues."
 
-  program_text = "A = data('ApproximateNumberOfMessagesVisible', filter=(${local.control_plane_filter}) and filter('namespace', 'AWS/SQS') and (${local.dlq_filter}) and filter('stat', 'upper'), rollup='latest').max(over='5m').sum(by=['aws_region', 'QueueName']).publish(label='A')"
+  program_text = <<-EOF
+A = data('ApproximateNumberOfMessagesVisible', filter=(${local.control_plane_filter}) and filter('namespace', 'AWS/SQS') and (${local.dlq_filter}) and filter('stat', 'upper'), rollup='latest').max(over='5m').sum(by=['aws_region', 'QueueName']).publish(label='A')
+alerts(detector_id='${var.detector_id}').publish(label='Control-plane health alerts')
+EOF
 
   plot_type                 = "ColumnChart"
   axes_precision            = 0

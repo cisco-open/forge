@@ -151,3 +151,20 @@ run "fails_closed_when_required_dynamic_scope_is_empty" {
     error_message = "A required dynamic property without configured values must fail closed for every runner health detector."
   }
 }
+
+run "allows_tenant_health_to_own_resource_pressure_notifications" {
+  command = plan
+
+  variables {
+    resource_pressure_notifications = []
+  }
+
+  assert {
+    condition = (
+      toset(one(signalfx_detector.ec2_runner_cpu.rule).notifications) == toset(["Email,forge@example.com"])
+      && length(one(signalfx_detector.ec2_runner_disk.rule).notifications) == 0
+      && length(one(signalfx_detector.ec2_runner_memory.rule).notifications) == 0
+    )
+    error_message = "Tenant health must be able to own disk and memory notifications without muting the separate CPU detector."
+  }
+}

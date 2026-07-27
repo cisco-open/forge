@@ -8,7 +8,7 @@ resource "signalfx_detector" "tenant_dependency_health" {
   for_each = toset(var.tenant_names)
 
   name        = "${var.detector_name_prefix} tenant ${each.value} health"
-  description = "Monitors ${each.value} dependencies, Lambda failures, build queues, Kubernetes workloads, EC2 status checks, and EBS IOPS limits."
+  description = "Monitors ${each.value} dependencies, Lambda failures, build queues, Kubernetes workloads, EC2 status and resource pressure, and EBS IOPS limits."
   max_delay   = 120
   tags        = local.detector_tags
   teams       = [var.team]
@@ -30,6 +30,12 @@ pending_pods = data('k8s.pod.phase', filter=filter('k8s.namespace.name', '${each
 failed_or_unknown_pods = data('k8s.pod.phase', filter=filter('k8s.namespace.name', '${each.value}'), rollup='latest').between(3.5, 5.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name']).fill(value=0, duration='10m')
 container_restarts = data('k8s.container.restarts', filter=filter('k8s.namespace.name', '${each.value}') and filter('k8s.container.name', '*'), rollup='latest').max(by=['k8s.cluster.name', 'k8s.pod.name', 'k8s.container.name']).delta().sum(over='15m').sum(by=['k8s.cluster.name']).fill(value=0, duration='15m')
 ec2_status_failures = data('StatusCheckFailed', filter=filter('aws_tag_TenantName', '${each.value}') and filter('namespace', 'AWS/EC2') and filter('stat', 'upper') and filter('aws_instance_id', '*'), rollup='max', extrapolation='zero').max(over='5m').max(by=['aws_region', 'aws_instance_id'])
+ec2_disk_used = data('system.filesystem.usage', filter=filter('aws_tag_TenantName', '${each.value}') and filter('cloud.platform', 'aws_ec2') and filter('state', 'used') and filter('type', 'ext4', 'xfs'), rollup='average').sum(by=['host.name', 'mountpoint', 'type', 'aws_account_id', 'aws_region'])
+ec2_disk_total = data('system.filesystem.usage', filter=filter('aws_tag_TenantName', '${each.value}') and filter('cloud.platform', 'aws_ec2') and filter('state', 'used', 'free') and filter('type', 'ext4', 'xfs'), rollup='average').sum(by=['host.name', 'mountpoint', 'type', 'aws_account_id', 'aws_region'])
+ec2_disk_utilization = ((ec2_disk_used / ec2_disk_total) * 100).mean(over='5m')
+ec2_memory_used = data('system.memory.usage', filter=filter('aws_tag_TenantName', '${each.value}') and filter('cloud.platform', 'aws_ec2') and filter('state', 'used'), rollup='average').sum(by=['host.name', 'aws_account_id', 'aws_region'])
+ec2_memory_total = data('system.memory.usage', filter=filter('aws_tag_TenantName', '${each.value}') and filter('cloud.platform', 'aws_ec2') and filter('state', 'used', 'free', 'cached', 'buffered'), rollup='average').sum(by=['host.name', 'aws_account_id', 'aws_region'])
+ec2_memory_utilization = ((ec2_memory_used / ec2_memory_total) * 100).mean(over='5m')
 ebs_iops_exceeded = data('VolumeIOPSExceededCheck', filter=filter('aws_tag_TenantName', '${each.value}') and filter('namespace', 'AWS/EBS') and filter('stat', 'upper') and filter('VolumeId', '*'), rollup='latest', extrapolation='zero').max(over='5m').max(by=['aws_region', 'VolumeId'])
 detect(when(tenant_cycle < 1, '${var.detector_config.no_data_duration}')).publish('Tenant dependency probe has no data')
 detect(when(ssm_availability < 1, '${var.detector_config.failure_duration}')).publish('Tenant GitHub App SSM credentials unavailable')
@@ -44,6 +50,8 @@ detect(when(pending_pods > 0, '10m')).publish('Tenant Kubernetes pod pending')
 detect(when(failed_or_unknown_pods > 0, '10m')).publish('Tenant Kubernetes pod failed or unknown')
 detect(when(container_restarts > 3)).publish('Tenant Kubernetes container restarting')
 detect(when(ec2_status_failures > 0, '5m')).publish('Tenant EC2 status check failure')
+detect(when(ec2_disk_utilization > 80, '10m'), off=when(ec2_disk_utilization < 75, '10m'), auto_resolve_after='15m').publish('Tenant EC2 disk pressure')
+detect(when(ec2_memory_utilization > 90, '10m'), off=when(ec2_memory_utilization < 80, '10m'), auto_resolve_after='15m').publish('Tenant EC2 memory pressure')
 detect(when(ebs_iops_exceeded > 0, '5m')).publish('Tenant EBS IOPS limit exceeded')
 EOF
 
@@ -135,6 +143,20 @@ EOF
     description   = "EC2 instance status-check failure sustained for 5 minutes"
     severity      = "Major"
     detect_label  = "Tenant EC2 status check failure"
+    notifications = var.detector_notifications
+  }
+
+  rule {
+    description   = "EC2 writable filesystem utilization above 80 percent for 10 minutes"
+    severity      = "Major"
+    detect_label  = "Tenant EC2 disk pressure"
+    notifications = var.detector_notifications
+  }
+
+  rule {
+    description   = "EC2 memory utilization above 90 percent for 10 minutes"
+    severity      = "Major"
+    detect_label  = "Tenant EC2 memory pressure"
     notifications = var.detector_notifications
   }
 

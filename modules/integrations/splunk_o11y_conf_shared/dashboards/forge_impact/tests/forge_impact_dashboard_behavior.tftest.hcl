@@ -43,6 +43,7 @@ run "forge_impact_dashboard_contract" {
       && strcontains(signalfx_list_chart.top_tenants_lambda_throttles.program_text, "data('Throttles'")
       && strcontains(signalfx_list_chart.top_tenants_ec2_memory.program_text, "system.memory.usage")
       && strcontains(signalfx_list_chart.top_tenants_ec2_memory.program_text, ".top(count=10)")
+      && strcontains(signalfx_list_chart.top_tenants_ec2_memory.program_text, "alerts(detector_id='tenant-a-health-detector')")
       && signalfx_list_chart.top_tenants_ec2_memory.color_by == "Scale"
       && length(signalfx_list_chart.top_tenants_ec2_memory.color_scale) == 3
       && one([for scale in signalfx_list_chart.top_tenants_ec2_memory.color_scale : scale.lt if scale.color == "green"]) == 90
@@ -57,6 +58,7 @@ run "forge_impact_dashboard_contract" {
       && strcontains(signalfx_list_chart.top_tenants_ec2_disk.program_text, "system.filesystem.usage")
       && strcontains(signalfx_list_chart.top_tenants_ec2_disk.program_text, "filter('type', 'ext4', 'xfs')")
       && strcontains(signalfx_list_chart.top_tenants_ec2_disk.program_text, "filter('mode', 'rw')")
+      && strcontains(signalfx_list_chart.top_tenants_ec2_disk.program_text, "alerts(detector_id='tenant-b-health-detector')")
       && strcontains(signalfx_list_chart.top_tenants_ec2_status_failures.program_text, "StatusCheckFailed")
       && strcontains(signalfx_list_chart.top_tenants_k8s_restarts.program_text, "k8s.container.restarts")
       && strcontains(signalfx_list_chart.top_tenants_ebs_queue_length.program_text, "VolumeQueueLength")

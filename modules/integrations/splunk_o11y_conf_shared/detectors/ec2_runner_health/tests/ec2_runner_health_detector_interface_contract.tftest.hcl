@@ -11,6 +11,7 @@ run "ec2_runner_health_detector_interface_contract" {
       "detector_name_prefix",
       "detector_notifications",
       "dynamic_variables",
+      "resource_pressure_notifications",
       "team",
       "tenant_names",
     ]
@@ -19,6 +20,7 @@ run "ec2_runner_health_detector_interface_contract" {
       "variable \"detector_name_prefix\"",
       "variable \"detector_notifications\"",
       "variable \"dynamic_variables\"",
+      "variable \"resource_pressure_notifications\"",
       "variable \"team\"",
       "variable \"tenant_names\"",
       "output \"detector_ids\"",

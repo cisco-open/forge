@@ -123,6 +123,7 @@ resource "signalfx_time_chart" "errors_and_throttles_by_function" {
   program_text = <<-EOF
 errors = data('Errors', filter=(${local.control_plane_filter}) and (${local.lambda_dimension_filter}) and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='5m').sum(by=['aws_region', 'aws_function_name']).publish(label='A')
 throttles = data('Throttles', filter=(${local.control_plane_filter}) and (${local.lambda_dimension_filter}) and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='5m').sum(by=['aws_region', 'aws_function_name']).publish(label='B')
+alerts(detector_id='${var.detector_id}').publish(label='Control-plane health alerts')
 EOF
 
   plot_type                 = "LineChart"

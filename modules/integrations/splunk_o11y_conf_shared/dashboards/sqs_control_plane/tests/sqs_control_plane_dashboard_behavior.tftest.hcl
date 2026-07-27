@@ -14,6 +14,7 @@ mock_provider "signalfx" {
 
 variables {
   dashboard_group = "forge-dashboard-group"
+  detector_id     = "aws-control-plane-detector"
   dynamic_variables = [
     {
       property               = "aws_account_id"
@@ -86,5 +87,16 @@ run "creates_sqs_control_plane_dashboard" {
       && strcontains(signalfx_time_chart.dlq_visible_messages.program_text, "*dlq*")
     )
     error_message = "Control-plane DLQ panels must support Forge dead-letter and DLQ queue naming patterns."
+  }
+
+  assert {
+    condition = alltrue([
+      for program_text in [
+        signalfx_time_chart.visible_messages.program_text,
+        signalfx_time_chart.oldest_message_age.program_text,
+        signalfx_time_chart.dlq_visible_messages.program_text,
+      ] : strcontains(program_text, "alerts(detector_id='aws-control-plane-detector')")
+    ])
+    error_message = "SQS backlog, age, and DLQ charts must show AWS control-plane detector events."
   }
 }

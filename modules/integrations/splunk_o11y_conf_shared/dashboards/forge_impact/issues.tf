@@ -66,6 +66,7 @@ resource "signalfx_list_chart" "top_tenants_ec2_memory" {
 used = data('system.memory.usage', filter=(${local.ec2_tenant_filter}) and filter('cloud.platform', 'aws_ec2') and filter('state', 'used'), rollup='latest').sum(by=['aws_tag_TenantName', 'host.name'])
 total = data('system.memory.usage', filter=(${local.ec2_tenant_filter}) and filter('cloud.platform', 'aws_ec2') and filter('state', 'used', 'free', 'cached', 'buffered'), rollup='latest').sum(by=['aws_tag_TenantName', 'host.name'])
 A = ((used / total) * 100).max(by=['aws_tag_TenantName']).top(count=10).publish(label='A')
+${local.tenant_health_alerts}
 EOF
 
   color_by                = "Scale"
@@ -262,6 +263,7 @@ resource "signalfx_list_chart" "top_tenants_ec2_disk" {
 used = data('system.filesystem.usage', filter=(${local.ec2_tenant_filter}) and filter('cloud.platform', 'aws_ec2') and filter('state', 'used') and filter('type', 'ext4', 'xfs') and filter('mode', 'rw'), rollup='latest').sum(by=['aws_tag_TenantName', 'host.id'])
 free = data('system.filesystem.usage', filter=(${local.ec2_tenant_filter}) and filter('cloud.platform', 'aws_ec2') and filter('state', 'free') and filter('type', 'ext4', 'xfs') and filter('mode', 'rw'), rollup='latest').sum(by=['aws_tag_TenantName', 'host.id'])
 A = ((used / (used + free)) * 100).max(by=['aws_tag_TenantName']).top(count=10).publish(label='A')
+${local.tenant_health_alerts}
 EOF
 
   color_by                = "Scale"

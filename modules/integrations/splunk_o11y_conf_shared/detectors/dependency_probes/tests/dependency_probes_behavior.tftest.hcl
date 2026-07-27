@@ -29,10 +29,10 @@ run "creates_one_dependency_detector_per_tenant" {
 
   assert {
     condition = (
-      length(signalfx_detector.tenant_dependency_health["tenant-a"].rule) == 14
-      && length(signalfx_detector.tenant_dependency_health["tenant-b"].rule) == 14
+      length(signalfx_detector.tenant_dependency_health["tenant-a"].rule) == 16
+      && length(signalfx_detector.tenant_dependency_health["tenant-b"].rule) == 16
     )
-    error_message = "Every tenant detector must keep four dependency rules plus ten actionable workload-health rules."
+    error_message = "Every tenant detector must keep four dependency rules plus twelve actionable workload-health rules."
   }
 
   assert {
@@ -45,6 +45,8 @@ run "creates_one_dependency_detector_per_tenant" {
       && strcontains(signalfx_detector.tenant_dependency_health["tenant-a"].program_text, "filter('QueueName', '*dead-letter*', '*dead_letter*', '*dlq*', '*DLQ*')")
       && strcontains(signalfx_detector.tenant_dependency_health["tenant-a"].program_text, "filter('k8s.namespace.name', 'tenant-a')")
       && strcontains(signalfx_detector.tenant_dependency_health["tenant-a"].program_text, "StatusCheckFailed")
+      && strcontains(signalfx_detector.tenant_dependency_health["tenant-a"].program_text, "ec2_disk_utilization > 80, '10m'")
+      && strcontains(signalfx_detector.tenant_dependency_health["tenant-a"].program_text, "ec2_memory_utilization > 90, '10m'")
       && strcontains(signalfx_detector.tenant_dependency_health["tenant-a"].program_text, "VolumeIOPSExceededCheck")
     )
     error_message = "Tenant detectors must combine direct dependency telemetry with tenant-scoped AWS and Kubernetes health signals."

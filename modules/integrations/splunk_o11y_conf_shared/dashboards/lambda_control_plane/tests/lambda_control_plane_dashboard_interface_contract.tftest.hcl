@@ -9,11 +9,13 @@ run "lambda_control_plane_dashboard_interface_contract" {
     module_path = "."
     expected_input_variables = [
       "dashboard_group",
+      "detector_id",
       "dynamic_variables",
     ]
     expected_output_values = []
     expected_interface_literals = [
       "variable \"dashboard_group\"",
+      "variable \"detector_id\"",
       "variable \"dynamic_variables\"",
       "property               = string",
       "values_suggested       = list(string)",
