@@ -12,13 +12,20 @@ import boto3
 import jwt
 import requests
 from boto3.s3.transfer import TransferConfig
+from botocore.config import Config
 from requests.exceptions import RequestException
 
 LOG = logging.getLogger()
 level_str = os.environ.get('LOG_LEVEL', 'INFO').upper()
 LOG.setLevel(getattr(logging, level_str, logging.INFO))
 
-SSM = boto3.client('ssm')
+SSM_CLIENT_CONFIG = Config(
+    connect_timeout=5,
+    read_timeout=10,
+    retries={'mode': 'standard', 'total_max_attempts': 4},
+)
+
+SSM = boto3.client('ssm', config=SSM_CLIENT_CONFIG)
 S3 = boto3.client('s3')
 S3_TRANSFER_CONFIG = TransferConfig(use_threads=False)
 
