@@ -26,12 +26,6 @@ variable "team" {
   type        = string
 }
 
-variable "resource_pressure_notifications" {
-  description = "Optional notification override for the standalone disk and memory pressure detectors."
-  type        = list(string)
-  default     = null
-}
-
 variable "tenant_names" {
   description = "Forge tenant names allowed to contribute runner health signals."
   type        = list(string)

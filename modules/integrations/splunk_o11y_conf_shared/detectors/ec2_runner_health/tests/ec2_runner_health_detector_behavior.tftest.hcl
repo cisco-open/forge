@@ -62,13 +62,13 @@ run "creates_scoped_runner_health_detectors" {
       && length(signalfx_detector.ec2_runner_disk.rule) == 1
       && length(signalfx_detector.ec2_runner_memory.rule) == 1
       && toset(one(signalfx_detector.ec2_runner_cpu.rule).notifications) == toset(["Email,forge@example.com"])
-      && toset(one(signalfx_detector.ec2_runner_disk.rule).notifications) == toset(["Email,forge@example.com"])
-      && toset(one(signalfx_detector.ec2_runner_memory.rule).notifications) == toset(["Email,forge@example.com"])
+      && length(one(signalfx_detector.ec2_runner_disk.rule).notifications) == 0
+      && length(one(signalfx_detector.ec2_runner_memory.rule).notifications) == 0
       && one(signalfx_detector.ec2_runner_cpu.rule).severity == "Major"
       && one(signalfx_detector.ec2_runner_disk.rule).severity == "Major"
       && one(signalfx_detector.ec2_runner_memory.rule).severity == "Major"
     )
-    error_message = "The runner health detectors must keep their names, owner team, severity, and configured alert route."
+    error_message = "The runner health detectors must keep their names, owner team, severity, and explicit notification ownership."
   }
 
   assert {
@@ -149,22 +149,5 @@ run "fails_closed_when_required_dynamic_scope_is_empty" {
       strcontains(program_text, "filter('deployment.scope', '__forge_dynamic_scope_not_configured__')")
     ])
     error_message = "A required dynamic property without configured values must fail closed for every runner health detector."
-  }
-}
-
-run "allows_tenant_health_to_own_resource_pressure_notifications" {
-  command = plan
-
-  variables {
-    resource_pressure_notifications = []
-  }
-
-  assert {
-    condition = (
-      toset(one(signalfx_detector.ec2_runner_cpu.rule).notifications) == toset(["Email,forge@example.com"])
-      && length(one(signalfx_detector.ec2_runner_disk.rule).notifications) == 0
-      && length(one(signalfx_detector.ec2_runner_memory.rule).notifications) == 0
-    )
-    error_message = "Tenant health must be able to own disk and memory notifications without muting the separate CPU detector."
   }
 }

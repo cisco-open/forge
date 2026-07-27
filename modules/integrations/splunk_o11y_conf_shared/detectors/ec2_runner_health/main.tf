@@ -62,7 +62,7 @@ EOF
     description   = "Forge EC2 runner writable filesystem above 80 percent for 10 minutes"
     severity      = "Major"
     detect_label  = "Forge EC2 runner high disk utilization"
-    notifications = var.resource_pressure_notifications == null ? var.detector_notifications : var.resource_pressure_notifications
+    notifications = []
   }
 }
 
@@ -85,6 +85,6 @@ EOF
     description   = "Forge EC2 runner memory above 90 percent for 10 minutes"
     severity      = "Major"
     detect_label  = "Forge EC2 runner high memory utilization"
-    notifications = var.resource_pressure_notifications == null ? var.detector_notifications : var.resource_pressure_notifications
+    notifications = []
   }
 }

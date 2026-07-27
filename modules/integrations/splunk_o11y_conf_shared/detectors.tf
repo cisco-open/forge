@@ -74,10 +74,4 @@ module "detector_ec2_runner_health" {
   dynamic_variables      = var.dashboard_variables.runner_ec2.dynamic_variables
   team                   = var.team
   tenant_names           = var.dashboard_variables.runner_ec2.tenant_names
-  resource_pressure_notifications = (
-    length(setsubtract(
-      toset(var.dashboard_variables.runner_ec2.tenant_names),
-      toset(var.dashboard_variables.dependency_probes.tenant_names),
-    )) == 0 ? [] : local.detector_notifications
-  )
 }
