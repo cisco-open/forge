@@ -14,6 +14,7 @@ run "integrations_splunk_o11y_aws_integration_common_contract" {
       "resource \"signalfx_aws_external_integration\" \"integration\"",
       "resource \"signalfx_aws_integration\" \"integration\"",
       "resource \"time_sleep\" \"wait_30_seconds\"",
+      "depends_on = [\n    time_sleep.wait_30_seconds,\n    aws_iam_role_policy.splunk_integration,\n    aws_iam_role_policy.splunk_managed_policy,\n  ]",
       "data \"aws_caller_identity\" \"current\"",
       "data \"aws_iam_policy_document\" \"splunk_integration\"",
       "data \"aws_iam_policy_document\" \"splunk_managed_policy\"",

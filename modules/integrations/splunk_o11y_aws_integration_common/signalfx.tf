@@ -14,7 +14,12 @@ resource "signalfx_aws_integration" "integration" {
   use_metric_streams_sync   = true
   enable_check_large_volume = true
 
-  depends_on = [time_sleep.wait_30_seconds]
+  # Splunk needs these policies while disabling metric streams during destroy.
+  depends_on = [
+    time_sleep.wait_30_seconds,
+    aws_iam_role_policy.splunk_integration,
+    aws_iam_role_policy.splunk_managed_policy,
+  ]
 }
 
 # Force a delay between secret creation and seeding. We only need a few
