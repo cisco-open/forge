@@ -17,6 +17,7 @@ run "aws_regional_health_detector_source_inventory" {
       "Control-plane Lambda errors",
       "Control-plane Lambda throttles",
       "Control-plane DLQ backlog",
+      "Dependency monitor retries exhausted",
       "Build queue oldest age major",
       "Build queue backlog warning",
       "Queued-build DLQ activity",
@@ -32,7 +33,7 @@ run "aws_regional_health_detector_source_inventory" {
   }
 
   assert {
-    condition     = output.expected_literal_count == 15
+    condition     = output.expected_literal_count == 16
     error_message = "Regional AWS detector source inventory count must remain pinned."
   }
 }

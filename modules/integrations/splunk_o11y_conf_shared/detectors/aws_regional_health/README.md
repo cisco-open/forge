@@ -39,7 +39,10 @@ detector accidentally.
 
 The control-plane detector excludes tenant-tagged resources and monitors:
 
-- sustained errors and throttles in shared Forge Lambda functions;
+- sustained errors and throttles in shared Forge Lambda functions, excluding
+  dependency-monitor errors that Lambda can still retry;
+- dependency-monitor failure-destination sends, which occur only after a
+  scheduled request exhausts all Lambda retries;
 - sustained backlog and oldest-message age in shared SQS queues; and
 - visible messages in control-plane dead-letter queues, including
   `dead-letter`, `dead_letter`, and `dlq` naming conventions.

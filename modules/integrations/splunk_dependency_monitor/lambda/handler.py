@@ -33,11 +33,14 @@ TENANT_PARAMETER_SUFFIX = '/github_ghes_org'
 SSM_CLIENT_CONFIG = Config(
     connect_timeout=5,
     read_timeout=10,
-    retries={'mode': 'standard', 'total_max_attempts': 4},
+    retries={'mode': 'adaptive', 'total_max_attempts': 8},
 )
+TENANT_DISCOVERY_CACHE_TTL_SECONDS = 900
 
 queued_datapoints: list[dict[str, Any]] = []
 queued_events: list[dict[str, Any]] = []
+tenant_discovery_cache: list[dict[str, Any]] | None = None
+tenant_discovery_cache_expires_at = 0.0
 
 SPLUNK_METRIC_NAMES = {
     'Availability': 'forge.dependency.availability',
@@ -107,7 +110,7 @@ def create_github_app_jwt(issuer: str, private_key: Any) -> str:
     return token.decode('ascii') if isinstance(token, bytes) else token
 
 
-def discover_tenants() -> list[dict[str, Any]]:
+def _discover_tenants_from_ssm() -> list[dict[str, Any]]:
     """Discover regional Forge tenants from existing GitHub SSM parameters."""
     LOG.info(
         'tenant_discovery_started aws_region=%s parameter_root=%s '
@@ -241,6 +244,48 @@ def discover_tenants() -> list[dict[str, Any]]:
 
     LOG.info('tenant_discovery_complete tenants=%s', len(configs))
     return configs
+
+
+def _copy_tenant_configs(
+    configs: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    return [dict(config) for config in configs]
+
+
+def discover_tenants() -> list[dict[str, Any]]:
+    """Discover tenants with warm-cache and stale-cache fallback."""
+    global tenant_discovery_cache
+    global tenant_discovery_cache_expires_at
+
+    now = time.monotonic()
+    cache_is_fresh = tenant_discovery_cache is not None and now < tenant_discovery_cache_expires_at
+    if cache_is_fresh:
+        LOG.info(
+            'tenant_discovery_cache_hit aws_region=%s tenants=%s',
+            AWS_REGION,
+            len(tenant_discovery_cache),
+        )
+        return _copy_tenant_configs(tenant_discovery_cache)
+
+    try:
+        configs = _discover_tenants_from_ssm()
+    except Exception as error:
+        if tenant_discovery_cache is None:
+            raise
+        LOG.warning(
+            'tenant_discovery_stale_cache_fallback aws_region=%s tenants=%s '
+            'error_type=%s',
+            AWS_REGION,
+            len(tenant_discovery_cache),
+            type(error).__name__,
+        )
+        return _copy_tenant_configs(tenant_discovery_cache)
+
+    tenant_discovery_cache = _copy_tenant_configs(configs)
+    tenant_discovery_cache_expires_at = (
+        now + TENANT_DISCOVERY_CACHE_TTL_SECONDS
+    )
+    return _copy_tenant_configs(configs)
 
 
 def load_github_app_credentials(

@@ -7,6 +7,13 @@ resource "aws_cloudwatch_log_group" "dependency_monitor" {
   tags_all          = local.all_security_tags
 }
 
+resource "aws_sqs_queue" "failed_invocations" {
+  name                      = local.failed_invocations_queue_name
+  message_retention_seconds = 1209600
+  sqs_managed_sse_enabled   = true
+  tags                      = local.all_security_tags
+}
+
 module "dependency_monitor" {
   #checkov:skip=CKV_TF_1:Module source uses a Renovate-managed release tag.
   source  = "terraform-aws-modules/lambda/aws"
@@ -63,6 +70,13 @@ data "aws_caller_identity" "current" {}
 
 data "aws_iam_policy_document" "dependency_monitor" {
   statement {
+    sid       = "SendFailedInvocation"
+    effect    = "Allow"
+    actions   = ["sqs:SendMessage"]
+    resources = [aws_sqs_queue.failed_invocations.arn]
+  }
+
+  statement {
     sid       = "DiscoverRegionalForgeTenants"
     effect    = "Allow"
     actions   = ["ssm:DescribeParameters"]
@@ -118,6 +132,17 @@ resource "aws_cloudwatch_event_target" "dependency_monitor" {
   rule      = aws_cloudwatch_event_rule.dependency_monitor.name
   target_id = "splunk-dependency-monitor"
   arn       = module.dependency_monitor.lambda_function_arn
+}
+
+resource "aws_lambda_function_event_invoke_config" "dependency_monitor" {
+  function_name          = module.dependency_monitor.lambda_function_name
+  maximum_retry_attempts = 2
+
+  destination_config {
+    on_failure {
+      destination = aws_sqs_queue.failed_invocations.arn
+    }
+  }
 }
 
 resource "aws_lambda_permission" "eventbridge_invoke" {

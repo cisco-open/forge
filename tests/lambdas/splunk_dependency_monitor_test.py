@@ -465,7 +465,7 @@ def test_tenants_are_discovered_from_regional_ssm(monkeypatch, aws):
     ]
 
 
-def test_tenant_discovery_runs_on_every_invocation(
+def test_tenant_discovery_uses_warm_cache(
     monkeypatch, caplog, aws
 ):
     handler = _load_handler(monkeypatch)
@@ -491,11 +491,51 @@ def test_tenant_discovery_runs_on_every_invocation(
 
     assert handler.discover_tenants() == []
     assert handler.discover_tenants() == []
-    assert describe_calls == 2
+    assert describe_calls == 1
     assert caplog.messages.count(
         'tenant_discovery_no_candidates aws_region=us-west-2 '
         'expected_pattern=/forge/*/github_ghes_org'
-    ) == 2
+    ) == 1
+    assert (
+        'tenant_discovery_cache_hit aws_region=us-west-2 tenants=0'
+        in caplog.messages
+    )
+
+
+def test_tenant_discovery_uses_stale_cache_after_ssm_failure(
+    monkeypatch, caplog, aws
+):
+    handler = _load_handler(monkeypatch)
+    cached_config = _tenant_config()
+    handler.tenant_discovery_cache = [cached_config]
+    handler.tenant_discovery_cache_expires_at = 99
+    monkeypatch.setattr(handler.time, 'monotonic', lambda: 100)
+
+    class FailingPaginator:
+        def paginate(self, **_kwargs):
+            raise RuntimeError('SSM throttled')
+
+    class FakeSsm:
+        def get_paginator(self, _operation_name):
+            return FailingPaginator()
+
+    monkeypatch.setattr(
+        handler.boto3,
+        'client',
+        lambda _service, *, region_name, **_kwargs: (
+            FakeSsm() if region_name == 'us-west-2' else None
+        ),
+    )
+
+    discovered = handler.discover_tenants()
+
+    assert discovered == [cached_config]
+    assert discovered is not handler.tenant_discovery_cache
+    assert (
+        'tenant_discovery_stale_cache_fallback aws_region=us-west-2 '
+        'tenants=1 error_type=RuntimeError'
+        in caplog.messages
+    )
 
 
 def test_splunk_outputs_are_delivered_independently(monkeypatch, aws):
@@ -923,7 +963,7 @@ def test_aws_client_requires_explicit_region(monkeypatch, aws):
         handler.aws_client('ssm')
 
 
-def test_ssm_client_uses_bounded_standard_retries(monkeypatch, aws):
+def test_ssm_client_uses_adaptive_retries(monkeypatch, aws):
     handler = _load_handler(monkeypatch)
     captured = {}
 
@@ -942,8 +982,8 @@ def test_ssm_client_uses_bounded_standard_retries(monkeypatch, aws):
     assert config.connect_timeout == 5
     assert config.read_timeout == 10
     assert config.retries == {
-        'mode': 'standard',
-        'total_max_attempts': 4,
+        'mode': 'adaptive',
+        'total_max_attempts': 8,
     }
 
 
