@@ -49,12 +49,6 @@ module "cur_per_service" {
 
   tags = local.all_security_tags
 
-  store_on_s3         = true
-  s3_object_tags_only = true
-  s3_object_tags      = var.default_tags
-  s3_bucket           = aws_s3_bucket.aws_billing_report.id
-  s3_prefix           = "lambda/billing_per_service"
-
   depends_on = [aws_cloudwatch_log_group.cur_per_service]
 }
 
