@@ -1,3 +1,4 @@
+import hashlib
 import json
 import logging
 import os
@@ -264,7 +265,7 @@ def ship_lines_to_kinesis(
     metadata_fields: dict[str, Any] | None = None,
 ) -> int:
     """Batch lines into PutRecords requests respecting count & size limits."""
-    buffer: list[tuple[bytes, int]] = []  # (data_bytes, length)
+    buffer: list[tuple[bytes, int, str]] = []
     total_shipped = 0
     current_bytes = 0
 
@@ -272,8 +273,10 @@ def ship_lines_to_kinesis(
         nonlocal buffer, total_shipped, current_bytes
         if not buffer:
             return
-        records = [{'Data': b, 'PartitionKey': str(
-            i)} for i, (b, _l) in enumerate(buffer)]
+        records = [
+            {'Data': data, 'PartitionKey': partition_key}
+            for data, _length, partition_key in buffer
+        ]
         attempt = 0
         failures: list[dict[str, Any]] = []
         while attempt < 4:
@@ -324,7 +327,7 @@ def ship_lines_to_kinesis(
         current_bytes = 0
 
     last_ts: float | None = None
-    for line in lines:
+    for line_number, line in enumerate(lines):
         if not line:
             continue
         ts = extract_ts(line, last_ts)
@@ -337,8 +340,18 @@ def ship_lines_to_kinesis(
             continue
         if len(buffer) >= MAX_RECORDS_BATCH or (current_bytes + payload_len) >= MAX_BATCH_BYTES:
             flush()
-        buffer.append((payload, payload_len))
+        buffer.append((
+            payload,
+            payload_len,
+            partition_key_for_line(bucket, key, line_number),
+        ))
         current_bytes += payload_len
 
     flush()
     return total_shipped
+
+
+def partition_key_for_line(bucket: str, key: str, line_number: int) -> str:
+    """Return a stable, high-cardinality Kinesis partition key."""
+    identity = f'{bucket}\0{key}\0{line_number}'.encode()
+    return hashlib.sha256(identity).hexdigest()

@@ -187,6 +187,49 @@ def test_ship_lines_retries_only_failed_kinesis_records(monkeypatch, aws):
     assert len(calls) == 2
     assert len(calls[0]['Records']) == 2
     assert len(calls[1]['Records']) == 1
+    assert calls[0]['Records'][1]['PartitionKey'] == (
+        calls[1]['Records'][0]['PartitionKey']
+    )
+
+
+def test_ship_lines_uses_unique_partition_keys_across_batches(
+    monkeypatch, aws
+):
+    mod = _load_splunk(monkeypatch)
+    calls = []
+
+    class _Kinesis:
+        def put_records(self, **kwargs):
+            calls.append(kwargs)
+            return {
+                'FailedRecordCount': 0,
+                'Records': [{} for _record in kwargs['Records']],
+            }
+
+    monkeypatch.setattr(mod, 'kinesis_client', _Kinesis())
+    monkeypatch.setattr(mod, 'MAX_RECORDS_BATCH', 2)
+
+    shipped = mod.ship_lines_to_kinesis(
+        [
+            '2026-07-03T22:26:04.000Z one',
+            'continued two',
+            'continued three',
+            'continued four',
+        ],
+        'forge-gh-logs',
+        'acme/app/99/1/4242.log',
+        {},
+    )
+
+    partition_keys = [
+        record['PartitionKey']
+        for call in calls
+        for record in call['Records']
+    ]
+
+    assert shipped == 4
+    assert len(calls) == 2
+    assert len(partition_keys) == len(set(partition_keys))
 
 
 def test_ship_lines_raises_when_kinesis_retries_are_exhausted(
