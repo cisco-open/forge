@@ -295,11 +295,11 @@ resource "signalfx_list_chart" "chart_top_instances_by_cpu_utilization" {
 
 resource "signalfx_time_chart" "chart_disk_utilization" {
   name        = "Disk utilization (%)"
-  description = "Percentile distribution across active hosts with agent installed"
+  description = "Writable filesystem utilization percentile distribution across active hosts with agent installed"
 
   program_text = <<-EOF
-B = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2') and filter('state', 'used')).publish(label='B', enable=False)
-C = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2') and filter('state', 'free')).publish(label='C', enable=False)
+B = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2') and filter('state', 'used') and filter('type', 'ext4', 'xfs') and filter('mode', 'rw')).publish(label='B', enable=False)
+C = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2') and filter('state', 'free') and filter('type', 'ext4', 'xfs') and filter('mode', 'rw')).publish(label='C', enable=False)
 D = ((B/(B+C))*100).mean(by=['AWSUniqueId']).publish(label='D', enable=False)
 E = (D).min().publish(label='E')
 F = (D).percentile(pct=10).publish(label='F')
@@ -1342,11 +1342,11 @@ EOF
 
 resource "signalfx_list_chart" "chart_disk_summary_utilization" {
   name        = "Disk summary utilization (%)"
-  description = "Percent of disk space utilized on all volumes on active hosts with agent installed. Tenant | Instance id | Host"
+  description = "Percent of disk space utilized on writable volumes on active hosts with agent installed. Tenant | Instance id | Host"
 
   program_text = <<-EOF
-A = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2') and filter('state', 'used')).sum(by=['aws_tag_TenantName', 'aws_instance_id', 'host.name', 'host.id', 'AWSUniqueId', 'mountpoint', 'device']).publish(label='A', enable=False)
-B = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2') and filter('state', 'free')).sum(by=['aws_tag_TenantName', 'aws_instance_id', 'host.name', 'host.id', 'AWSUniqueId', 'mountpoint', 'device']).publish(label='B', enable=False)
+A = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2') and filter('state', 'used') and filter('type', 'ext4', 'xfs') and filter('mode', 'rw')).sum(by=['aws_tag_TenantName', 'aws_instance_id', 'host.name', 'host.id', 'AWSUniqueId', 'mountpoint', 'device']).publish(label='A', enable=False)
+B = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2') and filter('state', 'free') and filter('type', 'ext4', 'xfs') and filter('mode', 'rw')).sum(by=['aws_tag_TenantName', 'aws_instance_id', 'host.name', 'host.id', 'AWSUniqueId', 'mountpoint', 'device']).publish(label='B', enable=False)
 C = ((A/(A+B))*100).publish(label='C')
 EOF
 

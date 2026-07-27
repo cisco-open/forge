@@ -47,11 +47,15 @@ run "runner_ec2_dashboard_contract" {
       && !strcontains(signalfx_time_chart.chart_cpu_utilization.program_text, "autodetect_id=")
       && strcontains(signalfx_time_chart.chart_disk_utilization.program_text, "alerts(detector_id='forge-runner-disk-detector')")
       && !strcontains(signalfx_time_chart.chart_disk_utilization.program_text, "autodetect_id=")
+      && strcontains(signalfx_time_chart.chart_disk_utilization.program_text, "filter('type', 'ext4', 'xfs')")
+      && strcontains(signalfx_time_chart.chart_disk_utilization.program_text, "filter('mode', 'rw')")
       && strcontains(signalfx_time_chart.chart_memory_utilization.program_text, "alerts(detector_id='forge-runner-memory-detector')")
       && !strcontains(signalfx_time_chart.chart_memory_utilization.program_text, "autodetect_id=")
       && signalfx_list_chart.chart_top_instances_by_cpu_utilization.sort_by == "-value"
       && signalfx_list_chart.chart_top_instances_by_cpu_utilization.time_range == 3600
-      && signalfx_list_chart.chart_disk_summary_utilization.description == "Percent of disk space utilized on all volumes on active hosts with agent installed. Tenant | Instance id | Host"
+      && signalfx_list_chart.chart_disk_summary_utilization.description == "Percent of disk space utilized on writable volumes on active hosts with agent installed. Tenant | Instance id | Host"
+      && strcontains(signalfx_list_chart.chart_disk_summary_utilization.program_text, "filter('type', 'ext4', 'xfs')")
+      && strcontains(signalfx_list_chart.chart_disk_summary_utilization.program_text, "filter('mode', 'rw')")
       && strcontains(signalfx_list_chart.chart_disk_summary_utilization.program_text, ".sum(by=['aws_tag_TenantName', 'aws_instance_id', 'host.name', 'host.id', 'AWSUniqueId', 'mountpoint', 'device'])")
       && contains([for field in signalfx_list_chart.chart_disk_summary_utilization.legend_options_fields : field.property if field.enabled], "aws_tag_TenantName")
       && contains([for field in signalfx_list_chart.chart_disk_summary_utilization.legend_options_fields : field.property if field.enabled], "aws_instance_id")
@@ -89,6 +93,8 @@ run "runner_ec2_dashboard_contract" {
       && strcontains(signalfx_list_chart.runner_classes_by_mean_peak_cpu.program_text, "aws_tag_ghr_runner_labels")
       && strcontains(signalfx_list_chart.runner_classes_by_mean_peak_memory.program_text, "aws_instance_type")
       && strcontains(signalfx_list_chart.job_runs_high_peak_filesystem.program_text, "system.filesystem.usage")
+      && strcontains(signalfx_list_chart.job_runs_high_peak_filesystem.program_text, "filter('type', 'ext4', 'xfs')")
+      && strcontains(signalfx_list_chart.job_runs_high_peak_filesystem.program_text, "filter('mode', 'rw')")
       && strcontains(signalfx_list_chart.job_runs_high_peak_filesystem.program_text, ".above(80, inclusive=True).top(count=20)")
       && length(signalfx_list_chart.job_runs_high_peak_filesystem.color_scale) == 3
       && one([for scale in signalfx_list_chart.job_runs_high_peak_filesystem.color_scale : scale.lt if scale.color == "blue"]) == 80

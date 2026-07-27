@@ -51,6 +51,8 @@ run "forge_impact_dashboard_contract" {
       && strcontains(signalfx_list_chart.top_tenants_sqs_backlog.program_text, "ApproximateNumberOfMessagesVisible")
       && strcontains(signalfx_list_chart.top_tenants_sqs_dlq_backlog.program_text, "*dead-letter*")
       && strcontains(signalfx_list_chart.top_tenants_ec2_disk.program_text, "system.filesystem.usage")
+      && strcontains(signalfx_list_chart.top_tenants_ec2_disk.program_text, "filter('type', 'ext4', 'xfs')")
+      && strcontains(signalfx_list_chart.top_tenants_ec2_disk.program_text, "filter('mode', 'rw')")
       && strcontains(signalfx_list_chart.top_tenants_ec2_status_failures.program_text, "StatusCheckFailed")
       && strcontains(signalfx_list_chart.top_tenants_k8s_restarts.program_text, "k8s.container.restarts")
       && strcontains(signalfx_list_chart.top_tenants_ebs_queue_length.program_text, "VolumeQueueLength")
