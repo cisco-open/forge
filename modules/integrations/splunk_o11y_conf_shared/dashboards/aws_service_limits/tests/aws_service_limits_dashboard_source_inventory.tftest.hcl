@@ -16,7 +16,7 @@ run "aws_service_limits_dashboard_source_inventory" {
       "service_name = \"EC2\"",
       "service_name = \"VPC\"",
       "service_name = \"IAM\"",
-      ".mean(over='1d').scale(100)",
+      ".mean(over='7d').scale(100)",
       "__forge_aws_account_scope_not_configured__",
       "__forge_aws_region_scope_not_configured__",
     ]

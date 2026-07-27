@@ -51,7 +51,7 @@ run "creates_aws_service_limits_dashboard" {
       && strcontains(chart.program_text, "filter('namespace', 'AWS/TrustedAdvisor')")
       && strcontains(chart.program_text, "filter('stat', 'upper')")
       && strcontains(chart.program_text, "data('ServiceLimitUsage'")
-      && strcontains(chart.program_text, ".mean(over='1d').scale(100)")
+      && strcontains(chart.program_text, ".mean(over='7d').scale(100)")
       && strcontains(chart.program_text, ".max(by=['Region', 'ServiceLimit'])")
       && chart.color_by == "Scale"
       && anytrue([for scale in chart.color_scale : scale.gte == 80 && scale.lt == 100])
