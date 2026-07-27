@@ -32,7 +32,7 @@ A small platform team cannot watch every tenant manually. These detectors conver
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.30.3 |
+| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.33.0 |
 
 ## Modules
 

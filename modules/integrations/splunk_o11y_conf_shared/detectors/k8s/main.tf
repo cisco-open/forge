@@ -114,7 +114,7 @@ EOF
 
 resource "signalfx_detector" "k8s_platform_pods_unhealthy" {
   name        = "${var.detector_name_prefix} K8S platform pods unhealthy"
-  description = "Detects sustained failed or unknown pods in Forge platform namespaces, grouped by cluster and namespace. Restore the affected scheduling or networking component and verify runner capacity."
+  description = "Detects sustained failed or unknown pods and repeated container restarts in Forge platform namespaces, grouped by cluster and namespace."
   max_delay   = 120
   tags        = local.detector_tags
   teams       = [var.team]
@@ -122,13 +122,22 @@ resource "signalfx_detector" "k8s_platform_pods_unhealthy" {
 
   program_text = <<-EOF
 platform_failed_pods = data('k8s.pod.phase', filter=(${local.k8s_platform_filter}), rollup='latest').between(3.5, 5.5, low_inclusive=True, high_inclusive=True).sum(by=['k8s.cluster.name', 'k8s.namespace.name']).fill(value=0, duration='${var.k8s_detector_config.platform_pods_duration}')
+platform_container_restarts = data('k8s.container.restarts', filter=(${local.k8s_platform_filter}) and filter('k8s.container.name', '*'), rollup='latest').max(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.pod.name', 'k8s.container.name']).delta().sum(over='${var.k8s_detector_config.container_restarts_duration}').sum(by=['k8s.cluster.name', 'k8s.namespace.name']).fill(value=0, duration='${var.k8s_detector_config.container_restarts_duration}')
 detect(when(platform_failed_pods > ${var.k8s_detector_config.platform_unhealthy_threshold}, '${var.k8s_detector_config.platform_pods_duration}')).publish('Platform pod failed or unknown')
+detect(when(platform_container_restarts > ${var.k8s_detector_config.container_restarts_threshold})).publish('Platform container restarting')
 EOF
 
   rule {
     description   = "Platform pod failed or unknown for ${var.k8s_detector_config.platform_pods_duration}"
     severity      = "Major"
     detect_label  = "Platform pod failed or unknown"
+    notifications = var.detector_notifications
+  }
+
+  rule {
+    description   = "Platform container restarts above ${var.k8s_detector_config.container_restarts_threshold} for ${var.k8s_detector_config.container_restarts_duration}"
+    severity      = "Warning"
+    detect_label  = "Platform container restarting"
     notifications = var.detector_notifications
   }
 }
