@@ -15,6 +15,6 @@ supported AWS service used by Forge:
 - CloudFormation;
 - Route 53.
 
-Each chart reports the one-day average limit usage percentage by Trusted Advisor
+Each chart reports the seven-day average limit usage percentage by Trusted Advisor
 region and service limit. Services without `ServiceLimitUsage` telemetry are not
 represented.

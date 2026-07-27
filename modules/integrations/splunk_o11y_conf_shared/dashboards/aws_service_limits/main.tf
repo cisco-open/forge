@@ -74,9 +74,9 @@ resource "signalfx_list_chart" "service_limit" {
   for_each = local.forge_services
 
   name        = "${each.value.display_name} service-limit usage"
-  description = "One-day average AWS Trusted Advisor service-limit usage for ${each.value.display_name}, by region and limit."
+  description = "Seven-day average AWS Trusted Advisor service-limit usage for ${each.value.display_name}, by region and limit."
 
-  program_text = "A = data('ServiceLimitUsage', filter=(${local.aws_service_limit_filter}) and filter('ServiceName', '${each.value.service_name}'), rollup='average').mean(over='1d').scale(100).max(by=['Region', 'ServiceLimit']).publish(label='A')"
+  program_text = "A = data('ServiceLimitUsage', filter=(${local.aws_service_limit_filter}) and filter('ServiceName', '${each.value.service_name}'), rollup='average').mean(over='7d').scale(100).max(by=['Region', 'ServiceLimit']).publish(label='A')"
   sort_by      = "-value"
 
   color_by                = "Scale"
