@@ -18,6 +18,7 @@ from urllib.parse import quote
 
 import boto3
 import common
+from botocore.config import Config
 
 LOG = logging.getLogger()
 LOG.setLevel(
@@ -29,6 +30,11 @@ GITHUB_API_VERSION = os.environ.get('GITHUB_API_VERSION', '2022-11-28')
 GITHUB_TIMEOUT_SECONDS = int(os.environ.get('GITHUB_TIMEOUT_SECONDS', '10'))
 TENANT_PARAMETER_ROOT = '/forge/'
 TENANT_PARAMETER_SUFFIX = '/github_ghes_org'
+SSM_CLIENT_CONFIG = Config(
+    connect_timeout=5,
+    read_timeout=10,
+    retries={'mode': 'standard', 'total_max_attempts': 4},
+)
 
 queued_datapoints: list[dict[str, Any]] = []
 queued_events: list[dict[str, Any]] = []
@@ -63,7 +69,10 @@ def aws_client(service_name: str) -> Any:
     """Create an AWS client pinned to the Lambda deployment region."""
     if not AWS_REGION:
         raise ValueError('AWS_REGION is missing from the Lambda environment')
-    return boto3.client(service_name, region_name=AWS_REGION)
+    client_kwargs: dict[str, Any] = {'region_name': AWS_REGION}
+    if service_name == 'ssm':
+        client_kwargs['config'] = SSM_CLIENT_CONFIG
+    return boto3.client(service_name, **client_kwargs)
 
 
 def _normalize_parameter_value(value: str) -> str:

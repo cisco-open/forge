@@ -9,11 +9,18 @@ from typing import Any, Dict, Iterable, List, Tuple
 
 import boto3
 from boto3.dynamodb.types import TypeDeserializer
+from botocore.config import Config
 from botocore.exceptions import ClientError
 
 LOG = logging.getLogger()
 LOG.setLevel(getattr(logging, os.environ.get(
     'LOG_LEVEL', 'INFO').upper(), logging.INFO))
+
+SSM_CLIENT_CONFIG = Config(
+    connect_timeout=5,
+    read_timeout=10,
+    retries={'mode': 'standard', 'total_max_attempts': 4},
+)
 
 dynamodb = boto3.client('dynamodb')
 deserializer = TypeDeserializer()
@@ -119,7 +126,7 @@ def load_tenant_configs() -> List[Dict[str, Any]]:
         raise ValueError(
             'Tenant config SSM parameter count must be at least 1')
 
-    ssm_client = boto3.client('ssm')
+    ssm_client = boto3.client('ssm', config=SSM_CLIENT_CONFIG)
     chunks = []
     for index in range(parameter_count):
         parameter_name = f"{parameter_prefix}/{index}"
@@ -201,7 +208,11 @@ def load_github_app_credentials(payload: Dict[str, Any]) -> Dict[str, Any]:
     aws_region = payload['aws_region']
     tenant_config = resolve_tenant_config(payload)
     deployment_prefix = tenant_config['deployment_prefix']
-    ssm_client = boto3.client('ssm', region_name=aws_region)
+    ssm_client = boto3.client(
+        'ssm',
+        region_name=aws_region,
+        config=SSM_CLIENT_CONFIG,
+    )
     parameter_base = f"/forge/{deployment_prefix}"
 
     raw_key = get_parameter(ssm_client, f"{parameter_base}/github_app_key")

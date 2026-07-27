@@ -15,6 +15,7 @@ if package_dir not in sys.path:
 import boto3  # noqa: E402
 import jwt  # noqa: E402
 import requests  # noqa: E402
+from botocore.config import Config  # noqa: E402
 
 # Configure logging
 LOG = logging.getLogger()
@@ -23,7 +24,13 @@ LOG.setLevel(getattr(logging, level_str, logging.INFO))
 
 DYNAMODB_TABLE = os.getenv('DYNAMODB_TABLE')
 
-SSM = boto3.client('ssm')
+SSM_CLIENT_CONFIG = Config(
+    connect_timeout=5,
+    read_timeout=10,
+    retries={'mode': 'standard', 'total_max_attempts': 4},
+)
+
+SSM = boto3.client('ssm', config=SSM_CLIENT_CONFIG)
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table(DYNAMODB_TABLE)
 

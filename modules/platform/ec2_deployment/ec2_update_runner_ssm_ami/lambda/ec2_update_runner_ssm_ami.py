@@ -3,12 +3,19 @@ import logging
 import os
 
 import boto3
+from botocore.config import Config
 
 LOG = logging.getLogger()
 level_str = os.environ.get('LOG_LEVEL', 'INFO').upper()
 LOG.setLevel(getattr(logging, level_str, logging.INFO))
 
-ssm = boto3.client('ssm')
+SSM_CLIENT_CONFIG = Config(
+    connect_timeout=5,
+    read_timeout=10,
+    retries={'mode': 'standard', 'total_max_attempts': 4},
+)
+
+ssm = boto3.client('ssm', config=SSM_CLIENT_CONFIG)
 ec2 = boto3.client('ec2')
 
 

@@ -229,7 +229,7 @@ def test_lambda_handler_keeps_tenant_failures_independent(monkeypatch, aws):
     monkeypatch.setattr(
         handler.boto3,
         'client',
-        lambda _service, *, region_name: (
+        lambda _service, *, region_name, **_kwargs: (
             region_name == 'us-west-2' and object()
         ),
     )
@@ -414,7 +414,7 @@ def test_tenants_are_discovered_from_regional_ssm(monkeypatch, aws):
     monkeypatch.setattr(
         handler.boto3,
         'client',
-        lambda _service, *, region_name: (
+        lambda _service, *, region_name, **_kwargs: (
             FakeSsm() if region_name == 'us-west-2' else None
         ),
     )
@@ -484,7 +484,7 @@ def test_tenant_discovery_runs_on_every_invocation(
     monkeypatch.setattr(
         handler.boto3,
         'client',
-        lambda _service, *, region_name: (
+        lambda _service, *, region_name, **_kwargs: (
             FakeSsm() if region_name == 'us-west-2' else None
         ),
     )
@@ -891,7 +891,7 @@ def test_lambda_handler_clears_warm_invocation_state(monkeypatch, aws):
     monkeypatch.setattr(
         handler.boto3,
         'client',
-        lambda _service, *, region_name: object(),
+        lambda _service, *, region_name, **_kwargs: object(),
     )
     monkeypatch.setattr(
         handler.common,
@@ -923,6 +923,30 @@ def test_aws_client_requires_explicit_region(monkeypatch, aws):
         handler.aws_client('ssm')
 
 
+def test_ssm_client_uses_bounded_standard_retries(monkeypatch, aws):
+    handler = _load_handler(monkeypatch)
+    captured = {}
+
+    def fake_client(service_name, **kwargs):
+        captured['service_name'] = service_name
+        captured.update(kwargs)
+        return object()
+
+    monkeypatch.setattr(handler.boto3, 'client', fake_client)
+
+    handler.aws_client('ssm')
+
+    config = captured['config']
+    assert captured['service_name'] == 'ssm'
+    assert captured['region_name'] == 'us-west-2'
+    assert config.connect_timeout == 5
+    assert config.read_timeout == 10
+    assert config.retries == {
+        'mode': 'standard',
+        'total_max_attempts': 4,
+    }
+
+
 def test_discovery_rejects_unavailable_parameter(monkeypatch, aws):
     handler = _load_handler(monkeypatch)
     parameter_name = '/forge/tenant-a-usw2-sl/github_ghes_org'
@@ -944,7 +968,7 @@ def test_discovery_rejects_unavailable_parameter(monkeypatch, aws):
     monkeypatch.setattr(
         handler.boto3,
         'client',
-        lambda _service, *, region_name: FakeSsm(),
+        lambda _service, *, region_name, **_kwargs: FakeSsm(),
     )
 
     with pytest.raises(ValueError, match='unavailable'):

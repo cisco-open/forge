@@ -1,3 +1,4 @@
+import ast
 import re
 import tomllib
 from pathlib import Path
@@ -66,6 +67,35 @@ def dependency_group_names(group_name: str) -> set[str]:
         )[0].lower()
         for dependency in dependencies
     }
+
+
+def test_python_ssm_clients_use_explicit_retry_config() -> None:
+    missing_config = []
+
+    for path in sorted((REPO_ROOT / 'modules').rglob('*.py')):
+        tree = ast.parse(path.read_text(encoding='utf-8'))
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            if not isinstance(node.func, ast.Attribute):
+                continue
+            is_boto3_client = all((
+                isinstance(node.func.value, ast.Name),
+                getattr(node.func.value, 'id', None) == 'boto3',
+                node.func.attr == 'client',
+            ))
+            if not is_boto3_client:
+                continue
+            first_arg = node.args[0] if node.args else None
+            if not isinstance(first_arg, ast.Constant):
+                continue
+            if first_arg.value != 'ssm':
+                continue
+            if not any(keyword.arg == 'config' for keyword in node.keywords):
+                relative_path = path.relative_to(REPO_ROOT).as_posix()
+                missing_config.append(f'{relative_path}:{node.lineno}')
+
+    assert missing_config == []
 
 
 def test_each_module_has_specific_native_test_file() -> None:
