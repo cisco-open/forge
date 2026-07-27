@@ -41,6 +41,10 @@ run "forge_impact_dashboard_contract" {
     condition = (
       strcontains(signalfx_list_chart.top_tenants_lambda_errors.program_text, "data('Errors'")
       && strcontains(signalfx_list_chart.top_tenants_lambda_throttles.program_text, "data('Throttles'")
+      && strcontains(signalfx_list_chart.top_tenants_lambda_errors.program_text, "filter('aws_tag_ForgeModuleRef', '*')")
+      && strcontains(signalfx_list_chart.top_tenants_lambda_throttles.program_text, "filter('aws_tag_ForgeModuleRef', '*')")
+      && !strcontains(signalfx_list_chart.top_tenants_lambda_errors.program_text, "aws_function_version")
+      && !strcontains(signalfx_list_chart.top_tenants_lambda_throttles.program_text, "aws_function_version")
       && strcontains(signalfx_list_chart.top_tenants_ec2_memory.program_text, "system.memory.usage")
       && strcontains(signalfx_list_chart.top_tenants_ec2_memory.program_text, ".top(count=10)")
       && signalfx_list_chart.top_tenants_ec2_memory.color_by == "Scale"
@@ -61,13 +65,32 @@ run "forge_impact_dashboard_contract" {
       && strcontains(signalfx_list_chart.top_tenants_k8s_restarts.program_text, "k8s.container.restarts")
       && strcontains(signalfx_list_chart.top_tenants_ebs_queue_length.program_text, "VolumeQueueLength")
       && strcontains(signalfx_list_chart.top_tenants_ebs_iops_exceeded.program_text, "VolumeIOPSExceededCheck")
-      && strcontains(signalfx_list_chart.top_tenants_lambda_errors.program_text, "alerts(detector_id='tenant-a-health-detector')")
-      && strcontains(signalfx_list_chart.top_tenants_sqs_dlq_backlog.program_text, "tenant-b health alerts")
-      && strcontains(signalfx_list_chart.top_tenants_k8s_restarts.program_text, "alerts(detector_id='tenant-a-health-detector')")
-      && strcontains(signalfx_list_chart.top_tenants_ec2_status_failures.program_text, "alerts(detector_id='tenant-b-health-detector')")
-      && strcontains(signalfx_list_chart.top_tenants_ebs_iops_exceeded.program_text, "alerts(detector_id='tenant-a-health-detector')")
+      && strcontains(signalfx_time_chart.tenant_health_alerts.program_text, "alerts(detector_id='tenant-a-health-detector')")
+      && strcontains(signalfx_time_chart.tenant_health_alerts.program_text, "alerts(detector_id='tenant-b-health-detector')")
+      && signalfx_time_chart.tenant_health_alerts.show_event_lines
     )
     error_message = "Forge impact must rank affected tenants across live-backed Lambda, EC2, K8S, SQS, and EBS issue signals."
+  }
+
+  assert {
+    condition = alltrue([
+      for program_text in [
+        signalfx_list_chart.top_tenants_lambda_errors.program_text,
+        signalfx_list_chart.top_tenants_lambda_throttles.program_text,
+        signalfx_list_chart.top_tenants_ec2_memory.program_text,
+        signalfx_list_chart.top_tenants_ec2_cpu.program_text,
+        signalfx_list_chart.top_tenants_ec2_disk.program_text,
+        signalfx_list_chart.top_tenants_ec2_status_failures.program_text,
+        signalfx_list_chart.top_tenants_k8s_pending_pods.program_text,
+        signalfx_list_chart.top_tenants_k8s_failed_pods.program_text,
+        signalfx_list_chart.top_tenants_k8s_restarts.program_text,
+        signalfx_list_chart.top_tenants_sqs_backlog.program_text,
+        signalfx_list_chart.top_tenants_sqs_dlq_backlog.program_text,
+        signalfx_list_chart.top_tenants_ebs_queue_length.program_text,
+        signalfx_list_chart.top_tenants_ebs_iops_exceeded.program_text,
+      ] : !strcontains(program_text, "alerts(detector_id=")
+    ])
+    error_message = "Issue leaderboards must stay metric-only; tenant alerts belong only on the central timeline."
   }
 
   assert {
@@ -96,7 +119,7 @@ run "forge_impact_dashboard_wiring_contract" {
     condition = (
       signalfx_dashboard.forge_impact.name == "Forge Tenant Impact"
       && signalfx_dashboard.forge_impact.dashboard_group == "forge-dashboard-group"
-      && length(signalfx_dashboard.forge_impact.chart) == 13
+      && length(signalfx_dashboard.forge_impact.chart) == 14
     )
     error_message = "Tenant impact must keep its dashboard identity and pinned chart count."
   }
@@ -109,6 +132,7 @@ run "forge_impact_dashboard_wiring_contract" {
       contains([for chart in signalfx_dashboard.forge_impact.chart : chart.chart_id], signalfx_list_chart.top_tenants_sqs_dlq_backlog.id),
       contains([for chart in signalfx_dashboard.forge_impact.chart : chart.chart_id], signalfx_list_chart.top_tenants_ec2_status_failures.id),
       contains([for chart in signalfx_dashboard.forge_impact.chart : chart.chart_id], signalfx_list_chart.top_tenants_ebs_queue_length.id),
+      contains([for chart in signalfx_dashboard.forge_impact.chart : chart.chart_id], signalfx_time_chart.tenant_health_alerts.id),
     ])
     error_message = "Tenant impact must contain its issue leaderboards."
   }

@@ -70,7 +70,7 @@ run "integrations_splunk_o11y_conf_shared_detectors_k8s_interface_contract" {
       "variable \"tenant_names\"",
       "description = \"List of Forge tenant namespaces.\"",
       "variable \"tenant_pods_pending_notifications\"",
-      "description = \"Optional notification override for the legacy aggregate tenant pending-pod detector.\"",
+      "description = \"Optional notification override for the standalone tenant pending-pod detector.\"",
       "output \"detector_ids\"",
       "description = \"Kubernetes detector IDs for linking the matching dashboard charts.\"",
     ]

@@ -63,8 +63,8 @@ EOF
 }
 
 resource "signalfx_detector" "aws_control_plane_health" {
-  name        = "${var.detector_name_prefix} AWS control-plane health"
-  description = "Monitors shared Forge Lambda errors and throttles plus control-plane SQS backlog and dead-letter queues. Tenant-tagged resources are intentionally excluded."
+  name        = "${var.detector_name_prefix} AWS Lambda control-plane health"
+  description = "Monitors shared Forge Lambda errors and throttles. Tenant-tagged resources are intentionally excluded."
   max_delay   = 120
   tags        = local.detector_tags
   teams       = [var.team]
@@ -73,14 +73,8 @@ resource "signalfx_detector" "aws_control_plane_health" {
   program_text = <<-EOF
 lambda_errors = data('Errors', filter=(${local.control_plane_filter}) and (${local.control_plane_lambda_filter}) and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='5m').sum(by=['aws_region', 'aws_function_name'])
 lambda_throttles = data('Throttles', filter=(${local.control_plane_filter}) and (${local.control_plane_lambda_filter}) and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='5m').sum(by=['aws_region', 'aws_function_name'])
-queue_oldest_age = data('ApproximateAgeOfOldestMessage', filter=(${local.control_plane_filter}) and (${local.control_plane_queue_filter}) and filter('stat', 'upper'), rollup='latest').max(over='5m').max(by=['aws_region', 'QueueName'])
-queue_visible_messages = data('ApproximateNumberOfMessagesVisible', filter=(${local.control_plane_filter}) and (${local.control_plane_queue_filter}) and filter('stat', 'upper'), rollup='latest').max(over='5m').max(by=['aws_region', 'QueueName'])
-dlq_visible_messages = data('ApproximateNumberOfMessagesVisible', filter=(${local.control_plane_filter}) and filter('namespace', 'AWS/SQS') and (${local.dead_letter_queue_name_filter}) and filter('stat', 'upper'), rollup='latest').max(over='5m').max(by=['aws_region', 'QueueName'])
 detect(when(lambda_errors > 0, '10m')).publish('Control-plane Lambda errors')
 detect(when(lambda_throttles > 0, '5m')).publish('Control-plane Lambda throttles')
-detect(when(queue_oldest_age > 300, '10m'), off=when(queue_oldest_age < 60, '15m')).publish('Control-plane queue oldest age major')
-detect(when((queue_oldest_age > 75) and (queue_visible_messages > 10), '10m'), off=when(queue_oldest_age < 60, '15m')).publish('Control-plane queue backlog warning')
-detect(when(dlq_visible_messages > 0, '5m')).publish('Control-plane DLQ backlog')
 EOF
 
   rule {
@@ -96,6 +90,24 @@ EOF
     detect_label  = "Control-plane Lambda throttles"
     notifications = var.detector_notifications
   }
+}
+
+resource "signalfx_detector" "aws_sqs_control_plane_health" {
+  name        = "${var.detector_name_prefix} AWS SQS control-plane health"
+  description = "Monitors shared Forge SQS backlog, oldest-message age, and dead-letter queues. Tenant-tagged resources are intentionally excluded."
+  max_delay   = 120
+  tags        = local.detector_tags
+  teams       = [var.team]
+  time_range  = 3600
+
+  program_text = <<-EOF
+queue_oldest_age = data('ApproximateAgeOfOldestMessage', filter=(${local.control_plane_filter}) and (${local.control_plane_queue_filter}) and filter('stat', 'upper'), rollup='latest').max(over='5m').max(by=['aws_region', 'QueueName'])
+queue_visible_messages = data('ApproximateNumberOfMessagesVisible', filter=(${local.control_plane_filter}) and (${local.control_plane_queue_filter}) and filter('stat', 'upper'), rollup='latest').max(over='5m').max(by=['aws_region', 'QueueName'])
+dlq_visible_messages = data('ApproximateNumberOfMessagesVisible', filter=(${local.control_plane_filter}) and filter('namespace', 'AWS/SQS') and (${local.dead_letter_queue_name_filter}) and filter('stat', 'upper'), rollup='latest').max(over='5m').max(by=['aws_region', 'QueueName'])
+detect(when(queue_oldest_age > 300, '10m'), off=when(queue_oldest_age < 60, '15m')).publish('Control-plane queue oldest age major')
+detect(when((queue_oldest_age > 75) and (queue_visible_messages > 10), '10m'), off=when(queue_oldest_age < 60, '15m')).publish('Control-plane queue backlog warning')
+detect(when(dlq_visible_messages > 0, '5m')).publish('Control-plane DLQ backlog')
+EOF
 
   rule {
     description   = "Control-plane queue oldest-message age above 300 seconds for 10 minutes"

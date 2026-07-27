@@ -46,7 +46,9 @@ resource "signalfx_time_chart" "visible_messages" {
   name        = "Visible messages by control-plane queue"
   description = "Visible backlog by Forge control-plane SQS queue and AWS region."
 
-  program_text = "A = data('ApproximateNumberOfMessagesVisible', filter=(${local.control_plane_filter}) and (${local.sqs_dimension_filter}) and filter('stat', 'upper'), rollup='latest').max(over='5m').sum(by=['aws_region', 'QueueName']).publish(label='A')"
+  program_text = <<-EOF
+A = data('ApproximateNumberOfMessagesVisible', filter=(${local.control_plane_filter}) and (${local.sqs_dimension_filter}) and filter('stat', 'upper'), rollup='latest').max(over='5m').sum(by=['aws_region', 'QueueName']).publish(label='A')
+EOF
 
   plot_type                 = "LineChart"
   axes_precision            = 0
@@ -79,7 +81,9 @@ resource "signalfx_time_chart" "oldest_message_age" {
   name        = "Oldest message age by control-plane queue"
   description = "Oldest visible message age by Forge control-plane SQS queue and AWS region."
 
-  program_text = "A = data('ApproximateAgeOfOldestMessage', filter=(${local.control_plane_filter}) and (${local.sqs_dimension_filter}) and filter('stat', 'upper'), rollup='latest').max(over='5m').max(by=['aws_region', 'QueueName']).publish(label='A')"
+  program_text = <<-EOF
+A = data('ApproximateAgeOfOldestMessage', filter=(${local.control_plane_filter}) and (${local.sqs_dimension_filter}) and filter('stat', 'upper'), rollup='latest').max(over='5m').max(by=['aws_region', 'QueueName']).publish(label='A')
+EOF
 
   plot_type                 = "LineChart"
   axes_precision            = 0
@@ -207,7 +211,9 @@ resource "signalfx_time_chart" "dlq_visible_messages" {
   name        = "Control-plane DLQ visible messages"
   description = "Visible messages in Forge control-plane dead-letter queues."
 
-  program_text = "A = data('ApproximateNumberOfMessagesVisible', filter=(${local.control_plane_filter}) and filter('namespace', 'AWS/SQS') and (${local.dlq_filter}) and filter('stat', 'upper'), rollup='latest').max(over='5m').sum(by=['aws_region', 'QueueName']).publish(label='A')"
+  program_text = <<-EOF
+A = data('ApproximateNumberOfMessagesVisible', filter=(${local.control_plane_filter}) and filter('namespace', 'AWS/SQS') and (${local.dlq_filter}) and filter('stat', 'upper'), rollup='latest').max(over='5m').sum(by=['aws_region', 'QueueName']).publish(label='A')
+EOF
 
   plot_type                 = "ColumnChart"
   axes_precision            = 0
@@ -272,6 +278,17 @@ resource "signalfx_time_chart" "dlq_oldest_message_age" {
 
 resource "terraform_data" "dashboard_parent" {
   triggers_replace = var.dashboard_group
+}
+
+resource "signalfx_time_chart" "health_alerts" {
+  name        = "SQS control-plane health alerts"
+  description = "Central alert timeline for shared Forge SQS backlog, oldest-message age, and dead-letter queues. SQS metric charts remain alert-free for clear correlation."
+
+  program_text = "alerts(detector_id='${var.detector_id}').publish(label='SQS control-plane health alerts')"
+
+  plot_type        = "LineChart"
+  show_event_lines = true
+  time_range       = 3600
 }
 
 resource "signalfx_dashboard" "sqs_control_plane" {
@@ -354,6 +371,14 @@ resource "signalfx_dashboard" "sqs_control_plane" {
     row      = 3
     column   = 6
     width    = 6
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_time_chart.health_alerts.id
+    row      = 4
+    column   = 0
+    width    = 12
     height   = 1
   }
 }

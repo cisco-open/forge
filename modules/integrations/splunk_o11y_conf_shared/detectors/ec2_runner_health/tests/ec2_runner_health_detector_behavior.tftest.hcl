@@ -62,13 +62,13 @@ run "creates_scoped_runner_health_detectors" {
       && length(signalfx_detector.ec2_runner_disk.rule) == 1
       && length(signalfx_detector.ec2_runner_memory.rule) == 1
       && toset(one(signalfx_detector.ec2_runner_cpu.rule).notifications) == toset(["Email,forge@example.com"])
-      && toset(one(signalfx_detector.ec2_runner_disk.rule).notifications) == toset(["Email,forge@example.com"])
-      && toset(one(signalfx_detector.ec2_runner_memory.rule).notifications) == toset(["Email,forge@example.com"])
+      && length(one(signalfx_detector.ec2_runner_disk.rule).notifications) == 0
+      && length(one(signalfx_detector.ec2_runner_memory.rule).notifications) == 0
       && one(signalfx_detector.ec2_runner_cpu.rule).severity == "Major"
       && one(signalfx_detector.ec2_runner_disk.rule).severity == "Major"
       && one(signalfx_detector.ec2_runner_memory.rule).severity == "Major"
     )
-    error_message = "The runner health detectors must keep their names, owner team, severity, and configured alert route."
+    error_message = "The runner health detectors must keep their names, owner team, severity, and explicit notification ownership."
   }
 
   assert {

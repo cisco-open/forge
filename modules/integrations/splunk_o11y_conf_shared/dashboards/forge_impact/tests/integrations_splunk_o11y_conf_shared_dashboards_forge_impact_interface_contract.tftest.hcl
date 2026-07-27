@@ -19,7 +19,7 @@ run "integrations_splunk_o11y_conf_shared_dashboards_forge_impact_interface_cont
       "description = \"Dashboard group name for organizing dashboards.\"",
       "type        = string",
       "variable \"detector_ids\"",
-      "description = \"Tenant health detector IDs keyed by tenant for linking issue charts.\"",
+      "description = \"Tenant health detector IDs keyed by tenant for the central alert timeline.\"",
       "type        = map(string)",
       "variable \"dynamic_variables\"",
       "description = \"Additional dynamic variable definitions for the dashboard.\"",

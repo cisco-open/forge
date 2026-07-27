@@ -310,4 +310,32 @@ variable "dashboard_variables" {
     })
   })
   description = "Variables for Dashboards"
+
+  validation {
+    condition = (
+      length(setsubtract(
+        toset(var.dashboard_variables.forge_impact.tenant_names),
+        toset(var.dashboard_variables.dependency_probes.tenant_names),
+      )) == 0
+      && length(setsubtract(
+        toset(var.dashboard_variables.dependency_probes.tenant_names),
+        toset(var.dashboard_variables.forge_impact.tenant_names),
+      )) == 0
+    )
+    error_message = "Forge Impact and tenant health detectors must use the same tenant_names."
+  }
+
+  validation {
+    condition = (
+      length(setsubtract(
+        toset(var.dashboard_variables.runner_k8s.tenant_names),
+        toset(var.dashboard_variables.dependency_probes.tenant_names),
+      )) == 0
+      && length(setsubtract(
+        toset(var.dashboard_variables.runner_ec2.tenant_names),
+        toset(var.dashboard_variables.dependency_probes.tenant_names),
+      )) == 0
+    )
+    error_message = "Every Kubernetes and EC2 runner tenant must have a tenant health detector."
+  }
 }

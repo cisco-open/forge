@@ -13,6 +13,7 @@ run "aws_regional_health_dashboard_source_inventory" {
       "resource \"signalfx_time_chart\" \"build_queue_oldest_age\"",
       "resource \"signalfx_time_chart\" \"build_queue_visible_backlog\"",
       "resource \"signalfx_time_chart\" \"build_queue_dlq_sends\"",
+      "resource \"signalfx_time_chart\" \"queue_health_alerts\"",
       "resource \"terraform_data\" \"dashboard_parent\"",
       "terraform_data.dashboard_parent,",
       "resource \"signalfx_dashboard\" \"aws_regional_health\"",
@@ -29,7 +30,7 @@ run "aws_regional_health_dashboard_source_inventory" {
   }
 
   assert {
-    condition     = output.expected_literal_count == 12
+    condition     = output.expected_literal_count == 13
     error_message = "Regional AWS dashboard source inventory count must remain pinned."
   }
 }

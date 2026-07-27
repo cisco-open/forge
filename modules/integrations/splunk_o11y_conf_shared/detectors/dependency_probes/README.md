@@ -10,12 +10,13 @@ the four dependency rules and adds actionable workload-health rules for:
 - Lambda error rate and sustained throttling;
 - delayed or stuck build queues and DLQ backlog;
 - pending or failed Kubernetes pods and repeated container restarts;
-- EC2 status-check failures; and
+- EC2 status-check failures and sustained memory or disk pressure; and
 - EBS provisioned-IOPS exceeded checks.
 
 AWS alerts retain region and resource dimensions, while Kubernetes alerts retain
-cluster context. Existing aggregate EC2 memory/disk detectors remain responsible
-for those notifications to avoid duplicate tenant incidents.
+cluster context. Separate EC2 memory/disk detectors remain available for chart
+compatibility but their notifications are suppressed when tenant-health coverage
+is complete.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements

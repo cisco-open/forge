@@ -28,6 +28,8 @@ run "dependency_probes_source_inventory" {
       "Tenant Kubernetes pod failed or unknown",
       "Tenant Kubernetes container restarting",
       "Tenant EC2 status check failure",
+      "Tenant EC2 disk pressure",
+      "Tenant EC2 memory pressure",
       "Tenant EBS IOPS limit exceeded",
     ]
   }
@@ -38,7 +40,7 @@ run "dependency_probes_source_inventory" {
   }
 
   assert {
-    condition     = output.expected_literal_count == 21
+    condition     = output.expected_literal_count == 23
     error_message = "Detector source inventory count must remain pinned."
   }
 }

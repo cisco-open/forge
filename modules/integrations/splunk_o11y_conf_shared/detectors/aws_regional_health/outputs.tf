@@ -3,7 +3,12 @@ output "detector_id" {
   value       = signalfx_detector.aws_regional_platform_health.id
 }
 
-output "control_plane_detector_id" {
-  description = "AWS control-plane detector ID for shared Lambda and SQS health."
+output "lambda_control_plane_detector_id" {
+  description = "AWS Lambda control-plane detector ID for linking Lambda health charts."
   value       = signalfx_detector.aws_control_plane_health.id
+}
+
+output "sqs_control_plane_detector_id" {
+  description = "AWS SQS control-plane detector ID for linking SQS health charts."
+  value       = signalfx_detector.aws_sqs_control_plane_health.id
 }

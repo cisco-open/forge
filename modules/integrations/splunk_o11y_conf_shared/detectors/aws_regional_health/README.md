@@ -77,6 +77,7 @@ No modules.
 | ---- | ---- |
 | [signalfx_detector.aws_control_plane_health](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/detector) | resource |
 | [signalfx_detector.aws_regional_platform_health](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/detector) | resource |
+| [signalfx_detector.aws_sqs_control_plane_health](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/detector) | resource |
 
 ## Inputs
 
@@ -91,6 +92,7 @@ No modules.
 
 | Name | Description |
 | ---- | ----------- |
-| <a name="output_control_plane_detector_id"></a> [control\_plane\_detector\_id](#output\_control\_plane\_detector\_id) | AWS control-plane detector ID for shared Lambda and SQS health. |
 | <a name="output_detector_id"></a> [detector\_id](#output\_detector\_id) | AWS regional platform detector ID for linking queue-health charts. |
+| <a name="output_lambda_control_plane_detector_id"></a> [lambda\_control\_plane\_detector\_id](#output\_lambda\_control\_plane\_detector\_id) | AWS Lambda control-plane detector ID for linking Lambda health charts. |
+| <a name="output_sqs_control_plane_detector_id"></a> [sqs\_control\_plane\_detector\_id](#output\_sqs\_control\_plane\_detector\_id) | AWS SQS control-plane detector ID for linking SQS health charts. |
 <!-- END_TF_DOCS -->

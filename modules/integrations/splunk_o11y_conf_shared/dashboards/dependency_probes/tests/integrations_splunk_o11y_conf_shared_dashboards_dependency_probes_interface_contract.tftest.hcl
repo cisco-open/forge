@@ -34,7 +34,7 @@ run "integrations_splunk_o11y_conf_shared_dashboards_dependency_probes_interface
       "description = \"Forge tenants available in the dashboard selector.\"",
       "type        = list(string)",
       "variable \"detector_ids\"",
-      "description = \"Tenant health detector IDs keyed by tenant for linking dashboard charts.\"",
+      "description = \"Tenant health detector IDs keyed by tenant for the central alert timeline.\"",
       "type        = map(string)",
     ]
   }

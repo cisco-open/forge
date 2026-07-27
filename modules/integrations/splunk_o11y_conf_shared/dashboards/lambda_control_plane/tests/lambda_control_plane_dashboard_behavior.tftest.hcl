@@ -14,6 +14,7 @@ mock_provider "signalfx" {
 
 variables {
   dashboard_group = "forge-dashboard-group"
+  detector_id     = "aws-control-plane-detector"
   dynamic_variables = [
     {
       property               = "aws_account_id"
@@ -52,10 +53,10 @@ run "creates_lambda_control_plane_dashboard" {
     condition = (
       signalfx_dashboard.lambda_control_plane.name == "Forge Control Plane - Lambdas"
       && signalfx_dashboard.lambda_control_plane.dashboard_group == "forge-dashboard-group"
-      && length(signalfx_dashboard.lambda_control_plane.chart) == 7
+      && length(signalfx_dashboard.lambda_control_plane.chart) == 8
       && length(signalfx_dashboard.lambda_control_plane.variable) == 3
     )
-    error_message = "The Lambda control-plane dashboard must keep its name, parent group, seven panels, and dedicated variables."
+    error_message = "The Lambda control-plane dashboard must keep its name, parent group, seven metric panels, one alert timeline, and dedicated variables."
   }
 
   assert {
@@ -77,5 +78,14 @@ run "creates_lambda_control_plane_dashboard" {
       && strcontains(program_text, "not filter('aws_tag_TenantName', '*')")
     ])
     error_message = "Every Lambda control-plane panel must be fail-closed and exclude tenant-tagged functions."
+  }
+
+  assert {
+    condition = (
+      !strcontains(signalfx_time_chart.errors_and_throttles_by_function.program_text, "alerts(detector_id=")
+      && strcontains(signalfx_time_chart.health_alerts.program_text, "alerts(detector_id='aws-control-plane-detector')")
+      && signalfx_time_chart.health_alerts.show_event_lines
+    )
+    error_message = "Lambda metric charts must remain alert-free and show detector events only on the central timeline."
   }
 }

@@ -23,7 +23,6 @@ resource "signalfx_list_chart" "github_availability" {
 
   program_text = <<-EOF
 A = data('forge.dependency.availability', filter=(${local.metric_filter}) and filter('Provider', 'GitHub'), rollup='latest').min(by=['TenantName', 'AWSRegion', 'CheckName']).publish(label='A')
-${local.detector_alerts}
 EOF
 
   color_scale {
@@ -63,7 +62,6 @@ resource "signalfx_list_chart" "ssm_availability" {
 
   program_text = <<-EOF
 A = data('forge.dependency.availability', filter=(${local.metric_filter}) and filter('Provider', 'AWS') and filter('CheckName', 'SSMCredentials'), rollup='latest').min(by=['TenantName', 'AWSRegion']).publish(label='A')
-${local.detector_alerts}
 EOF
 
   color_scale {
@@ -99,7 +97,6 @@ resource "signalfx_list_chart" "rate_limit_budget" {
 
   program_text = <<-EOF
 A = data('forge.dependency.rate_limit_remaining_pct', filter=(${local.metric_filter}) and filter('Provider', 'GitHub') and filter('CheckName', 'OrgRunnersApi'), rollup='latest').min(by=['TenantName', 'AWSRegion']).publish(label='A')
-${local.detector_alerts}
 EOF
 
   color_scale {
@@ -169,7 +166,6 @@ resource "signalfx_time_chart" "probe_execution" {
 
   program_text = <<-EOF
 A = data('forge.dependency.probe_executed', filter=(${local.metric_filter}) and filter('Provider', 'Forge') and filter('CheckName', 'TenantCycle'), rollup='sum').sum(by=['TenantName', 'AWSRegion']).publish(label='A')
-${local.detector_alerts}
 EOF
 
   plot_type        = "ColumnChart"
@@ -190,6 +186,17 @@ EOF
 
 resource "terraform_data" "dashboard_parent" {
   triggers_replace = var.dashboard_group
+}
+
+resource "signalfx_time_chart" "tenant_health_alerts" {
+  name        = "Tenant health alerts"
+  description = "Central alert timeline for the per-tenant dependency-health detectors. Dependency metric charts remain alert-free for clear correlation."
+
+  program_text = local.detector_alerts
+
+  plot_type        = "LineChart"
+  show_event_lines = true
+  time_range       = 3600
 }
 
 resource "signalfx_dashboard" "dependency_health" {
@@ -264,6 +271,14 @@ resource "signalfx_dashboard" "dependency_health" {
   chart {
     chart_id = signalfx_time_chart.probe_execution.id
     row      = 2
+    column   = 0
+    width    = 12
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_time_chart.tenant_health_alerts.id
+    row      = 3
     column   = 0
     width    = 12
     height   = 1

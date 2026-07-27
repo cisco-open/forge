@@ -195,6 +195,17 @@ resource "terraform_data" "dashboard_parent" {
   triggers_replace = var.dashboard_group
 }
 
+resource "signalfx_time_chart" "health_alerts" {
+  name        = "Lambda control-plane health alerts"
+  description = "Central alert timeline for shared Forge Lambda errors and throttles. Lambda metric charts remain alert-free for clear correlation."
+
+  program_text = "alerts(detector_id='${var.detector_id}').publish(label='Lambda control-plane health alerts')"
+
+  plot_type        = "LineChart"
+  show_event_lines = true
+  time_range       = 3600
+}
+
 resource "signalfx_dashboard" "lambda_control_plane" {
   name            = "Forge Control Plane - Lambdas"
   description     = "Health and activity for Forge Lambda functions that are not assigned to a tenant."
@@ -273,6 +284,14 @@ resource "signalfx_dashboard" "lambda_control_plane" {
   chart {
     chart_id = signalfx_time_chart.duration_by_function.id
     row      = 3
+    column   = 0
+    width    = 12
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_time_chart.health_alerts.id
+    row      = 4
     column   = 0
     width    = 12
     height   = 1

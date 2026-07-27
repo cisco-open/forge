@@ -10,8 +10,8 @@ Forge relies heavily on Lambdas for webhooks, scaling, tagging, log archival, tr
 
 - Invocation, error, throttle, and duration charts.
 - Provisioned concurrency and spillover views.
-- Version-level percentages and average duration lists using the enriched
-  `aws_function_name` and `aws_function_version` properties present on Forge
+- Forge module percentages and average duration lists using the enriched
+  `aws_function_name` property and `aws_tag_ForgeModuleRef` tag present on Forge
   Lambda metric streams.
 - Top-10 tenant rankings for errors and throttles, followed by top-10 Lambda
   detail charts that react to the dashboard tenant filter.
@@ -20,7 +20,7 @@ Forge relies heavily on Lambdas for webhooks, scaling, tagging, log archival, tr
 ## Operational Notes
 
 - Start here when an EventBridge, SQS, webhook, or trust-validation workflow behaves inconsistently.
-- Version-level charts help catch partial deployments or aliases pointing at unexpected code.
+- Forge module charts distinguish functions delivered by different Forge module references.
 - In a top-tenant chart, use the tenant property to apply a dashboard filter;
   the per-Lambda error and throttle charts then isolate that tenant.
 - Pair Lambda errors with CloudWatch/Splunk logs for request-level detail.

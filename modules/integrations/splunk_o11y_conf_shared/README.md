@@ -182,6 +182,7 @@ drill-down.
 | <a name="module_dashboard_sqs_control_plane"></a> [dashboard\_sqs\_control\_plane](#module\_dashboard\_sqs\_control\_plane) | ./dashboards/sqs_control_plane | n/a |
 | <a name="module_detector_aws_regional_health"></a> [detector\_aws\_regional\_health](#module\_detector\_aws\_regional\_health) | ./detectors/aws_regional_health | n/a |
 | <a name="module_detector_dependency_probes"></a> [detector\_dependency\_probes](#module\_detector\_dependency\_probes) | ./detectors/dependency_probes | n/a |
+| <a name="module_detector_ec2_runner_health"></a> [detector\_ec2\_runner\_health](#module\_detector\_ec2\_runner\_health) | ./detectors/ec2_runner_health | n/a |
 | <a name="module_detector_k8s"></a> [detector\_k8s](#module\_detector\_k8s) | ./detectors/k8s | n/a |
 
 ## Resources

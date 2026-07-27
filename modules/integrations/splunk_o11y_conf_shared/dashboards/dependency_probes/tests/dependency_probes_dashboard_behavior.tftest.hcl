@@ -39,8 +39,8 @@ run "creates_dependency_health_dashboard" {
   }
 
   assert {
-    condition     = length(signalfx_dashboard.dependency_health.chart) == 5
-    error_message = "The dashboard must retain GitHub, AWS, rate-limit, latency, and telemetry coverage."
+    condition     = length(signalfx_dashboard.dependency_health.chart) == 6
+    error_message = "The dashboard must retain GitHub, AWS, rate-limit, latency, telemetry, and central alert coverage."
   }
 
   assert {
@@ -81,11 +81,13 @@ run "creates_dependency_health_dashboard" {
           signalfx_list_chart.rate_limit_budget.program_text,
           signalfx_time_chart.probe_execution.program_text,
         ] :
-        strcontains(program_text, "alerts(detector_id='tenant-a-detector-id')")
-        && strcontains(program_text, "alerts(detector_id='tenant-b-detector-id')")
+        !strcontains(program_text, "alerts(detector_id=")
       ])
       && !strcontains(signalfx_time_chart.latency.program_text, "alerts(detector_id=")
+      && strcontains(signalfx_time_chart.tenant_health_alerts.program_text, "alerts(detector_id='tenant-a-detector-id')")
+      && strcontains(signalfx_time_chart.tenant_health_alerts.program_text, "alerts(detector_id='tenant-b-detector-id')")
+      && signalfx_time_chart.tenant_health_alerts.show_event_lines
     )
-    error_message = "Dependency detectors must link the four matching rule charts without linking the diagnostic-only latency chart."
+    error_message = "Dependency metric charts must remain alert-free and expose tenant alerts only on the central timeline."
   }
 }
