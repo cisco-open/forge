@@ -93,3 +93,16 @@ run "k8s_detector_scope_and_threshold_contract" {
     error_message = "K8s workload detectors must aggregate tenant pending pods by tenant and cover actionable platform pod failures and restart pressure."
   }
 }
+
+run "allows_tenant_health_to_own_pending_pod_notifications" {
+  command = plan
+
+  variables {
+    tenant_pods_pending_notifications = []
+  }
+
+  assert {
+    condition     = length(one(signalfx_detector.k8s_tenant_pods_pending.rule).notifications) == 0
+    error_message = "The aggregate pending-pod detector must support suppressing notifications when tenant health detectors own the same signal."
+  }
+}

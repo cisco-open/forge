@@ -3,6 +3,10 @@ mock_provider "signalfx" {}
 variables {
   tenant_names    = ["tenant-b", "tenant-a"]
   dashboard_group = "forge-dashboard-group"
+  detector_ids = {
+    tenant-a = "tenant-a-health-detector"
+    tenant-b = "tenant-b-health-detector"
+  }
   dynamic_variables = [
     {
       property               = "aws_region"
@@ -57,6 +61,11 @@ run "forge_impact_dashboard_contract" {
       && strcontains(signalfx_list_chart.top_tenants_k8s_restarts.program_text, "k8s.container.restarts")
       && strcontains(signalfx_list_chart.top_tenants_ebs_queue_length.program_text, "VolumeQueueLength")
       && strcontains(signalfx_list_chart.top_tenants_ebs_iops_exceeded.program_text, "VolumeIOPSExceededCheck")
+      && strcontains(signalfx_list_chart.top_tenants_lambda_errors.program_text, "alerts(detector_id='tenant-a-health-detector')")
+      && strcontains(signalfx_list_chart.top_tenants_sqs_dlq_backlog.program_text, "tenant-b health alerts")
+      && strcontains(signalfx_list_chart.top_tenants_k8s_restarts.program_text, "alerts(detector_id='tenant-a-health-detector')")
+      && strcontains(signalfx_list_chart.top_tenants_ec2_status_failures.program_text, "alerts(detector_id='tenant-b-health-detector')")
+      && strcontains(signalfx_list_chart.top_tenants_ebs_iops_exceeded.program_text, "alerts(detector_id='tenant-a-health-detector')")
     )
     error_message = "Forge impact must rank affected tenants across live-backed Lambda, EC2, K8S, SQS, and EBS issue signals."
   }

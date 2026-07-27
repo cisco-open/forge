@@ -1,15 +1,21 @@
-# Tenant dependency-probe detectors
+# Tenant health detectors
 
-Creates one Splunk Observability detector per Forge tenant. Each detector has
-rules for:
+Creates one Splunk Observability detector per Forge tenant. Each detector keeps
+the four dependency rules and adds actionable workload-health rules for:
 
 - missing probe telemetry;
 - unavailable regional SSM GitHub App parameters;
 - failed GitHub App authentication or organization runner API access; and
-- low GitHub REST API rate-limit budget.
+- low GitHub REST API rate-limit budget;
+- Lambda error rate and sustained throttling;
+- delayed or stuck build queues and DLQ backlog;
+- pending or failed Kubernetes pods and repeated container restarts;
+- EC2 status-check failures; and
+- EBS provisioned-IOPS exceeded checks.
 
-The detector keeps `AWSRegion` in the output MTS so a tenant
-incident identifies the affected Forge deployment region.
+AWS alerts retain region and resource dimensions, while Kubernetes alerts retain
+cluster context. Existing aggregate EC2 memory/disk detectors remain responsible
+for those notifications to avoid duplicate tenant incidents.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -39,15 +45,15 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
-| <a name="input_detector_config"></a> [detector\_config](#input\_detector\_config) | Thresholds and durations for tenant dependency detectors. | <pre>object({<br/>    failure_duration                   = string<br/>    no_data_duration                   = string<br/>    no_data_fill_duration              = string<br/>    rate_limit_duration                = string<br/>    rate_limit_remaining_pct_threshold = number<br/>  })</pre> | n/a | yes |
+| <a name="input_detector_config"></a> [detector\_config](#input\_detector\_config) | Thresholds and durations for the dependency rules in tenant health detectors. | <pre>object({<br/>    failure_duration                   = string<br/>    no_data_duration                   = string<br/>    no_data_fill_duration              = string<br/>    rate_limit_duration                = string<br/>    rate_limit_remaining_pct_threshold = number<br/>  })</pre> | n/a | yes |
 | <a name="input_detector_name_prefix"></a> [detector\_name\_prefix](#input\_detector\_name\_prefix) | Prefix to use for Splunk Observability detector names. | `string` | n/a | yes |
 | <a name="input_detector_notifications"></a> [detector\_notifications](#input\_detector\_notifications) | Detector notification destinations. | `list(string)` | n/a | yes |
 | <a name="input_team"></a> [team](#input\_team) | Splunk Observability team ID. | `string` | n/a | yes |
-| <a name="input_tenant_names"></a> [tenant\_names](#input\_tenant\_names) | Forge tenants that require independent dependency detectors. | `list(string)` | n/a | yes |
+| <a name="input_tenant_names"></a> [tenant\_names](#input\_tenant\_names) | Forge tenants that require independent health detectors. | `list(string)` | n/a | yes |
 
 ## Outputs
 
 | Name | Description |
 | ---- | ----------- |
-| <a name="output_detector_ids"></a> [detector\_ids](#output\_detector\_ids) | Dependency detector IDs keyed by tenant for linking dashboard charts. |
+| <a name="output_detector_ids"></a> [detector\_ids](#output\_detector\_ids) | Tenant health detector IDs keyed by tenant for linking dashboard charts. |
 <!-- END_TF_DOCS -->

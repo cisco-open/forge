@@ -59,6 +59,7 @@ No modules.
 | <a name="input_k8s_platform_namespaces"></a> [k8s\_platform\_namespaces](#input\_k8s\_platform\_namespaces) | Namespaces that contain platform pods required for runner scheduling and networking. | `list(string)` | n/a | yes |
 | <a name="input_team"></a> [team](#input\_team) | Team ID. | `string` | n/a | yes |
 | <a name="input_tenant_names"></a> [tenant\_names](#input\_tenant\_names) | List of Forge tenant namespaces. | `list(string)` | n/a | yes |
+| <a name="input_tenant_pods_pending_notifications"></a> [tenant\_pods\_pending\_notifications](#input\_tenant\_pods\_pending\_notifications) | Optional notification override for the legacy aggregate tenant pending-pod detector. | `list(string)` | `null` | no |
 
 ## Outputs
 

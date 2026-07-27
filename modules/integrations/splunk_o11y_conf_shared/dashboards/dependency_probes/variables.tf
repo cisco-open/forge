@@ -23,6 +23,6 @@ variable "tenant_names" {
 }
 
 variable "detector_ids" {
-  description = "Dependency detector IDs keyed by tenant for linking dashboard charts."
+  description = "Tenant health detector IDs keyed by tenant for linking dashboard charts."
   type        = map(string)
 }

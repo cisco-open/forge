@@ -108,7 +108,7 @@ EOF
     description   = "Tenant pod pending for ${var.k8s_detector_config.pending_pods_duration}"
     severity      = "Warning"
     detect_label  = "Tenant pod pending"
-    notifications = var.detector_notifications
+    notifications = var.tenant_pods_pending_notifications == null ? var.detector_notifications : var.tenant_pods_pending_notifications
   }
 }
 

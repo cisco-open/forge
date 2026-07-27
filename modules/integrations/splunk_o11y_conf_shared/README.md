@@ -40,7 +40,7 @@ It also creates:
 
 - Kubernetes detectors for missing telemetry, Splunk OTel collector health,
   pending tenant pods, and unhealthy platform pods.
-- One dependency detector per tenant in
+- One dependency and workload-health detector per tenant in
   `dashboard_variables.dependency_probes.tenant_names`. Each detector has rules
   for missing probe telemetry, unavailable SSM parameters, unavailable GitHub
   authentication or organization runner APIs, and a low GitHub API rate-limit

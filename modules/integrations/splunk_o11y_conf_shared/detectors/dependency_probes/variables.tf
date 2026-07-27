@@ -14,12 +14,12 @@ variable "team" {
 }
 
 variable "tenant_names" {
-  description = "Forge tenants that require independent dependency detectors."
+  description = "Forge tenants that require independent health detectors."
   type        = list(string)
 }
 
 variable "detector_config" {
-  description = "Thresholds and durations for tenant dependency detectors."
+  description = "Thresholds and durations for the dependency rules in tenant health detectors."
   type = object({
     failure_duration                   = string
     no_data_duration                   = string
