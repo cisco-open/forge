@@ -381,8 +381,8 @@ resource "signalfx_list_chart" "job_runs_high_peak_filesystem" {
 
   program_text = <<-EOF
 filesystem_identity = ${replace(local.ec2_runner_job_identity, "]", ", 'mountpoint', 'device']")}
-used = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2') and filter('state', 'used') and filter('aws_tag_TenantName', '*') and filter('aws_tag_ghr_job_url', '*')).sum(by=filesystem_identity)
-free = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2') and filter('state', 'free') and filter('aws_tag_TenantName', '*') and filter('aws_tag_ghr_job_url', '*')).sum(by=filesystem_identity)
+used = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2') and filter('state', 'used') and filter('type', 'ext4', 'xfs') and filter('mode', 'rw') and filter('aws_tag_TenantName', '*') and filter('aws_tag_ghr_job_url', '*')).sum(by=filesystem_identity)
+free = data('system.filesystem.usage', filter=filter('cloud.platform', 'aws_ec2') and filter('state', 'free') and filter('type', 'ext4', 'xfs') and filter('mode', 'rw') and filter('aws_tag_TenantName', '*') and filter('aws_tag_ghr_job_url', '*')).sum(by=filesystem_identity)
 jobs = ((used / (used + free)) * 100).max(over='24h')
 A = jobs.above(80, inclusive=True).top(count=20).publish(label='A')
 EOF

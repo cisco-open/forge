@@ -238,11 +238,11 @@ resource "signalfx_list_chart" "top_tenants_sqs_dlq_backlog" {
 
 resource "signalfx_list_chart" "top_tenants_ec2_disk" {
   name        = "Top 10 tenants: EC2 disk utilization"
-  description = "Highest current filesystem utilization on a Forge EC2 runner host per tenant."
+  description = "Highest current writable filesystem utilization on a Forge EC2 runner host per tenant."
 
   program_text = <<-EOF
-used = data('system.filesystem.usage', filter=(${local.ec2_tenant_filter}) and filter('cloud.platform', 'aws_ec2') and filter('state', 'used'), rollup='latest').sum(by=['aws_tag_TenantName', 'host.id'])
-free = data('system.filesystem.usage', filter=(${local.ec2_tenant_filter}) and filter('cloud.platform', 'aws_ec2') and filter('state', 'free'), rollup='latest').sum(by=['aws_tag_TenantName', 'host.id'])
+used = data('system.filesystem.usage', filter=(${local.ec2_tenant_filter}) and filter('cloud.platform', 'aws_ec2') and filter('state', 'used') and filter('type', 'ext4', 'xfs') and filter('mode', 'rw'), rollup='latest').sum(by=['aws_tag_TenantName', 'host.id'])
+free = data('system.filesystem.usage', filter=(${local.ec2_tenant_filter}) and filter('cloud.platform', 'aws_ec2') and filter('state', 'free') and filter('type', 'ext4', 'xfs') and filter('mode', 'rw'), rollup='latest').sum(by=['aws_tag_TenantName', 'host.id'])
 A = ((used / (used + free)) * 100).max(by=['aws_tag_TenantName']).top(count=10).publish(label='A')
 EOF
 
