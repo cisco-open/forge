@@ -66,13 +66,6 @@ data "aws_iam_policy_document" "splunk_s3_runner_logs_redrive" {
     ]
     resources = [aws_kms_key.splunk_s3_runner_logs.arn]
   }
-
-  statement {
-    sid       = "WriteLogs"
-    effect    = "Allow"
-    actions   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
-    resources = ["*"]
-  }
 }
 
 resource "aws_cloudwatch_log_group" "splunk_s3_runner_logs_redrive" {

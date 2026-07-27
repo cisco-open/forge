@@ -493,6 +493,8 @@ def test_splunk_runner_logs_wires_encrypted_dlq_redrive() -> None:
             'resources = [aws_kms_key.splunk_s3_runner_logs.arn]',
         ],
     )
+    assert '"logs:CreateLogGroup"' not in policy_doc
+    assert 'resources = ["*"]' not in policy_doc
     assert 'source = "../../platform/forge_runners/redrive_deadletter"' not in redrive_tf
 
 
