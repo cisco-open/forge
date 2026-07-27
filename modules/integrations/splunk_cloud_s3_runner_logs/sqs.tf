@@ -5,7 +5,7 @@ resource "aws_sqs_queue" "log_events_queue" {
   kms_master_key_id          = aws_kms_key.splunk_s3_runner_logs.arn
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.log_events_dlq.arn
-    maxReceiveCount     = 100
+    maxReceiveCount     = var.sqs_redrive_max_receive_count
   })
   tags = var.tags
 }

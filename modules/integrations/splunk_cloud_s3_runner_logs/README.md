@@ -16,7 +16,7 @@ Forge archives job logs and operational logs because runners are destroyed after
 ## Operational Notes
 
 - Splunk HEC endpoint and secret configuration must be correct before enabling delivery.
-- The SQS event source uses Lambda's automatic parallel scaling without a per-queue concurrency cap.
+- The SQS event source concurrency cap and DLQ receive threshold are configurable, defaulting to 40 concurrent invocations and 100 receives.
 - The scheduled redrive Lambda moves DLQ messages back to the runner-log event queue every ten minutes.
 - Use the backup bucket, DLQ, and redrive Lambda logs when logs are missing from Splunk.
 - The S3 event path should match the job-log archiver bucket layout.
@@ -88,9 +88,11 @@ Forge archives job logs and operational logs because runners are destroyed after
 | <a name="input_aws_profile"></a> [aws\_profile](#input\_aws\_profile) | AWS profile to use. | `string` | n/a | yes |
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | Default AWS region. | `string` | n/a | yes |
 | <a name="input_default_tags"></a> [default\_tags](#input\_default\_tags) | A map of tags to apply to resources. | `map(string)` | n/a | yes |
+| <a name="input_lambda_event_source_mapping_maximum_concurrency"></a> [lambda\_event\_source\_mapping\_maximum\_concurrency](#input\_lambda\_event\_source\_mapping\_maximum\_concurrency) | Maximum concurrent Lambda invocations for the runner-log SQS event source mapping. | `number` | `40` | no |
 | <a name="input_log_level"></a> [log\_level](#input\_log\_level) | Log level for application logging (e.g., INFO, DEBUG, WARN, ERROR) | `string` | `"INFO"` | no |
 | <a name="input_logging_retention_in_days"></a> [logging\_retention\_in\_days](#input\_logging\_retention\_in\_days) | Log retention period in days | `number` | `3` | no |
 | <a name="input_splunk_hec_endpoint"></a> [splunk\_hec\_endpoint](#input\_splunk\_hec\_endpoint) | Full URL of Splunk HEC endpoint | `string` | n/a | yes |
+| <a name="input_sqs_redrive_max_receive_count"></a> [sqs\_redrive\_max\_receive\_count](#input\_sqs\_redrive\_max\_receive\_count) | Number of source-queue receives allowed before a runner-log message moves to the DLQ. | `number` | `100` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to apply to resources. | `map(string)` | n/a | yes |
 
 ## Outputs
