@@ -33,8 +33,8 @@ run "lambda_dashboard_contract" {
       && strcontains(signalfx_single_value_chart.total_throttles.program_text, ".sum(over='30m')")
       && strcontains(signalfx_single_value_chart.total_invocations.program_text, ".sum(over='30m')")
       && strcontains(signalfx_time_chart.errors_by_version.program_text, "Errors")
-      && strcontains(signalfx_time_chart.errors_by_version.program_text, ".sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_function_version'])")
-      && strcontains(signalfx_list_chart.avg_duration_by_version.program_text, ".mean(by=['aws_tag_TenantName', 'aws_function_name', 'aws_function_version'])")
+      && strcontains(signalfx_time_chart.errors_by_version.program_text, ".sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_tag_ForgeModuleRef'])")
+      && strcontains(signalfx_list_chart.avg_duration_by_version.program_text, ".mean(by=['aws_tag_TenantName', 'aws_function_name', 'aws_tag_ForgeModuleRef'])")
     )
     error_message = "Lambda charts must keep one-hour visibility and ingestion-delay-safe invocation, error, and throttle behavior."
   }
@@ -48,27 +48,28 @@ run "lambda_dashboard_contract" {
         signalfx_time_chart.throttles_by_version.program_text,
         signalfx_time_chart.invocations_by_version.program_text,
         ] : (
-        strcontains(program_text, "filter('aws_function_version', '*')")
+        strcontains(program_text, "filter('aws_tag_ForgeModuleRef', '*')")
         && strcontains(program_text, "aws_function_name")
+        && !strcontains(program_text, "aws_function_version")
         && !strcontains(program_text, "filter('ExecutedVersion', '*')")
       )
     ])
-    error_message = "Standard Lambda version charts must use the live enriched function name and version properties instead of the sparse ExecutedVersion dimension."
+    error_message = "Standard Lambda module charts must use the Forge module reference tag and function name instead of version dimensions."
   }
 
   assert {
     condition = (
       strcontains(signalfx_list_chart.top_tenants_by_errors.program_text, ".sum(by=['aws_tag_TenantName']).sum(over='1h').above(0).top(count=10)")
       && strcontains(signalfx_list_chart.top_tenants_by_throttles.program_text, ".sum(by=['aws_tag_TenantName']).sum(over='1h').above(0).top(count=10)")
-      && strcontains(signalfx_list_chart.top_lambdas_by_errors.program_text, ".sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_function_version']).sum(over='1h').above(0).top(count=10)")
-      && strcontains(signalfx_list_chart.top_lambdas_by_throttles.program_text, ".sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_function_version']).sum(over='1h').above(0).top(count=10)")
+      && strcontains(signalfx_list_chart.top_lambdas_by_errors.program_text, ".sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_tag_ForgeModuleRef']).sum(over='1h').above(0).top(count=10)")
+      && strcontains(signalfx_list_chart.top_lambdas_by_throttles.program_text, ".sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_tag_ForgeModuleRef']).sum(over='1h').above(0).top(count=10)")
     )
     error_message = "Lambda triage charts must rank noisy tenants globally and expose tenant-filtered per-function detail."
   }
 
   assert {
     condition = (
-      one([for option in signalfx_list_chart.percent_invocations_by_version.viz_options : option if option.label == "C"]).display_name == "Invocation share by version"
+      one([for option in signalfx_list_chart.percent_invocations_by_version.viz_options : option if option.label == "C"]).display_name == "Invocation share by Forge module"
       && one(signalfx_time_chart.errors_by_version.viz_options).display_name == "Errors"
       && one(signalfx_list_chart.avg_duration_by_version.viz_options).display_name == "Average duration"
       && one(signalfx_time_chart.throttles_by_version.viz_options).display_name == "Throttles"
@@ -78,7 +79,7 @@ run "lambda_dashboard_contract" {
       && one(signalfx_list_chart.top_lambdas_by_errors.viz_options).display_name == "Errors"
       && one(signalfx_list_chart.top_lambdas_by_throttles.viz_options).display_name == "Throttles"
     )
-    error_message = "Lambda plot names must be static metric labels; tenant, function, and version identity belongs in dimension columns."
+    error_message = "Lambda plot names must be static metric labels; tenant, function, and Forge module identity belongs in dimension columns."
   }
 }
 

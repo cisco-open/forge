@@ -7,7 +7,7 @@ resource "signalfx_list_chart" "top_tenants_lambda_errors" {
   description = "Lambda errors over the selected window. Use the tenant property to continue investigation in the Lambdas dashboard."
 
   program_text = <<-EOF
-A = data('Errors', filter=(${local.ec2_tenant_filter}) and filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_function_version', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName']).sum(over=${local.issue_window}).above(0).top(count=10).publish(label='A')
+A = data('Errors', filter=(${local.ec2_tenant_filter}) and filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName']).sum(over=${local.issue_window}).above(0).top(count=10).publish(label='A')
 EOF
 
   hide_missing_values     = true
@@ -34,7 +34,7 @@ resource "signalfx_list_chart" "top_tenants_lambda_throttles" {
   description = "Lambda throttles over the selected window. Use the tenant property to continue investigation in the Lambdas dashboard."
 
   program_text = <<-EOF
-A = data('Throttles', filter=(${local.ec2_tenant_filter}) and filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_function_version', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName']).sum(over=${local.issue_window}).above(0).top(count=10).publish(label='A')
+A = data('Throttles', filter=(${local.ec2_tenant_filter}) and filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName']).sum(over=${local.issue_window}).above(0).top(count=10).publish(label='A')
 EOF
 
   hide_missing_values     = true

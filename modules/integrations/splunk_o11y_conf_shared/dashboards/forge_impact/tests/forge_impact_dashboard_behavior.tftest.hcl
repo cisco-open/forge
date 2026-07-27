@@ -41,6 +41,10 @@ run "forge_impact_dashboard_contract" {
     condition = (
       strcontains(signalfx_list_chart.top_tenants_lambda_errors.program_text, "data('Errors'")
       && strcontains(signalfx_list_chart.top_tenants_lambda_throttles.program_text, "data('Throttles'")
+      && strcontains(signalfx_list_chart.top_tenants_lambda_errors.program_text, "filter('aws_tag_ForgeModuleRef', '*')")
+      && strcontains(signalfx_list_chart.top_tenants_lambda_throttles.program_text, "filter('aws_tag_ForgeModuleRef', '*')")
+      && !strcontains(signalfx_list_chart.top_tenants_lambda_errors.program_text, "aws_function_version")
+      && !strcontains(signalfx_list_chart.top_tenants_lambda_throttles.program_text, "aws_function_version")
       && strcontains(signalfx_list_chart.top_tenants_ec2_memory.program_text, "system.memory.usage")
       && strcontains(signalfx_list_chart.top_tenants_ec2_memory.program_text, ".top(count=10)")
       && signalfx_list_chart.top_tenants_ec2_memory.color_by == "Scale"

@@ -1,14 +1,14 @@
 resource "signalfx_list_chart" "percent_invocations_by_version" {
-  name                    = "% invocations by version"
-  description             = "The % of total invocations handled by version"
+  name                    = "% invocations by Forge module"
+  description             = "The percentage of total invocations handled by each Forge module reference."
   unit_prefix             = "Metric"
   color_by                = "Dimension"
   secondary_visualization = "Sparkline"
   sort_by                 = "-value"
 
   program_text = <<-EOF
-A = data('Invocations', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_function_version', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName']).publish(label='A', enable=False)
-B = data('Invocations', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_function_version', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_function_version']).publish(label='B', enable=False)
+A = data('Invocations', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName']).publish(label='A', enable=False)
+B = data('Invocations', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_tag_ForgeModuleRef']).publish(label='B', enable=False)
 C = (B/A).scale(100).publish(label='C')
 EOF
 
@@ -20,7 +20,7 @@ EOF
   }
   legend_options_fields {
     enabled  = true
-    property = "aws_function_version"
+    property = "aws_tag_ForgeModuleRef"
   }
   legend_options_fields {
     enabled  = true
@@ -59,17 +59,17 @@ EOF
     label        = "B"
   }
   viz_options {
-    display_name = "Invocation share by version"
+    display_name = "Invocation share by Forge module"
     label        = "C"
     value_suffix = "%"
   }
 }
 
 resource "signalfx_time_chart" "errors_by_version" {
-  name         = "Errors by version"
+  name         = "Errors by Forge module"
   description  = "The number of invocations that failed due to errors in the function (response code 4XX)."
   program_text = <<-EOF
-A = data('Errors', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_function_version', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_function_version']).publish(label='A')
+A = data('Errors', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_tag_ForgeModuleRef']).publish(label='A')
 EOF
 
   plot_type   = "AreaChart"
@@ -79,7 +79,7 @@ EOF
   stacked     = false
 
   axes_precision            = 0
-  on_chart_legend_dimension = "aws_function_version"
+  on_chart_legend_dimension = "aws_tag_ForgeModuleRef"
 
   time_range = 3600
 
@@ -117,7 +117,7 @@ EOF
   }
   legend_options_fields {
     enabled  = true
-    property = "aws_function_version"
+    property = "aws_tag_ForgeModuleRef"
   }
   legend_options_fields {
     enabled  = false
@@ -150,7 +150,7 @@ EOF
 }
 
 resource "signalfx_list_chart" "avg_duration_by_version" {
-  name                    = "Average duration by version"
+  name                    = "Average duration by Forge module"
   unit_prefix             = "Metric"
   color_by                = "Dimension"
   secondary_visualization = "Sparkline"
@@ -159,7 +159,7 @@ resource "signalfx_list_chart" "avg_duration_by_version" {
   disable_sampling = true
 
   program_text = <<-EOF
-A = data('Duration', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'mean') and filter('aws_function_version', '*'), rollup='average').mean(by=['aws_tag_TenantName', 'aws_function_name', 'aws_function_version']).publish(label='A')
+A = data('Duration', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'mean') and filter('aws_tag_ForgeModuleRef', '*'), rollup='average').mean(by=['aws_tag_TenantName', 'aws_function_name', 'aws_tag_ForgeModuleRef']).publish(label='A')
 EOF
 
   time_range = 3600
@@ -198,7 +198,7 @@ EOF
   }
   legend_options_fields {
     enabled  = true
-    property = "aws_function_version"
+    property = "aws_tag_ForgeModuleRef"
   }
   legend_options_fields {
     enabled  = false
@@ -231,10 +231,10 @@ EOF
 }
 
 resource "signalfx_time_chart" "throttles_by_version" {
-  name         = "Throttles by version"
+  name         = "Throttles by Forge module"
   description  = "The number of Lambda function invocation attempts that were throttled due to invocation rates exceeding the customer’s concurrent limits (error code 429)."
   program_text = <<-EOF
-A = data('Throttles', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_function_version', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_function_version']).publish(label='A')
+A = data('Throttles', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_tag_ForgeModuleRef']).publish(label='A')
 EOF
 
   plot_type   = "AreaChart"
@@ -244,7 +244,7 @@ EOF
   stacked     = true
 
   axes_precision            = 0
-  on_chart_legend_dimension = "aws_function_version"
+  on_chart_legend_dimension = "aws_tag_ForgeModuleRef"
 
   time_range = 3600
 
@@ -282,7 +282,7 @@ EOF
   }
   legend_options_fields {
     enabled  = true
-    property = "aws_function_version"
+    property = "aws_tag_ForgeModuleRef"
   }
   legend_options_fields {
     enabled  = false
@@ -298,10 +298,10 @@ EOF
 }
 
 resource "signalfx_time_chart" "invocations_by_version" {
-  name         = "Invocations by version"
+  name         = "Invocations by Forge module"
   description  = "The number of times a function is invoked in response to an event or invocation API call."
   program_text = <<-EOF
-A = data('Invocations', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_function_version', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_function_version']).publish(label='A')
+A = data('Invocations', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_tag_ForgeModuleRef']).publish(label='A')
 EOF
 
   plot_type   = "AreaChart"
@@ -312,7 +312,7 @@ EOF
 
 
   axes_precision            = 0
-  on_chart_legend_dimension = "aws_function_version"
+  on_chart_legend_dimension = "aws_tag_ForgeModuleRef"
   time_range                = 3600
 
   histogram_options {
@@ -349,7 +349,7 @@ EOF
   }
   legend_options_fields {
     enabled  = true
-    property = "aws_function_version"
+    property = "aws_tag_ForgeModuleRef"
   }
   legend_options_fields {
     enabled  = false
@@ -417,7 +417,7 @@ EOF
   }
   legend_options_fields {
     enabled  = false
-    property = "aws_function_version"
+    property = "aws_tag_ForgeModuleRef"
   }
   legend_options_fields {
     enabled  = false
@@ -474,7 +474,7 @@ resource "signalfx_list_chart" "top_tenants_by_errors" {
   sort_by                 = "-value"
 
   program_text = <<-EOF
-A = data('Errors', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_function_version', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName']).sum(over='1h').above(0).top(count=10).publish(label='A')
+A = data('Errors', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName']).sum(over='1h').above(0).top(count=10).publish(label='A')
 EOF
 
   time_range = 3600
@@ -500,7 +500,7 @@ resource "signalfx_list_chart" "top_tenants_by_throttles" {
   sort_by                 = "-value"
 
   program_text = <<-EOF
-A = data('Throttles', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_function_version', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName']).sum(over='1h').above(0).top(count=10).publish(label='A')
+A = data('Throttles', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName']).sum(over='1h').above(0).top(count=10).publish(label='A')
 EOF
 
   time_range = 3600
@@ -526,7 +526,7 @@ resource "signalfx_list_chart" "top_lambdas_by_errors" {
   sort_by                 = "-value"
 
   program_text = <<-EOF
-A = data('Errors', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_function_version', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_function_version']).sum(over='1h').above(0).top(count=10).publish(label='A')
+A = data('Errors', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_tag_ForgeModuleRef']).sum(over='1h').above(0).top(count=10).publish(label='A')
 EOF
 
   time_range = 3600
@@ -541,7 +541,7 @@ EOF
   }
   legend_options_fields {
     enabled  = true
-    property = "aws_function_version"
+    property = "aws_tag_ForgeModuleRef"
   }
 
   viz_options {
@@ -560,7 +560,7 @@ resource "signalfx_list_chart" "top_lambdas_by_throttles" {
   sort_by                 = "-value"
 
   program_text = <<-EOF
-A = data('Throttles', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_function_version', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_function_version']).sum(over='1h').above(0).top(count=10).publish(label='A')
+A = data('Throttles', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_tag_ForgeModuleRef']).sum(over='1h').above(0).top(count=10).publish(label='A')
 EOF
 
   time_range = 3600
@@ -575,7 +575,7 @@ EOF
   }
   legend_options_fields {
     enabled  = true
-    property = "aws_function_version"
+    property = "aws_tag_ForgeModuleRef"
   }
 
   viz_options {
@@ -591,7 +591,7 @@ resource "terraform_data" "dashboard_parent" {
 
 resource "signalfx_dashboard" "lambda" {
   name            = "Forge Tenant - Lambdas"
-  description     = "Forge CICD Lambda invocation rate, errors, throttles, duration, tenant impact, and function-version detail."
+  description     = "Forge CICD Lambda invocation rate, errors, throttles, duration, tenant impact, and Forge module detail."
   dashboard_group = var.dashboard_group
 
   lifecycle {
