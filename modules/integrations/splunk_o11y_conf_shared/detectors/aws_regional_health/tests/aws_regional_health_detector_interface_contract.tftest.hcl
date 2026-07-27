@@ -14,6 +14,7 @@ run "aws_regional_health_detector_interface_contract" {
       "team",
     ]
     expected_output_values = [
+      "control_plane_detector_id",
       "detector_id",
     ]
     expected_interface_literals = [
@@ -30,6 +31,8 @@ run "aws_regional_health_detector_interface_contract" {
       "restricted_suggestions = bool",
       "output \"detector_id\"",
       "description = \"AWS regional platform detector ID for linking queue-health charts.\"",
+      "output \"control_plane_detector_id\"",
+      "description = \"AWS control-plane detector ID for shared Lambda and SQS health.\"",
     ]
   }
 
@@ -51,8 +54,8 @@ run "aws_regional_health_detector_interface_contract" {
   assert {
     condition = (
       output.expected_input_variable_count == 4
-      && output.expected_output_value_count == 1
-      && output.expected_interface_literal_count == 13
+      && output.expected_output_value_count == 2
+      && output.expected_interface_literal_count == 15
     )
     error_message = "Interface contract counts must remain pinned."
   }

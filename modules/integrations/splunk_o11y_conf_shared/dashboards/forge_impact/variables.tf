@@ -17,6 +17,11 @@ variable "dynamic_variables" {
   default = []
 }
 
+variable "detector_ids" {
+  description = "Tenant health detector IDs keyed by tenant for linking issue charts."
+  type        = map(string)
+}
+
 variable "tenant_names" {
   description = "Tenant namespaces that run Forge ARC runners."
   type        = list(string)

@@ -196,6 +196,7 @@ module "dashboard_forge_impact" {
   tenant_names      = var.dashboard_variables.forge_impact.tenant_names
   dynamic_variables = var.dashboard_variables.forge_impact.dynamic_variables
   dashboard_group   = signalfx_dashboard_group.forgecicd.id
+  detector_ids      = module.detector_dependency_probes.detector_ids
 }
 
 module "dashboard_runner_usage" {

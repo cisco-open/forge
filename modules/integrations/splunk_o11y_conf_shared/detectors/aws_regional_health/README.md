@@ -1,7 +1,7 @@
-# Forge AWS Regional Platform Health Detector
+# Forge AWS Platform Health Detectors
 
-This detector applies the stable queued-build thresholds carried by the
-regional platform dashboard:
+The regional detector applies the stable queued-build thresholds carried by
+the regional platform dashboard:
 
 - Major when oldest queued-build age remains above 300 seconds for 10 minutes.
 - Warning when oldest age remains above 75 seconds and visible backlog remains
@@ -14,9 +14,10 @@ after oldest queued-build age remains below 60 seconds for 15 minutes. The DLQ
 rule evaluates the rolling five-minute send count and activates when that count
 is non-zero.
 
-Lambda throttle panels remain diagnostic-only because their observed warning
-baselines vary materially by AWS region. The five-minute throttle count must
-not page independently.
+Tenant-assigned Lambda throttle totals remain diagnostic-only at the regional
+level because their baselines vary materially by tenant and region. The
+control-plane detector only evaluates shared functions without a TenantName
+tag and requires sustained throttling before alerting.
 
 ## Ownership and configuration
 
@@ -36,8 +37,16 @@ Missing required values or a missing dynamic scope produce non-matching
 filters, so an incomplete configuration cannot create an organization-wide
 detector accidentally.
 
+The control-plane detector excludes tenant-tagged resources and monitors:
+
+- sustained errors and throttles in shared Forge Lambda functions;
+- sustained backlog and oldest-message age in shared SQS queues; and
+- visible messages in control-plane dead-letter queues, including
+  `dead-letter`, `dead_letter`, and `dlq` naming conventions.
+
 The charts that provide incident context are managed by the
 [AWS regional platform dashboard](../../dashboards/aws_regional_health/README.md).
+Use the Lambda and SQS control-plane dashboards for shared-resource incidents.
 Use the
 [dashboard runbook](../../../../../docs/operations/splunk-o11y-dashboard-runbook.md)
 for triage and recovery, and the
@@ -66,6 +75,7 @@ No modules.
 
 | Name | Type |
 | ---- | ---- |
+| [signalfx_detector.aws_control_plane_health](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/detector) | resource |
 | [signalfx_detector.aws_regional_platform_health](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/detector) | resource |
 
 ## Inputs
@@ -81,5 +91,6 @@ No modules.
 
 | Name | Description |
 | ---- | ----------- |
+| <a name="output_control_plane_detector_id"></a> [control\_plane\_detector\_id](#output\_control\_plane\_detector\_id) | AWS control-plane detector ID for shared Lambda and SQS health. |
 | <a name="output_detector_id"></a> [detector\_id](#output\_detector\_id) | AWS regional platform detector ID for linking queue-health charts. |
 <!-- END_TF_DOCS -->

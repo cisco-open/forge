@@ -52,7 +52,7 @@ No modules.
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_dashboard_group"></a> [dashboard\_group](#input\_dashboard\_group) | Splunk Observability dashboard group ID. | `string` | n/a | yes |
-| <a name="input_detector_ids"></a> [detector\_ids](#input\_detector\_ids) | Dependency detector IDs keyed by tenant for linking dashboard charts. | `map(string)` | n/a | yes |
+| <a name="input_detector_ids"></a> [detector\_ids](#input\_detector\_ids) | Tenant health detector IDs keyed by tenant for linking dashboard charts. | `map(string)` | n/a | yes |
 | <a name="input_dynamic_variables"></a> [dynamic\_variables](#input\_dynamic\_variables) | Additional dynamic variable definitions for the dashboard. | <pre>list(object({<br/>    property               = string<br/>    alias                  = string<br/>    description            = string<br/>    values                 = list(string)<br/>    value_required         = bool<br/>    values_suggested       = list(string)<br/>    restricted_suggestions = bool<br/>  }))</pre> | `[]` | no |
 | <a name="input_tenant_names"></a> [tenant\_names](#input\_tenant\_names) | Forge tenants available in the dashboard selector. | `list(string)` | n/a | yes |
 

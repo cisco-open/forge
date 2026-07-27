@@ -6,7 +6,7 @@ locals {
   metric_filter = "(${local.tenant_filter})"
   detector_alerts = join("\n", [
     for tenant_name, detector_id in var.detector_ids :
-    "alerts(detector_id='${detector_id}').publish(label='${tenant_name} dependency alerts')"
+    "alerts(detector_id='${detector_id}').publish(label='${tenant_name} health alerts')"
   ])
 }
 

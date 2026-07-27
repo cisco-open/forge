@@ -29,7 +29,7 @@ run "dependency_probes_interface_contract" {
       "rate_limit_duration                = string",
       "rate_limit_remaining_pct_threshold = number",
       "output \"detector_ids\"",
-      "description = \"Dependency detector IDs keyed by tenant for linking dashboard charts.\"",
+      "description = \"Tenant health detector IDs keyed by tenant for linking dashboard charts.\"",
     ]
   }
 

@@ -16,6 +16,7 @@ run "integrations_splunk_o11y_conf_shared_detectors_k8s_interface_contract" {
       "k8s_platform_namespaces",
       "team",
       "tenant_names",
+      "tenant_pods_pending_notifications",
     ]
     expected_output_values = [
       "detector_ids",
@@ -68,6 +69,8 @@ run "integrations_splunk_o11y_conf_shared_detectors_k8s_interface_contract" {
       "description = \"Team ID.\"",
       "variable \"tenant_names\"",
       "description = \"List of Forge tenant namespaces.\"",
+      "variable \"tenant_pods_pending_notifications\"",
+      "description = \"Optional notification override for the legacy aggregate tenant pending-pod detector.\"",
       "output \"detector_ids\"",
       "description = \"Kubernetes detector IDs for linking the matching dashboard charts.\"",
     ]
@@ -100,9 +103,9 @@ run "integrations_splunk_o11y_conf_shared_detectors_k8s_interface_contract" {
 
   assert {
     condition = (
-      output.expected_input_variable_count == 8
+      output.expected_input_variable_count == 9
       && output.expected_output_value_count == 1
-      && output.expected_interface_literal_count == 49
+      && output.expected_interface_literal_count == 51
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

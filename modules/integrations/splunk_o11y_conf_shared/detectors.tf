@@ -17,6 +17,12 @@ module "detector_k8s" {
   k8s_platform_namespaces   = var.k8s_platform_namespaces
   team                      = var.team
   tenant_names              = var.dashboard_variables.runner_k8s.tenant_names
+  tenant_pods_pending_notifications = (
+    length(setsubtract(
+      toset(var.dashboard_variables.runner_k8s.tenant_names),
+      toset(var.dashboard_variables.dependency_probes.tenant_names),
+    )) == 0 ? [] : local.detector_notifications
+  )
 }
 
 module "detector_dependency_probes" {

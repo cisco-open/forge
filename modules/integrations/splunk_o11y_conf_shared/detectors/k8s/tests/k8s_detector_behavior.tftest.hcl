@@ -83,9 +83,26 @@ run "k8s_detector_scope_and_threshold_contract" {
       && strcontains(signalfx_detector.k8s_tenant_pods_pending.program_text, ".fill(value=0, duration='10m')")
       && strcontains(signalfx_detector.k8s_platform_pods_unhealthy.program_text, "filter('k8s.namespace.name', 'kube-system') or filter('k8s.namespace.name', 'karpenter')")
       && !strcontains(signalfx_detector.k8s_platform_pods_unhealthy.program_text, "Platform pod pending")
-      && length(signalfx_detector.k8s_platform_pods_unhealthy.rule) == 1
-      && one(signalfx_detector.k8s_platform_pods_unhealthy.rule).severity == "Major"
+      && strcontains(signalfx_detector.k8s_platform_pods_unhealthy.program_text, "platform_container_restarts")
+      && strcontains(signalfx_detector.k8s_platform_pods_unhealthy.program_text, ".delta().sum(over='10m')")
+      && strcontains(signalfx_detector.k8s_platform_pods_unhealthy.program_text, "platform_container_restarts > 3")
+      && length(signalfx_detector.k8s_platform_pods_unhealthy.rule) == 2
+      && length([for rule in signalfx_detector.k8s_platform_pods_unhealthy.rule : rule if rule.severity == "Major"]) == 1
+      && length([for rule in signalfx_detector.k8s_platform_pods_unhealthy.rule : rule if rule.severity == "Warning"]) == 1
     )
-    error_message = "K8s workload detectors must aggregate tenant pending pods by tenant and retain only the actionable platform failed-or-unknown rule."
+    error_message = "K8s workload detectors must aggregate tenant pending pods by tenant and cover actionable platform pod failures and restart pressure."
+  }
+}
+
+run "allows_tenant_health_to_own_pending_pod_notifications" {
+  command = plan
+
+  variables {
+    tenant_pods_pending_notifications = []
+  }
+
+  assert {
+    condition     = length(one(signalfx_detector.k8s_tenant_pods_pending.rule).notifications) == 0
+    error_message = "The aggregate pending-pod detector must support suppressing notifications when tenant health detectors own the same signal."
   }
 }

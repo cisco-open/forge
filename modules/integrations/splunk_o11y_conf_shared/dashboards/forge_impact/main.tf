@@ -26,6 +26,10 @@ locals {
     "(${local.configured_k8s_tenant_filter})",
     "(${local.configured_k8s_cluster_filter})",
   ])
+  tenant_health_alerts = join("\n", [
+    for tenant_name, detector_id in var.detector_ids :
+    "alerts(detector_id='${detector_id}').publish(label='${tenant_name} health alerts')"
+  ])
 }
 
 resource "terraform_data" "dashboard_parent" {

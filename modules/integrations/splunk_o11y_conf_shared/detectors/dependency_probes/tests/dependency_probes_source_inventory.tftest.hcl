@@ -19,6 +19,16 @@ run "dependency_probes_source_inventory" {
       "Tenant GitHub App SSM credentials unavailable",
       "Tenant GitHub API unavailable",
       "Tenant GitHub API rate-limit budget low",
+      "Tenant Lambda error rate high",
+      "Tenant Lambda throttling",
+      "Tenant build queue delayed",
+      "Tenant build queue stuck",
+      "Tenant DLQ backlog",
+      "Tenant Kubernetes pod pending",
+      "Tenant Kubernetes pod failed or unknown",
+      "Tenant Kubernetes container restarting",
+      "Tenant EC2 status check failure",
+      "Tenant EBS IOPS limit exceeded",
     ]
   }
 
@@ -28,7 +38,7 @@ run "dependency_probes_source_inventory" {
   }
 
   assert {
-    condition     = output.expected_literal_count == 11
+    condition     = output.expected_literal_count == 21
     error_message = "Detector source inventory count must remain pinned."
   }
 }
