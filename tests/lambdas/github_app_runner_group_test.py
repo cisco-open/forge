@@ -14,15 +14,25 @@ pytestmark = requires_aws
 
 
 class _Response:
-    def __init__(self, payload, *, links=None, headers=None):
+    def __init__(
+        self,
+        payload,
+        *,
+        links=None,
+        headers=None,
+        status_code=200,
+    ):
         self._payload = payload
         self.links = links or {}
         self.headers = headers or {}
+        self.status_code = status_code
 
     def json(self):
         return self._payload
 
     def raise_for_status(self):
+        if self.status_code >= 400:
+            raise RuntimeError(f'HTTP {self.status_code}')
         return None
 
 
@@ -30,8 +40,8 @@ def test_list_repositories_follows_github_pagination(monkeypatch, aws):
     mod = load_handler_module('github_app_runner_group')
     calls = []
 
-    def _get(url, headers):
-        calls.append((url, headers))
+    def _get(url, headers, timeout):
+        calls.append((url, headers, timeout))
         if len(calls) == 1:
             return _Response(
                 {'repositories': [{'id': 1, 'full_name': 'org/one'}]},
@@ -48,6 +58,7 @@ def test_list_repositories_follows_github_pagination(monkeypatch, aws):
     assert [repo['full_name'] for repo in repos] == ['org/one', 'org/two']
     assert calls[0][0] == 'https://api.github.test/installation/repositories'
     assert calls[1][0] == 'https://api.github.test/page/2'
+    assert calls[0][2] == mod.GITHUB_REQUEST_TIMEOUT_SECONDS
 
 
 def test_save_to_runner_group_creates_selected_group_and_adds_repos(
@@ -134,8 +145,8 @@ def test_get_all_runner_groups_follows_link_header_pagination(
     mod = load_handler_module('github_app_runner_group')
     calls = []
 
-    def _get(url, headers):
-        calls.append((url, headers))
+    def _get(url, headers, timeout):
+        calls.append((url, headers, timeout))
         if len(calls) == 1:
             return _Response(
                 {'runner_groups': [{'id': 1, 'name': 'small'}]},
@@ -159,6 +170,67 @@ def test_get_all_runner_groups_follows_link_header_pagination(
 
     assert [group['name'] for group in groups] == ['small', 'large']
     assert calls[1][0] == 'https://api.github.test/page/2'
+    assert calls[0][2] == mod.GITHUB_REQUEST_TIMEOUT_SECONDS
+
+
+def test_get_all_runner_groups_retries_transient_github_503(
+    monkeypatch, aws
+):
+    mod = load_handler_module('github_app_runner_group')
+    calls = []
+    sleeps = []
+
+    def _get(url, headers, timeout):
+        calls.append((url, headers, timeout))
+        if len(calls) == 1:
+            return _Response(
+                {},
+                headers={'Retry-After': '0'},
+                status_code=503,
+            )
+        return _Response(
+            {'runner_groups': [{'id': 1, 'name': 'small'}]},
+        )
+
+    monkeypatch.setattr(mod.requests, 'get', _get)
+    monkeypatch.setattr(mod.time, 'sleep', sleeps.append)
+
+    groups = mod.get_all_runner_groups(
+        'https://api.github.test/orgs/acme/actions/runner-groups',
+        {'Authorization': 'Bearer token'},
+    )
+
+    assert [group['name'] for group in groups] == ['small']
+    assert len(calls) == 2
+    assert sleeps == [0]
+
+
+def test_get_all_runner_groups_does_not_retry_permanent_github_404(
+    monkeypatch, aws
+):
+    mod = load_handler_module('github_app_runner_group')
+    calls = []
+
+    def _get(url, headers, timeout):
+        calls.append((url, headers, timeout))
+        return _Response({}, status_code=404)
+
+    monkeypatch.setattr(mod.requests, 'get', _get)
+    monkeypatch.setattr(
+        mod.time,
+        'sleep',
+        lambda *_args: (_ for _ in ()).throw(
+            AssertionError('permanent errors must not be retried')
+        ),
+    )
+
+    with pytest.raises(RuntimeError, match='HTTP 404'):
+        mod.get_all_runner_groups(
+            'https://api.github.test/orgs/acme/actions/runner-groups',
+            {'Authorization': 'Bearer token'},
+        )
+
+    assert len(calls) == 1
 
 
 def test_lambda_handler_propagates_missing_secret_without_github_calls(

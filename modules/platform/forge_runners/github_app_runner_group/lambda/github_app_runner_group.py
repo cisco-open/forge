@@ -22,6 +22,75 @@ LOG.setLevel(getattr(logging, level_str, logging.INFO))
 
 SSM = boto3.client('ssm')
 
+GITHUB_REQUEST_TIMEOUT_SECONDS = 10
+GITHUB_GET_MAX_ATTEMPTS = 3
+GITHUB_RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
+GITHUB_MAX_RETRY_DELAY_SECONDS = 10
+
+
+def _retry_delay_seconds(response: Any, attempt: int) -> float:
+    """Return a bounded Retry-After or exponential-backoff delay."""
+    retry_after = response.headers.get('Retry-After')
+    if retry_after is not None:
+        try:
+            return min(
+                max(float(retry_after), 0),
+                GITHUB_MAX_RETRY_DELAY_SECONDS,
+            )
+        except (TypeError, ValueError):
+            pass
+
+    return min(2 ** (attempt - 1), GITHUB_MAX_RETRY_DELAY_SECONDS)
+
+
+def github_get(url: str, headers: Dict[str, str]) -> Any:
+    """GET GitHub API data with bounded retries for transient failures."""
+    for attempt in range(1, GITHUB_GET_MAX_ATTEMPTS + 1):
+        try:
+            response = requests.get(
+                url,
+                headers=headers,
+                timeout=GITHUB_REQUEST_TIMEOUT_SECONDS,
+            )
+        except (requests.ConnectionError, requests.Timeout) as error:
+            if attempt == GITHUB_GET_MAX_ATTEMPTS:
+                raise
+
+            delay = min(
+                2 ** (attempt - 1),
+                GITHUB_MAX_RETRY_DELAY_SECONDS,
+            )
+            LOG.warning(
+                'GitHub GET %s failed transiently on attempt %s/%s: %s. '
+                'Retrying in %s seconds.',
+                url,
+                attempt,
+                GITHUB_GET_MAX_ATTEMPTS,
+                error,
+                delay,
+            )
+            time.sleep(delay)
+            continue
+
+        retryable = response.status_code in GITHUB_RETRYABLE_STATUS_CODES
+        if not retryable or attempt == GITHUB_GET_MAX_ATTEMPTS:
+            response.raise_for_status()
+            return response
+
+        delay = _retry_delay_seconds(response, attempt)
+        LOG.warning(
+            'GitHub GET %s returned retryable status %s on attempt %s/%s. '
+            'Retrying in %s seconds.',
+            url,
+            response.status_code,
+            attempt,
+            GITHUB_GET_MAX_ATTEMPTS,
+            delay,
+        )
+        time.sleep(delay)
+
+    raise RuntimeError('GitHub GET retry loop exhausted unexpectedly')
+
 
 def generate_jwt(app_id: str, private_key: str) -> str:
     """Generate a JWT for GitHub App authentication."""
@@ -56,8 +125,7 @@ def list_repositories(access_token: str, github_api: str) -> List[Dict[str, Any]
     url = f'{github_api}/installation/repositories'
 
     while url:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
+        response = github_get(url, headers)
         data = response.json()
 
         # Add repositories from the current page
@@ -73,8 +141,7 @@ def get_all_runner_groups(url: str, headers: Dict[str, str]) -> List[Dict[str, A
     """Fetch all runner groups, handling pagination."""
     runner_groups = []
     while url:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
+        response = github_get(url, headers)
         data = response.json()
         runner_groups.extend(data.get('runner_groups', []))
 
