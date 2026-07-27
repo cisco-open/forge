@@ -28,7 +28,8 @@ locals {
   # ─────────────────────────────────────────────────────────────────────────────
   config = read_terragrunt_config("runner_settings.hcl")
 
-  release_version_file = "${get_repo_root()}/release_versions.yml"
+  release_version_env  = get_env("RELEASE_VERSION_PATH", "")
+  release_version_file = length(trimspace(local.release_version_env)) > 0 ? local.release_version_env : "${get_repo_root()}/release_versions.yml"
   release_version      = yamldecode(file(local.release_version_file))
   forge_module_ref     = local.release_version.spec.iac.modules.forge_runners.ref
 
