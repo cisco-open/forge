@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.5.1](https://github.com/cisco-open/forge/compare/v4.5.0...v4.5.1) (2026-07-27)
+
+
+### Bug Fixes
+
+* **lambdas:** configure retries for SSM clients ([#546](https://github.com/cisco-open/forge/issues/546)) ([f98dbb8](https://github.com/cisco-open/forge/commit/f98dbb87272ae8974778dfb2a29fab0d0892ea65))
+* **runner-groups:** retry transient GitHub reads ([#545](https://github.com/cisco-open/forge/issues/545)) ([08a99fb](https://github.com/cisco-open/forge/commit/08a99fbd2ea3e8b3f179b57c82d03e90df4fe7f1))
+
 ## [4.5.0](https://github.com/cisco-open/forge/compare/v4.4.1...v4.5.0) (2026-07-25)
 
 
