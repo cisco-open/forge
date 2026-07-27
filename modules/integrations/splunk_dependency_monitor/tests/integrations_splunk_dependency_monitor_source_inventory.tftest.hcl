@@ -12,19 +12,14 @@ run "integrations_splunk_dependency_monitor_source_inventory" {
       "resource \"aws_cloudwatch_log_group\" \"dependency_monitor\"",
       "resource \"aws_cloudwatch_event_rule\" \"dependency_monitor\"",
       "resource \"aws_cloudwatch_event_target\" \"dependency_monitor\"",
-      "resource \"aws_lambda_function_event_invoke_config\" \"dependency_monitor\"",
-      "resource \"aws_sqs_queue\" \"failed_invocations\"",
       "target_id = \"splunk-dependency-monitor\"",
       "dependency_monitor_function_name = \"splunk-dependency-monitor-$${var.aws_region}\"",
-      "maximum_retry_attempts = 2",
-      "destination = aws_sqs_queue.failed_invocations.arn",
       "resource \"aws_lambda_permission\" \"eventbridge_invoke\"",
       "data \"aws_iam_policy_document\" \"dependency_monitor\"",
       "data \"aws_secretsmanager_secret\" \"secrets\"",
       "data \"aws_secretsmanager_secret_version\" \"secrets\"",
       "data \"aws_caller_identity\" \"current\"",
       "data \"aws_region\" \"current\"",
-      "sqs:SendMessage",
       "ssm:DescribeParameters",
       "ssm:ListTagsForResource",
       "parameter/forge/*/github_ghes_org",
@@ -40,7 +35,7 @@ run "integrations_splunk_dependency_monitor_source_inventory" {
   }
 
   assert {
-    condition     = output.expected_literal_count == 23
+    condition     = output.expected_literal_count == 18
     error_message = "Source inventory count must remain pinned."
   }
 }

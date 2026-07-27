@@ -93,7 +93,6 @@ run "creates_regional_platform_detector" {
       && signalfx_detector.aws_control_plane_health.teams == toset(["forge-team"])
       && length(signalfx_detector.aws_control_plane_health.rule) == 2
       && strcontains(signalfx_detector.aws_control_plane_health.program_text, "not filter('aws_tag_TenantName', '*')")
-      && strcontains(signalfx_detector.aws_control_plane_health.program_text, "not filter('aws_function_name', 'splunk-dependency-monitor-*')")
       && strcontains(signalfx_detector.aws_control_plane_health.program_text, "lambda_errors > 0, '10m'")
       && strcontains(signalfx_detector.aws_control_plane_health.program_text, "lambda_throttles > 0, '5m'")
       && !strcontains(signalfx_detector.aws_control_plane_health.program_text, "ApproximateAgeOfOldestMessage")
@@ -113,16 +112,14 @@ run "creates_regional_platform_detector" {
     condition = (
       signalfx_detector.aws_sqs_control_plane_health.name == "Forge Prod AWS SQS control-plane health"
       && signalfx_detector.aws_sqs_control_plane_health.teams == toset(["forge-team"])
-      && length(signalfx_detector.aws_sqs_control_plane_health.rule) == 4
+      && length(signalfx_detector.aws_sqs_control_plane_health.rule) == 3
       && strcontains(signalfx_detector.aws_sqs_control_plane_health.program_text, "not filter('aws_tag_TenantName', '*')")
-      && strcontains(signalfx_detector.aws_sqs_control_plane_health.program_text, "filter('QueueName', 'splunk-dependency-monitor-*-failed-invocations')")
-      && strcontains(signalfx_detector.aws_sqs_control_plane_health.program_text, "dependency_monitor_failed_invocations > 0")
       && strcontains(signalfx_detector.aws_sqs_control_plane_health.program_text, "queue_oldest_age > 300, '10m'")
       && strcontains(signalfx_detector.aws_sqs_control_plane_health.program_text, "filter('QueueName', '*dead-letter*', '*dead_letter*', '*dlq*', '*DLQ*')")
       && strcontains(signalfx_detector.aws_sqs_control_plane_health.program_text, "dlq_visible_messages > 0, '5m'")
       && !strcontains(signalfx_detector.aws_sqs_control_plane_health.program_text, "data('Errors'")
     )
-    error_message = "The SQS control-plane detector must exclude tenant resources and alert when dependency-monitor retries are exhausted."
+    error_message = "The SQS control-plane detector must exclude tenant resources and contain only queue and DLQ failures."
   }
 
   assert {

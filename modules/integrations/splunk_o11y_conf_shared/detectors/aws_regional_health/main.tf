@@ -15,13 +15,12 @@ locals {
   ]
   configured_scope_filter = length(local.configured_scope_filters) > 0 ? join(" and ", local.configured_scope_filters) : "filter('sf_metric', '__forge_dynamic_scope_not_configured__')"
 
-  aws_platform_filter                     = "(${local.configured_scope_filter})"
-  build_queue_filter                      = "filter('QueueName', '*-queued-builds') and (not filter('QueueName', '*_dead_letter'))"
-  control_plane_filter                    = "(${local.aws_platform_filter}) and (not filter('aws_tag_TenantName', '*'))"
-  dependency_monitor_failure_queue_filter = "filter('QueueName', 'splunk-dependency-monitor-*-failed-invocations')"
-  control_plane_queue_filter              = "filter('namespace', 'AWS/SQS') and filter('QueueName', '*') and (not ${local.dependency_monitor_failure_queue_filter})"
-  control_plane_lambda_filter             = "filter('namespace', 'AWS/Lambda') and filter('aws_function_name', '*') and (not filter('aws_function_name', 'splunk-dependency-monitor-*'))"
-  dead_letter_queue_name_filter           = "filter('QueueName', '*dead-letter*', '*dead_letter*', '*dlq*', '*DLQ*')"
+  aws_platform_filter           = "(${local.configured_scope_filter})"
+  build_queue_filter            = "filter('QueueName', '*-queued-builds') and (not filter('QueueName', '*_dead_letter'))"
+  control_plane_filter          = "(${local.aws_platform_filter}) and (not filter('aws_tag_TenantName', '*'))"
+  control_plane_queue_filter    = "filter('namespace', 'AWS/SQS') and filter('QueueName', '*')"
+  control_plane_lambda_filter   = "filter('namespace', 'AWS/Lambda') and filter('aws_function_name', '*')"
+  dead_letter_queue_name_filter = "filter('QueueName', '*dead-letter*', '*dead_letter*', '*dlq*', '*DLQ*')"
 }
 
 resource "signalfx_detector" "aws_regional_platform_health" {
@@ -105,11 +104,9 @@ resource "signalfx_detector" "aws_sqs_control_plane_health" {
 queue_oldest_age = data('ApproximateAgeOfOldestMessage', filter=(${local.control_plane_filter}) and (${local.control_plane_queue_filter}) and filter('stat', 'upper'), rollup='latest').max(over='5m').max(by=['aws_region', 'QueueName'])
 queue_visible_messages = data('ApproximateNumberOfMessagesVisible', filter=(${local.control_plane_filter}) and (${local.control_plane_queue_filter}) and filter('stat', 'upper'), rollup='latest').max(over='5m').max(by=['aws_region', 'QueueName'])
 dlq_visible_messages = data('ApproximateNumberOfMessagesVisible', filter=(${local.control_plane_filter}) and filter('namespace', 'AWS/SQS') and (${local.dead_letter_queue_name_filter}) and filter('stat', 'upper'), rollup='latest').max(over='5m').max(by=['aws_region', 'QueueName'])
-dependency_monitor_failed_invocations = data('NumberOfMessagesSent', filter=(${local.aws_platform_filter}) and filter('namespace', 'AWS/SQS') and filter('stat', 'sum') and (${local.dependency_monitor_failure_queue_filter}), rollup='sum', extrapolation='zero').sum(over='5m').sum(by=['aws_region', 'QueueName'])
 detect(when(queue_oldest_age > 300, '10m'), off=when(queue_oldest_age < 60, '15m')).publish('Control-plane queue oldest age major')
 detect(when((queue_oldest_age > 75) and (queue_visible_messages > 10), '10m'), off=when(queue_oldest_age < 60, '15m')).publish('Control-plane queue backlog warning')
 detect(when(dlq_visible_messages > 0, '5m')).publish('Control-plane DLQ backlog')
-detect(when(dependency_monitor_failed_invocations > 0)).publish('Dependency monitor retries exhausted')
 EOF
 
   rule {
@@ -130,13 +127,6 @@ EOF
     description   = "Visible messages present in a control-plane dead-letter queue for 5 minutes"
     severity      = "Major"
     detect_label  = "Control-plane DLQ backlog"
-    notifications = var.detector_notifications
-  }
-
-  rule {
-    description   = "A dependency-monitor scheduled request exhausted all Lambda retries"
-    severity      = "Major"
-    detect_label  = "Dependency monitor retries exhausted"
     notifications = var.detector_notifications
   }
 }

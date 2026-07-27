@@ -54,16 +54,13 @@ regional SSM parameters beside the GitHub App parameters:
 - `/forge/<deployment_prefix>/github_ghes_org` from
   `deployment_config.github.ghes_org`
 
-The dependency-monitor Lambda uses adaptive SSM retries and keeps successful
-tenant discovery results in each warm execution environment for 15 minutes.
-When the cache expires, it uses `DescribeParameters` with the `/forge/` name
-prefix and selects only parameters whose name ends in `/github_ghes_org`. If
-that refresh still exhausts SSM retries, the Lambda uses its last successful
-cache while SSM recovers. It derives each deployment prefix from the parameter
-path and reads the existing parameter's `TenantName` tag for the tenant
-dimension, falling back to the GitHub organization value when the tag is
-absent. A newly deployed regional tenant is therefore discovered without
-changing or reapplying this module.
+On every scheduled invocation, the dependency-monitor Lambda uses
+`DescribeParameters` with the `/forge/` name prefix and selects only parameters
+whose name ends in `/github_ghes_org`. It derives each deployment prefix from
+the parameter path and reads the existing parameter's `TenantName` tag for the
+tenant dimension, falling back to the GitHub organization value when the tag is
+absent. A newly deployed regional tenant is
+therefore discovered without changing or reapplying this module.
 
 The module creates no tenant-discovery parameters. The discovery call returns
 metadata and reads the existing non-secret organization parameter. The Lambda
@@ -75,12 +72,6 @@ platform-owned parameters; it does not create or own tenant configuration.
 Deploy one module instance per Forge AWS region. SSM Parameter Store is
 regional, and all boto3 clients are pinned to the Lambda's `AWS_REGION`, so a
 regional monitor only discovers and probes Forge deployments in that region.
-
-Scheduled events use the two standard Lambda asynchronous retries. After all
-three attempts fail, Lambda writes one invocation record to the regional
-`splunk-dependency-monitor-<region>-failed-invocations` SQS queue. The record
-contains the request ID needed for log correlation. Splunk Observability alerts
-on sends to this queue instead of alerting on each intermediate Lambda error.
 
 ```hcl
 module "splunk_dependency_monitor" {
@@ -130,9 +121,7 @@ the dependency-probe tenants configured in the shared Observability module.
 | [aws_cloudwatch_event_rule.dependency_monitor](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_rule) | resource |
 | [aws_cloudwatch_event_target.dependency_monitor](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_target) | resource |
 | [aws_cloudwatch_log_group.dependency_monitor](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
-| [aws_lambda_function_event_invoke_config.dependency_monitor](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function_event_invoke_config) | resource |
 | [aws_lambda_permission.eventbridge_invoke](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission) | resource |
-| [aws_sqs_queue.failed_invocations](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sqs_queue) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_iam_policy_document.dependency_monitor](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
@@ -149,7 +138,7 @@ the dependency-probe tenants configured in the shared Observability module.
 | <a name="input_github_api_version"></a> [github\_api\_version](#input\_github\_api\_version) | GitHub REST API version sent by every regional dependency probe. | `string` | `"2022-11-28"` | no |
 | <a name="input_github_timeout_seconds"></a> [github\_timeout\_seconds](#input\_github\_timeout\_seconds) | Timeout for each GitHub API request. | `number` | `10` | no |
 | <a name="input_log_level"></a> [log\_level](#input\_log\_level) | Lambda log level. | `string` | `"INFO"` | no |
-| <a name="input_logging_retention_in_days"></a> [logging\_retention\_in\_days](#input\_logging\_retention\_in\_days) | Number of days to retain dependency-probe Lambda logs. | `number` | `3` | no |
+| <a name="input_logging_retention_in_days"></a> [logging\_retention\_in\_days](#input\_logging\_retention\_in\_days) | Number of days to retain dependency-probe Lambda logs. | `number` | `14` | no |
 | <a name="input_schedule_expression"></a> [schedule\_expression](#input\_schedule\_expression) | EventBridge schedule for tenant dependency probes. | `string` | `"cron(*/5 * * * ? *)"` | no |
 | <a name="input_splunk_dependency_monitor_config"></a> [splunk\_dependency\_monitor\_config](#input\_splunk\_dependency\_monitor\_config) | Splunk Cloud HEC and Splunk Observability metric-ingest configuration. | <pre>object({<br/>    splunk_hec_url     = string<br/>    splunk_index       = string<br/>    splunk_metrics_url = string<br/>  })</pre> | n/a | yes |
 | <a name="input_splunk_http_timeout_seconds"></a> [splunk\_http\_timeout\_seconds](#input\_splunk\_http\_timeout\_seconds) | Timeout for batched Splunk Cloud and Splunk O11y HTTP requests. | `number` | `10` | no |
