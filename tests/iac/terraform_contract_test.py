@@ -498,7 +498,7 @@ def test_splunk_runner_logs_wires_encrypted_dlq_redrive() -> None:
     assert 'source = "../../platform/forge_runners/redrive_deadletter"' not in redrive_tf
 
 
-def test_splunk_runner_logs_allows_automatic_parallel_sqs_scaling() -> None:
+def test_splunk_runner_logs_caps_parallel_sqs_scaling() -> None:
     lambda_tf = read_repo_file(
         'modules/integrations/splunk_cloud_s3_runner_logs/lambda.tf'
     )
@@ -519,7 +519,8 @@ def test_splunk_runner_logs_allows_automatic_parallel_sqs_scaling() -> None:
         in lambda_module
     )
     assert 'batch_size                         = 1' in event_source
-    assert re.search(r'(?m)^\s*scaling_config\s*{', event_source) is None
+    assert re.search(r'(?m)^\s*scaling_config\s*{', event_source)
+    assert 'maximum_concurrency = 20' in event_source
     assert 'reserved_concurrent_executions' not in lambda_module
 
 
