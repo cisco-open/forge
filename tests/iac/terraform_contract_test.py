@@ -520,7 +520,7 @@ def test_splunk_runner_logs_caps_parallel_sqs_scaling() -> None:
     )
     assert 'batch_size                         = 1' in event_source
     assert re.search(r'(?m)^\s*scaling_config\s*{', event_source)
-    assert 'maximum_concurrency = 20' in event_source
+    assert 'maximum_concurrency = 40' in event_source
     assert 'reserved_concurrent_executions' not in lambda_module
 
 

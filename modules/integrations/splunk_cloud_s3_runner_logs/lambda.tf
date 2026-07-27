@@ -110,6 +110,6 @@ resource "aws_lambda_event_source_mapping" "sqs_to_lambda" {
   enabled                            = true
 
   scaling_config {
-    maximum_concurrency = 20
+    maximum_concurrency = 40
   }
 }
