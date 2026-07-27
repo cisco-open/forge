@@ -93,7 +93,6 @@ resource "signalfx_time_chart" "build_queue_oldest_age" {
 
   program_text = <<-EOF
 A = data('ApproximateAgeOfOldestMessage', filter=(${local.aws_platform_filter}) and filter('namespace', 'AWS/SQS') and filter('stat', 'upper') and (${local.build_queue_filter})).max(over='5m').max(by=['aws_region']).publish(label='A')
-alerts(detector_id='${var.detector_id}').publish(label='Regional queue-health alerts')
 EOF
 
   plot_type                 = "LineChart"
@@ -125,7 +124,6 @@ resource "signalfx_time_chart" "build_queue_visible_backlog" {
 
   program_text = <<-EOF
 A = data('ApproximateNumberOfMessagesVisible', filter=(${local.aws_platform_filter}) and filter('namespace', 'AWS/SQS') and filter('stat', 'upper') and (${local.build_queue_filter})).max(over='5m').sum(by=['aws_region']).publish(label='A')
-alerts(detector_id='${var.detector_id}').publish(label='Regional queue-health alerts')
 EOF
 
   plot_type                 = "LineChart"
@@ -156,7 +154,6 @@ resource "signalfx_time_chart" "build_queue_dlq_sends" {
 
   program_text = <<-EOF
 A = data('NumberOfMessagesSent', filter=(${local.aws_platform_filter}) and filter('namespace', 'AWS/SQS') and filter('stat', 'sum') and filter('QueueName', '*_dead_letter'), rollup='sum').sum(over='5m').sum(by=['aws_region']).publish(label='A')
-alerts(detector_id='${var.detector_id}').publish(label='Regional queue-health alerts')
 EOF
 
   plot_type                 = "ColumnChart"
@@ -183,6 +180,17 @@ EOF
 
 resource "terraform_data" "dashboard_parent" {
   triggers_replace = var.dashboard_group
+}
+
+resource "signalfx_time_chart" "queue_health_alerts" {
+  name        = "Regional queue health alerts"
+  description = "Central alert timeline for regional queued-build backlog, oldest-message age, and dead-letter queue activity. Metric charts remain alert-free for clear correlation."
+
+  program_text = "alerts(detector_id='${var.detector_id}').publish(label='Regional queue health alerts')"
+
+  plot_type        = "LineChart"
+  show_event_lines = true
+  time_range       = 3600
 }
 
 resource "signalfx_dashboard" "aws_regional_health" {
@@ -247,6 +255,14 @@ resource "signalfx_dashboard" "aws_regional_health" {
   chart {
     chart_id = signalfx_time_chart.build_queue_dlq_sends.id
     row      = 2
+    column   = 0
+    width    = 12
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_time_chart.queue_health_alerts.id
+    row      = 3
     column   = 0
     width    = 12
     height   = 1

@@ -36,6 +36,17 @@ resource "terraform_data" "dashboard_parent" {
   triggers_replace = var.dashboard_group
 }
 
+resource "signalfx_time_chart" "tenant_health_alerts" {
+  name        = "Tenant health alerts"
+  description = "Central alert timeline for the per-tenant health detectors. Issue leaderboards remain metric-only so unrelated alerts do not appear on every chart."
+
+  program_text = local.tenant_health_alerts
+
+  plot_type        = "LineChart"
+  show_event_lines = true
+  time_range       = 3600
+}
+
 resource "signalfx_dashboard" "forge_impact" {
   name            = "Forge Tenant Impact"
   description     = "Cross-service tenant issue leaderboards for the first step of workload incident investigation."
@@ -149,6 +160,14 @@ resource "signalfx_dashboard" "forge_impact" {
     row      = 4
     column   = 6
     width    = 6
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_time_chart.tenant_health_alerts.id
+    row      = 5
+    column   = 0
+    width    = 12
     height   = 1
   }
 }

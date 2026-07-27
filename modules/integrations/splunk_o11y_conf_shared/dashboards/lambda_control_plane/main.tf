@@ -123,7 +123,6 @@ resource "signalfx_time_chart" "errors_and_throttles_by_function" {
   program_text = <<-EOF
 errors = data('Errors', filter=(${local.control_plane_filter}) and (${local.lambda_dimension_filter}) and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='5m').sum(by=['aws_region', 'aws_function_name']).publish(label='A')
 throttles = data('Throttles', filter=(${local.control_plane_filter}) and (${local.lambda_dimension_filter}) and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='5m').sum(by=['aws_region', 'aws_function_name']).publish(label='B')
-alerts(detector_id='${var.detector_id}').publish(label='Control-plane health alerts')
 EOF
 
   plot_type                 = "LineChart"
@@ -194,6 +193,17 @@ resource "signalfx_time_chart" "duration_by_function" {
 
 resource "terraform_data" "dashboard_parent" {
   triggers_replace = var.dashboard_group
+}
+
+resource "signalfx_time_chart" "health_alerts" {
+  name        = "Lambda control-plane health alerts"
+  description = "Central alert timeline for shared Forge Lambda errors and throttles. Lambda metric charts remain alert-free for clear correlation."
+
+  program_text = "alerts(detector_id='${var.detector_id}').publish(label='Lambda control-plane health alerts')"
+
+  plot_type        = "LineChart"
+  show_event_lines = true
+  time_range       = 3600
 }
 
 resource "signalfx_dashboard" "lambda_control_plane" {
@@ -274,6 +284,14 @@ resource "signalfx_dashboard" "lambda_control_plane" {
   chart {
     chart_id = signalfx_time_chart.duration_by_function.id
     row      = 3
+    column   = 0
+    width    = 12
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_time_chart.health_alerts.id
+    row      = 4
     column   = 0
     width    = 12
     height   = 1

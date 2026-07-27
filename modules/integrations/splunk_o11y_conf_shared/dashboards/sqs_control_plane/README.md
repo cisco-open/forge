@@ -36,6 +36,7 @@ No modules.
 | [signalfx_single_value_chart.queue_count](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/single_value_chart) | resource |
 | [signalfx_time_chart.dlq_oldest_message_age](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.dlq_visible_messages](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
+| [signalfx_time_chart.health_alerts](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.messages_by_operation](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.messages_by_state](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.oldest_message_age](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |

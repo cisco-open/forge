@@ -48,10 +48,10 @@ run "creates_regional_platform_dashboard" {
     condition = (
       signalfx_dashboard.aws_regional_health.name == "Forge AWS Regional Platform Health"
       && signalfx_dashboard.aws_regional_health.dashboard_group == "forge-dashboard-group"
-      && length(signalfx_dashboard.aws_regional_health.chart) == 5
+      && length(signalfx_dashboard.aws_regional_health.chart) == 6
       && length(signalfx_dashboard.aws_regional_health.variable) == 3
     )
-    error_message = "The regional platform dashboard must keep its distinct name, parent group, five live panels, and dedicated variables."
+    error_message = "The regional platform dashboard must keep its distinct name, parent group, five metric panels, one alert timeline, and dedicated variables."
   }
 
   assert {
@@ -91,11 +91,13 @@ run "creates_regional_platform_dashboard" {
           signalfx_time_chart.build_queue_oldest_age.program_text,
           signalfx_time_chart.build_queue_visible_backlog.program_text,
           signalfx_time_chart.build_queue_dlq_sends.program_text,
-        ] : strcontains(program_text, "alerts(detector_id='regional-queue-detector-id')")
+        ] : !strcontains(program_text, "alerts(detector_id=")
       ])
       && !strcontains(signalfx_time_chart.lambda_throttle_attempt_rate.program_text, "alerts(detector_id=")
       && !strcontains(signalfx_time_chart.lambda_throttle_count.program_text, "alerts(detector_id=")
+      && strcontains(signalfx_time_chart.queue_health_alerts.program_text, "alerts(detector_id='regional-queue-detector-id')")
+      && signalfx_time_chart.queue_health_alerts.show_event_lines
     )
-    error_message = "The regional queue detector must link only queue-health charts, not diagnostic Lambda throttle charts."
+    error_message = "Regional metric charts must remain alert-free and show queue detector events only on the central timeline."
   }
 }

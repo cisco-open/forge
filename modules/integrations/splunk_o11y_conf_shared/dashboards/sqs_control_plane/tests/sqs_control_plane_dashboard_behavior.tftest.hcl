@@ -53,10 +53,10 @@ run "creates_sqs_control_plane_dashboard" {
     condition = (
       signalfx_dashboard.sqs_control_plane.name == "Forge Control Plane - SQS"
       && signalfx_dashboard.sqs_control_plane.dashboard_group == "forge-dashboard-group"
-      && length(signalfx_dashboard.sqs_control_plane.chart) == 7
+      && length(signalfx_dashboard.sqs_control_plane.chart) == 8
       && length(signalfx_dashboard.sqs_control_plane.variable) == 3
     )
-    error_message = "The SQS control-plane dashboard must keep its name, parent group, seven panels, and dedicated variables."
+    error_message = "The SQS control-plane dashboard must keep its name, parent group, seven metric panels, one alert timeline, and dedicated variables."
   }
 
   assert {
@@ -90,13 +90,17 @@ run "creates_sqs_control_plane_dashboard" {
   }
 
   assert {
-    condition = alltrue([
-      for program_text in [
-        signalfx_time_chart.visible_messages.program_text,
-        signalfx_time_chart.oldest_message_age.program_text,
-        signalfx_time_chart.dlq_visible_messages.program_text,
-      ] : strcontains(program_text, "alerts(detector_id='aws-control-plane-detector')")
-    ])
-    error_message = "SQS backlog, age, and DLQ charts must show AWS control-plane detector events."
+    condition = (
+      alltrue([
+        for program_text in [
+          signalfx_time_chart.visible_messages.program_text,
+          signalfx_time_chart.oldest_message_age.program_text,
+          signalfx_time_chart.dlq_visible_messages.program_text,
+        ] : !strcontains(program_text, "alerts(detector_id=")
+      ])
+      && strcontains(signalfx_time_chart.health_alerts.program_text, "alerts(detector_id='aws-control-plane-detector')")
+      && signalfx_time_chart.health_alerts.show_event_lines
+    )
+    error_message = "SQS metric charts must remain alert-free and show detector events only on the central timeline."
   }
 }

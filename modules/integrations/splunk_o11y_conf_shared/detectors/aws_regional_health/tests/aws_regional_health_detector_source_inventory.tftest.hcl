@@ -10,6 +10,7 @@ run "aws_regional_health_detector_source_inventory" {
     expected_literals = [
       "resource \"signalfx_detector\" \"aws_regional_platform_health\"",
       "resource \"signalfx_detector\" \"aws_control_plane_health\"",
+      "resource \"signalfx_detector\" \"aws_sqs_control_plane_health\"",
       "ApproximateAgeOfOldestMessage",
       "ApproximateNumberOfMessagesVisible",
       "NumberOfMessagesSent",
@@ -31,7 +32,7 @@ run "aws_regional_health_detector_source_inventory" {
   }
 
   assert {
-    condition     = output.expected_literal_count == 14
+    condition     = output.expected_literal_count == 15
     error_message = "Regional AWS detector source inventory count must remain pinned."
   }
 }

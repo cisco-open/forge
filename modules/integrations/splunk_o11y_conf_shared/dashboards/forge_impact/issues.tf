@@ -8,7 +8,6 @@ resource "signalfx_list_chart" "top_tenants_lambda_errors" {
 
   program_text = <<-EOF
 A = data('Errors', filter=(${local.ec2_tenant_filter}) and filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_function_version', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName']).sum(over=${local.issue_window}).above(0).top(count=10).publish(label='A')
-${local.tenant_health_alerts}
 EOF
 
   hide_missing_values     = true
@@ -36,7 +35,6 @@ resource "signalfx_list_chart" "top_tenants_lambda_throttles" {
 
   program_text = <<-EOF
 A = data('Throttles', filter=(${local.ec2_tenant_filter}) and filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_function_version', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName']).sum(over=${local.issue_window}).above(0).top(count=10).publish(label='A')
-${local.tenant_health_alerts}
 EOF
 
   hide_missing_values     = true
@@ -66,7 +64,6 @@ resource "signalfx_list_chart" "top_tenants_ec2_memory" {
 used = data('system.memory.usage', filter=(${local.ec2_tenant_filter}) and filter('cloud.platform', 'aws_ec2') and filter('state', 'used'), rollup='latest').sum(by=['aws_tag_TenantName', 'host.name'])
 total = data('system.memory.usage', filter=(${local.ec2_tenant_filter}) and filter('cloud.platform', 'aws_ec2') and filter('state', 'used', 'free', 'cached', 'buffered'), rollup='latest').sum(by=['aws_tag_TenantName', 'host.name'])
 A = ((used / total) * 100).max(by=['aws_tag_TenantName']).top(count=10).publish(label='A')
-${local.tenant_health_alerts}
 EOF
 
   color_by                = "Scale"
@@ -149,7 +146,6 @@ resource "signalfx_list_chart" "top_tenants_k8s_pending_pods" {
 
   program_text = <<-EOF
 A = data('k8s.pod.phase', filter=(${local.k8s_tenant_namespace_filter}), rollup='latest').between(0, 1.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.namespace.name']).above(0).top(count=10).publish(label='A')
-${local.tenant_health_alerts}
 EOF
 
   hide_missing_values     = true
@@ -177,7 +173,6 @@ resource "signalfx_list_chart" "top_tenants_k8s_failed_pods" {
 
   program_text = <<-EOF
 A = data('k8s.pod.phase', filter=(${local.k8s_tenant_namespace_filter}), rollup='latest').between(3.5, 5.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.namespace.name']).above(0).top(count=10).publish(label='A')
-${local.tenant_health_alerts}
 EOF
 
   hide_missing_values     = true
@@ -205,7 +200,6 @@ resource "signalfx_list_chart" "top_tenants_sqs_backlog" {
 
   program_text = <<-EOF
 A = data('ApproximateNumberOfMessagesVisible', filter=(${local.ec2_tenant_filter}) and filter('namespace', 'AWS/SQS') and filter('QueueName', '*') and filter('stat', 'mean'), rollup='latest').sum(by=['aws_tag_TenantName']).above(0).top(count=10).publish(label='A')
-${local.tenant_health_alerts}
 EOF
 
   hide_missing_values     = true
@@ -233,7 +227,6 @@ resource "signalfx_list_chart" "top_tenants_sqs_dlq_backlog" {
 
   program_text = <<-EOF
 A = data('ApproximateNumberOfMessagesVisible', filter=(${local.ec2_tenant_filter}) and filter('namespace', 'AWS/SQS') and filter('QueueName', '*dead-letter*', '*dead_letter*', '*dlq*', '*DLQ*') and filter('stat', 'mean'), rollup='latest').sum(by=['aws_tag_TenantName']).above(0).top(count=10).publish(label='A')
-${local.tenant_health_alerts}
 EOF
 
   hide_missing_values     = true
@@ -263,7 +256,6 @@ resource "signalfx_list_chart" "top_tenants_ec2_disk" {
 used = data('system.filesystem.usage', filter=(${local.ec2_tenant_filter}) and filter('cloud.platform', 'aws_ec2') and filter('state', 'used') and filter('type', 'ext4', 'xfs') and filter('mode', 'rw'), rollup='latest').sum(by=['aws_tag_TenantName', 'host.id'])
 free = data('system.filesystem.usage', filter=(${local.ec2_tenant_filter}) and filter('cloud.platform', 'aws_ec2') and filter('state', 'free') and filter('type', 'ext4', 'xfs') and filter('mode', 'rw'), rollup='latest').sum(by=['aws_tag_TenantName', 'host.id'])
 A = ((used / (used + free)) * 100).max(by=['aws_tag_TenantName']).top(count=10).publish(label='A')
-${local.tenant_health_alerts}
 EOF
 
   color_by                = "Scale"
@@ -306,7 +298,6 @@ resource "signalfx_list_chart" "top_tenants_ec2_status_failures" {
 
   program_text = <<-EOF
 A = data('StatusCheckFailed', filter=(${local.ec2_tenant_filter}) and filter('namespace', 'AWS/EC2') and filter('stat', 'sum') and filter('aws_instance_id', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName', 'aws_instance_id']).sum(over=${local.issue_window}).max(by=['aws_tag_TenantName']).above(0).top(count=10).publish(label='A')
-${local.tenant_health_alerts}
 EOF
 
   color_by                = "Scale"
@@ -344,7 +335,6 @@ resource "signalfx_list_chart" "top_tenants_k8s_restarts" {
 
   program_text = <<-EOF
 A = data('k8s.container.restarts', filter=(${local.k8s_tenant_namespace_filter}) and filter('k8s.container.name', '*'), rollup='latest').max(by=['k8s.namespace.name', 'k8s.pod.name', 'k8s.container.name']).delta().sum(by=['k8s.namespace.name']).sum(over=${local.issue_window}).above(0).top(count=10).publish(label='A')
-${local.tenant_health_alerts}
 EOF
 
   color_by                = "Scale"
@@ -406,7 +396,6 @@ resource "signalfx_list_chart" "top_tenants_ebs_iops_exceeded" {
 
   program_text = <<-EOF
 A = data('VolumeIOPSExceededCheck', filter=(${local.ec2_tenant_filter}) and filter('namespace', 'AWS/EBS') and filter('stat', 'sum') and filter('VolumeId', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName', 'VolumeId']).sum(over=${local.issue_window}).max(by=['aws_tag_TenantName']).above(0).top(count=10).publish(label='A')
-${local.tenant_health_alerts}
 EOF
 
   color_by                = "Scale"

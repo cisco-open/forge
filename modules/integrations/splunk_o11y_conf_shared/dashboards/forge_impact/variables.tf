@@ -18,7 +18,7 @@ variable "dynamic_variables" {
 }
 
 variable "detector_ids" {
-  description = "Tenant health detector IDs keyed by tenant for linking issue charts."
+  description = "Tenant health detector IDs keyed by tenant for the central alert timeline."
   type        = map(string)
 }
 

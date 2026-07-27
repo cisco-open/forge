@@ -77,7 +77,7 @@ module "dashboard_lambda_control_plane" {
 
   dynamic_variables = var.dashboard_variables.lambda_control_plane.dynamic_variables
   dashboard_group   = signalfx_dashboard_group.forgecicd.id
-  detector_id       = module.detector_aws_regional_health.control_plane_detector_id
+  detector_id       = module.detector_aws_regional_health.lambda_control_plane_detector_id
 }
 
 module "dashboard_kinesis_control_plane" {
@@ -138,7 +138,7 @@ module "dashboard_sqs_control_plane" {
 
   dynamic_variables = var.dashboard_variables.sqs_control_plane.dynamic_variables
   dashboard_group   = signalfx_dashboard_group.forgecicd.id
-  detector_id       = module.detector_aws_regional_health.control_plane_detector_id
+  detector_id       = module.detector_aws_regional_health.sqs_control_plane_detector_id
 }
 
 module "dashboard_s3" {

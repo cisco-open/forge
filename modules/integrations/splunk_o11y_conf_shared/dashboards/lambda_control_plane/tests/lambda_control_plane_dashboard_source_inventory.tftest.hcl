@@ -9,6 +9,7 @@ run "lambda_control_plane_dashboard_source_inventory" {
     module_path = "."
     expected_literals = [
       "resource \"signalfx_dashboard\" \"lambda_control_plane\"",
+      "resource \"signalfx_time_chart\" \"health_alerts\"",
       "Forge Control Plane - Lambdas",
       "resource \"terraform_data\" \"dashboard_parent\"",
       "terraform_data.dashboard_parent,",
