@@ -132,4 +132,27 @@ run "creates_regional_platform_detector" {
     ])
     error_message = "Every SQS control-plane detector rule must use the configured notification routing."
   }
+
+  assert {
+    condition = (
+      signalfx_detector.runner_log_delivery_health.name == "Forge Prod runner-log delivery integrity"
+      && signalfx_detector.runner_log_delivery_health.max_delay == 120
+      && length(signalfx_detector.runner_log_delivery_health.rule) == 3
+      && strcontains(signalfx_detector.runner_log_delivery_health.program_text, "filter('DeliveryStreamName', 'splunk-s3-runner-logs-firehose-*')")
+      && strcontains(signalfx_detector.runner_log_delivery_health.program_text, "filter('QueueName', 'splunk-s3-runner-logs-events-dlq')")
+      && strcontains(signalfx_detector.runner_log_delivery_health.program_text, "filter('stat', 'mean')")
+      && strcontains(signalfx_detector.runner_log_delivery_health.program_text, "(records > 0) and (success_pct < 100), '5m'")
+      && strcontains(signalfx_detector.runner_log_delivery_health.program_text, "(records > 0) and (freshness > 300), '10m'")
+      && strcontains(signalfx_detector.runner_log_delivery_health.program_text, "dlq > 0, '5m'")
+    )
+    error_message = "The runner-log detector must use percentage delivery semantics, suppress idle streams, and cover stale delivery and DLQ occupancy."
+  }
+
+  assert {
+    condition = alltrue([
+      for rule in signalfx_detector.runner_log_delivery_health.rule :
+      toset(rule.notifications) == toset(["Email,forge@example.com"])
+    ])
+    error_message = "Every runner-log delivery detector rule must use the configured notification routing."
+  }
 }

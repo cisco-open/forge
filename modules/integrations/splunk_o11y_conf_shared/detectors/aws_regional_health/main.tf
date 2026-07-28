@@ -21,6 +21,48 @@ locals {
   control_plane_queue_filter    = "filter('namespace', 'AWS/SQS') and filter('QueueName', '*')"
   control_plane_lambda_filter   = "(${var.lambda_dimension_filter}) and filter('aws_function_name', '*')"
   dead_letter_queue_name_filter = "filter('QueueName', '*dead-letter*', '*dead_letter*', '*dlq*', '*DLQ*')"
+  runner_log_firehose_filter    = "filter('namespace', 'AWS/Firehose') and filter('DeliveryStreamName', 'splunk-s3-runner-logs-firehose-*')"
+  runner_log_dlq_filter         = "filter('namespace', 'AWS/SQS') and filter('QueueName', 'splunk-s3-runner-logs-events-dlq')"
+}
+
+resource "signalfx_detector" "runner_log_delivery_health" {
+  name        = "${var.detector_name_prefix} runner-log delivery integrity"
+  description = "Monitors the shared runner-log Firehose delivery path and its dead-letter queue. Idle delivery streams do not alert."
+  max_delay   = 120
+  tags        = local.detector_tags
+  teams       = [var.team]
+  time_range  = 86400
+
+  program_text = <<-EOF
+records = data('DeliveryToSplunk.Records', filter=(${local.control_plane_filter}) and (${local.runner_log_firehose_filter}) and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='5m').sum(by=['aws_region', 'DeliveryStreamName'])
+success_pct = data('DeliveryToSplunk.Success', filter=(${local.control_plane_filter}) and (${local.runner_log_firehose_filter}) and filter('stat', 'mean'), rollup='average').mean(over='5m').mean(by=['aws_region', 'DeliveryStreamName'])
+freshness = data('DeliveryToSplunk.DataFreshness', filter=(${local.control_plane_filter}) and (${local.runner_log_firehose_filter}) and filter('stat', 'upper'), rollup='max').max(over='5m').max(by=['aws_region', 'DeliveryStreamName'])
+dlq = data('ApproximateNumberOfMessagesVisible', filter=(${local.control_plane_filter}) and (${local.runner_log_dlq_filter}) and filter('stat', 'upper'), rollup='latest').max(over='5m').max(by=['aws_region', 'QueueName'])
+detect(when(dlq > 0, '5m'), off=when(dlq == 0, '15m')).publish('Runner-log DLQ contains messages')
+detect(when((records > 0) and (success_pct < 100), '5m'), off=when((success_pct == 100) or (records == 0), '10m')).publish('Runner-log Splunk delivery failure')
+detect(when((records > 0) and (freshness > 300), '10m'), off=when(freshness <= 240, '10m')).publish('Runner-log Splunk delivery stale')
+EOF
+
+  rule {
+    description   = "Runner-log dead-letter queue contains messages for 5 minutes"
+    severity      = "Critical"
+    detect_label  = "Runner-log DLQ contains messages"
+    notifications = var.detector_notifications
+  }
+
+  rule {
+    description   = "Runner-log delivery success remains below 100 percent for the configured 300-second retry window"
+    severity      = "Critical"
+    detect_label  = "Runner-log Splunk delivery failure"
+    notifications = var.detector_notifications
+  }
+
+  rule {
+    description   = "Runner-log delivery freshness exceeds the configured 300-second retry window for 10 minutes"
+    severity      = "Major"
+    detect_label  = "Runner-log Splunk delivery stale"
+    notifications = var.detector_notifications
+  }
 }
 
 resource "signalfx_detector" "aws_regional_platform_health" {

@@ -53,6 +53,7 @@ run "creates_runner_logs_ingestion_dashboard" {
     condition = (
       signalfx_dashboard.runner_logs_ingestion.name == "Forge Runner Logs Ingestion"
       && signalfx_dashboard.runner_logs_ingestion.dashboard_group == "forge-dashboard-group"
+      && signalfx_dashboard.runner_logs_ingestion.time_range == "-24h"
       && length(signalfx_dashboard.runner_logs_ingestion.chart) == 17
       && length(signalfx_dashboard.runner_logs_ingestion.variable) == 3
     )
@@ -105,6 +106,9 @@ run "creates_runner_logs_ingestion_dashboard" {
       && strcontains(signalfx_time_chart.oldest_message_trend.program_text, "ApproximateAgeOfOldestMessage")
       && signalfx_time_chart.oldest_message_trend.time_range == 21600
       && strcontains(signalfx_time_chart.firehose_delivery.program_text, "DeliveryToSplunk.Records")
+      && strcontains(signalfx_time_chart.firehose_delivery.program_text, "filter('stat', 'mean')")
+      && strcontains(signalfx_time_chart.firehose_delivery.program_text, "rollup='average'")
+      && strcontains(signalfx_time_chart.firehose_delivery.program_text, ".mean(over='5m').mean(by=['aws_region', 'DeliveryStreamName'])")
       && strcontains(signalfx_time_chart.firehose_latency.program_text, "DeliveryToSplunk.DataFreshness")
       && strcontains(signalfx_time_chart.firehose_latency.program_text, "DeliveryToSplunk.DataAckLatency")
     )

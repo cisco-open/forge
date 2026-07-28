@@ -296,10 +296,10 @@ resource "signalfx_time_chart" "oldest_message_trend" {
 
 resource "signalfx_time_chart" "firehose_delivery" {
   name             = "Runner-log delivery to Splunk"
-  description      = "Records delivered successfully to Splunk per five minutes."
+  description      = "Records sent to Splunk and the average Firehose delivery success percentage per five minutes. Interpret success only while records are flowing."
   program_text     = <<-EOF
 records = data('DeliveryToSplunk.Records', filter=(${local.aws_platform_filter}) and (${local.firehose_filter}) and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='5m').sum(by=['aws_region', 'DeliveryStreamName']).publish(label='A')
-success = data('DeliveryToSplunk.Success', filter=(${local.aws_platform_filter}) and (${local.firehose_filter}) and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='5m').sum(by=['aws_region', 'DeliveryStreamName']).publish(label='B')
+success = data('DeliveryToSplunk.Success', filter=(${local.aws_platform_filter}) and (${local.firehose_filter}) and filter('stat', 'mean'), rollup='average').mean(over='5m').mean(by=['aws_region', 'DeliveryStreamName']).publish(label='B')
 EOF
   plot_type        = "LineChart"
   disable_sampling = true
@@ -310,8 +310,9 @@ EOF
     label        = "A"
   }
   viz_options {
-    display_name = "Successful deliveries"
+    display_name = "Delivery success"
     label        = "B"
+    value_suffix = "%"
   }
 }
 
@@ -345,7 +346,7 @@ resource "signalfx_dashboard" "runner_logs_ingestion" {
   name            = "Forge Runner Logs Ingestion"
   description     = "End-to-end health of the Forge runner-log ingestion path from SQS through Lambda and Kinesis to Firehose and Splunk HEC."
   dashboard_group = var.dashboard_group
-  time_range      = "-1h"
+  time_range      = "-24h"
 
   lifecycle {
     replace_triggered_by = [
