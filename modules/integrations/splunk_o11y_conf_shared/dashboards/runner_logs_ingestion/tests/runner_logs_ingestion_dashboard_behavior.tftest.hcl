@@ -14,6 +14,7 @@ mock_provider "signalfx" {
 
 variables {
   dashboard_group         = "forge-dashboard-group"
+  detector_id             = "runner-log-delivery-detector-id"
   lambda_dimension_filter = "filter('namespace', 'AWS/Lambda') and filter('Resource', '*') and (not filter('ExecutedVersion', '*'))"
   dynamic_variables = [
     {
@@ -53,10 +54,10 @@ run "creates_runner_logs_ingestion_dashboard" {
     condition = (
       signalfx_dashboard.runner_logs_ingestion.name == "Forge Runner Logs Ingestion"
       && signalfx_dashboard.runner_logs_ingestion.dashboard_group == "forge-dashboard-group"
-      && length(signalfx_dashboard.runner_logs_ingestion.chart) == 17
+      && length(signalfx_dashboard.runner_logs_ingestion.chart) == 18
       && length(signalfx_dashboard.runner_logs_ingestion.variable) == 3
     )
-    error_message = "The runner-log ingestion dashboard must keep its name, parent group, seventeen panels, and dedicated variables."
+    error_message = "The runner-log ingestion dashboard must keep its name, parent group, eighteen panels, and dedicated variables."
   }
 
   assert {
@@ -105,9 +106,15 @@ run "creates_runner_logs_ingestion_dashboard" {
       && strcontains(signalfx_time_chart.oldest_message_trend.program_text, "ApproximateAgeOfOldestMessage")
       && signalfx_time_chart.oldest_message_trend.time_range == 21600
       && strcontains(signalfx_time_chart.firehose_delivery.program_text, "DeliveryToSplunk.Records")
+      && strcontains(signalfx_time_chart.firehose_delivery.program_text, "filter('stat', 'mean')")
+      && strcontains(signalfx_time_chart.firehose_delivery.program_text, "rollup='average'")
+      && strcontains(signalfx_time_chart.firehose_delivery.program_text, ".mean(over='5m').mean(by=['aws_region', 'DeliveryStreamName'])")
       && strcontains(signalfx_time_chart.firehose_latency.program_text, "DeliveryToSplunk.DataFreshness")
       && strcontains(signalfx_time_chart.firehose_latency.program_text, "DeliveryToSplunk.DataAckLatency")
+      && strcontains(signalfx_time_chart.delivery_health_alerts.program_text, "alerts(detector_id='runner-log-delivery-detector-id')")
+      && signalfx_time_chart.delivery_health_alerts.show_event_lines
+      && signalfx_time_chart.delivery_health_alerts.time_range == 3600
     )
-    error_message = "The dashboard must preserve the SQS, Lambda, Kinesis, Splunk delivery, and tuning validation signals."
+    error_message = "The dashboard must preserve the detector events, SQS, Lambda, Kinesis, Splunk delivery, and tuning validation signals."
   }
 }
