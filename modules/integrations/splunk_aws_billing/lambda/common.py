@@ -185,20 +185,48 @@ def send_metric_to_o11y_batch(metrics):
     return True
 
 
+TENANT_APPLICATION_ARN = re.compile(
+    r'arn:aws:resource-groups:'
+    r'(?P<aws_region>[\w-]+):'
+    r'(?P<account_id>\d+):'
+    r'group/'
+    r'(?P<forgecicd_tenant>[a-z0-9]+)-'
+    r'(?P<forgecicd_region_alias>[a-z0-9]+)-'
+    r'(?P<forgecicd_vpc_alias>[a-z0-9]+)'
+    r'/resources'
+)
+
+MODULE_APPLICATION_ARN = re.compile(
+    r'arn:aws:resource-groups:'
+    r'(?P<aws_region>[\w-]+):'
+    r'(?P<account_id>\d+):'
+    r'group/'
+    r'(?P<forgecicd_module_group>helpers|infra|integrations)_'
+    r'(?P<forgecicd_module>[a-z0-9_]+)_'
+    r'(?P=aws_region)'
+    r'/resources'
+)
+
+
 def extract_arn_parts(arn):
-    match = re.search(
-        r'arn:aws:resource-groups:(?P<aws_region>[\w-]+):(?P<account_id>\d+):group/(?P<forgecicd_tenant>[^-]+)-(?P<forgecicd_region_alias>[^-]+)-(?P<forgecicd_vpc_alias>[^/]+)/',
-        arn
-    )
+    if not isinstance(arn, str):
+        return None
+
+    match = MODULE_APPLICATION_ARN.fullmatch(arn)
     if match:
-        return match.groupdict()
-    return {
-        'aws_region': 'unknown',
-        'account_id': 'unknown',
-        'forgecicd_tenant': 'unknown',
-        'forgecicd_region_alias': 'unknown',
-        'forgecicd_vpc_alias': 'unknown'
-    }
+        return {
+            **match.groupdict(),
+            'forgecicd_scope': 'module',
+        }
+
+    match = TENANT_APPLICATION_ARN.fullmatch(arn)
+    if match:
+        return {
+            **match.groupdict(),
+            'forgecicd_scope': 'tenant',
+        }
+
+    return None
 
 
 def parse_tags(val):
@@ -227,7 +255,8 @@ def preprocess_df(df):
     df['resource_tags'] = df['resource_tags'].apply(parse_tags)
     df['user_aws_application'] = df['resource_tags'].apply(
         lambda tags: tags.get('user_aws_application', 'unknown'))
-    df = df[df['user_aws_application'] != 'unknown']
+    application_fields = df['user_aws_application'].apply(extract_arn_parts)
+    df = df[application_fields.notna()]
 
     LOG.info('Preprocessed DataFrame shape: %s', df.shape)
     return df

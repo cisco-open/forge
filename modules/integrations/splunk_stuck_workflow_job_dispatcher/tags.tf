@@ -1,5 +1,9 @@
 locals {
-  all_security_tags = merge(var.default_tags, var.tags)
+  all_security_tags = merge(
+    var.default_tags,
+    var.tags,
+    aws_servicecatalogappregistry_application.this.application_tag,
+  )
 
   redelivery_tenant_configs = [
     for tenant_config in var.redelivery_config.tenant_configs : {

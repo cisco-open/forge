@@ -4,5 +4,5 @@ resource "aws_kinesis_stream" "splunk_s3_runner_logs" {
   encryption_type  = "KMS"
   kms_key_id       = aws_kms_key.splunk_s3_runner_logs.arn
   stream_mode_details { stream_mode = "ON_DEMAND" }
-  tags = var.tags
+  tags = local.module_tags
 }

@@ -23,6 +23,6 @@ module "webex_webhook_relay" {
   logging_retention_in_days = var.logging_retention_in_days
   log_level                 = var.log_level
   aws_region                = var.aws_region
-  tags                      = var.tags
+  tags                      = local.module_tags
   default_tags              = var.default_tags
 }

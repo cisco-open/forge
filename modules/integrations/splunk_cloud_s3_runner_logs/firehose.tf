@@ -12,7 +12,7 @@ resource "aws_iam_role" "firehose_role" {
       Action    = "sts:AssumeRole"
     }]
   })
-  tags = var.tags
+  tags = local.module_tags
 }
 
 resource "aws_iam_policy" "firehose_policy" {
@@ -107,7 +107,7 @@ resource "aws_kinesis_firehose_delivery_stream" "splunk_firehose" {
       log_stream_name = "delivery"
     }
   }
-  tags = var.tags
+  tags = local.module_tags
 }
 
 # CloudWatch Log Group for Firehose delivery diagnostics
@@ -116,5 +116,5 @@ resource "aws_cloudwatch_log_group" "firehose_splunk" {
   name              = "/aws/kinesisfirehose/${local.prefix_firehose}-${var.aws_region}"
   retention_in_days = var.logging_retention_in_days
   kms_key_id        = aws_kms_key.splunk_s3_runner_logs.arn
-  tags              = var.tags
+  tags              = local.module_tags
 }

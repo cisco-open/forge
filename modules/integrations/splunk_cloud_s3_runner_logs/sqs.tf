@@ -7,14 +7,14 @@ resource "aws_sqs_queue" "log_events_queue" {
     deadLetterTargetArn = aws_sqs_queue.log_events_dlq.arn
     maxReceiveCount     = var.sqs_redrive_max_receive_count
   })
-  tags = var.tags
+  tags = local.module_tags
 }
 
 resource "aws_sqs_queue" "log_events_dlq" {
   name                      = "splunk-s3-runner-logs-events-dlq"
   message_retention_seconds = 1209600 # 14 days
   kms_master_key_id         = aws_kms_key.splunk_s3_runner_logs.arn
-  tags                      = merge(var.tags, { Purpose = "dlq" })
+  tags                      = merge(local.module_tags, { Purpose = "dlq" })
 }
 
 resource "aws_sqs_queue_policy" "allow_s3" {

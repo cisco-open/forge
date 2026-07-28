@@ -311,8 +311,45 @@ def test_extract_arn_parts_for_resource_group_application(monkeypatch, aws):
         'forgecicd_tenant': 'acgw',
         'forgecicd_region_alias': 'usw2',
         'forgecicd_vpc_alias': 'dev',
+        'forgecicd_scope': 'tenant',
     }
-    assert common.extract_arn_parts('not-an-arn')['aws_region'] == 'unknown'
+    assert common.extract_arn_parts('not-an-arn') is None
+
+
+def test_extract_arn_parts_for_module_application(monkeypatch, aws):
+    common = _load_billing_module(monkeypatch, 'common')
+
+    parts = common.extract_arn_parts(
+        'arn:aws:resource-groups:us-west-2:123456789012:'
+        'group/integrations_splunk_aws_billing_us-west-2/resources'
+    )
+
+    assert parts == {
+        'aws_region': 'us-west-2',
+        'account_id': '123456789012',
+        'forgecicd_module_group': 'integrations',
+        'forgecicd_module': 'splunk_aws_billing',
+        'forgecicd_scope': 'module',
+    }
+
+
+def test_extract_arn_parts_requires_a_complete_match(monkeypatch, aws):
+    common = _load_billing_module(monkeypatch, 'common')
+    tenant_arn = (
+        'arn:aws:resource-groups:us-west-2:123456789012:'
+        'group/acgw-usw2-dev/resources'
+    )
+    module_arn = (
+        'arn:aws:resource-groups:us-west-2:123456789012:'
+        'group/helpers_ecr_us-west-2/resources'
+    )
+
+    assert common.extract_arn_parts(f'prefix-{tenant_arn}') is None
+    assert common.extract_arn_parts(f'{tenant_arn}/extra') is None
+    assert common.extract_arn_parts(module_arn.replace(
+        'helpers_ecr_us-west-2',
+        'helpers_ecr_us-east-1',
+    )) is None
 
 
 def test_per_service_event_body_rounds_costs(monkeypatch, aws):
@@ -410,6 +447,37 @@ def test_per_service_batches_events_and_o11y_metrics(monkeypatch, aws):
         'forge.per_service.cost_usd',
         'forge.per_service.net_cost_usd',
     ]
+
+
+def test_per_service_skips_rows_with_unsupported_applications(
+    monkeypatch, aws
+):
+    mod = _load_billing_module(monkeypatch, 'handler_per_service')
+    splunk_batches = []
+    metric_batches = []
+    monkeypatch.setattr(
+        mod.common,
+        'send_to_splunk_batch',
+        lambda batch: splunk_batches.append(list(batch)),
+    )
+    monkeypatch.setattr(
+        mod.common,
+        'send_metric_to_o11y_batch',
+        lambda batch: metric_batches.append(list(batch)),
+    )
+
+    mod.process_grouped_rows(_GroupedRows([
+        {
+            'usage_date': '2026-07-03',
+            'line_item_product_code': 'AmazonEC2',
+            'user_aws_application': 'not-a-supported-application',
+            'line_item_unblended_cost': '1.00',
+            'line_item_net_unblended_cost': '0.90',
+        },
+    ]))
+
+    assert splunk_batches == []
+    assert metric_batches == []
 
 
 def test_per_resource_batches_include_resource_dimensions(monkeypatch, aws):

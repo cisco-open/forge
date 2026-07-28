@@ -4,7 +4,7 @@ resource "aws_s3_bucket" "firehose_backup" {
   #checkov:skip=CKV2_AWS_61:Backup bucket lifecycle expiration is deferred until failed-delivery retention requirements are validated.
   #checkov:skip=CKV2_AWS_62:Backup bucket is only a failed-delivery target and has no event-driven consumer.
   bucket = "splunk-s3-runner-logs-failed-${data.aws_caller_identity.current.account_id}-${var.aws_region}"
-  tags   = var.tags
+  tags   = local.module_tags
 }
 
 resource "aws_s3_bucket_ownership_controls" "firehose_backup" {

@@ -30,9 +30,9 @@ module "splunk_s3_runner_logs_redrive_lambda" {
   attach_policy_json = true
   policy_json        = data.aws_iam_policy_document.splunk_s3_runner_logs_redrive.json
 
-  function_tags = var.tags
-  role_tags     = var.tags
-  tags          = var.tags
+  function_tags = local.module_tags
+  role_tags     = local.module_tags
+  tags          = local.module_tags
 
   depends_on = [aws_cloudwatch_log_group.splunk_s3_runner_logs_redrive]
 }
@@ -73,16 +73,16 @@ resource "aws_cloudwatch_log_group" "splunk_s3_runner_logs_redrive" {
   #checkov:skip=CKV_AWS_338:CloudWatch retention is intentionally operator-defined; teams may keep short CloudWatch windows when exporting logs to Splunk or Loki.
   name              = "/aws/lambda/${local.redrive_function_name}"
   retention_in_days = var.logging_retention_in_days
-  tags              = var.tags
-  tags_all          = var.tags
+  tags              = local.module_tags
+  tags_all          = local.module_tags
 }
 
 resource "aws_cloudwatch_event_rule" "splunk_s3_runner_logs_redrive" {
   name                = local.redrive_function_name
   description         = "Redrive failed runner-log events every 10 minutes"
   schedule_expression = "cron(*/10 * * * ? *)"
-  tags                = var.tags
-  tags_all            = var.tags
+  tags                = local.module_tags
+  tags_all            = local.module_tags
 }
 
 resource "aws_cloudwatch_event_target" "splunk_s3_runner_logs_redrive" {
