@@ -113,45 +113,55 @@
                 },
                 "structure": [
                     {
-                        "item": "assume_role_failures_table",
-                        "position": {
-                            "h": 420,
-                            "w": 760,
-                            "x": 0,
-                            "y": 0
-                        },
-                        "type": "block"
-                    },
+                                                                                                                                                "item": "operator_guide",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 170,
+                                                                                                                                                    "w": 1200,
+                                                                                                                                                    "x": 0,
+                                                                                                                                                    "y": 0
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            },
                     {
-                        "item": "trust_failure_trend_chart",
-                        "position": {
-                            "h": 420,
-                            "w": 440,
-                            "x": 760,
-                            "y": 0
-                        },
-                        "type": "block"
-                    },
+                                                                                                                                                "item": "validator_access_denied_table",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 520,
+                                                                                                                                                    "w": 480,
+                                                                                                                                                    "x": 0,
+                                                                                                                                                    "y": 170
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            },
                     {
-                        "item": "latest_validation_table",
-                        "position": {
-                            "h": 520,
-                            "w": 720,
-                            "x": 0,
-                            "y": 420
-                        },
-                        "type": "block"
-                    },
+                                                                                                                                                "item": "assume_role_failures_table",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 420,
+                                                                                                                                                    "w": 760,
+                                                                                                                                                    "x": 0,
+                                                                                                                                                    "y": 690
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            },
                     {
-                        "item": "validator_access_denied_table",
-                        "position": {
-                            "h": 520,
-                            "w": 480,
-                            "x": 720,
-                            "y": 420
-                        },
-                        "type": "block"
-                    }
+                                                                                                                                                "item": "trust_failure_trend_chart",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 420,
+                                                                                                                                                    "w": 440,
+                                                                                                                                                    "x": 760,
+                                                                                                                                                    "y": 690
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            },
+                    {
+                                                                                                                                                "item": "latest_validation_table",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 520,
+                                                                                                                                                    "w": 720,
+                                                                                                                                                    "x": 0,
+                                                                                                                                                    "y": 1110
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            }
                 ],
                 "type": "grid"
             }
@@ -168,6 +178,14 @@
     },
     "title": "Forge Trust Failures",
     "visualizations": {
+        "operator_guide": {
+            "options": {
+                "fontSize": "default",
+                "markdown": "### How to use this dashboard\nStart with AssumeRole and AccessDenied failures, then inspect the latest validation record and affected role. **Healthy:** failure panels are empty; successful validation or unrelated role activity is not a failure. **Action:** identify validator tenant, Forge role, tenant role, AWS account, denied operation, and whether TagSession was attempted. **Ownership:** validator defects belong to Forge; trust policy, permissions, KMS, and session-tag conditions belong to tenant configuration; STS outages are external."
+            },
+            "title": "How should I use this dashboard?",
+            "type": "splunk.markdown"
+        },
         "assume_role_failures_table": {
             "dataSources": {
                 "primary": "assume_role_failures_search"
@@ -177,7 +195,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Basic AssumeRole Failures",
+            "description": "Answers \"Which roles fail AssumeRole?\" for the selected filters and time range. Healthy depends on the workflow stage and is not inferred from a high count alone. Action: identify the affected tenant and resource, then use the next causal-stage panel or raw details to verify impact.",
+            "title": "Which roles fail AssumeRole?",
             "type": "splunk.table"
         },
         "latest_validation_table": {
@@ -189,6 +208,7 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
+            "description": "Answers \"Latest Validation Detail?\" with investigation detail. Healthy is not determined by row count; expected activity may be non-empty, while an empty result can also reflect filters or retention. Action: use this panel only after an impact or failure panel identifies the tenant, repository, workflow job, request, runner, pod, node, or AWS resource to correlate.",
             "title": "Latest Validation Detail",
             "type": "splunk.table"
         },
@@ -199,7 +219,8 @@
             "options": {},
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Trust Failure Trend",
+            "description": "Answers \"Are trust failures increasing?\" with a time series over the selected global range. Healthy: error, retry, delay, or backlog series remain at the established baseline; activity volume alone is not a failure. Failure: a sustained adverse series aligns with affected jobs or resources. Action: use the actionable table above for tenant and resource identifiers before opening raw events.",
+            "title": "Are trust failures increasing?",
             "type": "splunk.line"
         },
         "validator_access_denied_table": {
@@ -211,7 +232,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Validator AccessDenied Errors",
+            "description": "Answers \"Which validator operations receive AccessDenied?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. Failure: one or more rows persist or affect workflow jobs. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
+            "title": "Which validator operations receive AccessDenied?",
             "type": "splunk.table"
         }
     }
