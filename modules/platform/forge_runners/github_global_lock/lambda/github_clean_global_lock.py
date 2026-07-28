@@ -177,9 +177,8 @@ def get_workflow_status(access_token: str, owner: str, repo: str, run_id: str, a
         headers=headers,
         timeout=GITHUB_REQUEST_TIMEOUT,
     )
-    if response.status_code == 200:
-        return response.json().get('status')  # "completed" or other statuses
-    return None
+    response.raise_for_status()
+    return response.json().get('status')  # "completed" or other statuses
 
 
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:

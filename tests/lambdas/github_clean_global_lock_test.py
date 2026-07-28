@@ -7,6 +7,7 @@ import json
 import logging
 
 import boto3
+import pytest
 import requests
 from conftest import AWS_REGION, requires_aws
 from support import load_handler_module
@@ -102,7 +103,7 @@ def test_scan_and_process_deletes_only_completed_workflow_locks(
     ) in caplog.text
 
 
-def test_get_workflow_status_returns_none_on_non_200(monkeypatch, aws):
+def test_get_workflow_status_raises_on_non_200(monkeypatch, aws):
     mod = _load_lock_lambda(monkeypatch)
 
     class _Response:
@@ -111,16 +112,20 @@ def test_get_workflow_status_returns_none_on_non_200(monkeypatch, aws):
         def json(self):
             return {'status': 'completed'}
 
+        def raise_for_status(self):
+            raise requests.HTTPError('500 Server Error')
+
     monkeypatch.setattr(mod.GITHUB_SESSION, 'get', lambda *_args,
                         **_kwargs: _Response())
 
-    assert mod.get_workflow_status(
-        'token',
-        'acme',
-        'app',
-        '100',
-        '1',
-    ) is None
+    with pytest.raises(requests.HTTPError):
+        mod.get_workflow_status(
+            'token',
+            'acme',
+            'app',
+            '100',
+            '1',
+        )
 
 
 def test_github_requests_retry_transient_failures(monkeypatch, aws):

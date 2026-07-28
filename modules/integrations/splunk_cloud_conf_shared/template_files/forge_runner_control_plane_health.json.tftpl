@@ -18,6 +18,18 @@
             },
             "type": "ds.search"
         },
+        "global_lock_cleanup_search": {
+            "name": "Global-lock cleanup outcomes",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" (sourcetype=\"aws:cloudwatchlogs:forgecicd\" OR sourcetype=\"aws:cloudwatchlogs\") source=\"*:/aws/lambda/*clean-global-lock*:*\"\n(\"global_lock_cleanup_observed\" OR \"global_lock_cleanup_deleted\" OR \"global_lock_cleanup_lookup_failed\" OR \"global_lock_cleanup_skipped\")\n| rex field=_raw \"lock_id=(?<lock_id>[^ ]+)\"\n| rex field=_raw \"repository=(?<repository>[^ ]+)\"\n| rex field=_raw \"run_id=(?<run_id>\\d+)\"\n| rex field=_raw \"attempt=(?<attempt>[^ ]+)\"\n| rex field=_raw \"status=(?<workflow_status>[^ ]+)\"\n| rex field=_raw \"reason=(?<reason>[^ ]+)\"\n| eval tenant=coalesce(forgecicd_tenant,\"unknown\"), aws_region=coalesce(aws_region,\"unknown\")\n| eval outcome=case(\n    match(_raw,\"global_lock_cleanup_lookup_failed\"), \"github_lookup_failed\",\n    match(_raw,\"global_lock_cleanup_skipped\") AND reason=\"missing_workflow_url\", \"malformed_missing_workflow_url\",\n    match(_raw,\"global_lock_cleanup_skipped\") AND reason=\"invalid_workflow_url\", \"malformed_invalid_workflow_url\",\n    match(_raw,\"global_lock_cleanup_deleted\"), \"completed_lock_deleted\",\n    match(_raw,\"global_lock_cleanup_observed\"), \"workflow_lock_observed\",\n    true(), \"other\")\n| fillnull value=\"unknown\" lock_id repository run_id attempt workflow_status reason environment service\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$environment$\"=\"*\" OR like(environment,\"%$environment$%\")\n| where \"$service$\"=\"*\" OR like(service,\"%$service$%\")\n| stats values(outcome) as outcomes values(workflow_status) as workflow_statuses count as observations min(_time) as first_time max(_time) as last_time by tenant aws_region repository run_id attempt lock_id\n| eval outcome_list=mvjoin(outcomes,\",\"), status_list=mvjoin(workflow_statuses,\",\")\n| eval assessment=case(\n    mvfind(outcomes,\"github_lookup_failed\")>=0, \"github_lookup_failed\",\n    mvfind(outcomes,\"malformed_missing_workflow_url\")>=0 OR mvfind(outcomes,\"malformed_invalid_workflow_url\")>=0, \"malformed_lock_record\",\n    mvfind(workflow_statuses,\"completed\")>=0 AND mvfind(outcomes,\"completed_lock_deleted\")<0, \"completed_lock_not_deleted\",\n    mvfind(outcomes,\"completed_lock_deleted\")>=0, \"completed_lock_cleaned\",\n    true(), \"active_workflow_lock\")\n| eval operator_action=case(\n    assessment=\"github_lookup_failed\", \"Check GitHub API availability, rate limits, and cleanup Lambda retries\",\n    assessment=\"malformed_lock_record\", \"Inspect the lock producer and repair or remove the malformed DynamoDB item\",\n    assessment=\"completed_lock_not_deleted\", \"Inspect DynamoDB delete permissions and cleanup Lambda errors\",\n    assessment=\"completed_lock_cleaned\", \"No action; cleanup succeeded\",\n    true(), \"No stale-lock conclusion: lock age is not emitted; verify the workflow state before action\")\n| where \"$signal$\"=\"*\" OR like(assessment,\"%$signal$%\") OR like(outcome_list,\"%$signal$%\")\n| eval first_seen=strftime(first_time,\"%Y-%m-%d %H:%M:%S\"), last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| table assessment tenant aws_region repository run_id attempt lock_id workflow_statuses outcomes observations first_seen last_seen operator_action\n| sort - last_time\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
         "pool_activity_search": {
             "name": "Pool top-up activity",
             "options": {
@@ -103,7 +115,7 @@
             }
         }
     },
-    "description": "Runner control-plane signals from scale-up registration, pool top-up, scale-down cleanup, GitHub API retry, and SQS publish logs.",
+    "description": "Runner control-plane signals from scale-up registration, pool top-up, scale-down and global-lock cleanup, GitHub API retry, and SQS publish logs.",
     "inputs": {
         "input_environment": {
             "options": {
@@ -237,6 +249,16 @@
                             "y": 1160
                         },
                         "type": "block"
+                    },
+                    {
+                        "item": "global_lock_cleanup_table",
+                        "position": {
+                            "h": 420,
+                            "w": 1200,
+                            "x": 0,
+                            "y": 1520
+                        },
+                        "type": "block"
                     }
                 ],
                 "type": "grid"
@@ -264,6 +286,18 @@
             "showLastUpdated": true,
             "showProgressBar": false,
             "title": "GitHub and SQS API Warnings",
+            "type": "splunk.table"
+        },
+        "global_lock_cleanup_table": {
+            "dataSources": {
+                "primary": "global_lock_cleanup_search"
+            },
+            "options": {
+                "count": 100
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Global-Lock Cleanup Outcomes",
             "type": "splunk.table"
         },
         "pool_activity_table": {
