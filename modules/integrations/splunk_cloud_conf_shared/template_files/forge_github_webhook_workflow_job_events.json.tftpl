@@ -248,22 +248,12 @@
                         "type": "block"
                     },
                     {
-                        "item": "operator_guide",
-                        "position": {
-                            "h": 170,
-                            "w": 1200,
-                            "x": 0,
-                            "y": 220
-                        },
-                        "type": "block"
-                    },
-                    {
                         "item": "queued_jobs_table",
                         "position": {
                             "h": 360,
                             "w": 1200,
                             "x": 0,
-                            "y": 390
+                            "y": 220
                         },
                         "type": "block"
                     },
@@ -273,7 +263,7 @@
                             "h": 360,
                             "w": 1200,
                             "x": 0,
-                            "y": 750
+                            "y": 580
                         },
                         "type": "block"
                     },
@@ -283,7 +273,7 @@
                             "h": 260,
                             "w": 1200,
                             "x": 0,
-                            "y": 1110
+                            "y": 940
                         },
                         "type": "block"
                     },
@@ -293,7 +283,7 @@
                             "h": 360,
                             "w": 1200,
                             "x": 0,
-                            "y": 1370
+                            "y": 1200
                         },
                         "type": "block"
                     },
@@ -303,7 +293,7 @@
                             "h": 360,
                             "w": 600,
                             "x": 0,
-                            "y": 1730
+                            "y": 1560
                         },
                         "type": "block"
                     },
@@ -313,7 +303,7 @@
                             "h": 360,
                             "w": 600,
                             "x": 600,
-                            "y": 1730
+                            "y": 1560
                         },
                         "type": "block"
                     },
@@ -323,7 +313,7 @@
                             "h": 340,
                             "w": 1200,
                             "x": 0,
-                            "y": 2090
+                            "y": 1920
                         },
                         "type": "block"
                     },
@@ -333,7 +323,7 @@
                             "h": 620,
                             "w": 1200,
                             "x": 0,
-                            "y": 2430
+                            "y": 2260
                         },
                         "type": "block"
                     }
@@ -422,15 +412,6 @@
             "showProgressBar": false,
             "title": "Oldest queued workflow job",
             "type": "splunk.singlevalue"
-        },
-        "operator_guide": {
-            "description": "Explains the intended triage sequence and ownership boundaries for webhook and workflow-job signals.",
-            "options": {
-                "fontSize": "default",
-                "markdown": "### How to use this dashboard\nStart with the four impact cards, then inspect queued jobs and shared relay health before using tenant outcomes, trends, or raw events. **Healthy:** no workflow job remains queued beyond 15 minutes and confirmed relay failures are zero; failed or canceled jobs may still be normal workload outcomes. **Action:** identify tenant, repository, workflow job, delivery, and last observed lifecycle stage, then follow dispatcher, SQS, and EC2 or ARC capacity. **Ownership:** shared relay or dispatcher defects belong to Forge; labels and runner mapping belong to tenant configuration; GitHub delivery and AWS capacity may be external."
-            },
-            "title": "How should I use this dashboard?",
-            "type": "splunk.markdown"
         },
         "queued_jobs_single": {
             "dataSources": {

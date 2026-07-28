@@ -86,21 +86,19 @@ run "organizes_webhook_health_for_operator_triage" {
       && strcontains(splunk_data_ui_views.forge_github_webhook_workflow_job_events.eai_data, "Which workflow-job webhook events were received?")
       && strcontains(splunk_data_ui_views.forge_github_webhook_workflow_job_events.eai_data, "timechart span=15m dc(workflow_job_id) by status")
       && strcontains(splunk_data_ui_views.forge_github_webhook_workflow_job_events.eai_data, "operator_action")
-      && strcontains(splunk_data_ui_views.forge_github_webhook_workflow_job_events.eai_data, "How should I use this dashboard?")
-      && strcontains(splunk_data_ui_views.forge_github_webhook_workflow_job_events.eai_data, "splunk.markdown")
-      && strcontains(splunk_data_ui_views.forge_github_webhook_workflow_job_events.eai_data, "**Ownership:**")
+      && !strcontains(splunk_data_ui_views.forge_github_webhook_workflow_job_events.eai_data, "\"operator_guide\"")
+      && !strcontains(splunk_data_ui_views.forge_github_webhook_workflow_job_events.eai_data, "\"type\": \"splunk.markdown\"")
     )
-    error_message = "The webhook dashboard must explain healthy results, ask operator-oriented questions, add workflow trends, and provide next actions."
+    error_message = "The webhook dashboard must explain healthy results, ask operator-oriented questions, add workflow trends, and avoid a dedicated guide row."
   }
 
   assert {
     condition = (
       length(regexall("(?s)\"item\":\\s*\"queued_jobs_single\".*?\"y\":\\s*0", splunk_data_ui_views.forge_github_webhook_workflow_job_events.eai_data)) == 1
-      && length(regexall("(?s)\"item\":\\s*\"operator_guide\".*?\"y\":\\s*220", splunk_data_ui_views.forge_github_webhook_workflow_job_events.eai_data)) == 1
-      && length(regexall("(?s)\"item\":\\s*\"queued_jobs_table\".*?\"y\":\\s*390", splunk_data_ui_views.forge_github_webhook_workflow_job_events.eai_data)) == 1
-      && length(regexall("(?s)\"item\":\\s*\"webhook_relay_health_chart\".*?\"y\":\\s*750", splunk_data_ui_views.forge_github_webhook_workflow_job_events.eai_data)) == 1
-      && length(regexall("(?s)\"item\":\\s*\"workflow_activity_trend_chart\".*?\"y\":\\s*1370", splunk_data_ui_views.forge_github_webhook_workflow_job_events.eai_data)) == 1
-      && length(regexall("(?s)\"item\":\\s*\"github_webhook_workflow_jobs_table\".*?\"y\":\\s*2430", splunk_data_ui_views.forge_github_webhook_workflow_job_events.eai_data)) == 1
+      && length(regexall("(?s)\"item\":\\s*\"queued_jobs_table\".*?\"y\":\\s*220", splunk_data_ui_views.forge_github_webhook_workflow_job_events.eai_data)) == 1
+      && length(regexall("(?s)\"item\":\\s*\"webhook_relay_health_chart\".*?\"y\":\\s*580", splunk_data_ui_views.forge_github_webhook_workflow_job_events.eai_data)) == 1
+      && length(regexall("(?s)\"item\":\\s*\"workflow_activity_trend_chart\".*?\"y\":\\s*1200", splunk_data_ui_views.forge_github_webhook_workflow_job_events.eai_data)) == 1
+      && length(regexall("(?s)\"item\":\\s*\"github_webhook_workflow_jobs_table\".*?\"y\":\\s*2260", splunk_data_ui_views.forge_github_webhook_workflow_job_events.eai_data)) == 1
     )
     error_message = "The dashboard must order queued-job summary cards, the actionable queue table, relay health, trends, and raw events from top to bottom."
   }
