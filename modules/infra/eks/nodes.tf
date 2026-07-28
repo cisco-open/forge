@@ -63,4 +63,11 @@ module "self_managed_node_group" {
 
   tags = merge(local.all_security_tags, { "calico_dependency" = local._wait_for_calico })
 
+  # The upstream module enables a rolling instance refresh by default whenever
+  # the ASG or launch template changes. That includes metadata-only tag changes
+  # and is not Kubernetes-aware, so it can terminate nodes running active jobs.
+  # Node replacement must instead be started by a rollout that cordons the node,
+  # waits for protected workloads to finish, and drains it before termination.
+  instance_refresh = {}
+
 }
