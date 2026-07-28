@@ -352,24 +352,6 @@ EOF
   }
 }
 
-resource "signalfx_text_chart" "operator_guide" {
-  name        = "How should I use this dashboard?"
-  description = "Operator workflow for the shared runner-log delivery pipeline."
-
-  markdown = <<-EOF
-## How should I use this dashboard?
-
-1. **Scope first:** select the Forge AWS account and region. This dashboard covers the shared ingestion path, not an individual tenant runner.
-2. **Start with summary and alerts:** record the alert condition and region. Healthy means no DLQ occupancy, no sustained delivery failure or stale delivery, and a queue that drains while records continue through the pipeline.
-3. **Trace in order:** SQS source queue → ingestion Lambda → Kinesis → Firehose → Splunk. Find the first stage where input continues but output, deletion, or freshness stops progressing.
-4. **Do not infer from one value:** an idle pipeline can legitimately show no delivered records. Interpret Firehose success only while records flow, and combine backlog with oldest-message age before declaring delayed processing.
-5. **Assign ownership from evidence:** shared queue, Lambda, Kinesis, or Firehose failures belong to the Forge platform; Splunk HEC or acknowledgement failures require the Splunk dependency owner; malformed workload logs require tenant or workload follow-up.
-6. **Validate recovery:** require the detector to clear, DLQ to remain empty, oldest-message age to fall, and Firehose freshness to recover while new records are delivered.
-
-Use production logs to identify the exact S3 object, offset, Lambda request, or delivery error. Capture evidence promptly because log retention is limited.
-EOF
-}
-
 resource "terraform_data" "dashboard_parent" {
   triggers_replace = var.dashboard_group
 }
@@ -402,134 +384,127 @@ resource "signalfx_dashboard" "runner_logs_ingestion" {
   }
 
   chart {
-    chart_id = signalfx_text_chart.operator_guide.id
-    row      = 0
-    column   = 0
-    width    = 12
-    height   = 2
-  }
-  chart {
     chart_id = signalfx_single_value_chart.visible_backlog.id
-    row      = 2
+    row      = 0
     column   = 0
     width    = 2
     height   = 1
   }
   chart {
     chart_id = signalfx_single_value_chart.oldest_message.id
-    row      = 2
+    row      = 0
     column   = 2
     width    = 2
     height   = 1
   }
   chart {
     chart_id = signalfx_single_value_chart.lambda_duration_guardrail.id
-    row      = 2
+    row      = 0
     column   = 4
     width    = 2
     height   = 1
   }
   chart {
     chart_id = signalfx_single_value_chart.lambda_errors.id
-    row      = 2
+    row      = 0
     column   = 6
     width    = 2
     height   = 1
   }
   chart {
     chart_id = signalfx_single_value_chart.kinesis_throttles.id
-    row      = 2
+    row      = 0
     column   = 8
     width    = 2
     height   = 1
   }
   chart {
     chart_id = signalfx_single_value_chart.firehose_freshness.id
-    row      = 2
+    row      = 0
     column   = 10
     width    = 2
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.delivery_health_alerts.id
-    row      = 3
+    row      = 1
     column   = 0
     width    = 12
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.sqs_state.id
-    row      = 4
+    row      = 2
     column   = 0
     width    = 6
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.sqs_flow.id
-    row      = 4
+    row      = 2
     column   = 6
     width    = 6
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.lambda_concurrency.id
-    row      = 5
+    row      = 3
     column   = 0
     width    = 4
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.lambda_duration.id
-    row      = 5
+    row      = 3
     column   = 4
     width    = 4
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.lambda_failures.id
-    row      = 5
+    row      = 3
     column   = 8
     width    = 4
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.kinesis_records.id
-    row      = 6
+    row      = 4
     column   = 0
     width    = 4
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.kinesis_throughput.id
-    row      = 6
+    row      = 4
     column   = 4
     width    = 4
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.kinesis_iterator_age.id
-    row      = 6
+    row      = 4
     column   = 8
     width    = 4
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.firehose_delivery.id
-    row      = 7
+    row      = 5
     column   = 0
     width    = 6
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.firehose_latency.id
-    row      = 7
+    row      = 5
     column   = 6
     width    = 6
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.oldest_message_trend.id
-    row      = 8
+    row      = 6
     column   = 0
     width    = 12
     height   = 1

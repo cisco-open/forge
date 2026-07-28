@@ -199,24 +199,6 @@ resource "signalfx_time_chart" "tenant_health_alerts" {
   time_range       = 3600
 }
 
-resource "signalfx_text_chart" "operator_guide" {
-  name        = "How should I use this dashboard?"
-  description = "Operator workflow for Forge external dependency health."
-
-  markdown = <<-EOF
-## How should I use this dashboard?
-
-1. **Scope first:** select the tenant and AWS region associated with the affected workflow.
-2. **Start with active alerts:** record the failed dependency check, tenant, region, and alert start time.
-3. **Confirm the failure:** availability `1` is healthy and `0` is a failed probe. Missing probe execution is missing telemetry, not proof that GitHub or AWS is unavailable.
-4. **Identify the boundary:** GitHub authentication or API failures belong to the GitHub dependency path; SSM failures require tenant parameter, IAM, KMS, and regional AWS checks; a low rate-limit budget is pressure, not an outage by itself.
-5. **Correlate before acting:** compare availability with probe execution and latency, then confirm the exact failure in production logs using the same tenant, region, and incident window.
-6. **Validate recovery:** require successful probe executions and cleared alerts. Confirm the affected workflow path recovers; a single green sample does not establish sustained recovery.
-
-Escalate with the check name, tenant, region, timestamps, and request or installation identifiers when available. Never include credentials or tokens.
-EOF
-}
-
 resource "signalfx_dashboard" "dependency_health" {
   name            = "Forge External Dependency Health"
   description     = "Tenant-level GitHub and AWS dependency availability, latency, rate-limit budget, and regional probe telemetry."
@@ -255,16 +237,8 @@ resource "signalfx_dashboard" "dependency_health" {
   }
 
   chart {
-    chart_id = signalfx_text_chart.operator_guide.id
-    row      = 0
-    column   = 0
-    width    = 12
-    height   = 2
-  }
-
-  chart {
     chart_id = signalfx_time_chart.tenant_health_alerts.id
-    row      = 2
+    row      = 0
     column   = 0
     width    = 12
     height   = 1
@@ -272,7 +246,7 @@ resource "signalfx_dashboard" "dependency_health" {
 
   chart {
     chart_id = signalfx_list_chart.github_availability.id
-    row      = 3
+    row      = 1
     column   = 0
     width    = 4
     height   = 1
@@ -280,7 +254,7 @@ resource "signalfx_dashboard" "dependency_health" {
 
   chart {
     chart_id = signalfx_list_chart.ssm_availability.id
-    row      = 3
+    row      = 1
     column   = 4
     width    = 4
     height   = 1
@@ -288,7 +262,7 @@ resource "signalfx_dashboard" "dependency_health" {
 
   chart {
     chart_id = signalfx_list_chart.rate_limit_budget.id
-    row      = 3
+    row      = 1
     column   = 8
     width    = 4
     height   = 1
@@ -296,7 +270,7 @@ resource "signalfx_dashboard" "dependency_health" {
 
   chart {
     chart_id = signalfx_time_chart.latency.id
-    row      = 4
+    row      = 2
     column   = 0
     width    = 12
     height   = 1
@@ -304,7 +278,7 @@ resource "signalfx_dashboard" "dependency_health" {
 
   chart {
     chart_id = signalfx_time_chart.probe_execution.id
-    row      = 5
+    row      = 3
     column   = 0
     width    = 12
     height   = 1

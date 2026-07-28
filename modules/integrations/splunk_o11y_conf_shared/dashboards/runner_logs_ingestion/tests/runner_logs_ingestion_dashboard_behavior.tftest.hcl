@@ -9,11 +9,6 @@ mock_provider "signalfx" {
       id = "time-chart-id"
     }
   }
-  mock_resource "signalfx_text_chart" {
-    defaults = {
-      id = "text-chart-id"
-    }
-  }
   mock_resource "signalfx_dashboard" {}
 }
 
@@ -59,23 +54,10 @@ run "creates_runner_logs_ingestion_dashboard" {
     condition = (
       signalfx_dashboard.runner_logs_ingestion.name == "Forge Runner Logs Ingestion"
       && signalfx_dashboard.runner_logs_ingestion.dashboard_group == "forge-dashboard-group"
-      && length(signalfx_dashboard.runner_logs_ingestion.chart) == 19
+      && length(signalfx_dashboard.runner_logs_ingestion.chart) == 18
       && length(signalfx_dashboard.runner_logs_ingestion.variable) == 3
     )
-    error_message = "The runner-log ingestion dashboard must keep its name, parent group, operator guide, eighteen health panels, and dedicated variables."
-  }
-
-  assert {
-    condition = (
-      signalfx_text_chart.operator_guide.name == "How should I use this dashboard?"
-      && strcontains(signalfx_text_chart.operator_guide.markdown, "SQS source queue → ingestion Lambda → Kinesis → Firehose → Splunk")
-      && strcontains(signalfx_text_chart.operator_guide.markdown, "an idle pipeline can legitimately show no delivered records")
-      && length([
-        for chart in signalfx_dashboard.runner_logs_ingestion.chart : chart
-        if chart.chart_id == signalfx_text_chart.operator_guide.id && chart.row == 0
-      ]) == 1
-    )
-    error_message = "The runner-log dashboard must lead with workflow-ordered and non-causal operator guidance."
+    error_message = "The runner-log ingestion dashboard must keep its name, parent group, eighteen panels, and dedicated variables."
   }
 
   assert {

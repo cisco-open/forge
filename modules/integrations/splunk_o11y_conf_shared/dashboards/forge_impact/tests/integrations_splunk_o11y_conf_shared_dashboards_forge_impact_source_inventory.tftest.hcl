@@ -22,7 +22,6 @@ run "integrations_splunk_o11y_conf_shared_dashboards_forge_impact_source_invento
       "resource \"signalfx_list_chart\" \"top_tenants_ebs_queue_length\"",
       "resource \"signalfx_list_chart\" \"top_tenants_ebs_iops_exceeded\"",
       "resource \"signalfx_time_chart\" \"tenant_health_alerts\"",
-      "resource \"signalfx_text_chart\" \"operator_guide\"",
       "resource \"terraform_data\" \"dashboard_parent\"",
       "terraform_data.dashboard_parent,",
       "configured_k8s_cluster_names = distinct(flatten([",
@@ -38,7 +37,7 @@ run "integrations_splunk_o11y_conf_shared_dashboards_forge_impact_source_invento
   }
 
   assert {
-    condition     = output.expected_literal_count == 21
-    error_message = "Source inventory must keep 21 module-specific Terraform and lifecycle literals pinned."
+    condition     = output.expected_literal_count == 20
+    error_message = "Source inventory must keep 20 module-specific Terraform and lifecycle literals pinned."
   }
 }

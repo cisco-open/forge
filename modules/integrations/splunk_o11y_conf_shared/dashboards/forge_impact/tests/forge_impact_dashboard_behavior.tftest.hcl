@@ -120,26 +120,17 @@ run "forge_impact_dashboard_wiring_contract" {
     condition = (
       signalfx_dashboard.forge_impact.name == "Forge Tenant Impact"
       && signalfx_dashboard.forge_impact.dashboard_group == "forge-dashboard-group"
-      && length(signalfx_dashboard.forge_impact.chart) == 15
+      && length(signalfx_dashboard.forge_impact.chart) == 14
     )
     error_message = "Tenant impact must keep its dashboard identity and pinned chart count."
   }
 
   assert {
-    condition = (
-      signalfx_text_chart.operator_guide.name == "How should I use this dashboard?"
-      && strcontains(signalfx_text_chart.operator_guide.markdown, "One elevated metric is a lead for investigation, not a confirmed failure")
-      && strcontains(signalfx_text_chart.operator_guide.markdown, "Assign ownership from evidence")
-      && length([
-        for chart in signalfx_dashboard.forge_impact.chart : chart
-        if chart.chart_id == signalfx_text_chart.operator_guide.id && chart.row == 0
-      ]) == 1
-      && length([
-        for chart in signalfx_dashboard.forge_impact.chart : chart
-        if chart.chart_id == signalfx_time_chart.tenant_health_alerts.id && chart.row == 2
-      ]) == 1
-    )
-    error_message = "Tenant impact must lead with non-causal operator guidance followed by active alerts."
+    condition = length([
+      for chart in signalfx_dashboard.forge_impact.chart : chart
+      if chart.chart_id == signalfx_time_chart.tenant_health_alerts.id && chart.row == 0
+    ]) == 1
+    error_message = "Tenant impact must lead with active alerts."
   }
 
   assert {

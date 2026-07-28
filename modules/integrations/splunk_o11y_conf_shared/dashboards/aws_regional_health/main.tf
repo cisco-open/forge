@@ -193,24 +193,6 @@ resource "signalfx_time_chart" "queue_health_alerts" {
   time_range       = 3600
 }
 
-resource "signalfx_text_chart" "operator_guide" {
-  name        = "How should I use this dashboard?"
-  description = "Operator workflow for regional Forge platform health."
-
-  markdown = <<-EOF
-## How should I use this dashboard?
-
-1. **Scope first:** select the AWS account, region, and Forge product family involved in the incident.
-2. **Start with active alerts:** record the region, detector condition, and start time.
-3. **Confirm impact:** use oldest queued-build age together with visible backlog and DLQ sends. A throttle count or backlog value alone does not prove customer impact.
-4. **Separate the mechanism:** sustained queue age indicates delayed processing; DLQ sends indicate failed processing; Lambda throttle rate indicates constrained execution attempts.
-5. **Assign ownership from evidence:** multi-tenant or multi-region impact points toward the Forge shared platform. One tenant or workload requires tenant configuration and demand checks before escalation.
-6. **Validate recovery:** confirm the alert clears, oldest-message age falls below its reset gate, backlog drains, and no new DLQ sends appear.
-
-Use the time picker for incident history. This dashboard is regional evidence, not a substitute for workflow-job and production-log correlation.
-EOF
-}
-
 resource "signalfx_dashboard" "aws_regional_health" {
   name            = "Forge AWS Regional Platform Health"
   description     = "Regional Forge control-plane Lambda throttling and queued-build SQS health."
@@ -239,16 +221,8 @@ resource "signalfx_dashboard" "aws_regional_health" {
   }
 
   chart {
-    chart_id = signalfx_text_chart.operator_guide.id
-    row      = 0
-    column   = 0
-    width    = 12
-    height   = 2
-  }
-
-  chart {
     chart_id = signalfx_time_chart.queue_health_alerts.id
-    row      = 2
+    row      = 0
     column   = 0
     width    = 12
     height   = 1
@@ -256,7 +230,7 @@ resource "signalfx_dashboard" "aws_regional_health" {
 
   chart {
     chart_id = signalfx_time_chart.lambda_throttle_attempt_rate.id
-    row      = 3
+    row      = 1
     column   = 0
     width    = 6
     height   = 1
@@ -264,7 +238,7 @@ resource "signalfx_dashboard" "aws_regional_health" {
 
   chart {
     chart_id = signalfx_time_chart.lambda_throttle_count.id
-    row      = 3
+    row      = 1
     column   = 6
     width    = 6
     height   = 1
@@ -272,7 +246,7 @@ resource "signalfx_dashboard" "aws_regional_health" {
 
   chart {
     chart_id = signalfx_time_chart.build_queue_oldest_age.id
-    row      = 4
+    row      = 2
     column   = 0
     width    = 6
     height   = 1
@@ -280,7 +254,7 @@ resource "signalfx_dashboard" "aws_regional_health" {
 
   chart {
     chart_id = signalfx_time_chart.build_queue_visible_backlog.id
-    row      = 4
+    row      = 2
     column   = 6
     width    = 6
     height   = 1
@@ -288,7 +262,7 @@ resource "signalfx_dashboard" "aws_regional_health" {
 
   chart {
     chart_id = signalfx_time_chart.build_queue_dlq_sends.id
-    row      = 5
+    row      = 3
     column   = 0
     width    = 12
     height   = 1

@@ -43,7 +43,6 @@ No modules.
 | [signalfx_list_chart.github_availability](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
 | [signalfx_list_chart.rate_limit_budget](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
 | [signalfx_list_chart.ssm_availability](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
-| [signalfx_text_chart.operator_guide](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/text_chart) | resource |
 | [signalfx_time_chart.latency](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.probe_execution](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.tenant_health_alerts](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |

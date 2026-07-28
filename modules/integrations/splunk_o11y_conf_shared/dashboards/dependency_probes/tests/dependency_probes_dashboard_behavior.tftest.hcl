@@ -9,11 +9,6 @@ mock_provider "signalfx" {
       id = "time-chart-id"
     }
   }
-  mock_resource "signalfx_text_chart" {
-    defaults = {
-      id = "text-chart-id"
-    }
-  }
   mock_resource "signalfx_dashboard" {}
 }
 
@@ -44,25 +39,16 @@ run "creates_dependency_health_dashboard" {
   }
 
   assert {
-    condition     = length(signalfx_dashboard.dependency_health.chart) == 7
-    error_message = "The dashboard must retain its operator guide, GitHub, AWS, rate-limit, latency, telemetry, and central alert coverage."
+    condition     = length(signalfx_dashboard.dependency_health.chart) == 6
+    error_message = "The dashboard must retain its GitHub, AWS, rate-limit, latency, telemetry, and central alert coverage."
   }
 
   assert {
-    condition = (
-      signalfx_text_chart.operator_guide.name == "How should I use this dashboard?"
-      && strcontains(signalfx_text_chart.operator_guide.markdown, "Missing probe execution is missing telemetry")
-      && strcontains(signalfx_text_chart.operator_guide.markdown, "low rate-limit budget is pressure, not an outage")
-      && length([
-        for chart in signalfx_dashboard.dependency_health.chart : chart
-        if chart.chart_id == signalfx_text_chart.operator_guide.id && chart.row == 0
-      ]) == 1
-      && length([
-        for chart in signalfx_dashboard.dependency_health.chart : chart
-        if chart.chart_id == signalfx_time_chart.tenant_health_alerts.id && chart.row == 2
-      ]) == 1
-    )
-    error_message = "The dependency dashboard must lead with truthful operator guidance followed by active alerts."
+    condition = length([
+      for chart in signalfx_dashboard.dependency_health.chart : chart
+      if chart.chart_id == signalfx_time_chart.tenant_health_alerts.id && chart.row == 0
+    ]) == 1
+    error_message = "The dependency dashboard must lead with active alerts."
   }
 
   assert {
