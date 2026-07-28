@@ -59,6 +59,13 @@ def process_grouped_rows(grouped):
 
     for _, row in grouped.iterrows():
         fields = common.extract_arn_parts(row['user_aws_application'])
+        if fields is None:
+            LOG.warning(
+                'Skipping row with unsupported aws_application: %s',
+                row['user_aws_application'],
+            )
+            continue
+
         event_body = create_event_body(row, fields)
         line = json.dumps(event_body)
         line_size = len(line.encode())

@@ -157,7 +157,7 @@ resource "aws_kms_key" "splunk_s3_runner_logs" {
   description             = "KMS key for GitHub logs ingestion pipeline"
   deletion_window_in_days = 30
   enable_key_rotation     = true
-  tags                    = var.tags
+  tags                    = local.module_tags
   policy                  = data.aws_iam_policy_document.kms_s3.json
 }
 

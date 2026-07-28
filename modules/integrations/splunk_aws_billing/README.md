@@ -17,6 +17,8 @@ Forge needs tenant-level cost visibility to make runner-size, warm-pool, and EC2
 
 - Billing data is delayed by AWS, so dashboards should not be treated as real-time usage telemetry.
 - Resource tags and runner metadata determine how useful tenant attribution will be.
+- Billing rows are accepted only when `user_aws_application` is a complete Forge tenant or module AppRegistry resource-group ARN; unsupported values are skipped.
+- Non-tenant module costs are emitted with `forgecicd_scope=module`, `forgecicd_module_group`, and `forgecicd_module` dimensions.
 - Keep S3 retention and access aligned with financial-data handling rules.
 
 <!-- BEGIN_TF_DOCS -->
@@ -35,7 +37,7 @@ Forge needs tenant-level cost visibility to make runner-size, warm-pool, and EC2
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.54.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.55.0 |
 
 ## Modules
 
@@ -65,6 +67,7 @@ Forge needs tenant-level cost visibility to make runner-size, warm-pool, and EC2
 | [aws_s3_bucket_public_access_block.aws_billing_report](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
 | [aws_s3_bucket_server_side_encryption_configuration.aws_billing_report_settings](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_server_side_encryption_configuration) | resource |
 | [aws_s3_bucket_versioning.aws_billing_report](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_versioning) | resource |
+| [aws_servicecatalogappregistry_application.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/servicecatalogappregistry_application) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_iam_policy_document.cur_bucket_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.lambda_policy_document](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |

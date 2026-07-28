@@ -31,6 +31,6 @@ module "webhook_relay_destination" {
     targets                    = local.targets
   }
 
-  tags         = var.tags
+  tags         = local.module_tags
   default_tags = var.default_tags
 }
