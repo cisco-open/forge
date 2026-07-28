@@ -15,6 +15,7 @@ run "integrations_splunk_cloud_conf_shared_contract" {
       "resource \"splunk_data_ui_views\" \"forge_ec2_run_instances_scale_up_failures\"",
       "resource \"splunk_data_ui_views\" \"forge_ec2_runner_lifecycle\"",
       "resource \"splunk_data_ui_views\" \"forge_github_webhook_workflow_job_events\"",
+      "template_files/forge_github_webhook_workflow_job_events.json.tftpl",
       "resource \"splunk_data_ui_views\" \"forge_ingestion_quality\"",
       "resource \"splunk_data_ui_views\" \"forge_kubernetes_storage_and_network\"",
       "resource \"splunk_data_ui_views\" \"forge_lambda_operations\"",
