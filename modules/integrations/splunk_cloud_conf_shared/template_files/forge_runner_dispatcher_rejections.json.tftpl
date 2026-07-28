@@ -191,22 +191,12 @@
                 },
                 "structure": [
                     {
-                                                                                                                                                "item": "operator_guide",
-                                                                                                                                                "position": {
-                                                                                                                                                    "h": 170,
-                                                                                                                                                    "w": 1200,
-                                                                                                                                                    "x": 0,
-                                                                                                                                                    "y": 0
-                                                                                                                                                },
-                                                                                                                                                "type": "block"
-                                                                                                                                            },
-                    {
                                                                                                                                                 "item": "dispatcher_rejection_top_repos_table",
                                                                                                                                                 "position": {
                                                                                                                                                     "h": 360,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 170
+                                                                                                                                                    "y": 0
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -216,7 +206,7 @@
                                                                                                                                                     "h": 380,
                                                                                                                                                     "w": 700,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 530
+                                                                                                                                                    "y": 360
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -226,7 +216,7 @@
                                                                                                                                                     "h": 360,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 910
+                                                                                                                                                    "y": 740
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -236,7 +226,7 @@
                                                                                                                                                     "h": 380,
                                                                                                                                                     "w": 500,
                                                                                                                                                     "x": 600,
-                                                                                                                                                    "y": 910
+                                                                                                                                                    "y": 740
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -246,7 +236,7 @@
                                                                                                                                                     "h": 440,
                                                                                                                                                     "w": 1200,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 1290
+                                                                                                                                                    "y": 1120
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             }
@@ -266,14 +256,6 @@
     },
     "title": "Forge Runner Dispatcher Rejections",
     "visualizations": {
-        "operator_guide": {
-            "options": {
-                "fontSize": "default",
-                "markdown": "### How to use this dashboard\nStart with rejection summary, labels, and repositories, then inspect the latest structured sample. **Healthy:** no sustained production rejection pattern; isolated unsupported labels may be expected tenant input. **Action:** identify tenant, repository, workflow job, full labels, and rejection reason before checking runner mapping and policy. **Ownership:** deterministic dispatcher defects belong to Forge; labels and runner mapping belong to tenant configuration; GitHub delivery gaps are external or shared relay issues."
-            },
-            "title": "How should I use this dashboard?",
-            "type": "splunk.markdown"
-        },
         "dispatcher_rejection_examples_table": {
             "dataSources": {
                 "primary": "dispatcher_rejection_examples_search"

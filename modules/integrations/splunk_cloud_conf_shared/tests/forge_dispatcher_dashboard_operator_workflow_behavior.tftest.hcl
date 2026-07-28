@@ -43,14 +43,13 @@ run "orders_dispatcher_dashboards_for_operator_triage" {
   assert {
     condition = (
       can(regex(
-        "\"item\": \"operator_guide\"[\\s\\S]*\"item\": \"dispatcher_rejection_summary_table\"[\\s\\S]*\"item\": \"dispatcher_rejection_trend_chart\"[\\s\\S]*\"item\": \"dispatcher_rejection_examples_table\"",
+        "\"item\": \"dispatcher_rejection_summary_table\"[\\s\\S]*\"item\": \"dispatcher_rejection_trend_chart\"[\\s\\S]*\"item\": \"dispatcher_rejection_examples_table\"",
         splunk_data_ui_views.forge_runner_dispatcher_rejections.eai_data,
       ))
-      && strcontains(splunk_data_ui_views.forge_runner_dispatcher_rejections.eai_data, "Healthy:")
-      && strcontains(splunk_data_ui_views.forge_runner_dispatcher_rejections.eai_data, "Action:")
+      && !strcontains(splunk_data_ui_views.forge_runner_dispatcher_rejections.eai_data, "\"operator_guide\"")
       && strcontains(splunk_data_ui_views.forge_runner_dispatcher_rejections.eai_data, "age_minutes")
     )
-    error_message = "Dispatcher rejections must lead with guidance and actionable scope, explain healthy/action semantics, expose age, and leave raw samples last."
+    error_message = "Dispatcher rejections must lead with actionable scope, expose age, and leave raw samples last without a guide row."
   }
 
   assert {
@@ -64,11 +63,11 @@ run "orders_dispatcher_dashboards_for_operator_triage" {
 
   assert {
     condition = (
-      strcontains(splunk_data_ui_views.stuck_workflow_job_dispatcher_health.eai_data, "How should I use this dashboard?")
+      !strcontains(splunk_data_ui_views.stuck_workflow_job_dispatcher_health.eai_data, "\"operator_guide\"")
       && strcontains(splunk_data_ui_views.stuck_workflow_job_dispatcher_debug.eai_data, "Use this drilldown only after the health dashboard")
-      && strcontains(splunk_data_ui_views.stuck_workflow_job_dispatcher_debug.eai_data, "global locks are not assumed causal")
-      && strcontains(splunk_data_ui_views.stuck_workflow_job_dispatcher_debug.eai_data, "Healthy:")
+      && strcontains(splunk_data_ui_views.stuck_workflow_job_dispatcher_debug.eai_data, "Global locks are not assumed causal")
+      && !strcontains(splunk_data_ui_views.stuck_workflow_job_dispatcher_debug.eai_data, "\"operator_guide\"")
     )
-    error_message = "Stuck-job health and debug dashboards must state their workflow, healthy state, and non-causal global-lock boundary."
+    error_message = "Stuck-job health and debug dashboards must keep compact workflow guidance and the non-causal global-lock boundary."
   }
 }

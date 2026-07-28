@@ -149,22 +149,12 @@
                 },
                 "structure": [
                     {
-                                                                                                                                                "item": "operator_guide",
-                                                                                                                                                "position": {
-                                                                                                                                                    "h": 170,
-                                                                                                                                                    "w": 1200,
-                                                                                                                                                    "x": 0,
-                                                                                                                                                    "y": 0
-                                                                                                                                                },
-                                                                                                                                                "type": "block"
-                                                                                                                                            },
-                    {
                                                                                                                                                 "item": "hotspots_table",
                                                                                                                                                 "position": {
                                                                                                                                                     "h": 390,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 170
+                                                                                                                                                    "y": 0
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -174,7 +164,7 @@
                                                                                                                                                     "h": 390,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 600,
-                                                                                                                                                    "y": 170
+                                                                                                                                                    "y": 0
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -184,7 +174,7 @@
                                                                                                                                                     "h": 360,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 560
+                                                                                                                                                    "y": 390
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -194,7 +184,7 @@
                                                                                                                                                     "h": 420,
                                                                                                                                                     "w": 1200,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 920
+                                                                                                                                                    "y": 750
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -204,7 +194,7 @@
                                                                                                                                                     "h": 330,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 1340
+                                                                                                                                                    "y": 1170
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -214,7 +204,7 @@
                                                                                                                                                     "h": 330,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 600,
-                                                                                                                                                    "y": 1340
+                                                                                                                                                    "y": 1170
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -224,7 +214,7 @@
                                                                                                                                                     "h": 360,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 1670
+                                                                                                                                                    "y": 1500
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             }
@@ -244,14 +234,6 @@
     },
     "title": "Forge Stuck Workflow Job Dispatcher Health",
     "visualizations": {
-        "operator_guide": {
-            "options": {
-                "fontSize": "default",
-                "markdown": "### How to use this dashboard\nStart with the stuck-job control-plane path and worker outcomes, then use decision trends and hot spots for scope. **Healthy:** no job remains queued beyond the configured 15-minute alert boundary and redelivery reaches a terminal outcome. **Action:** identify tenant, repository, workflow job, labels, and last successful stage, then open the debug dashboard. **Ownership:** shared redelivery defects belong to Forge; runner mapping and capacity belong to tenant configuration; GitHub or AWS service failures may be external."
-            },
-            "title": "How should I use this dashboard?",
-            "type": "splunk.markdown"
-        },
         "alert_quality_table": {
             "dataSources": {
                 "primary": "alert_quality_search"
