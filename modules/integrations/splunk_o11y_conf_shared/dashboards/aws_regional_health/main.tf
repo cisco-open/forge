@@ -221,8 +221,16 @@ resource "signalfx_dashboard" "aws_regional_health" {
   }
 
   chart {
-    chart_id = signalfx_time_chart.lambda_throttle_attempt_rate.id
+    chart_id = signalfx_time_chart.queue_health_alerts.id
     row      = 0
+    column   = 0
+    width    = 12
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_time_chart.lambda_throttle_attempt_rate.id
+    row      = 1
     column   = 0
     width    = 6
     height   = 1
@@ -230,7 +238,7 @@ resource "signalfx_dashboard" "aws_regional_health" {
 
   chart {
     chart_id = signalfx_time_chart.lambda_throttle_count.id
-    row      = 0
+    row      = 1
     column   = 6
     width    = 6
     height   = 1
@@ -238,7 +246,7 @@ resource "signalfx_dashboard" "aws_regional_health" {
 
   chart {
     chart_id = signalfx_time_chart.build_queue_oldest_age.id
-    row      = 1
+    row      = 2
     column   = 0
     width    = 6
     height   = 1
@@ -246,7 +254,7 @@ resource "signalfx_dashboard" "aws_regional_health" {
 
   chart {
     chart_id = signalfx_time_chart.build_queue_visible_backlog.id
-    row      = 1
+    row      = 2
     column   = 6
     width    = 6
     height   = 1
@@ -254,14 +262,6 @@ resource "signalfx_dashboard" "aws_regional_health" {
 
   chart {
     chart_id = signalfx_time_chart.build_queue_dlq_sends.id
-    row      = 2
-    column   = 0
-    width    = 12
-    height   = 1
-  }
-
-  chart {
-    chart_id = signalfx_time_chart.queue_health_alerts.id
     row      = 3
     column   = 0
     width    = 12
