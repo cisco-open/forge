@@ -6,6 +6,7 @@ import base64
 import json
 
 import boto3
+import requests
 from conftest import AWS_REGION, requires_aws
 from support import load_handler_module
 
@@ -96,7 +97,7 @@ def test_get_workflow_status_returns_none_on_non_200(monkeypatch, aws):
         def json(self):
             return {'status': 'completed'}
 
-    monkeypatch.setattr(mod.requests, 'get', lambda *_args,
+    monkeypatch.setattr(mod.GITHUB_SESSION, 'get', lambda *_args,
                         **_kwargs: _Response())
 
     assert mod.get_workflow_status(
@@ -106,6 +107,52 @@ def test_get_workflow_status_returns_none_on_non_200(monkeypatch, aws):
         '100',
         '1',
     ) is None
+
+
+def test_github_requests_retry_transient_failures(monkeypatch, aws):
+    mod = _load_lock_lambda(monkeypatch)
+
+    retries = mod.GITHUB_SESSION.get_adapter('https://').max_retries
+
+    assert retries.total == 3
+    assert retries.connect == 3
+    assert retries.read == 3
+    assert retries.status == 3
+    assert retries.allowed_methods == frozenset({'GET', 'POST'})
+    assert set(retries.status_forcelist) == {429, 500, 502, 503, 504}
+
+
+def test_scan_continues_after_github_connection_error(monkeypatch, aws):
+    table = _create_lock_table()
+    mod = _load_lock_lambda(monkeypatch)
+    for lock_id, run_id in (
+        ('lock-connection-error', '100'),
+        ('lock-complete', '101'),
+    ):
+        table.put_item(Item={
+            'lock_id': lock_id,
+            'workflow_run_url': (
+                f'https://github.com/acme/app/actions/runs/{run_id}'
+            ),
+            'workflow_run_attempt': '1',
+        })
+
+    def _status(_token, _owner, _repo, run_id, _attempt):
+        if run_id == '100':
+            raise requests.ConnectionError(
+                'Remote end closed connection without response'
+            )
+        return 'completed'
+
+    monkeypatch.setattr(mod, 'get_workflow_status', _status)
+
+    mod.scan_and_process_dynamodb('installation-token')
+
+    remaining = {
+        item['lock_id']
+        for item in table.scan()['Items']
+    }
+    assert remaining == {'lock-connection-error'}
 
 
 def test_lambda_handler_loads_ssm_secrets_and_runs_cleanup(monkeypatch, ssm):

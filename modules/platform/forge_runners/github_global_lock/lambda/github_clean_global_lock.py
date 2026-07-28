@@ -16,6 +16,8 @@ import boto3  # noqa: E402
 import jwt  # noqa: E402
 import requests  # noqa: E402
 from botocore.config import Config  # noqa: E402
+from requests.adapters import HTTPAdapter  # noqa: E402
+from urllib3.util.retry import Retry  # noqa: E402
 
 # Configure logging
 LOG = logging.getLogger()
@@ -28,6 +30,23 @@ SSM_CLIENT_CONFIG = Config(
     connect_timeout=5,
     read_timeout=10,
     retries={'mode': 'standard', 'total_max_attempts': 4},
+)
+
+GITHUB_REQUEST_TIMEOUT = (5, 10)
+GITHUB_RETRY_CONFIG = Retry(
+    total=3,
+    connect=3,
+    read=3,
+    status=3,
+    backoff_factor=0.5,
+    status_forcelist=(429, 500, 502, 503, 504),
+    allowed_methods=frozenset({'GET', 'POST'}),
+    respect_retry_after_header=True,
+)
+GITHUB_SESSION = requests.Session()
+GITHUB_SESSION.mount(
+    'https://',
+    HTTPAdapter(max_retries=GITHUB_RETRY_CONFIG),
 )
 
 SSM = boto3.client('ssm', config=SSM_CLIENT_CONFIG)
@@ -52,7 +71,11 @@ def get_installation_access_token(jwt_token: str, installation_id: str) -> str:
         'Accept': 'application/vnd.github+json',
     }
     url = f'https://api.github.com/app/installations/{installation_id}/access_tokens'
-    response = requests.post(url, headers=headers)
+    response = GITHUB_SESSION.post(
+        url,
+        headers=headers,
+        timeout=GITHUB_REQUEST_TIMEOUT,
+    )
     response.raise_for_status()
     return response.json()['token']
 
@@ -96,8 +119,17 @@ def scan_and_process_dynamodb(access_token: str):
             if not owner or not repo or not run_id:
                 continue
 
-            status = get_workflow_status(
-                access_token, owner, repo, run_id, workflow_run_attempt)
+            try:
+                status = get_workflow_status(
+                    access_token, owner, repo, run_id, workflow_run_attempt)
+            except requests.RequestException as error:
+                LOG.warning(
+                    'Skipping lock %s after GitHub workflow lookup failed: %s',
+                    lock_id,
+                    error,
+                )
+                continue
+
             if status == 'completed':
                 print(f'Deleting completed workflow: {workflow_run_url}')
                 table.delete_item(
@@ -113,7 +145,11 @@ def get_workflow_status(access_token: str, owner: str, repo: str, run_id: str, a
     headers = {'Authorization': f'token {access_token}',
                'Accept': 'application/vnd.github.v3+json'}
 
-    response = requests.get(url, headers=headers)
+    response = GITHUB_SESSION.get(
+        url,
+        headers=headers,
+        timeout=GITHUB_REQUEST_TIMEOUT,
+    )
     if response.status_code == 200:
         return response.json().get('status')  # "completed" or other statuses
     return None
