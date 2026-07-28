@@ -9,11 +9,6 @@ mock_provider "signalfx" {
       id = "time-chart-id"
     }
   }
-  mock_resource "signalfx_text_chart" {
-    defaults = {
-      id = "text-chart-id"
-    }
-  }
   mock_resource "signalfx_dashboard" {}
 }
 
@@ -57,10 +52,10 @@ run "creates_runner_logs_ingestion_dashboard" {
     condition = (
       signalfx_dashboard.runner_logs_ingestion.name == "Forge Runner Logs Ingestion"
       && signalfx_dashboard.runner_logs_ingestion.dashboard_group == "forge-dashboard-group"
-      && length(signalfx_dashboard.runner_logs_ingestion.chart) == 18
+      && length(signalfx_dashboard.runner_logs_ingestion.chart) == 17
       && length(signalfx_dashboard.runner_logs_ingestion.variable) == 3
     )
-    error_message = "The runner-log ingestion dashboard must keep its name, parent group, eighteen panels, and dedicated variables."
+    error_message = "The runner-log ingestion dashboard must keep its name, parent group, seventeen panels, and dedicated variables."
   }
 
   assert {
@@ -111,10 +106,6 @@ run "creates_runner_logs_ingestion_dashboard" {
       && strcontains(signalfx_time_chart.firehose_delivery.program_text, "DeliveryToSplunk.Records")
       && strcontains(signalfx_time_chart.firehose_latency.program_text, "DeliveryToSplunk.DataFreshness")
       && strcontains(signalfx_time_chart.firehose_latency.program_text, "DeliveryToSplunk.DataAckLatency")
-      && strcontains(signalfx_text_chart.tuning_validation.markdown, "attempts > 1")
-      && strcontains(signalfx_text_chart.tuning_validation.markdown, "like(key, \"%.log\")")
-      && strcontains(signalfx_text_chart.tuning_validation.markdown, "BY bucket key offset")
-      && strcontains(signalfx_text_chart.tuning_validation.markdown, "REPORT RequestId Status: timeout")
     )
     error_message = "The dashboard must preserve the SQS, Lambda, Kinesis, Splunk delivery, and tuning validation signals."
   }

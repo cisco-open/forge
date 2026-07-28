@@ -83,7 +83,7 @@ resource "signalfx_single_value_chart" "lambda_duration_guardrail" {
 
 resource "signalfx_single_value_chart" "lambda_errors" {
   name         = "Runner-log Lambda errors/timeouts - sum(30m)"
-  description  = "Lambda Errors includes invocation timeouts. Use the manual Splunk validation runbook on this dashboard to distinguish timeout-only failures."
+  description  = "Lambda Errors includes invocation timeouts."
   program_text = "A = data('Errors', filter=(${local.aws_platform_filter}) and (${local.lambda_filter}) and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='30m').sum().publish(label='A')"
   color_by     = "Dimension"
 
@@ -337,30 +337,6 @@ EOF
   }
 }
 
-resource "signalfx_text_chart" "tuning_validation" {
-  name        = "Runner-log tuning validation runbook"
-  description = "Manual acceptance checks that complement the live runner-log health panels."
-
-  markdown = <<-EOF
-## Manual tuning validation
-
-- **Duration:** maximum stays below 6 minutes where possible and below 8 minutes as the guardrail. The AWS metric exposes mean/max, not native p99.
-- **Timeouts:** the live Lambda errors/timeouts panel remains zero. Manually confirm timeout-only failures in Splunk with `REPORT RequestId Status: timeout`.
-- **Checkpoint replay:** manually run the following Splunk search; it must return no rows:
-
-```
-index="srea-forge-prod-index" source="*splunk-s3-runner-logs-lambda*" "processing_object" "offset="
-| rex "bucket=(?<bucket>\\S+) key=(?<key>\\S+).*offset=(?<offset>\\d+)"
-| where like(key, "%.log")
-| stats count AS attempts values(source) AS sources BY bucket key offset
-| where attempts > 1
-```
-
-- **Kinesis:** read and write throughput-exceeded panels remain zero.
-- **Queue recovery:** oldest-message age shows a sustained downward trend over the six-hour panel.
-EOF
-}
-
 resource "terraform_data" "dashboard_parent" {
   triggers_replace = var.dashboard_group
 }
@@ -510,12 +486,5 @@ resource "signalfx_dashboard" "runner_logs_ingestion" {
     column   = 0
     width    = 12
     height   = 1
-  }
-  chart {
-    chart_id = signalfx_text_chart.tuning_validation.id
-    row      = 6
-    column   = 0
-    width    = 12
-    height   = 2
   }
 }

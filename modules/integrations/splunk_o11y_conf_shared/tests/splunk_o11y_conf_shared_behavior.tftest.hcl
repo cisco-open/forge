@@ -23,7 +23,6 @@ mock_provider "signalfx" {
   mock_resource "signalfx_detector" {}
   mock_resource "signalfx_list_chart" {}
   mock_resource "signalfx_single_value_chart" {}
-  mock_resource "signalfx_text_chart" {}
   mock_resource "signalfx_time_chart" {}
 }
 
