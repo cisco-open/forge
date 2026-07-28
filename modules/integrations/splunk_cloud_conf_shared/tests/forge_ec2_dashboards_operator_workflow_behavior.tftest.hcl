@@ -37,12 +37,11 @@ run "orders_ec2_failure_dashboards_for_operator_triage" {
         splunk_data_ui_views.forge_ec2_run_instances_scale_up_failures.eai_data,
         splunk_data_ui_views.forge_ec2_runner_lifecycle.eai_data,
       ] :
-      strcontains(body, "How should I use this dashboard?")
-      && strcontains(body, "Healthy:")
-      && strcontains(body, "Action:")
+      !strcontains(body, "\"operator_guide\"")
+      && !strcontains(body, "\"type\": \"splunk.markdown\"")
       && strcontains(body, "\"description\": \"Answers")
     ])
-    error_message = "Every EC2 dashboard must provide operator guidance and panel-level measurement, healthy-state, and next-action descriptions."
+    error_message = "EC2 dashboards must keep operational guidance in compact panel descriptions."
   }
 
   assert {
@@ -57,8 +56,8 @@ run "orders_ec2_failure_dashboards_for_operator_triage" {
 
   assert {
     condition = (
-      can(regex("\"item\": \"operator_guide\"[\\s\\S]*\"item\": \"tenant_error_summary_table\"[\\s\\S]*\"item\": \"fleet_error_trend_chart\"[\\s\\S]*\"item\": \"request_drilldown_table\"", splunk_data_ui_views.forge_ec2_fleet_scale_up_failures.eai_data))
-      && can(regex("\"item\": \"operator_guide\"[\\s\\S]*\"item\": \"run_instances_summary_table\"[\\s\\S]*\"item\": \"run_instances_error_trend_chart\"[\\s\\S]*\"item\": \"run_instances_drilldown_table\"", splunk_data_ui_views.forge_ec2_run_instances_scale_up_failures.eai_data))
+      can(regex("\"item\": \"tenant_error_summary_table\"[\\s\\S]*\"item\": \"fleet_error_trend_chart\"[\\s\\S]*\"item\": \"request_drilldown_table\"", splunk_data_ui_views.forge_ec2_fleet_scale_up_failures.eai_data))
+      && can(regex("\"item\": \"run_instances_summary_table\"[\\s\\S]*\"item\": \"run_instances_error_trend_chart\"[\\s\\S]*\"item\": \"run_instances_drilldown_table\"", splunk_data_ui_views.forge_ec2_run_instances_scale_up_failures.eai_data))
     )
     error_message = "EC2 failure dashboards must place scope and actionable failures before trends and request drilldowns."
   }

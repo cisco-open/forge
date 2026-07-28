@@ -191,22 +191,12 @@
                 },
                 "structure": [
                     {
-                                                                                                                                                "item": "operator_guide",
-                                                                                                                                                "position": {
-                                                                                                                                                    "h": 170,
-                                                                                                                                                    "w": 1200,
-                                                                                                                                                    "x": 0,
-                                                                                                                                                    "y": 0
-                                                                                                                                                },
-                                                                                                                                                "type": "block"
-                                                                                                                                            },
-                    {
                                                                                                                                                 "item": "run_instances_summary_table",
                                                                                                                                                 "position": {
                                                                                                                                                     "h": 390,
                                                                                                                                                     "w": 1200,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 170
+                                                                                                                                                    "y": 0
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -216,7 +206,7 @@
                                                                                                                                                     "h": 360,
                                                                                                                                                     "w": 1200,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 560
+                                                                                                                                                    "y": 390
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -226,7 +216,7 @@
                                                                                                                                                     "h": 360,
                                                                                                                                                     "w": 760,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 920
+                                                                                                                                                    "y": 750
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -236,7 +226,7 @@
                                                                                                                                                     "h": 360,
                                                                                                                                                     "w": 440,
                                                                                                                                                     "x": 760,
-                                                                                                                                                    "y": 920
+                                                                                                                                                    "y": 750
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -246,7 +236,7 @@
                                                                                                                                                     "h": 500,
                                                                                                                                                     "w": 1200,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 1280
+                                                                                                                                                    "y": 1110
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             }
@@ -266,14 +256,6 @@
     },
     "title": "Forge EC2 RunInstances Scale-Up Failures",
     "visualizations": {
-        "operator_guide": {
-            "options": {
-                "fontSize": "default",
-                "markdown": "### How to use this dashboard\nStart with the tenant error summary and recurrence window, then inspect the exact RunInstances request and SQS retry pressure. **Healthy:** failure panels are empty; a single transient AWS error without job impact is not a Forge incident. **Action:** identify error code, region, instance or host requirement, and retry outcome before assigning cause. **Ownership:** shared request construction is Forge code; AMI, KMS, subnet, and dedicated-host configuration is tenant-owned; AWS capacity is external."
-            },
-            "title": "How should I use this dashboard?",
-            "type": "splunk.markdown"
-        },
         "recurrence_windows_table": {
             "dataSources": {
                 "primary": "recurrence_windows_search"
