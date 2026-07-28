@@ -413,17 +413,20 @@ def emit_dispatch_decisions(
             continue
 
         LOG.info(
-            'redelivery_work_queued key=%s repository=%s tenant=%s aws_region=%s github_delivery=%d runner_labels=%s',
+            'redelivery_work_queued key=%s repository=%s tenant=%s aws_region=%s run_id=%s workflow_job_id=%s github_delivery=%d runner_labels=%s',
             key,
             work_payload.get('repository'),
             work_payload.get('tenant'),
             work_payload.get('aws_region'),
+            work_payload.get('run_id'),
+            work_payload.get('workflow_job_id'),
             len(work_payload.get('github_delivery') or []),
             ','.join(work_payload.get('runner_labels') or []),
         )
         queued.append(
             {
                 'key': key,
+                'run_id': work_payload.get('run_id'),
                 'workflow_job_id': work_payload['workflow_job_id'],
                 'runner_labels': work_payload.get('runner_labels') or [],
             })

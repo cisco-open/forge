@@ -282,6 +282,7 @@ def test_process_results_classifies_and_queues_without_lambda_wrapper(
     ]
     assert result['queued'] == [{
         'key': 'acgw#us-west-2#acme/app#902',
+        'run_id': 1,
         'workflow_job_id': 902,
         'runner_labels': ['env:ops-prod', 'self-hosted', 'type:small', 'x64'],
     }]
