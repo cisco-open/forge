@@ -91,6 +91,17 @@ module "dashboard_kinesis_control_plane" {
   dashboard_group   = signalfx_dashboard_group.forgecicd.id
 }
 
+module "dashboard_runner_logs_ingestion" {
+  source = "./dashboards/runner_logs_ingestion"
+
+  providers = {
+    signalfx = signalfx
+  }
+
+  dynamic_variables = var.dashboard_variables.runner_logs_ingestion.dynamic_variables
+  dashboard_group   = signalfx_dashboard_group.forgecicd.id
+}
+
 module "dashboard_dependency_probes" {
   source = "./dashboards/dependency_probes"
 

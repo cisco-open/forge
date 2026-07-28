@@ -23,7 +23,10 @@ def _configure_runtime() -> None:
         os.environ.setdefault(key, value)
 
     repo_root = Path(__file__).resolve().parents[1]
-    lambda_path = 'modules/integrations/splunk_cloud_s3_runner_logs/lambda'
+    lambda_path = (
+        'modules/integrations/splunk_cloud_s3_runner_logs/lambda/'
+        'splunk_s3_runner_logs'
+    )
     lambda_dir = repo_root / lambda_path
     if lambda_dir.exists():
         sys.path.insert(0, str(lambda_dir))

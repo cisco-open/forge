@@ -2,7 +2,7 @@ resource "splunk_configs_conf" "forgecicd_shared_lambda_fields" {
   name = "transforms/forgecicd_shared_lambda_fields"
 
   variables = {
-    "REGEX"      = "(?<aws_region>[^:]+):\\/aws\\/lambda\\/(?<forgecicd_log_type>splunk-dependency-monitor|splunk-s3-runner-logs-lambda|forge-aws-billing-per-service|forge-aws-billing-per-resource-process|forge-aws-billing-per-resource|webex-webhook-relay-destination-receiver|SplunkDMMetadataEC2InstPatternTags|SplunkDMMetadataEC2Inst)(?:-[a-z]{2}(?:-[a-z]+)+-[0-9]+)?:"
+    "REGEX"      = "(?<aws_region>[^:]+):\\/aws\\/lambda\\/(?<forgecicd_log_type>splunk-dependency-monitor|splunk-s3-runner-logs-lambda|splunk-s3-runner-logs-redrive|forge-aws-billing-per-service|forge-aws-billing-per-resource-process|forge-aws-billing-per-resource|webex-webhook-relay-destination-receiver|SplunkDMMetadataEC2InstPatternTags|SplunkDMMetadataEC2Inst)(?:-[a-z]{2}(?:-[a-z]+)+-[0-9]+)?:"
     "FORMAT"     = "aws_region::$1 forgecicd_log_type::$2"
     "SOURCE_KEY" = "source"
     "CLEAN_KEYS" = "0"

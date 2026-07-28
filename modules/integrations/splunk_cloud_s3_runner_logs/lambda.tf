@@ -10,11 +10,12 @@ module "splunk_s3_runner_logs_lambda" {
   function_name = "${local.prefix_lambda}-lambda-${var.aws_region}"
   handler       = "splunk_s3_runner_logs.lambda_handler"
   runtime       = "python3.12"
+  memory_size   = 1024
   timeout       = 900
   architectures = ["x86_64"]
 
   source_path = [{
-    path = "${path.module}/lambda"
+    path = "${path.module}/lambda/splunk_s3_runner_logs"
   }]
 
   logging_log_group                 = aws_cloudwatch_log_group.splunk_s3_runner_logs_lambda.name
@@ -108,4 +109,8 @@ resource "aws_lambda_event_source_mapping" "sqs_to_lambda" {
   batch_size                         = 1
   maximum_batching_window_in_seconds = 0
   enabled                            = true
+
+  scaling_config {
+    maximum_concurrency = var.lambda_event_source_mapping_maximum_concurrency
+  }
 }

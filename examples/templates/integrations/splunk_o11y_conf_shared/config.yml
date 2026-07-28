@@ -86,6 +86,32 @@ dashboard_variables:
         values_suggested:
           - Forge MT
         restricted_suggestions: true
+  runner_logs_ingestion:
+    dynamic_variables:
+      - property: aws_account_id
+        alias: AWS account
+        description: Forge AWS accounts containing the runner-log ingestion pipeline.
+        values: []
+        value_required: false
+        values_suggested:
+          - <AWS_ACCOUNT_ID>  # e.g., 111111111111
+        restricted_suggestions: true
+      - property: aws_region
+        alias: AWS region
+        description: Forge AWS regions containing the runner-log ingestion pipeline.
+        values: []
+        value_required: false
+        values_suggested:
+          - <AWS_REGION>  # e.g., eu-west-1
+        restricted_suggestions: true
+      - property: aws_tag_ProductFamilyName
+        alias: Product family
+        description: Forge AWS product-family tag for the runner-log ingestion pipeline.
+        values: []
+        value_required: false
+        values_suggested:
+          - Forge MT
+        restricted_suggestions: true
   sqs_control_plane:
     dynamic_variables:
       - property: aws_account_id

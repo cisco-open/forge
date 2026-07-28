@@ -221,6 +221,18 @@ variable "dashboard_variables" {
         }
       ))
     })
+    runner_logs_ingestion = object({
+      dynamic_variables = list(object({
+        property               = string
+        alias                  = string
+        description            = string
+        values                 = list(string)
+        value_required         = bool
+        values_suggested       = list(string)
+        restricted_suggestions = bool
+        }
+      ))
+    })
     sqs_control_plane = object({
       dynamic_variables = list(object({
         property               = string
