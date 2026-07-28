@@ -11,6 +11,7 @@ run "integrations_splunk_o11y_conf_shared_dashboards_forge_impact_interface_cont
       "dashboard_group",
       "detector_ids",
       "dynamic_variables",
+      "lambda_dimension_filter",
       "tenant_names",
     ]
     expected_output_values = []
@@ -33,6 +34,8 @@ run "integrations_splunk_o11y_conf_shared_dashboards_forge_impact_interface_cont
       "restricted_suggestions = bool",
       "}))",
       "default = []",
+      "variable \"lambda_dimension_filter\"",
+      "description = \"Canonical AWS Lambda resource-level SignalFlow filter.\"",
       "variable \"tenant_names\"",
       "description = \"Tenant namespaces that run Forge ARC runners.\"",
       "type        = list(string)",
@@ -66,9 +69,9 @@ run "integrations_splunk_o11y_conf_shared_dashboards_forge_impact_interface_cont
 
   assert {
     condition = (
-      output.expected_input_variable_count == 4
+      output.expected_input_variable_count == 5
       && output.expected_output_value_count == 0
-      && output.expected_interface_literal_count == 21
+      && output.expected_interface_literal_count == 23
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

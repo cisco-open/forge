@@ -11,6 +11,7 @@ run "dependency_probes_interface_contract" {
       "detector_config",
       "detector_name_prefix",
       "detector_notifications",
+      "lambda_dimension_filter",
       "team",
       "tenant_names",
     ]
@@ -20,6 +21,8 @@ run "dependency_probes_interface_contract" {
     expected_interface_literals = [
       "variable \"detector_notifications\"",
       "variable \"detector_name_prefix\"",
+      "variable \"lambda_dimension_filter\"",
+      "description = \"Canonical AWS Lambda resource-level SignalFlow filter.\"",
       "variable \"team\"",
       "variable \"tenant_names\"",
       "variable \"detector_config\"",
@@ -50,9 +53,9 @@ run "dependency_probes_interface_contract" {
 
   assert {
     condition = (
-      output.expected_input_variable_count == 5
+      output.expected_input_variable_count == 6
       && output.expected_output_value_count == 1
-      && output.expected_interface_literal_count == 12
+      && output.expected_interface_literal_count == 14
     )
     error_message = "Interface contract counts must remain pinned."
   }

@@ -10,6 +10,7 @@ run "integrations_splunk_o11y_conf_shared_dashboards_lambda_interface_contract" 
     expected_input_variables = [
       "dashboard_group",
       "dynamic_variables",
+      "lambda_dimension_filter",
       "tenant_names",
     ]
     expected_output_values = []
@@ -29,6 +30,8 @@ run "integrations_splunk_o11y_conf_shared_dashboards_lambda_interface_contract" 
       "restricted_suggestions = bool",
       "}))",
       "default = []",
+      "variable \"lambda_dimension_filter\"",
+      "description = \"Canonical AWS Lambda resource-level SignalFlow filter.\"",
       "variable \"tenant_names\"",
       "description = \"List of tenant names used for the dashboard.\"",
       "type        = list(string)",
@@ -62,9 +65,9 @@ run "integrations_splunk_o11y_conf_shared_dashboards_lambda_interface_contract" 
 
   assert {
     condition = (
-      output.expected_input_variable_count == 3
+      output.expected_input_variable_count == 4
       && output.expected_output_value_count == 0
-      && output.expected_interface_literal_count == 18
+      && output.expected_interface_literal_count == 20
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

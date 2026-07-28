@@ -20,3 +20,8 @@ variable "detector_id" {
   description = "AWS control-plane detector ID for linking Lambda health alerts."
   type        = string
 }
+
+variable "lambda_dimension_filter" {
+  description = "Canonical AWS Lambda resource-level SignalFlow filter."
+  type        = string
+}

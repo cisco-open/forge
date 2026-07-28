@@ -26,3 +26,8 @@ variable "tenant_names" {
   description = "Tenant namespaces that run Forge ARC runners."
   type        = list(string)
 }
+
+variable "lambda_dimension_filter" {
+  description = "Canonical AWS Lambda resource-level SignalFlow filter."
+  type        = string
+}

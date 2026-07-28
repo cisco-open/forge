@@ -13,8 +13,9 @@ mock_provider "signalfx" {
 }
 
 variables {
-  dashboard_group = "forge-dashboard-group"
-  detector_id     = "aws-control-plane-detector"
+  dashboard_group         = "forge-dashboard-group"
+  lambda_dimension_filter = "filter('namespace', 'AWS/Lambda') and filter('Resource', '*') and (not filter('ExecutedVersion', '*'))"
+  detector_id             = "aws-control-plane-detector"
   dynamic_variables = [
     {
       property               = "aws_account_id"

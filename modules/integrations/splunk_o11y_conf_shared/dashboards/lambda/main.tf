@@ -7,8 +7,8 @@ resource "signalfx_list_chart" "percent_invocations_by_version" {
   sort_by                 = "-value"
 
   program_text = <<-EOF
-A = data('Invocations', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName']).publish(label='A', enable=False)
-B = data('Invocations', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_tag_ForgeModuleRef']).publish(label='B', enable=False)
+A = data('Invocations', filter=(${var.lambda_dimension_filter}) and filter('stat', 'sum') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName']).publish(label='A', enable=False)
+B = data('Invocations', filter=(${var.lambda_dimension_filter}) and filter('stat', 'sum') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_tag_ForgeModuleRef']).publish(label='B', enable=False)
 C = (B/A).scale(100).publish(label='C')
 EOF
 
@@ -69,7 +69,7 @@ resource "signalfx_time_chart" "errors_by_version" {
   name         = "Errors by Forge module"
   description  = "The number of invocations that failed due to errors in the function (response code 4XX)."
   program_text = <<-EOF
-A = data('Errors', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_tag_ForgeModuleRef']).publish(label='A')
+A = data('Errors', filter=(${var.lambda_dimension_filter}) and filter('stat', 'sum') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_tag_ForgeModuleRef']).publish(label='A')
 EOF
 
   plot_type   = "AreaChart"
@@ -139,7 +139,7 @@ resource "signalfx_single_value_chart" "total_throttles" {
   color_by    = "Dimension"
 
   program_text = <<-EOF
-A = data('Throttles', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('Resource', '*') and (not filter('ExecutedVersion', '*')), rollup='sum', extrapolation='zero').sum(over='30m').sum().publish(label='A')
+A = data('Throttles', filter=(${var.lambda_dimension_filter}) and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='30m').sum().publish(label='A')
 EOF
 
   viz_options {
@@ -159,7 +159,7 @@ resource "signalfx_list_chart" "avg_duration_by_version" {
   disable_sampling = true
 
   program_text = <<-EOF
-A = data('Duration', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'mean') and filter('aws_tag_ForgeModuleRef', '*'), rollup='average').mean(by=['aws_tag_TenantName', 'aws_function_name', 'aws_tag_ForgeModuleRef']).publish(label='A')
+A = data('Duration', filter=(${var.lambda_dimension_filter}) and filter('stat', 'mean') and filter('aws_tag_ForgeModuleRef', '*'), rollup='average').mean(by=['aws_tag_TenantName', 'aws_function_name', 'aws_tag_ForgeModuleRef']).publish(label='A')
 EOF
 
   time_range = 3600
@@ -218,7 +218,7 @@ resource "signalfx_single_value_chart" "avg_invocation_duration" {
   color_by    = "Metric"
 
   program_text = <<-EOF
-A = data('Duration', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'mean') and filter('Resource', '*') and (not filter('ExecutedVersion', '*')), rollup='average').publish(label='A')
+A = data('Duration', filter=(${var.lambda_dimension_filter}) and filter('stat', 'mean'), rollup='average').publish(label='A')
 EOF
 
   max_precision = 5
@@ -234,7 +234,7 @@ resource "signalfx_time_chart" "throttles_by_version" {
   name         = "Throttles by Forge module"
   description  = "The number of Lambda function invocation attempts that were throttled due to invocation rates exceeding the customer’s concurrent limits (error code 429)."
   program_text = <<-EOF
-A = data('Throttles', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_tag_ForgeModuleRef']).publish(label='A')
+A = data('Throttles', filter=(${var.lambda_dimension_filter}) and filter('stat', 'sum') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_tag_ForgeModuleRef']).publish(label='A')
 EOF
 
   plot_type   = "AreaChart"
@@ -301,7 +301,7 @@ resource "signalfx_time_chart" "invocations_by_version" {
   name         = "Invocations by Forge module"
   description  = "The number of times a function is invoked in response to an event or invocation API call."
   program_text = <<-EOF
-A = data('Invocations', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_tag_ForgeModuleRef']).publish(label='A')
+A = data('Invocations', filter=(${var.lambda_dimension_filter}) and filter('stat', 'sum') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_tag_ForgeModuleRef']).publish(label='A')
 EOF
 
   plot_type   = "AreaChart"
@@ -369,7 +369,7 @@ resource "signalfx_time_chart" "invocations" {
   name         = "Invocations"
   description  = "The number of times a function is invoked in response to an event or invocation API call and associated errors or throttles."
   program_text = <<-EOF
-A = data('Invocations', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('Resource', '*') and (not filter('ExecutedVersion', '*')), rollup='sum').sum().publish(label='A')
+A = data('Invocations', filter=(${var.lambda_dimension_filter}) and filter('stat', 'sum'), rollup='sum').sum().publish(label='A')
 EOF
 
   plot_type   = "AreaChart"
@@ -438,7 +438,7 @@ resource "signalfx_single_value_chart" "total_errors" {
   color_by    = "Dimension"
 
   program_text = <<-EOF
-A = data('Errors', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('Resource', '*') and (not filter('ExecutedVersion', '*')), rollup='sum', extrapolation='zero').sum(over='30m').sum().publish(label='A')
+A = data('Errors', filter=(${var.lambda_dimension_filter}) and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='30m').sum().publish(label='A')
 EOF
 
   viz_options {
@@ -455,7 +455,7 @@ resource "signalfx_single_value_chart" "total_invocations" {
   color_by    = "Dimension"
 
   program_text = <<-EOF
-A = data('Invocations', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('Resource', '*') and (not filter('ExecutedVersion', '*')), rollup='sum').sum(over='30m').sum().publish(label='A')
+A = data('Invocations', filter=(${var.lambda_dimension_filter}) and filter('stat', 'sum'), rollup='sum').sum(over='30m').sum().publish(label='A')
 EOF
 
   viz_options {
@@ -474,7 +474,7 @@ resource "signalfx_list_chart" "top_tenants_by_errors" {
   sort_by                 = "-value"
 
   program_text = <<-EOF
-A = data('Errors', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName']).sum(over='1h').above(0).top(count=10).publish(label='A')
+A = data('Errors', filter=(${var.lambda_dimension_filter}) and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName']).sum(over='1h').above(0).top(count=10).publish(label='A')
 EOF
 
   time_range = 3600
@@ -500,7 +500,7 @@ resource "signalfx_list_chart" "top_tenants_by_throttles" {
   sort_by                 = "-value"
 
   program_text = <<-EOF
-A = data('Throttles', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName']).sum(over='1h').above(0).top(count=10).publish(label='A')
+A = data('Throttles', filter=(${var.lambda_dimension_filter}) and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName']).sum(over='1h').above(0).top(count=10).publish(label='A')
 EOF
 
   time_range = 3600
@@ -526,7 +526,7 @@ resource "signalfx_list_chart" "top_lambdas_by_errors" {
   sort_by                 = "-value"
 
   program_text = <<-EOF
-A = data('Errors', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_tag_ForgeModuleRef']).sum(over='1h').above(0).top(count=10).publish(label='A')
+A = data('Errors', filter=(${var.lambda_dimension_filter}) and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_tag_ForgeModuleRef']).sum(over='1h').above(0).top(count=10).publish(label='A')
 EOF
 
   time_range = 3600
@@ -560,7 +560,7 @@ resource "signalfx_list_chart" "top_lambdas_by_throttles" {
   sort_by                 = "-value"
 
   program_text = <<-EOF
-A = data('Throttles', filter=filter('namespace', 'AWS/Lambda') and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_tag_ForgeModuleRef']).sum(over='1h').above(0).top(count=10).publish(label='A')
+A = data('Throttles', filter=(${var.lambda_dimension_filter}) and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum', extrapolation='zero').sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_tag_ForgeModuleRef']).sum(over='1h').above(0).top(count=10).publish(label='A')
 EOF
 
   time_range = 3600

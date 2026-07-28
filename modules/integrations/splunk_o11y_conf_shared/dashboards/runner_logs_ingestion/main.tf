@@ -25,7 +25,7 @@ locals {
   aws_platform_filter = "(${local.aws_account_filter}) and (${local.aws_region_filter}) and (${local.product_family_filter}) and (not filter('aws_tag_TenantName', '*'))"
   queue_filter        = "filter('namespace', 'AWS/SQS') and filter('QueueName', 'splunk-s3-runner-logs-events')"
   dlq_filter          = "filter('namespace', 'AWS/SQS') and filter('QueueName', 'splunk-s3-runner-logs-events-dlq')"
-  lambda_filter       = "filter('namespace', 'AWS/Lambda') and filter('aws_function_name', 'splunk-s3-runner-logs-lambda-*')"
+  lambda_filter       = "(${var.lambda_dimension_filter}) and filter('aws_function_name', 'splunk-s3-runner-logs-lambda-*')"
   kinesis_filter      = "filter('namespace', 'AWS/Kinesis') and filter('StreamName', 'splunk-s3-runner-logs-stream-*')"
   firehose_filter     = "filter('namespace', 'AWS/Firehose') and filter('DeliveryStreamName', 'splunk-s3-runner-logs-firehose-*')"
 }

@@ -3,9 +3,10 @@ mock_provider "signalfx" {
 }
 
 variables {
-  detector_name_prefix   = "Forge Prod"
-  detector_notifications = ["Email,forge@example.com"]
-  team                   = "forge-team"
+  detector_name_prefix    = "Forge Prod"
+  detector_notifications  = ["Email,forge@example.com"]
+  lambda_dimension_filter = "filter('namespace', 'AWS/Lambda') and filter('Resource', '*') and (not filter('ExecutedVersion', '*'))"
+  team                    = "forge-team"
   dynamic_variables = [
     {
       property               = "aws_account_id"
@@ -93,6 +94,8 @@ run "creates_regional_platform_detector" {
       && signalfx_detector.aws_control_plane_health.teams == toset(["forge-team"])
       && length(signalfx_detector.aws_control_plane_health.rule) == 2
       && strcontains(signalfx_detector.aws_control_plane_health.program_text, "not filter('aws_tag_TenantName', '*')")
+      && strcontains(signalfx_detector.aws_control_plane_health.program_text, "filter('Resource', '*')")
+      && strcontains(signalfx_detector.aws_control_plane_health.program_text, "not filter('ExecutedVersion', '*')")
       && strcontains(signalfx_detector.aws_control_plane_health.program_text, "lambda_errors > 0, '10m'")
       && strcontains(signalfx_detector.aws_control_plane_health.program_text, "lambda_throttles > 0, '5m'")
       && !strcontains(signalfx_detector.aws_control_plane_health.program_text, "ApproximateAgeOfOldestMessage")

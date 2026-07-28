@@ -8,8 +8,9 @@ mock_provider "signalfx" {
 }
 
 variables {
-  dashboard_group = "forge-dashboard-group"
-  detector_id     = "regional-queue-detector-id"
+  dashboard_group         = "forge-dashboard-group"
+  lambda_dimension_filter = "filter('namespace', 'AWS/Lambda') and filter('Resource', '*') and (not filter('ExecutedVersion', '*'))"
+  detector_id             = "regional-queue-detector-id"
   dynamic_variables = [
     {
       property               = "aws_account_id"

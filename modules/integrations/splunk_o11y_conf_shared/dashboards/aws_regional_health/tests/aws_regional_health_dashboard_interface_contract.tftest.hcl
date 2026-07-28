@@ -11,6 +11,7 @@ run "aws_regional_health_dashboard_interface_contract" {
       "dashboard_group",
       "detector_id",
       "dynamic_variables",
+      "lambda_dimension_filter",
     ]
     expected_output_values = []
     expected_interface_literals = [
@@ -22,6 +23,8 @@ run "aws_regional_health_dashboard_interface_contract" {
       "restricted_suggestions = bool",
       "variable \"detector_id\"",
       "description = \"AWS regional platform detector ID linked to queue-health charts.\"",
+      "variable \"lambda_dimension_filter\"",
+      "description = \"Canonical AWS Lambda resource-level SignalFlow filter.\"",
     ]
   }
 

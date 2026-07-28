@@ -13,7 +13,8 @@ mock_provider "signalfx" {
 }
 
 variables {
-  dashboard_group = "forge-dashboard-group"
+  dashboard_group         = "forge-dashboard-group"
+  lambda_dimension_filter = "filter('namespace', 'AWS/Lambda') and filter('Resource', '*') and (not filter('ExecutedVersion', '*'))"
   dynamic_variables = [
     {
       property               = "aws_account_id"
