@@ -1,5 +1,22 @@
 # Changelog
 
+## [4.6.0](https://github.com/cisco-open/forge/compare/v4.5.1...v4.6.0) (2026-07-28)
+
+
+### Features
+
+* **logs:** add runner log DLQ redrive ([#555](https://github.com/cisco-open/forge/issues/555)) ([abbf49e](https://github.com/cisco-open/forge/commit/abbf49e1b48152b86f79b72e852f398100608b63))
+* **observability:** add platform health detectors ([#552](https://github.com/cisco-open/forge/issues/552)) ([9c1a6d1](https://github.com/cisco-open/forge/commit/9c1a6d1cefed0744e3a8bc9eea391fea492a64de))
+
+
+### Bug Fixes
+
+* **integrations:** preserve Splunk permissions during destroy ([#554](https://github.com/cisco-open/forge/issues/554)) ([c1d76f4](https://github.com/cisco-open/forge/commit/c1d76f4b12007bf490f56e8aff1494f44047237f))
+* **observability:** close detector coverage gaps ([#553](https://github.com/cisco-open/forge/issues/553)) ([7ca522c](https://github.com/cisco-open/forge/commit/7ca522cf0e4d6edc438d1cd94a916d9a3ca69943))
+* **observability:** exclude read-only filesystems from disk panels ([#549](https://github.com/cisco-open/forge/issues/549)) ([d170a6e](https://github.com/cisco-open/forge/commit/d170a6e4816f7df5853eb8984c8c1c72a797c0c7))
+* **observability:** extend service-limit chart window ([#550](https://github.com/cisco-open/forge/issues/550)) ([5c606da](https://github.com/cisco-open/forge/commit/5c606da4bed3a0eae9a073ae6978a302cc64cb69))
+* **observability:** increase dependency monitor retries ([#557](https://github.com/cisco-open/forge/issues/557)) ([2ddaf13](https://github.com/cisco-open/forge/commit/2ddaf1312f0c7f6ac79098ed757e0c5ab83f1b04))
+
 ## [4.5.1](https://github.com/cisco-open/forge/compare/v4.5.0...v4.5.1) (2026-07-27)
 
 
