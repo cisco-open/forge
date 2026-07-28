@@ -14,6 +14,7 @@ run "runner_logs_ingestion_dashboard_source_inventory" {
       "alerts(detector_id='$${var.detector_id}')",
       "Runner-log Lambda duration guardrail",
       "Runner-log oldest message age - 6h trend",
+      "resource \"signalfx_text_chart\" \"operator_guide\"",
       "resource \"terraform_data\" \"dashboard_parent\"",
       "terraform_data.dashboard_parent,",
       "not filter('aws_tag_TenantName', '*')",

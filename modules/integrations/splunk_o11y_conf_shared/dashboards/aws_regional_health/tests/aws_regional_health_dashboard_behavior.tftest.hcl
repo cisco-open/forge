@@ -4,6 +4,11 @@ mock_provider "signalfx" {
       id = "time-chart-id"
     }
   }
+  mock_resource "signalfx_text_chart" {
+    defaults = {
+      id = "text-chart-id"
+    }
+  }
   mock_resource "signalfx_dashboard" {}
 }
 
@@ -49,10 +54,27 @@ run "creates_regional_platform_dashboard" {
     condition = (
       signalfx_dashboard.aws_regional_health.name == "Forge AWS Regional Platform Health"
       && signalfx_dashboard.aws_regional_health.dashboard_group == "forge-dashboard-group"
-      && length(signalfx_dashboard.aws_regional_health.chart) == 6
+      && length(signalfx_dashboard.aws_regional_health.chart) == 7
       && length(signalfx_dashboard.aws_regional_health.variable) == 3
     )
-    error_message = "The regional platform dashboard must keep its distinct name, parent group, five metric panels, one alert timeline, and dedicated variables."
+    error_message = "The regional platform dashboard must keep its distinct name, parent group, operator guide, five metric panels, one alert timeline, and dedicated variables."
+  }
+
+  assert {
+    condition = (
+      signalfx_text_chart.operator_guide.name == "How should I use this dashboard?"
+      && strcontains(signalfx_text_chart.operator_guide.markdown, "A throttle count or backlog value alone does not prove customer impact")
+      && strcontains(signalfx_text_chart.operator_guide.markdown, "Assign ownership from evidence")
+      && length([
+        for chart in signalfx_dashboard.aws_regional_health.chart : chart
+        if chart.chart_id == signalfx_text_chart.operator_guide.id && chart.row == 0
+      ]) == 1
+      && length([
+        for chart in signalfx_dashboard.aws_regional_health.chart : chart
+        if chart.chart_id == signalfx_time_chart.queue_health_alerts.id && chart.row == 2
+      ]) == 1
+    )
+    error_message = "The regional platform dashboard must lead with non-causal operator guidance followed by active alerts."
   }
 
   assert {
