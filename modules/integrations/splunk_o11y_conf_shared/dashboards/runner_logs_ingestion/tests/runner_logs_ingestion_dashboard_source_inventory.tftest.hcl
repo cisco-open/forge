@@ -10,6 +10,8 @@ run "runner_logs_ingestion_dashboard_source_inventory" {
     expected_literals = [
       "resource \"signalfx_dashboard\" \"runner_logs_ingestion\"",
       "Forge Runner Logs Ingestion",
+      "Runner-log Lambda duration guardrail",
+      "Runner-log oldest message age - 6h trend",
       "resource \"terraform_data\" \"dashboard_parent\"",
       "terraform_data.dashboard_parent,",
       "not filter('aws_tag_TenantName', '*')",

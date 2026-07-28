@@ -53,13 +53,42 @@ resource "signalfx_single_value_chart" "oldest_message" {
   }
 }
 
+resource "signalfx_single_value_chart" "lambda_duration_guardrail" {
+  name                    = "Runner-log Lambda duration guardrail"
+  description             = "Maximum duration over 30 minutes. This is a conservative guardrail for the 6-8 minute target because the AWS integration does not expose a native p99 statistic."
+  program_text            = "A = data('Duration', filter=(${local.aws_platform_filter}) and (${local.lambda_filter}) and filter('stat', 'upper'), rollup='max').max(over='30m').max().publish(label='A')"
+  color_by                = "Scale"
+  secondary_visualization = "Sparkline"
+
+  color_scale {
+    color = "green"
+    lt    = 360000
+  }
+  color_scale {
+    color = "orange"
+    gte   = 360000
+    lt    = 480000
+  }
+  color_scale {
+    color = "red"
+    gte   = 480000
+  }
+
+  viz_options {
+    display_name = "Maximum duration"
+    label        = "A"
+    value_unit   = "Millisecond"
+  }
+}
+
 resource "signalfx_single_value_chart" "lambda_errors" {
-  name         = "Runner-log Lambda errors - sum(30m)"
+  name         = "Runner-log Lambda errors/timeouts - sum(30m)"
+  description  = "Lambda Errors includes invocation timeouts."
   program_text = "A = data('Errors', filter=(${local.aws_platform_filter}) and (${local.lambda_filter}) and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='30m').sum().publish(label='A')"
   color_by     = "Dimension"
 
   viz_options {
-    display_name = "Lambda errors"
+    display_name = "Lambda errors/timeouts"
     label        = "A"
   }
 }
@@ -154,14 +183,22 @@ resource "signalfx_time_chart" "lambda_concurrency" {
 
 resource "signalfx_time_chart" "lambda_duration" {
   name         = "Runner-log Lambda duration"
-  description  = "Average runner-log Lambda execution duration by AWS region."
-  program_text = "A = data('Duration', filter=(${local.aws_platform_filter}) and (${local.lambda_filter}) and filter('stat', 'mean'), rollup='average').mean(over='5m').mean(by=['aws_region', 'aws_function_name']).publish(label='A')"
+  description  = "Mean and maximum runner-log Lambda execution duration by AWS region. Keep maximum below 6 minutes where possible and below 8 minutes as the operational guardrail."
+  program_text = <<-EOF
+average = data('Duration', filter=(${local.aws_platform_filter}) and (${local.lambda_filter}) and filter('stat', 'mean'), rollup='average').mean(over='5m').mean(by=['aws_region', 'aws_function_name']).publish(label='A')
+maximum = data('Duration', filter=(${local.aws_platform_filter}) and (${local.lambda_filter}) and filter('stat', 'upper'), rollup='max').max(over='5m').max(by=['aws_region', 'aws_function_name']).publish(label='B')
+EOF
   plot_type    = "LineChart"
-  time_range   = 3600
+  time_range   = 21600
 
   viz_options {
     display_name = "Average duration"
     label        = "A"
+    value_unit   = "Millisecond"
+  }
+  viz_options {
+    display_name = "Maximum duration"
+    label        = "B"
     value_unit   = "Millisecond"
   }
 }
@@ -240,6 +277,20 @@ resource "signalfx_time_chart" "kinesis_iterator_age" {
     display_name = "Iterator age"
     label        = "A"
     value_unit   = "Millisecond"
+  }
+}
+
+resource "signalfx_time_chart" "oldest_message_trend" {
+  name         = "Runner-log oldest message age - 6h trend"
+  description  = "Maximum source-queue message age by AWS region. After tuning, the sustained trend should decline rather than repeatedly reset and grow."
+  program_text = "A = data('ApproximateAgeOfOldestMessage', filter=(${local.aws_platform_filter}) and (${local.queue_filter}) and filter('stat', 'upper'), rollup='max').max(over='5m').max(by=['aws_region']).publish(label='A')"
+  plot_type    = "LineChart"
+  time_range   = 21600
+
+  viz_options {
+    display_name = "Oldest message age"
+    label        = "A"
+    value_unit   = "Second"
   }
 }
 
@@ -332,24 +383,31 @@ resource "signalfx_dashboard" "runner_logs_ingestion" {
     height   = 1
   }
   chart {
-    chart_id = signalfx_single_value_chart.lambda_errors.id
+    chart_id = signalfx_single_value_chart.lambda_duration_guardrail.id
     row      = 0
     column   = 4
     width    = 2
     height   = 1
   }
   chart {
-    chart_id = signalfx_single_value_chart.kinesis_throttles.id
+    chart_id = signalfx_single_value_chart.lambda_errors.id
     row      = 0
     column   = 6
-    width    = 3
+    width    = 2
+    height   = 1
+  }
+  chart {
+    chart_id = signalfx_single_value_chart.kinesis_throttles.id
+    row      = 0
+    column   = 8
+    width    = 2
     height   = 1
   }
   chart {
     chart_id = signalfx_single_value_chart.firehose_freshness.id
     row      = 0
-    column   = 9
-    width    = 3
+    column   = 10
+    width    = 2
     height   = 1
   }
   chart {
@@ -420,6 +478,13 @@ resource "signalfx_dashboard" "runner_logs_ingestion" {
     row      = 4
     column   = 6
     width    = 6
+    height   = 1
+  }
+  chart {
+    chart_id = signalfx_time_chart.oldest_message_trend.id
+    row      = 5
+    column   = 0
+    width    = 12
     height   = 1
   }
 }
