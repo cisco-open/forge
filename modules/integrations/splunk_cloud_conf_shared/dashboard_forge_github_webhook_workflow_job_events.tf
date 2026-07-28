@@ -145,8 +145,70 @@ locals {
         title           = "Forge GitHub Webhook Workflow Job Events"
         type            = "splunk.table"
       }
+      delivery_chain_gaps_table = {
+        dataSources = {
+          primary = "delivery_chain_gaps_search"
+        }
+        options = {
+          count = 50
+        }
+        showLastUpdated = true
+        showProgressBar = false
+        title           = "Webhook Delivery Chain Gaps Older Than 5 Minutes"
+        type            = "splunk.table"
+      }
     }
     dataSources = {
+      delivery_chain_gaps_search = {
+        name = "Webhook delivery-chain gaps"
+        options = {
+          enableSmartSources = true
+          query              = <<-EOT
+            index="${var.splunk_conf.index}" sourcetype IN ("aws:cloudwatchlogs","aws:cloudwatchlogs:forgecicd")
+            (source="*:/aws/lambda/*validate-signature*" OR source="*:/aws/lambda/*webhook*" OR source="*:/aws/lambda/*dispatch-to-runner*")
+            | spath path=github.github-delivery output=delivery
+            | spath path=github.workflowJobId output=workflow_job_id
+            | spath path=github.repository output=repository
+            | rex field=_raw "(?i)(?:delivery|github-delivery)[=: ]+(?<raw_delivery>[0-9a-f-]{20,})"
+            | rex field=_raw "(?:Job ID:|workflowJobId[=: ])(?<raw_job_id>\\d+)"
+            | eval delivery=coalesce(delivery,raw_delivery), workflow_job_id=coalesce(workflow_job_id,raw_job_id)
+            | eval stage=case(
+                like(source,"%validate-signature%"),"relay",
+                like(source,"%dispatch-to-runner%") OR searchmatch("Successfully dispatched job for"),"dispatch",
+                like(source,"%webhook%"),"tenant_webhook",
+                true(),"other")
+            | where isnotnull(delivery) OR isnotnull(workflow_job_id)
+            | eventstats values(workflow_job_id) as workflow_ids_by_delivery by delivery
+            | eval workflow_job_id=coalesce(workflow_job_id,mvindex(workflow_ids_by_delivery,0))
+            | eventstats values(delivery) as deliveries_by_workflow_job by workflow_job_id
+            | eval delivery=coalesce(delivery,mvindex(deliveries_by_workflow_job,0))
+            | eval correlation_id=coalesce(delivery,workflow_job_id)
+            | stats min(_time) as first_seen max(_time) as last_seen
+                max(eval(stage="relay")) as relay
+                max(eval(stage="tenant_webhook")) as tenant_webhook
+                max(eval(stage="dispatch")) as dispatch
+                values(delivery) as delivery
+                values(workflow_job_id) as workflow_job_id
+                latest(forgecicd_tenant) as forgecicd_tenant
+                latest(repository) as repository
+                values(source) as sources
+                by correlation_id
+            | where "$tenant$"="*" OR forgecicd_tenant="$tenant$"
+            | where "$repository$"="*" OR like(repository, "%$repository$%")
+            | eval age_seconds=now()-first_seen
+            | where age_seconds>300 AND (relay=0 OR tenant_webhook=0 OR dispatch=0)
+            | eval missing_stages=mvjoin(mvappend(if(relay=0,"relay",null()),if(tenant_webhook=0,"tenant_webhook",null()),if(dispatch=0,"dispatch",null())),", ")
+            | convert ctime(first_seen) ctime(last_seen)
+            | table correlation_id delivery workflow_job_id forgecicd_tenant repository missing_stages age_seconds first_seen last_seen sources
+            | sort - age_seconds
+          EOT
+          queryParameters = {
+            earliest = "$global_time.earliest$"
+            latest   = "$global_time.latest$"
+          }
+        }
+        type = "ds.search"
+      }
       tenant_health_summary_search = {
         name = "Per-tenant job health"
         options = {
@@ -572,6 +634,16 @@ locals {
                 w = 1200
                 x = 0
                 y = 1300
+              }
+              type = "block"
+            },
+            {
+              item = "delivery_chain_gaps_table"
+              position = {
+                h = 480
+                w = 1200
+                x = 0
+                y = 1920
               }
               type = "block"
             }
