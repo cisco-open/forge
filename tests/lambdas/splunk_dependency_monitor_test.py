@@ -496,6 +496,10 @@ def test_tenant_discovery_runs_on_every_invocation(
         'tenant_discovery_no_candidates aws_region=us-west-2 '
         'expected_pattern=/forge/*/github_ghes_org'
     ) == 2
+    assert caplog.messages.count(
+        'ssm_client_config retry_mode=adaptive total_max_attempts=8 '
+        'connect_timeout_seconds=5 read_timeout_seconds=10'
+    ) == 2
 
 
 def test_splunk_outputs_are_delivered_independently(monkeypatch, aws):

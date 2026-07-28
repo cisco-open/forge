@@ -117,6 +117,20 @@ def discover_tenants() -> list[dict[str, Any]]:
         TENANT_PARAMETER_SUFFIX,
     )
     ssm = aws_client('ssm')
+    effective_config = getattr(
+        getattr(ssm, 'meta', None),
+        'config',
+        SSM_CLIENT_CONFIG,
+    )
+    effective_retries = effective_config.retries
+    LOG.info(
+        'ssm_client_config retry_mode=%s total_max_attempts=%s '
+        'connect_timeout_seconds=%s read_timeout_seconds=%s',
+        effective_retries.get('mode'),
+        effective_retries.get('total_max_attempts'),
+        effective_config.connect_timeout,
+        effective_config.read_timeout,
+    )
     paginator = ssm.get_paginator('describe_parameters')
     parameter_names = []
     for page_number, page in enumerate(

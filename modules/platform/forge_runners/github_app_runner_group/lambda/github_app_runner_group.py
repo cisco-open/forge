@@ -2,6 +2,7 @@ import base64  # noqa: E402
 import json  # noqa: E402
 import logging  # noqa: E402
 import os  # noqa: E402
+import random  # noqa: E402
 import sys  # noqa: E402
 import time  # noqa: E402
 from typing import Any, Dict, List  # noqa: E402
@@ -31,13 +32,16 @@ SSM = boto3.client('ssm', config=SSM_CLIENT_CONFIG)
 
 GITHUB_REQUEST_TIMEOUT_SECONDS = 10
 GITHUB_GET_MAX_ATTEMPTS = 3
+GITHUB_WRITE_MAX_ATTEMPTS = 3
 GITHUB_RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
 GITHUB_MAX_RETRY_DELAY_SECONDS = 10
 
 
-def _retry_delay_seconds(response: Any, attempt: int) -> float:
+def _retry_delay_seconds(response: Any | None, attempt: int) -> float:
     """Return a bounded Retry-After or exponential-backoff delay."""
-    retry_after = response.headers.get('Retry-After')
+    retry_after = (
+        response.headers.get('Retry-After') if response is not None else None
+    )
     if retry_after is not None:
         try:
             return min(
@@ -47,7 +51,11 @@ def _retry_delay_seconds(response: Any, attempt: int) -> float:
         except (TypeError, ValueError):
             pass
 
-    return min(2 ** (attempt - 1), GITHUB_MAX_RETRY_DELAY_SECONDS)
+    maximum_delay = min(
+        2 ** (attempt - 1),
+        GITHUB_MAX_RETRY_DELAY_SECONDS,
+    )
+    return random.uniform(0, maximum_delay)
 
 
 def github_get(url: str, headers: Dict[str, str]) -> Any:
@@ -63,10 +71,7 @@ def github_get(url: str, headers: Dict[str, str]) -> Any:
             if attempt == GITHUB_GET_MAX_ATTEMPTS:
                 raise
 
-            delay = min(
-                2 ** (attempt - 1),
-                GITHUB_MAX_RETRY_DELAY_SECONDS,
-            )
+            delay = _retry_delay_seconds(None, attempt)
             LOG.warning(
                 'GitHub GET %s failed transiently on attempt %s/%s: %s. '
                 'Retrying in %s seconds.',
@@ -99,6 +104,62 @@ def github_get(url: str, headers: Dict[str, str]) -> Any:
     raise RuntimeError('GitHub GET retry loop exhausted unexpectedly')
 
 
+def github_write(
+    method: str,
+    url: str,
+    headers: Dict[str, str],
+    *,
+    json_payload: Dict[str, Any] | None = None,
+) -> Any:
+    """Send an idempotent GitHub write with bounded transient retries."""
+    request = getattr(requests, method.lower())
+    for attempt in range(1, GITHUB_WRITE_MAX_ATTEMPTS + 1):
+        request_kwargs: Dict[str, Any] = {
+            'headers': headers,
+            'timeout': GITHUB_REQUEST_TIMEOUT_SECONDS,
+        }
+        if json_payload is not None:
+            request_kwargs['json'] = json_payload
+
+        try:
+            response = request(url, **request_kwargs)
+        except (requests.ConnectionError, requests.Timeout) as error:
+            if attempt == GITHUB_WRITE_MAX_ATTEMPTS:
+                raise
+
+            delay = _retry_delay_seconds(None, attempt)
+            LOG.warning(
+                'GitHub %s failed transiently on attempt %s/%s: %s. '
+                'Retrying in %s seconds.',
+                method,
+                attempt,
+                GITHUB_WRITE_MAX_ATTEMPTS,
+                error,
+                delay,
+            )
+            time.sleep(delay)
+            continue
+
+        retryable = response.status_code in GITHUB_RETRYABLE_STATUS_CODES
+        if not retryable or attempt == GITHUB_WRITE_MAX_ATTEMPTS:
+            response.raise_for_status()
+            return response
+
+        delay = _retry_delay_seconds(response, attempt)
+        LOG.warning(
+            'GitHub %s returned retryable status %s on attempt %s/%s. '
+            'Retrying in %s seconds.',
+            method,
+            response.status_code,
+            attempt,
+            GITHUB_WRITE_MAX_ATTEMPTS,
+            delay,
+        )
+        time.sleep(delay)
+
+    raise RuntimeError('GitHub write retry loop exhausted unexpectedly')
+
+
 def generate_jwt(app_id: str, private_key: str) -> str:
     """Generate a JWT for GitHub App authentication."""
     payload = {
@@ -116,7 +177,11 @@ def get_installation_access_token(jwt_token: str, installation_id: str, github_a
         'Accept': 'application/vnd.github+json',
     }
     url = f'{github_api}/app/installations/{installation_id}/access_tokens'
-    response = requests.post(url, headers=headers)
+    response = requests.post(
+        url,
+        headers=headers,
+        timeout=GITHUB_REQUEST_TIMEOUT_SECONDS,
+    )
     response.raise_for_status()
     return response.json()['token']
 
@@ -177,7 +242,12 @@ def create_runner_group(access_token: str, github_api: str, organization: str, r
         'visibility': visibility,
         'selected_repository_ids': []
     }
-    response = requests.post(url, json=payload, headers=headers)
+    response = requests.post(
+        url,
+        json=payload,
+        headers=headers,
+        timeout=GITHUB_REQUEST_TIMEOUT_SECONDS,
+    )
     response.raise_for_status()
     LOG.info(
         f"Created runner group '{runner_group_name}' with visibility '{visibility}'.")
@@ -199,9 +269,12 @@ def save_to_runner_group(access_token: str, github_api: str, organization: str, 
         group_id = group['id']
         patch_payload = {'visibility': visibility}
         patch_url = f'{github_api}/orgs/{organization}/actions/runner-groups/{group_id}'
-        response = requests.patch(
-            patch_url, json=patch_payload, headers=headers)
-        response.raise_for_status()
+        github_write(
+            'PATCH',
+            patch_url,
+            headers,
+            json_payload=patch_payload,
+        )
         LOG.info(
             f"Updated runner group '{runner_group_name}' visibility to '{visibility}'.")
     else:
@@ -211,13 +284,30 @@ def save_to_runner_group(access_token: str, github_api: str, organization: str, 
 
     # Only add repos if visibility is 'selected'
     if visibility == 'selected':
+        failed_repositories = []
         for repo in repos:
             repo_id = repo['id']
             add_url = f'{github_api}/orgs/{organization}/actions/runner-groups/{group_id}/repositories/{repo_id}'
-            response = requests.put(add_url, headers=headers)
-            response.raise_for_status()
+            try:
+                github_write('PUT', add_url, headers)
+            except requests.RequestException as error:
+                failed_repositories.append(repo_id)
+                LOG.error(
+                    'Failed to add repository %s (%s) to runner group %s: %s',
+                    repo.get('full_name', 'unknown'),
+                    repo_id,
+                    runner_group_name,
+                    error,
+                )
+                continue
             LOG.info(
                 f"Added repository {repo['full_name']} to runner group {runner_group_name}.")
+
+        if failed_repositories:
+            raise RuntimeError(
+                'Failed to add repositories to runner group '
+                f'{runner_group_name}: {failed_repositories}'
+            )
 
 
 def get_secret(secret_name: str) -> str:
