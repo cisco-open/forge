@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import json
+import logging
 
 import boto3
 import requests
@@ -54,8 +55,9 @@ def test_parse_github_url_returns_empty_parts_for_invalid_url(
 
 
 def test_scan_and_process_deletes_only_completed_workflow_locks(
-    monkeypatch, aws
+    monkeypatch, aws, caplog
 ):
+    caplog.set_level(logging.INFO)
     table = _create_lock_table()
     mod = _load_lock_lambda(monkeypatch)
     table.put_item(Item={
@@ -86,6 +88,18 @@ def test_scan_and_process_deletes_only_completed_workflow_locks(
         for item in table.scan()['Items']
     }
     assert remaining == {'lock-active', 'lock-invalid-url'}
+    assert (
+        'global_lock_cleanup_deleted lock_id=lock-complete '
+        'repository=acme/app run_id=100 attempt=1'
+    ) in caplog.text
+    assert (
+        'global_lock_cleanup_observed lock_id=lock-active '
+        'repository=acme/app run_id=101 attempt=1 status=in_progress'
+    ) in caplog.text
+    assert (
+        'global_lock_cleanup_skipped reason=invalid_workflow_url '
+        'lock_id=lock-invalid-url'
+    ) in caplog.text
 
 
 def test_get_workflow_status_returns_none_on_non_200(monkeypatch, aws):
@@ -122,7 +136,9 @@ def test_github_requests_retry_transient_failures(monkeypatch, aws):
     assert set(retries.status_forcelist) == {429, 500, 502, 503, 504}
 
 
-def test_scan_continues_after_github_connection_error(monkeypatch, aws):
+def test_scan_continues_after_github_connection_error(
+    monkeypatch, aws, caplog
+):
     table = _create_lock_table()
     mod = _load_lock_lambda(monkeypatch)
     for lock_id, run_id in (
@@ -153,6 +169,10 @@ def test_scan_continues_after_github_connection_error(monkeypatch, aws):
         for item in table.scan()['Items']
     }
     assert remaining == {'lock-connection-error'}
+    assert (
+        'global_lock_cleanup_lookup_failed '
+        'lock_id=lock-connection-error repository=acme/app run_id=100'
+    ) in caplog.text
 
 
 def test_lambda_handler_loads_ssm_secrets_and_runs_cleanup(monkeypatch, ssm):

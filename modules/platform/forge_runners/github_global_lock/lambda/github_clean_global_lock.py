@@ -113,10 +113,19 @@ def scan_and_process_dynamodb(access_token: str):
             item.get('workflow_run_id')
 
             if not workflow_run_url:
+                LOG.warning(
+                    'global_lock_cleanup_skipped reason=missing_workflow_url lock_id=%s',
+                    lock_id,
+                )
                 continue
 
             owner, repo, run_id = parse_github_url(workflow_run_url)
             if not owner or not repo or not run_id:
+                LOG.warning(
+                    'global_lock_cleanup_skipped reason=invalid_workflow_url lock_id=%s workflow_run_url=%s',
+                    lock_id,
+                    workflow_run_url,
+                )
                 continue
 
             try:
@@ -124,16 +133,34 @@ def scan_and_process_dynamodb(access_token: str):
                     access_token, owner, repo, run_id, workflow_run_attempt)
             except requests.RequestException as error:
                 LOG.warning(
-                    'Skipping lock %s after GitHub workflow lookup failed: %s',
+                    'global_lock_cleanup_lookup_failed lock_id=%s repository=%s run_id=%s attempt=%s error=%s',
                     lock_id,
+                    f'{owner}/{repo}',
+                    run_id,
+                    workflow_run_attempt,
                     error,
                 )
                 continue
 
+            LOG.info(
+                'global_lock_cleanup_observed lock_id=%s repository=%s run_id=%s attempt=%s status=%s',
+                lock_id,
+                f'{owner}/{repo}',
+                run_id,
+                workflow_run_attempt,
+                status or 'unknown',
+            )
+
             if status == 'completed':
-                print(f'Deleting completed workflow: {workflow_run_url}')
                 table.delete_item(
                     Key={'lock_id': lock_id})
+                LOG.info(
+                    'global_lock_cleanup_deleted lock_id=%s repository=%s run_id=%s attempt=%s',
+                    lock_id,
+                    f'{owner}/{repo}',
+                    run_id,
+                    workflow_run_attempt,
+                )
 
         last_evaluated_key = response.get('LastEvaluatedKey')
         if not last_evaluated_key:
