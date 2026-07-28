@@ -41,4 +41,18 @@ data "aws_iam_policy_document" "lambda_policy_document" {
       for s in data.aws_secretsmanager_secret.secrets : s.kms_key_id
     ]
   }
+
+  statement {
+    actions = [
+      "cloudwatch:PutMetricData"
+    ]
+    effect    = "Allow"
+    resources = ["*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "cloudwatch:namespace"
+      values   = ["Forge/Billing"]
+    }
+  }
 }

@@ -104,10 +104,10 @@ def test_send_to_splunk_batch_gzips_newline_delimited_events(
 
     monkeypatch.setattr(common.requests, 'post', _post)
 
-    common.send_to_splunk_batch([
+    assert common.send_to_splunk_batch([
         json.dumps({'event': {'id': 1}}),
         json.dumps({'event': {'id': 2}}),
-    ])
+    ]) is True
 
     assert calls[0]['url'] == 'https://splunk.example/hec'
     assert calls[0]['headers']['Authorization'] == 'Splunk token-123'
@@ -130,7 +130,7 @@ def test_send_to_splunk_batch_empty_list_does_not_call_http(
         ),
     )
 
-    assert common.send_to_splunk_batch([]) is None
+    assert common.send_to_splunk_batch([]) is True
 
 
 def test_send_metric_to_o11y_batch_posts_gauge_payload(monkeypatch, aws):
@@ -157,13 +157,13 @@ def test_send_metric_to_o11y_batch_posts_gauge_payload(monkeypatch, aws):
 
     monkeypatch.setattr(common.requests, 'post', _post)
 
-    common.send_metric_to_o11y_batch([
+    assert common.send_metric_to_o11y_batch([
         {
             'metric': 'forge.per_service.cost_usd',
             'value': 1.25,
             'dimensions': {'service': 'AmazonEC2'},
         },
-    ])
+    ]) is True
 
     assert calls == [{
         'url': 'https://o11y.example/v2/datapoint',
@@ -184,18 +184,117 @@ def test_send_metric_to_o11y_batch_posts_gauge_payload(monkeypatch, aws):
     }]
 
 
-def test_splunk_http_errors_are_logged_not_retried_inline(
+def test_splunk_non_transient_http_errors_emit_delivery_failure_metric(
     monkeypatch, aws, captured_logs
 ):
     common = _load_billing_module(monkeypatch, 'common')
+    metrics = []
 
     def _post(*_args, **_kwargs):
         raise common.requests.RequestException('network down')
 
     monkeypatch.setattr(common.requests, 'post', _post)
+    monkeypatch.setattr(
+        common.cloudwatch,
+        'put_metric_data',
+        lambda **kwargs: metrics.append(kwargs),
+    )
 
-    assert common.send_to_splunk_batch(['{"event":{"id":1}}']) is None
-    assert 'Failed to send batch to Splunk: network down' in captured_logs.text
+    assert common.send_to_splunk_batch(['{"event":{"id":1}}']) is False
+    assert '"event": "billing_delivery_failed"' in captured_logs.text
+    assert '"Destination": "splunk_hec"' in captured_logs.text
+    assert '"BatchSize": 1' in captured_logs.text
+    assert 'network down' in captured_logs.text
+    assert metrics == [{
+        'Namespace': 'Forge/Billing',
+        'MetricData': [{
+            'MetricName': 'DeliveryFailures',
+            'Dimensions': [{
+                'Name': 'Destination',
+                'Value': 'splunk_hec',
+            }],
+            'Value': 1,
+            'Unit': 'Count',
+        }],
+    }]
+
+
+def test_o11y_delivery_retries_transient_status_and_honors_retry_after(
+    monkeypatch, aws
+):
+    monkeypatch.setenv(
+        'SPLUNK_METRICS_URL',
+        'https://o11y.example/v2/datapoint',
+    )
+    common = _load_billing_module(monkeypatch, 'common')
+    calls = []
+    sleeps = []
+
+    class _Response:
+        def __init__(self, status_code, headers=None):
+            self.status_code = status_code
+            self.headers = headers or {}
+
+        def raise_for_status(self):
+            if self.status_code >= 400:
+                raise common.requests.HTTPError(
+                    f'HTTP {self.status_code}',
+                )
+
+    def _post(*_args, **_kwargs):
+        calls.append(_kwargs)
+        if len(calls) == 1:
+            return _Response(503, {'Retry-After': '0'})
+        return _Response(200)
+
+    monkeypatch.setattr(common.requests, 'post', _post)
+    monkeypatch.setattr(common.time, 'sleep', sleeps.append)
+
+    assert common.send_metric_to_o11y_batch([
+        {
+            'metric': 'forge.per_service.cost_usd',
+            'value': 1.25,
+            'dimensions': {'service': 'AmazonEC2'},
+        },
+    ]) is True
+
+    assert len(calls) == 2
+    assert sleeps == [0]
+
+
+def test_o11y_delivery_exhaustion_returns_false_and_emits_failure_metric(
+    monkeypatch, aws, captured_logs
+):
+    common = _load_billing_module(monkeypatch, 'common')
+    calls = []
+    metrics = []
+    monkeypatch.setattr(common, 'DELIVERY_MAX_ATTEMPTS', 2)
+
+    def _post(*_args, **_kwargs):
+        calls.append(_kwargs)
+        raise common.requests.Timeout('read timed out')
+
+    monkeypatch.setattr(common.requests, 'post', _post)
+    monkeypatch.setattr(common.time, 'sleep', lambda _delay: None)
+    monkeypatch.setattr(
+        common.cloudwatch,
+        'put_metric_data',
+        lambda **kwargs: metrics.append(kwargs),
+    )
+
+    assert common.send_metric_to_o11y_batch([
+        {
+            'metric': 'forge.per_service.cost_usd',
+            'value': 1.25,
+            'dimensions': {'service': 'AmazonEC2'},
+        },
+    ]) is False
+
+    assert len(calls) == 2
+    assert '"Destination": "splunk_o11y"' in captured_logs.text
+    assert 'read timed out' in captured_logs.text
+    assert metrics[0]['Namespace'] == 'Forge/Billing'
+    assert metrics[0]['MetricData'][0]['MetricName'] == 'DeliveryFailures'
 
 
 def test_extract_arn_parts_for_resource_group_application(monkeypatch, aws):

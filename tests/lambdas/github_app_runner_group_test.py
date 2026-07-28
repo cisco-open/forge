@@ -6,6 +6,7 @@ import base64
 import json
 
 import pytest
+import requests
 from botocore.exceptions import ClientError
 from conftest import requires_aws
 from support import load_handler_module
@@ -32,7 +33,7 @@ class _Response:
 
     def raise_for_status(self):
         if self.status_code >= 400:
-            raise RuntimeError(f'HTTP {self.status_code}')
+            raise requests.HTTPError(f'HTTP {self.status_code}')
         return None
 
 
@@ -68,12 +69,12 @@ def test_save_to_runner_group_creates_selected_group_and_adds_repos(
     calls = []
     monkeypatch.setattr(mod, 'get_all_runner_groups', lambda *_args: [])
 
-    def _post(url, json, headers):
-        calls.append(('post', url, json, headers))
+    def _post(url, json, headers, timeout):
+        calls.append(('post', url, json, headers, timeout))
         return _Response({'id': 123, 'name': 'forge-small'})
 
-    def _put(url, headers):
-        calls.append(('put', url, None, headers))
+    def _put(url, headers, timeout):
+        calls.append(('put', url, None, headers, timeout))
         return _Response({})
 
     monkeypatch.setattr(mod.requests, 'post', _post)
@@ -97,8 +98,10 @@ def test_save_to_runner_group_creates_selected_group_and_adds_repos(
         'visibility': 'selected',
         'selected_repository_ids': [],
     }
+    assert calls[0][4] == mod.GITHUB_REQUEST_TIMEOUT_SECONDS
     assert calls[1][0] == 'put'
     assert calls[1][1].endswith('/runner-groups/123/repositories/10')
+    assert calls[1][4] == mod.GITHUB_REQUEST_TIMEOUT_SECONDS
 
 
 def test_save_to_runner_group_updates_all_visibility_without_repo_puts(
@@ -112,8 +115,8 @@ def test_save_to_runner_group_updates_all_visibility_without_repo_puts(
         lambda *_args: [{'id': 123, 'name': 'forge-small'}],
     )
 
-    def _patch(url, json, headers):
-        patch_calls.append((url, json, headers))
+    def _patch(url, json, headers, timeout):
+        patch_calls.append((url, json, headers, timeout))
         return _Response({})
 
     monkeypatch.setattr(mod.requests, 'patch', _patch)
@@ -137,6 +140,94 @@ def test_save_to_runner_group_updates_all_visibility_without_repo_puts(
     assert len(patch_calls) == 1
     assert patch_calls[0][0].endswith('/runner-groups/123')
     assert patch_calls[0][1] == {'visibility': 'all'}
+    assert patch_calls[0][3] == mod.GITHUB_REQUEST_TIMEOUT_SECONDS
+
+
+def test_save_to_runner_group_retries_transient_repository_put(
+    monkeypatch, aws
+):
+    mod = load_handler_module('github_app_runner_group')
+    calls = []
+    sleeps = []
+    monkeypatch.setattr(
+        mod,
+        'get_all_runner_groups',
+        lambda *_args: [{'id': 123, 'name': 'forge-small'}],
+    )
+    monkeypatch.setattr(
+        mod.requests,
+        'patch',
+        lambda *_args, **_kwargs: _Response({}),
+    )
+
+    def _put(url, headers, timeout):
+        calls.append((url, headers, timeout))
+        if len(calls) == 1:
+            return _Response(
+                {},
+                headers={'Retry-After': '0'},
+                status_code=503,
+            )
+        return _Response({})
+
+    monkeypatch.setattr(mod.requests, 'put', _put)
+    monkeypatch.setattr(mod.time, 'sleep', sleeps.append)
+
+    mod.save_to_runner_group(
+        'token-123',
+        'https://api.github.test',
+        'acme',
+        'forge-small',
+        [{'id': 10, 'full_name': 'acme/app'}],
+        'selected',
+    )
+
+    assert len(calls) == 2
+    assert sleeps == [0]
+
+
+def test_save_to_runner_group_preserves_successful_repositories_before_raising(
+    monkeypatch, aws
+):
+    mod = load_handler_module('github_app_runner_group')
+    repo_ids = []
+    monkeypatch.setattr(
+        mod,
+        'get_all_runner_groups',
+        lambda *_args: [{'id': 123, 'name': 'forge-small'}],
+    )
+    monkeypatch.setattr(
+        mod.requests,
+        'patch',
+        lambda *_args, **_kwargs: _Response({}),
+    )
+
+    def _put(url, headers, timeout):
+        repo_id = int(url.rsplit('/', 1)[-1])
+        repo_ids.append(repo_id)
+        return _Response(
+            {},
+            headers={'Retry-After': '0'},
+            status_code=503 if repo_id == 10 else 200,
+        )
+
+    monkeypatch.setattr(mod.requests, 'put', _put)
+    monkeypatch.setattr(mod.time, 'sleep', lambda _delay: None)
+
+    with pytest.raises(RuntimeError, match=r'\[10\]'):
+        mod.save_to_runner_group(
+            'token-123',
+            'https://api.github.test',
+            'acme',
+            'forge-small',
+            [
+                {'id': 10, 'full_name': 'acme/failing'},
+                {'id': 20, 'full_name': 'acme/succeeding'},
+            ],
+            'selected',
+        )
+
+    assert repo_ids == [10, 10, 10, 20]
 
 
 def test_get_all_runner_groups_follows_link_header_pagination(
@@ -224,7 +315,7 @@ def test_get_all_runner_groups_does_not_retry_permanent_github_404(
         ),
     )
 
-    with pytest.raises(RuntimeError, match='HTTP 404'):
+    with pytest.raises(requests.HTTPError, match='HTTP 404'):
         mod.get_all_runner_groups(
             'https://api.github.test/orgs/acme/actions/runner-groups',
             {'Authorization': 'Bearer token'},
