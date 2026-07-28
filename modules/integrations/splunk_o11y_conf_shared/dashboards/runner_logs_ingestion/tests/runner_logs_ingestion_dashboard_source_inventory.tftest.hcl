@@ -9,7 +9,13 @@ run "runner_logs_ingestion_dashboard_source_inventory" {
     module_path = "."
     expected_literals = [
       "resource \"signalfx_dashboard\" \"runner_logs_ingestion\"",
+      "resource \"signalfx_text_chart\" \"tuning_validation\"",
       "Forge Runner Logs Ingestion",
+      "Runner-log Lambda duration guardrail",
+      "Runner-log oldest message age - 6h trend",
+      "REPORT RequestId Status: timeout",
+      "BY bucket key offset",
+      "attempts > 1",
       "resource \"terraform_data\" \"dashboard_parent\"",
       "terraform_data.dashboard_parent,",
       "not filter('aws_tag_TenantName', '*')",

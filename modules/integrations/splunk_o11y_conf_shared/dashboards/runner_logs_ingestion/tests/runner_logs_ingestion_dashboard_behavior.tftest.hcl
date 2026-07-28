@@ -9,6 +9,11 @@ mock_provider "signalfx" {
       id = "time-chart-id"
     }
   }
+  mock_resource "signalfx_text_chart" {
+    defaults = {
+      id = "text-chart-id"
+    }
+  }
   mock_resource "signalfx_dashboard" {}
 }
 
@@ -52,10 +57,10 @@ run "creates_runner_logs_ingestion_dashboard" {
     condition = (
       signalfx_dashboard.runner_logs_ingestion.name == "Forge Runner Logs Ingestion"
       && signalfx_dashboard.runner_logs_ingestion.dashboard_group == "forge-dashboard-group"
-      && length(signalfx_dashboard.runner_logs_ingestion.chart) == 15
+      && length(signalfx_dashboard.runner_logs_ingestion.chart) == 18
       && length(signalfx_dashboard.runner_logs_ingestion.variable) == 3
     )
-    error_message = "The runner-log ingestion dashboard must keep its name, parent group, fifteen panels, and dedicated variables."
+    error_message = "The runner-log ingestion dashboard must keep its name, parent group, eighteen panels, and dedicated variables."
   }
 
   assert {
@@ -63,6 +68,7 @@ run "creates_runner_logs_ingestion_dashboard" {
       for program_text in [
         signalfx_single_value_chart.visible_backlog.program_text,
         signalfx_single_value_chart.oldest_message.program_text,
+        signalfx_single_value_chart.lambda_duration_guardrail.program_text,
         signalfx_single_value_chart.lambda_errors.program_text,
         signalfx_single_value_chart.kinesis_throttles.program_text,
         signalfx_single_value_chart.firehose_freshness.program_text,
@@ -74,6 +80,7 @@ run "creates_runner_logs_ingestion_dashboard" {
         signalfx_time_chart.kinesis_records.program_text,
         signalfx_time_chart.kinesis_throughput.program_text,
         signalfx_time_chart.kinesis_iterator_age.program_text,
+        signalfx_time_chart.oldest_message_trend.program_text,
         signalfx_time_chart.firehose_delivery.program_text,
         signalfx_time_chart.firehose_latency.program_text,
       ] :
@@ -92,13 +99,23 @@ run "creates_runner_logs_ingestion_dashboard" {
       strcontains(signalfx_time_chart.sqs_state.program_text, "splunk-s3-runner-logs-events")
       && strcontains(signalfx_time_chart.sqs_state.program_text, "splunk-s3-runner-logs-events-dlq")
       && strcontains(signalfx_time_chart.lambda_concurrency.program_text, "ConcurrentExecutions")
-      && strcontains(signalfx_time_chart.lambda_duration.program_text, "Duration")
+      && strcontains(signalfx_single_value_chart.lambda_duration_guardrail.program_text, "max(over='30m')")
+      && strcontains(signalfx_time_chart.lambda_duration.program_text, "filter('stat', 'mean')")
+      && strcontains(signalfx_time_chart.lambda_duration.program_text, "filter('stat', 'upper')")
+      && signalfx_time_chart.lambda_duration.time_range == 21600
+      && strcontains(signalfx_single_value_chart.lambda_errors.description, "timeouts")
       && strcontains(signalfx_time_chart.kinesis_throughput.program_text, "WriteProvisionedThroughputExceeded")
       && strcontains(signalfx_time_chart.kinesis_iterator_age.program_text, "GetRecords.IteratorAgeMilliseconds")
+      && strcontains(signalfx_time_chart.oldest_message_trend.program_text, "ApproximateAgeOfOldestMessage")
+      && signalfx_time_chart.oldest_message_trend.time_range == 21600
       && strcontains(signalfx_time_chart.firehose_delivery.program_text, "DeliveryToSplunk.Records")
       && strcontains(signalfx_time_chart.firehose_latency.program_text, "DeliveryToSplunk.DataFreshness")
       && strcontains(signalfx_time_chart.firehose_latency.program_text, "DeliveryToSplunk.DataAckLatency")
+      && strcontains(signalfx_text_chart.tuning_validation.markdown, "attempts > 1")
+      && strcontains(signalfx_text_chart.tuning_validation.markdown, "like(key, \"%.log\")")
+      && strcontains(signalfx_text_chart.tuning_validation.markdown, "BY bucket key offset")
+      && strcontains(signalfx_text_chart.tuning_validation.markdown, "REPORT RequestId Status: timeout")
     )
-    error_message = "The dashboard must preserve the SQS, Lambda, Kinesis, and Splunk delivery health signals."
+    error_message = "The dashboard must preserve the SQS, Lambda, Kinesis, Splunk delivery, and tuning validation signals."
   }
 }
