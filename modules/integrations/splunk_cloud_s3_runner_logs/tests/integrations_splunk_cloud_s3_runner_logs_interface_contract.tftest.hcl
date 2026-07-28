@@ -14,6 +14,7 @@ run "integrations_splunk_cloud_s3_runner_logs_interface_contract" {
       "lambda_event_source_mapping_maximum_concurrency",
       "log_level",
       "logging_retention_in_days",
+      "runner_log_chunk_size_bytes",
       "splunk_hec_endpoint",
       "sqs_redrive_max_receive_count",
       "tags",
@@ -35,6 +36,9 @@ run "integrations_splunk_cloud_s3_runner_logs_interface_contract" {
       "description = \"Log retention period in days\"",
       "type        = number",
       "default     = 3",
+      "variable \"runner_log_chunk_size_bytes\"",
+      "description = \"Maximum bytes processed from a runner .log object before continuing from a line-aligned SQS checkpoint.\"",
+      "default     = 8388608",
       "variable \"lambda_event_source_mapping_maximum_concurrency\"",
       "description = \"Maximum concurrent Lambda invocations for the runner-log SQS event source mapping.\"",
       "default     = 40",
@@ -42,7 +46,7 @@ run "integrations_splunk_cloud_s3_runner_logs_interface_contract" {
       "description = \"Full URL of Splunk HEC endpoint\"",
       "variable \"sqs_redrive_max_receive_count\"",
       "description = \"Number of source-queue receives allowed before a runner-log message moves to the DLQ.\"",
-      "default     = 100",
+      "default     = 5",
       "variable \"tags\"",
     ]
   }
@@ -74,9 +78,9 @@ run "integrations_splunk_cloud_s3_runner_logs_interface_contract" {
 
   assert {
     condition = (
-      output.expected_input_variable_count == 9
+      output.expected_input_variable_count == 10
       && output.expected_output_value_count == 0
-      && output.expected_interface_literal_count == 24
+      && output.expected_interface_literal_count == 27
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

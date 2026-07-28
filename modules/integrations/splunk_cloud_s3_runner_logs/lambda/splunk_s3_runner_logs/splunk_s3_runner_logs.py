@@ -16,13 +16,20 @@ LOG.setLevel(getattr(logging, level_str, logging.INFO))
 
 s3_client = boto3.client('s3')
 kinesis_client = boto3.client('kinesis')
+sqs_client = boto3.client('sqs')
 sts_client = boto3.client('sts')
 
 SOURCETYPE = os.getenv('SOURCETYPE')
 INDEX = os.getenv('INDEX')
 KINESIS_STREAM_NAME = os.getenv('KINESIS_STREAM_NAME')
+SQS_QUEUE_URL = os.getenv('SQS_QUEUE_URL')
+LOG_CHUNK_BYTES = int(os.getenv('LOG_CHUNK_BYTES', str(8 * 1024 * 1024)))
 MAX_RECORDS_BATCH = 500
 MAX_BATCH_BYTES = 4000000
+MAX_KINESIS_RECORD_BYTES = 1000000
+LONG_LINE_RECORD_TARGET_BYTES = 750 * 1024
+CHECKPOINT_FIELD = 'forge_runner_log_checkpoint'
+CHECKPOINT_VERSION = 1
 
 # Safety clamps
 MAX_RECORDS_BATCH = min(MAX_RECORDS_BATCH, 500)
@@ -53,68 +60,276 @@ def lambda_handler(event, _context):
             LOG.warning('invalid_json_body_skip')
             continue
 
+        checkpoint = body_json.get(CHECKPOINT_FIELD)
+        if checkpoint is not None:
+            total_lines += process_log_checkpoint(checkpoint)
+            continue
+
         for s3_rec in body_json.get('Records', []):
             bucket = s3_rec.get('s3', {}).get('bucket', {}).get('name')
-            key = s3_rec.get('s3', {}).get('object', {}).get('key')
+            object_data = s3_rec.get('s3', {}).get('object', {})
+            key = object_data.get('key')
+            object_size = object_data.get('size')
             if not bucket or not key:
                 LOG.warning('missing_bucket_or_key')
                 continue
-            LOG.info('processing_object bucket=%s key=%s', bucket, key)
-            # Fetch object tags once per object
-            tags: dict[str, str] = {}
-            try:
-                tag_resp = s3_client.get_object_tagging(Bucket=bucket, Key=key)
-                tag_set = tag_resp.get('TagSet', [])
-                LOG.debug('Fetched %d tags for bucket=%s key=%s',
-                          len(tag_set), bucket, key)
-
-                for idx, t in enumerate(tag_set):
-                    k = t.get('Key')
-                    v = t.get('Value')
-                    LOG.debug(
-                        'Processing tag[%d]: Key=%s, Value=%s', idx, k, v)
-                    if k is not None and v is not None:
-                        tags[k] = v
-                    else:
-                        LOG.warning(
-                            'Skipped invalid tag[%d] bucket=%s key=%s tag=%s', idx, bucket, key, t)
-
-                LOG.debug('Final object_tags bucket=%s key=%s tag_count=%d tags=%s',
-                          bucket, key, len(tags), tags)
-            except Exception as tag_err:  # pragma: no cover
-                LOG.warning(
-                    'tag_fetch_failed bucket=%s key=%s err=%s', bucket, key, tag_err)
-
-            metadata_fields = load_metadata_fields(bucket, key, tags)
-
-            # Decide ingestion strategy based on file type.
-            if key.endswith('.json'):
-                # Treat entire JSON file as a single event line.
-                try:
-                    obj = s3_client.get_object(Bucket=bucket, Key=key)
-                    raw = obj['Body'].read()
-                    text = raw.decode('utf-8', errors='replace')
-                    shipped = ship_lines_to_kinesis(
-                        [text], bucket, key, tags, metadata_fields)
-                    LOG.info(
-                        'json_object_ingested bucket=%s key=%s size=%d', bucket, key, len(raw))
-                except Exception as json_err:  # pragma: no cover
-                    LOG.warning(
-                        'json_object_failed bucket=%s key=%s err=%s', bucket, key, json_err)
-                    continue
-            elif key.endswith('.log'):
-                # Line-by-line streaming for log files.
-                line_iter = stream_s3_object_lines(bucket, key)
-                shipped = ship_lines_to_kinesis(
-                    line_iter, bucket, key, tags, metadata_fields)
-            else:
-                LOG.info('unsupported_object_skip bucket=%s key=%s', bucket, key)
-                continue
-            total_lines += shipped
-            LOG.info('object_complete bucket=%s key=%s lines=%d',
-                     bucket, key, shipped)
+            total_lines += process_s3_object(
+                bucket,
+                key,
+                object_size=object_size,
+            )
 
     return {'statusCode': 200, 'body': json.dumps({'lines': total_lines})}
+
+
+def process_s3_object(
+    bucket: str,
+    key: str,
+    *,
+    object_size: int | None = None,
+    start_offset: int = 0,
+    last_timestamp: float | None = None,
+) -> int:
+    """Process a JSON object or one bounded, line-aligned log chunk."""
+    LOG.info(
+        'processing_object bucket=%s key=%s offset=%d',
+        bucket,
+        key,
+        start_offset,
+    )
+    tags = load_object_tags(bucket, key)
+    metadata_fields = load_metadata_fields(bucket, key, tags)
+
+    if key.endswith('.json'):
+        if start_offset != 0:
+            raise ValueError('JSON objects do not support checkpoint offsets')
+        try:
+            obj = s3_client.get_object(Bucket=bucket, Key=key)
+            raw = obj['Body'].read()
+            text = raw.decode('utf-8', errors='replace')
+            shipped = ship_lines_to_kinesis(
+                [text], bucket, key, tags, metadata_fields)
+            LOG.info(
+                'json_object_ingested bucket=%s key=%s size=%d',
+                bucket,
+                key,
+                len(raw),
+            )
+        except Exception as json_err:  # pragma: no cover
+            LOG.warning(
+                'json_object_failed bucket=%s key=%s err=%s',
+                bucket,
+                key,
+                json_err,
+            )
+            return 0
+        LOG.info('object_complete bucket=%s key=%s lines=%d',
+                 bucket, key, shipped)
+        return shipped
+
+    if not key.endswith('.log'):
+        LOG.info('unsupported_object_skip bucket=%s key=%s', bucket, key)
+        return 0
+
+    if object_size is None:
+        object_size = s3_client.head_object(
+            Bucket=bucket,
+            Key=key,
+        )['ContentLength']
+    object_size = int(object_size)
+    if start_offset < 0 or start_offset > object_size:
+        raise ValueError(
+            f'Invalid checkpoint offset {start_offset} for size {object_size}'
+        )
+    if start_offset == object_size:
+        LOG.info('object_complete bucket=%s key=%s lines=0', bucket, key)
+        return 0
+
+    lines, next_offset = read_s3_object_line_chunk(
+        bucket,
+        key,
+        start_offset,
+        LOG_CHUNK_BYTES,
+    )
+    shipped = ship_lines_to_kinesis(
+        lines,
+        bucket,
+        key,
+        tags,
+        metadata_fields,
+        line_number_start=start_offset,
+        initial_last_ts=last_timestamp,
+    )
+    last_timestamp = timestamp_after_lines(lines, last_timestamp)
+    LOG.info(
+        'object_chunk_complete bucket=%s key=%s offset=%d next_offset=%d '
+        'size=%d lines=%d',
+        bucket,
+        key,
+        start_offset,
+        next_offset,
+        object_size,
+        shipped,
+    )
+
+    if next_offset < object_size:
+        enqueue_log_checkpoint(
+            bucket,
+            key,
+            next_offset,
+            object_size,
+            last_timestamp,
+        )
+    else:
+        LOG.info('object_complete bucket=%s key=%s lines=%d',
+                 bucket, key, shipped)
+    return shipped
+
+
+def process_log_checkpoint(checkpoint: Any) -> int:
+    """Validate and process a continuation message from the runner-log queue."""
+    if not isinstance(checkpoint, dict):
+        raise ValueError('Runner-log checkpoint must be an object')
+    if checkpoint.get('version') != CHECKPOINT_VERSION:
+        raise ValueError('Unsupported runner-log checkpoint version')
+
+    bucket = checkpoint.get('bucket')
+    key = checkpoint.get('key')
+    offset = checkpoint.get('offset')
+    object_size = checkpoint.get('object_size')
+    last_timestamp = checkpoint.get('last_timestamp')
+    valid_bucket = isinstance(bucket, str) and bool(bucket)
+    valid_key = isinstance(key, str) and key.endswith('.log')
+    valid_offset = isinstance(offset, int) and not isinstance(offset, bool)
+    valid_size = (
+        isinstance(object_size, int) and not isinstance(object_size, bool)
+    )
+    timestamp_is_number = isinstance(last_timestamp, (int, float))
+    timestamp_is_boolean = isinstance(last_timestamp, bool)
+    valid_timestamp = last_timestamp is None or (
+        timestamp_is_number and not timestamp_is_boolean
+    )
+    if not all((
+        valid_bucket,
+        valid_key,
+        valid_offset,
+        valid_size,
+        valid_timestamp,
+    )):
+        raise ValueError('Invalid runner-log checkpoint')
+
+    return process_s3_object(
+        bucket,
+        key,
+        object_size=object_size,
+        start_offset=offset,
+        last_timestamp=last_timestamp,
+    )
+
+
+def enqueue_log_checkpoint(
+    bucket: str,
+    key: str,
+    offset: int,
+    object_size: int,
+    last_timestamp: float | None,
+) -> None:
+    """Enqueue the next byte offset after the current chunk is fully shipped."""
+    if not SQS_QUEUE_URL:
+        raise RuntimeError('SQS_QUEUE_URL is required for log checkpoints')
+    body = {
+        CHECKPOINT_FIELD: {
+            'version': CHECKPOINT_VERSION,
+            'bucket': bucket,
+            'key': key,
+            'offset': offset,
+            'object_size': object_size,
+            'last_timestamp': last_timestamp,
+        },
+    }
+    sqs_client.send_message(
+        QueueUrl=SQS_QUEUE_URL,
+        MessageBody=json.dumps(body, separators=(',', ':')),
+    )
+    LOG.info(
+        'object_checkpoint_enqueued bucket=%s key=%s offset=%d size=%d',
+        bucket,
+        key,
+        offset,
+        object_size,
+    )
+
+
+def load_object_tags(bucket: str, key: str) -> dict[str, str]:
+    """Fetch scalar S3 object tags used as Splunk event fields."""
+    tags: dict[str, str] = {}
+    try:
+        tag_resp = s3_client.get_object_tagging(Bucket=bucket, Key=key)
+        tag_set = tag_resp.get('TagSet', [])
+        LOG.debug('Fetched %d tags for bucket=%s key=%s',
+                  len(tag_set), bucket, key)
+
+        for idx, tag in enumerate(tag_set):
+            tag_key = tag.get('Key')
+            tag_value = tag.get('Value')
+            if tag_key is not None and tag_value is not None:
+                tags[tag_key] = tag_value
+            else:
+                LOG.warning(
+                    'Skipped invalid tag[%d] bucket=%s key=%s tag=%s',
+                    idx,
+                    bucket,
+                    key,
+                    tag,
+                )
+    except Exception as tag_err:  # pragma: no cover
+        LOG.warning(
+            'tag_fetch_failed bucket=%s key=%s err=%s',
+            bucket,
+            key,
+            tag_err,
+        )
+    return tags
+
+
+def read_s3_object_line_chunk(
+    bucket: str,
+    key: str,
+    start_offset: int,
+    max_bytes: int,
+) -> tuple[list[str], int]:
+    """Read at least max_bytes and stop only after a complete log line."""
+    if max_bytes < 1:
+        raise ValueError('max_bytes must be positive')
+
+    obj = s3_client.get_object(
+        Bucket=bucket,
+        Key=key,
+        Range=f'bytes={start_offset}-',
+    )
+    body = obj['Body']
+    buffer = b''
+    lines: list[str] = []
+    consumed = 0
+
+    try:
+        while True:
+            chunk = body.read(64 * 1024)
+            if not chunk:
+                if buffer:
+                    lines.append(buffer.decode('utf-8', errors='replace'))
+                    consumed += len(buffer)
+                return lines, start_offset + consumed
+
+            buffer += chunk
+            while b'\n' in buffer:
+                raw_line, buffer = buffer.split(b'\n', 1)
+                lines.append(raw_line.decode('utf-8', errors='replace'))
+                consumed += len(raw_line) + 1
+                if consumed >= max_bytes:
+                    return lines, start_offset + consumed
+    finally:
+        body.close()
 
 
 def stream_s3_object_lines(bucket: str, key: str) -> Iterable[str]:
@@ -226,6 +441,18 @@ def extract_ts(line: str, last_ts: str | float | None) -> float:
     return round(time.time(), 3)
 
 
+def timestamp_after_lines(
+    lines: Iterable[str],
+    initial_last_ts: float | None,
+) -> float | None:
+    """Return the timestamp state that must continue with the next chunk."""
+    last_ts = initial_last_ts
+    for line in lines:
+        if line:
+            last_ts = extract_ts(line, last_ts)
+    return last_ts
+
+
 def wrap_line(
     line: str,
     ts: float,
@@ -233,6 +460,7 @@ def wrap_line(
     key: str,
     tags: dict[str, str],
     metadata_fields: dict[str, Any] | None = None,
+    event_fields: dict[str, Any] | None = None,
 ) -> str:
     """
     Wrap a log line with metadata for Splunk/Kinesis ingestion.
@@ -242,6 +470,7 @@ def wrap_line(
         'AccountId': ACCOUNT_ID,
         **(metadata_fields or {}),
         **tags,
+        **(event_fields or {}),
     }
     event = {
         'event': line,
@@ -257,12 +486,101 @@ def wrap_line(
     return json.dumps(event) + '\n'
 
 
+def split_long_log_line(
+    line: str,
+    ts: float,
+    bucket: str,
+    key: str,
+    tags: dict[str, str],
+    metadata_fields: dict[str, Any] | None,
+    line_number: int,
+) -> list[bytes]:
+    """Split one oversized log line into UTF-8-safe HEC event payloads."""
+    event_id = partition_key_for_line(bucket, key, line_number)
+    original_line_bytes = len(line.encode('utf-8'))
+    placeholder_fields = {
+        'forge_event_id': event_id,
+        'chunked': 'true',
+        'chunk_index': 999999999,
+        'chunk_count': 999999999,
+        'original_line_bytes': original_line_bytes,
+    }
+    fragments: list[str] = []
+    start = 0
+
+    while start < len(line):
+        low = start + 1
+        high = len(line)
+        best_end = start
+        while low <= high:
+            candidate_end = (low + high) // 2
+            candidate = wrap_line(
+                line[start:candidate_end],
+                ts,
+                bucket,
+                key,
+                tags,
+                metadata_fields,
+                placeholder_fields,
+            ).encode('utf-8')
+            if len(candidate) <= LONG_LINE_RECORD_TARGET_BYTES:
+                best_end = candidate_end
+                low = candidate_end + 1
+            else:
+                high = candidate_end - 1
+
+        if best_end == start:
+            raise RuntimeError(
+                'Runner-log metadata exceeds the long-line record target'
+            )
+        fragments.append(line[start:best_end])
+        start = best_end
+
+    chunk_count = len(fragments)
+    payloads = []
+    for chunk_index, fragment in enumerate(fragments):
+        chunk_fields = {
+            'forge_event_id': event_id,
+            'chunked': 'true',
+            'chunk_index': chunk_index,
+            'chunk_count': chunk_count,
+            'original_line_bytes': original_line_bytes,
+        }
+        payload = wrap_line(
+            fragment,
+            ts,
+            bucket,
+            key,
+            tags,
+            metadata_fields,
+            chunk_fields,
+        ).encode('utf-8')
+        if len(payload) > MAX_KINESIS_RECORD_BYTES:
+            raise RuntimeError(
+                f'Long-line chunk exceeds Kinesis limit: {len(payload)} bytes'
+            )
+        payloads.append(payload)
+
+    LOG.info(
+        'long_line_split bucket=%s key=%s event_id=%s '
+        'original_bytes=%d chunks=%d',
+        bucket,
+        key,
+        event_id,
+        original_line_bytes,
+        chunk_count,
+    )
+    return payloads
+
+
 def ship_lines_to_kinesis(
     lines: Iterable[str],
     bucket: str,
     key: str,
     tags: dict[str, str],
     metadata_fields: dict[str, Any] | None = None,
+    line_number_start: int = 0,
+    initial_last_ts: float | None = None,
 ) -> int:
     """Batch lines into PutRecords requests respecting count & size limits."""
     buffer: list[tuple[bytes, int, str]] = []
@@ -326,32 +644,63 @@ def ship_lines_to_kinesis(
         buffer = []
         current_bytes = 0
 
-    last_ts: float | None = None
-    for line_number, line in enumerate(lines):
+    last_ts = initial_last_ts
+    for line_number, line in enumerate(lines, start=line_number_start):
         if not line:
             continue
         ts = extract_ts(line, last_ts)
         last_ts = ts
         payload = wrap_line(
             line, ts, bucket, key, tags, metadata_fields).encode('utf-8')
-        payload_len = len(payload)
-        if payload_len > 1000000:  # Guard insanely long lines
-            LOG.warning('line_too_large_skip size=%d', payload_len)
-            continue
-        if len(buffer) >= MAX_RECORDS_BATCH or (current_bytes + payload_len) >= MAX_BATCH_BYTES:
-            flush()
-        buffer.append((
-            payload,
-            payload_len,
-            partition_key_for_line(bucket, key, line_number),
-        ))
-        current_bytes += payload_len
+        if len(payload) > MAX_KINESIS_RECORD_BYTES:
+            if not key.endswith('.log'):
+                raise RuntimeError(
+                    'Oversized non-log runner event cannot be safely split'
+                )
+            payloads = split_long_log_line(
+                line,
+                ts,
+                bucket,
+                key,
+                tags,
+                metadata_fields,
+                line_number,
+            )
+        else:
+            payloads = [payload]
+
+        for chunk_index, chunk_payload in enumerate(payloads):
+            payload_len = len(chunk_payload)
+            batch_is_full = len(buffer) >= MAX_RECORDS_BATCH
+            batch_would_be_too_large = (
+                current_bytes + payload_len >= MAX_BATCH_BYTES
+            )
+            if batch_is_full or batch_would_be_too_large:
+                flush()
+            buffer.append((
+                chunk_payload,
+                payload_len,
+                partition_key_for_line(
+                    bucket,
+                    key,
+                    line_number,
+                    chunk_index if len(payloads) > 1 else None,
+                ),
+            ))
+            current_bytes += payload_len
 
     flush()
     return total_shipped
 
 
-def partition_key_for_line(bucket: str, key: str, line_number: int) -> str:
+def partition_key_for_line(
+    bucket: str,
+    key: str,
+    line_number: int,
+    chunk_index: int | None = None,
+) -> str:
     """Return a stable, high-cardinality Kinesis partition key."""
-    identity = f'{bucket}\0{key}\0{line_number}'.encode()
-    return hashlib.sha256(identity).hexdigest()
+    identity = f'{bucket}\0{key}\0{line_number}'
+    if chunk_index is not None:
+        identity = f'{identity}\0{chunk_index}'
+    return hashlib.sha256(identity.encode()).hexdigest()

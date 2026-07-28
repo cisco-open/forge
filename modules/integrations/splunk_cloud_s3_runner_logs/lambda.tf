@@ -1,5 +1,6 @@
 locals {
-  prefix_lambda = "splunk-s3-runner-logs"
+  prefix_lambda          = "splunk-s3-runner-logs"
+  lambda_timeout_seconds = 900
 }
 
 module "splunk_s3_runner_logs_lambda" {
@@ -11,7 +12,7 @@ module "splunk_s3_runner_logs_lambda" {
   handler       = "splunk_s3_runner_logs.lambda_handler"
   runtime       = "python3.12"
   memory_size   = 1024
-  timeout       = 900
+  timeout       = local.lambda_timeout_seconds
   architectures = ["x86_64"]
 
   source_path = [{
@@ -25,7 +26,9 @@ module "splunk_s3_runner_logs_lambda" {
 
   environment_variables = {
     KINESIS_STREAM_NAME = aws_kinesis_stream.splunk_s3_runner_logs.name
+    LOG_CHUNK_BYTES     = var.runner_log_chunk_size_bytes
     LOG_LEVEL           = var.log_level
+    SQS_QUEUE_URL       = aws_sqs_queue.log_events_queue.url
   }
 
   attach_policy_json = true
@@ -58,9 +61,9 @@ data "aws_iam_policy_document" "splunk_s3_runner_logs_lambda" {
   }
 
   statement {
-    sid       = "SQSPoll"
+    sid       = "SQSProcessAndCheckpoint"
     effect    = "Allow"
-    actions   = ["sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:GetQueueAttributes"]
+    actions   = ["sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:GetQueueAttributes", "sqs:SendMessage"]
     resources = [aws_sqs_queue.log_events_queue.arn]
   }
 

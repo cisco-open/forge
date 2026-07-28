@@ -70,6 +70,7 @@ resource "splunk_configs_conf" "forgecicd_runner_logs_logs" {
     "REPORT-forgecicd_runner_logs_tenant_fields_logs" = "forgecicd_runner_logs_tenant_fields_logs"
     "REPORT-forgecicd_runner_ec2"                     = "forgecicd_runner_ec2"
     "REPORT-forgecicd_runner_arc"                     = "forgecicd_runner_arc"
+    "TRUNCATE"                                        = "1000000"
   }
 
   acl {
@@ -112,7 +113,6 @@ resource "splunk_configs_conf" "forgecicd_runner_logs_logs" {
       variables["SEGMENTATION-standard"],
       variables["SHOULD_LINEMERGE"],
       variables["TRANSFORMS"],
-      variables["TRUNCATE"],
       variables["detect_trailing_nulls"],
       variables["disabled"],
       variables["maxDist"],

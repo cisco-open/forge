@@ -522,6 +522,15 @@ def test_splunk_runner_logs_caps_parallel_sqs_scaling() -> None:
         in lambda_module
     )
     assert 'memory_size   = 1024' in lambda_module
+    assert 'lambda_timeout_seconds = 900' in lambda_tf
+    assert 'timeout       = local.lambda_timeout_seconds' in lambda_module
+    assert 'LOG_CHUNK_BYTES     = var.runner_log_chunk_size_bytes' in (
+        lambda_module
+    )
+    assert 'SQS_QUEUE_URL       = aws_sqs_queue.log_events_queue.url' in (
+        lambda_module
+    )
+    assert '"sqs:SendMessage"' in lambda_tf
     assert 'batch_size                         = 1' in event_source
     assert re.search(r'(?m)^\s*scaling_config\s*{', event_source)
     assert (
@@ -531,6 +540,10 @@ def test_splunk_runner_logs_caps_parallel_sqs_scaling() -> None:
     )
     assert (
         'maxReceiveCount     = var.sqs_redrive_max_receive_count'
+        in sqs_tf
+    )
+    assert (
+        'visibility_timeout_seconds = local.lambda_timeout_seconds * 6'
         in sqs_tf
     )
     assert 'reserved_concurrent_executions' not in lambda_module
@@ -556,6 +569,25 @@ def test_splunk_shared_extraction_classifies_runner_logs_redrive() -> None:
         '"FORMAT"     = "aws_region::$1 forgecicd_log_type::$2"'
         in transforms_tf
     )
+
+
+def test_splunk_runner_log_raw_chunks_are_not_truncated() -> None:
+    props_tf = read_repo_file(
+        'modules/integrations/splunk_cloud_conf_shared/'
+        'props_runner_logs.tf'
+    )
+    runner_logs_props = hcl_block(
+        props_tf,
+        'resource',
+        'splunk_configs_conf',
+        'forgecicd_runner_logs_logs',
+    )
+
+    assert re.search(
+        r'(?m)^\s*"TRUNCATE"\s*=\s*"1000000"$',
+        runner_logs_props,
+    )
+    assert 'variables["TRUNCATE"]' not in runner_logs_props
 
 
 def test_forge_subscription_ecr_cross_product_uses_region_provider_alias() -> None:
