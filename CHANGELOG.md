@@ -1,5 +1,24 @@
 # Changelog
 
+## [4.7.0](https://github.com/cisco-open/forge/compare/v4.6.0...v4.7.0) (2026-07-28)
+
+
+### Features
+
+* **billing:** attribute shared module costs ([#565](https://github.com/cisco-open/forge/issues/565)) ([e877fd4](https://github.com/cisco-open/forge/commit/e877fd45e0fcabfb8aab7833055f799e800e2d1c))
+* **observability:** add runner log tuning health gates ([#563](https://github.com/cisco-open/forge/issues/563)) ([2c061e9](https://github.com/cisco-open/forge/commit/2c061e9e66fd358778221c317fd1f0d5ad26cd16))
+* **observability:** separate stuck-job and global-lock health ([#570](https://github.com/cisco-open/forge/issues/570)) ([b5cddec](https://github.com/cisco-open/forge/commit/b5cddece7bdb36361611765cf2cf9a0c19198586))
+
+
+### Bug Fixes
+
+* **forge-runners:** retry GitHub global lock requests ([#559](https://github.com/cisco-open/forge/issues/559)) ([e97abc1](https://github.com/cisco-open/forge/commit/e97abc1825388f27fa8c7e5cfe0584d5badf1481))
+* **lambdas:** harden transient dependency handling ([#562](https://github.com/cisco-open/forge/issues/562)) ([768e1c4](https://github.com/cisco-open/forge/commit/768e1c442c772430df211bccbedbb88965c2d49f))
+* **logs:** checkpoint and split runner log ingestion ([#561](https://github.com/cisco-open/forge/issues/561)) ([a7a39d4](https://github.com/cisco-open/forge/commit/a7a39d4c1637762bf72dfcc33247dc679eb5cb94))
+* **observability:** alert on runner log delivery integrity ([#566](https://github.com/cisco-open/forge/issues/566)) ([e79e01a](https://github.com/cisco-open/forge/commit/e79e01a6ebd677a46cb6ec013bb29344aa6eef9f))
+* **observability:** canonicalize Lambda metric dimensions ([#569](https://github.com/cisco-open/forge/issues/569)) ([483fd41](https://github.com/cisco-open/forge/commit/483fd4170e6f54caebe2f4888a80e7ad4a4a4032))
+* **observability:** separate webhook dispatch and relay health ([#568](https://github.com/cisco-open/forge/issues/568)) ([2ceb123](https://github.com/cisco-open/forge/commit/2ceb12360b55d68728ab0c9970039f50100ab151))
+
 ## [4.6.0](https://github.com/cisco-open/forge/compare/v4.5.1...v4.6.0) (2026-07-28)
 
 
