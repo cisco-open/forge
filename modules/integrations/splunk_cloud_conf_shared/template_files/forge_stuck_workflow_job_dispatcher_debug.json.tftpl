@@ -146,65 +146,75 @@
                 },
                 "structure": [
                     {
-                        "item": "job_lifecycle_table",
-                        "position": {
-                            "h": 410,
-                            "w": 1200,
-                            "x": 0,
-                            "y": 0
-                        },
-                        "type": "block"
-                    },
+                                                                                                                                                "item": "operator_guide",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 170,
+                                                                                                                                                    "w": 1200,
+                                                                                                                                                    "x": 0,
+                                                                                                                                                    "y": 0
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            },
                     {
-                        "item": "receiver_decision_detail_table",
-                        "position": {
-                            "h": 360,
-                            "w": 600,
-                            "x": 0,
-                            "y": 410
-                        },
-                        "type": "block"
-                    },
+                                                                                                                                                "item": "runner_group_summary_table",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 360,
+                                                                                                                                                    "w": 600,
+                                                                                                                                                    "x": 0,
+                                                                                                                                                    "y": 170
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            },
                     {
-                        "item": "runner_group_summary_table",
-                        "position": {
-                            "h": 360,
-                            "w": 600,
-                            "x": 600,
-                            "y": 410
-                        },
-                        "type": "block"
-                    },
+                                                                                                                                                "item": "job_lifecycle_table",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 410,
+                                                                                                                                                    "w": 1200,
+                                                                                                                                                    "x": 0,
+                                                                                                                                                    "y": 530
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            },
                     {
-                        "item": "delivery_attempts_table",
-                        "position": {
-                            "h": 360,
-                            "w": 600,
-                            "x": 0,
-                            "y": 770
-                        },
-                        "type": "block"
-                    },
+                                                                                                                                                "item": "delivery_attempts_table",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 360,
+                                                                                                                                                    "w": 600,
+                                                                                                                                                    "x": 0,
+                                                                                                                                                    "y": 940
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            },
                     {
-                        "item": "failure_samples_table",
-                        "position": {
-                            "h": 360,
-                            "w": 600,
-                            "x": 600,
-                            "y": 770
-                        },
-                        "type": "block"
-                    },
+                                                                                                                                                "item": "receiver_decision_detail_table",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 360,
+                                                                                                                                                    "w": 600,
+                                                                                                                                                    "x": 600,
+                                                                                                                                                    "y": 940
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            },
                     {
-                        "item": "latest_samples_table",
-                        "position": {
-                            "h": 420,
-                            "w": 1200,
-                            "x": 0,
-                            "y": 1130
-                        },
-                        "type": "block"
-                    }
+                                                                                                                                                "item": "failure_samples_table",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 360,
+                                                                                                                                                    "w": 600,
+                                                                                                                                                    "x": 0,
+                                                                                                                                                    "y": 1300
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            },
+                    {
+                                                                                                                                                "item": "latest_samples_table",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 420,
+                                                                                                                                                    "w": 1200,
+                                                                                                                                                    "x": 0,
+                                                                                                                                                    "y": 1660
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            }
                 ],
                 "type": "grid"
             }
@@ -221,6 +231,14 @@
     },
     "title": "Forge Stuck Workflow Job Dispatcher Debug",
     "visualizations": {
+        "operator_guide": {
+            "options": {
+                "fontSize": "default",
+                "markdown": "### How to use this dashboard\nUse this drilldown only after the health dashboard identifies a stuck workflow job. Start with the end-to-end redelivery lifecycle, then inspect receiver decisions, capacity decisions, delivery attempts, and unique failure samples. **Healthy:** the job advances or redelivery completes without repeated failure. **Action:** filter to one tenant, repository, and workflow job ID and follow webhook, dispatcher, SQS, provider capacity, and runner start. **Ownership:** classify only after the failing stage is identified; global locks are not assumed causal."
+            },
+            "title": "How should I use this dashboard?",
+            "type": "splunk.markdown"
+        },
         "delivery_attempts_table": {
             "dataSources": {
                 "primary": "delivery_attempts_search"
@@ -230,7 +248,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "GitHub Delivery Attempts",
+            "description": "Answers \"Did GitHub delivery attempts succeed?\" for the selected filters and time range. Healthy depends on the workflow stage and is not inferred from a high count alone. Action: identify the affected tenant and resource, then use the next causal-stage panel or raw details to verify impact.",
+            "title": "Did GitHub delivery attempts succeed?",
             "type": "splunk.table"
         },
         "failure_samples_table": {
@@ -242,7 +261,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Failure Samples",
+            "description": "Answers \"What failed in the latest redelivery attempts?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. Failure: one or more rows persist or affect workflow jobs. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
+            "title": "What failed in the latest redelivery attempts?",
             "type": "splunk.table"
         },
         "job_lifecycle_table": {
@@ -254,7 +274,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "End-to-End Redelivery Lifecycle",
+            "description": "Answers \"Where did each redelivery attempt stop?\" for the selected filters and time range. Healthy depends on the workflow stage and is not inferred from a high count alone. Action: identify the affected tenant and resource, then use the next causal-stage panel or raw details to verify impact.",
+            "title": "Where did each redelivery attempt stop?",
             "type": "splunk.table"
         },
         "latest_samples_table": {
@@ -266,7 +287,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Latest Log Samples",
+            "description": "Answers \"What do the latest correlated logs show?\" with investigation detail. Healthy is not determined by row count; expected activity may be non-empty, while an empty result can also reflect filters or retention. Action: use this panel only after an impact or failure panel identifies the tenant, repository, workflow job, request, runner, pod, node, or AWS resource to correlate.",
+            "title": "What do the latest correlated logs show?",
             "type": "splunk.table"
         },
         "receiver_decision_detail_table": {
@@ -278,7 +300,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Receiver Decision Detail",
+            "description": "Answers \"Why did the receiver accept, skip, or reject the job?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. Failure: one or more rows persist or affect workflow jobs. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
+            "title": "Why did the receiver accept, skip, or reject the job?",
             "type": "splunk.table"
         },
         "runner_group_summary_table": {
@@ -290,7 +313,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Runner Group Capacity Decisions",
+            "description": "Answers \"Did runner-group capacity block redelivery?\" for the selected filters and time range. Healthy depends on the workflow stage and is not inferred from a high count alone. Action: identify the affected tenant and resource, then use the next causal-stage panel or raw details to verify impact.",
+            "title": "Did runner-group capacity block redelivery?",
             "type": "splunk.table"
         }
     }
