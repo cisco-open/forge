@@ -11,6 +11,7 @@ run "aws_regional_health_detector_interface_contract" {
       "detector_name_prefix",
       "detector_notifications",
       "dynamic_variables",
+      "lambda_dimension_filter",
       "team",
     ]
     expected_output_values = [
@@ -22,6 +23,8 @@ run "aws_regional_health_detector_interface_contract" {
       "variable \"detector_notifications\"",
       "variable \"detector_name_prefix\"",
       "variable \"dynamic_variables\"",
+      "variable \"lambda_dimension_filter\"",
+      "description = \"Canonical AWS Lambda resource-level SignalFlow filter.\"",
       "variable \"team\"",
       "property               = string",
       "alias                  = string",
@@ -56,9 +59,9 @@ run "aws_regional_health_detector_interface_contract" {
 
   assert {
     condition = (
-      output.expected_input_variable_count == 4
+      output.expected_input_variable_count == 5
       && output.expected_output_value_count == 3
-      && output.expected_interface_literal_count == 17
+      && output.expected_interface_literal_count == 19
     )
     error_message = "Interface contract counts must remain pinned."
   }

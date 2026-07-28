@@ -1,5 +1,6 @@
 locals {
-  detector_notifications = var.detector_notifications == null ? ["Team,${var.team}"] : var.detector_notifications
+  detector_notifications  = var.detector_notifications == null ? ["Team,${var.team}"] : var.detector_notifications
+  lambda_dimension_filter = "filter('namespace', 'AWS/Lambda') and filter('Resource', '*') and (not filter('ExecutedVersion', '*'))"
 }
 
 module "detector_k8s" {
@@ -43,8 +44,9 @@ module "detector_dependency_probes" {
   detector_notifications = (
     local.detector_notifications
   )
-  team         = var.team
-  tenant_names = var.dashboard_variables.dependency_probes.tenant_names
+  lambda_dimension_filter = local.lambda_dimension_filter
+  team                    = var.team
+  tenant_names            = var.dashboard_variables.dependency_probes.tenant_names
 }
 
 module "detector_aws_regional_health" {
@@ -58,8 +60,9 @@ module "detector_aws_regional_health" {
   detector_notifications = (
     local.detector_notifications
   )
-  dynamic_variables = var.dashboard_variables.aws_regional_health.dynamic_variables
-  team              = var.team
+  dynamic_variables       = var.dashboard_variables.aws_regional_health.dynamic_variables
+  lambda_dimension_filter = local.lambda_dimension_filter
+  team                    = var.team
 }
 
 module "detector_ec2_runner_health" {

@@ -20,3 +20,8 @@ variable "detector_id" {
   description = "AWS regional platform detector ID linked to queue-health charts."
   type        = string
 }
+
+variable "lambda_dimension_filter" {
+  description = "Canonical AWS Lambda resource-level SignalFlow filter."
+  type        = string
+}

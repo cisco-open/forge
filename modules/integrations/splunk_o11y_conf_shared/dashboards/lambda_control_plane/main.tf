@@ -24,7 +24,7 @@ locals {
 
   aws_platform_filter     = "(${local.aws_account_filter}) and (${local.aws_region_filter}) and (${local.product_family_filter})"
   control_plane_filter    = "(${local.aws_platform_filter}) and (not filter('aws_tag_TenantName', '*'))"
-  lambda_dimension_filter = "filter('namespace', 'AWS/Lambda') and filter('aws_function_name', '*')"
+  lambda_dimension_filter = "(${var.lambda_dimension_filter}) and filter('aws_function_name', '*')"
 }
 
 resource "signalfx_single_value_chart" "function_count" {

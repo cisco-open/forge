@@ -3,10 +3,11 @@ mock_provider "signalfx" {
 }
 
 variables {
-  detector_notifications = []
-  detector_name_prefix   = "Forge Prod"
-  team                   = "forge-team"
-  tenant_names           = ["tenant-a", "tenant-b"]
+  detector_notifications  = []
+  detector_name_prefix    = "Forge Prod"
+  lambda_dimension_filter = "filter('namespace', 'AWS/Lambda') and filter('Resource', '*') and (not filter('ExecutedVersion', '*'))"
+  team                    = "forge-team"
+  tenant_names            = ["tenant-a", "tenant-b"]
   detector_config = {
     failure_duration                   = "10m"
     no_data_duration                   = "15m"
@@ -42,6 +43,8 @@ run "creates_one_dependency_detector_per_tenant" {
       && strcontains(signalfx_detector.tenant_dependency_health["tenant-a"].program_text, "forge.dependency.rate_limit_remaining_pct")
       && strcontains(signalfx_detector.tenant_dependency_health["tenant-a"].program_text, "filter('aws_tag_TenantName', 'tenant-a')")
       && strcontains(signalfx_detector.tenant_dependency_health["tenant-a"].program_text, "filter('aws_tag_ForgeModuleRef', '*')")
+      && strcontains(signalfx_detector.tenant_dependency_health["tenant-a"].program_text, "filter('Resource', '*')")
+      && strcontains(signalfx_detector.tenant_dependency_health["tenant-a"].program_text, "not filter('ExecutedVersion', '*')")
       && strcontains(signalfx_detector.tenant_dependency_health["tenant-a"].program_text, "sum(by=['aws_region', 'aws_function_name', 'aws_tag_ForgeModuleRef'])")
       && !strcontains(signalfx_detector.tenant_dependency_health["tenant-a"].program_text, "aws_function_version")
       && strcontains(signalfx_detector.tenant_dependency_health["tenant-a"].program_text, "lambda_error_rate >= 5")

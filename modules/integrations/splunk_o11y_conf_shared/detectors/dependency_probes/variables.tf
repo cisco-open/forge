@@ -28,3 +28,8 @@ variable "detector_config" {
     rate_limit_remaining_pct_threshold = number
   })
 }
+
+variable "lambda_dimension_filter" {
+  description = "Canonical AWS Lambda resource-level SignalFlow filter."
+  type        = string
+}

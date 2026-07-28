@@ -22,3 +22,8 @@ variable "dashboard_group" {
   description = "Dashboard group name for organizing dashboards."
   type        = string
 }
+
+variable "lambda_dimension_filter" {
+  description = "Canonical AWS Lambda resource-level SignalFlow filter."
+  type        = string
+}

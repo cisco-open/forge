@@ -11,12 +11,15 @@ run "lambda_control_plane_dashboard_interface_contract" {
       "dashboard_group",
       "detector_id",
       "dynamic_variables",
+      "lambda_dimension_filter",
     ]
     expected_output_values = []
     expected_interface_literals = [
       "variable \"dashboard_group\"",
       "variable \"detector_id\"",
       "variable \"dynamic_variables\"",
+      "variable \"lambda_dimension_filter\"",
+      "description = \"Canonical AWS Lambda resource-level SignalFlow filter.\"",
       "property               = string",
       "values_suggested       = list(string)",
       "restricted_suggestions = bool",

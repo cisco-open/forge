@@ -1,8 +1,9 @@
 mock_provider "signalfx" {}
 
 variables {
-  tenant_names    = ["tenant-b", "tenant-a"]
-  dashboard_group = "forge-dashboard-group"
+  tenant_names            = ["tenant-b", "tenant-a"]
+  dashboard_group         = "forge-dashboard-group"
+  lambda_dimension_filter = "filter('namespace', 'AWS/Lambda') and filter('Resource', '*') and (not filter('ExecutedVersion', '*'))"
   detector_ids = {
     tenant-a = "tenant-a-health-detector"
     tenant-b = "tenant-b-health-detector"

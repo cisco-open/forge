@@ -63,9 +63,10 @@ module "dashboard_lambda" {
     signalfx = signalfx
   }
 
-  tenant_names      = var.dashboard_variables.lambda.tenant_names
-  dynamic_variables = var.dashboard_variables.lambda.dynamic_variables
-  dashboard_group   = signalfx_dashboard_group.forgecicd.id
+  tenant_names            = var.dashboard_variables.lambda.tenant_names
+  dynamic_variables       = var.dashboard_variables.lambda.dynamic_variables
+  dashboard_group         = signalfx_dashboard_group.forgecicd.id
+  lambda_dimension_filter = local.lambda_dimension_filter
 }
 
 module "dashboard_lambda_control_plane" {
@@ -75,9 +76,10 @@ module "dashboard_lambda_control_plane" {
     signalfx = signalfx
   }
 
-  dynamic_variables = var.dashboard_variables.lambda_control_plane.dynamic_variables
-  dashboard_group   = signalfx_dashboard_group.forgecicd.id
-  detector_id       = module.detector_aws_regional_health.lambda_control_plane_detector_id
+  dynamic_variables       = var.dashboard_variables.lambda_control_plane.dynamic_variables
+  dashboard_group         = signalfx_dashboard_group.forgecicd.id
+  detector_id             = module.detector_aws_regional_health.lambda_control_plane_detector_id
+  lambda_dimension_filter = local.lambda_dimension_filter
 }
 
 module "dashboard_kinesis_control_plane" {
@@ -98,8 +100,9 @@ module "dashboard_runner_logs_ingestion" {
     signalfx = signalfx
   }
 
-  dynamic_variables = var.dashboard_variables.runner_logs_ingestion.dynamic_variables
-  dashboard_group   = signalfx_dashboard_group.forgecicd.id
+  dynamic_variables       = var.dashboard_variables.runner_logs_ingestion.dynamic_variables
+  dashboard_group         = signalfx_dashboard_group.forgecicd.id
+  lambda_dimension_filter = local.lambda_dimension_filter
 }
 
 module "dashboard_dependency_probes" {
@@ -122,9 +125,10 @@ module "dashboard_aws_regional_health" {
     signalfx = signalfx
   }
 
-  dynamic_variables = var.dashboard_variables.aws_regional_health.dynamic_variables
-  dashboard_group   = signalfx_dashboard_group.forgecicd.id
-  detector_id       = module.detector_aws_regional_health.detector_id
+  dynamic_variables       = var.dashboard_variables.aws_regional_health.dynamic_variables
+  dashboard_group         = signalfx_dashboard_group.forgecicd.id
+  detector_id             = module.detector_aws_regional_health.detector_id
+  lambda_dimension_filter = local.lambda_dimension_filter
 }
 
 # Messaging and storage
@@ -206,10 +210,11 @@ module "dashboard_forge_impact" {
     signalfx = signalfx
   }
 
-  tenant_names      = var.dashboard_variables.forge_impact.tenant_names
-  dynamic_variables = var.dashboard_variables.forge_impact.dynamic_variables
-  dashboard_group   = signalfx_dashboard_group.forgecicd.id
-  detector_ids      = module.detector_dependency_probes.detector_ids
+  tenant_names            = var.dashboard_variables.forge_impact.tenant_names
+  dynamic_variables       = var.dashboard_variables.forge_impact.dynamic_variables
+  dashboard_group         = signalfx_dashboard_group.forgecicd.id
+  detector_ids            = module.detector_dependency_probes.detector_ids
+  lambda_dimension_filter = local.lambda_dimension_filter
 }
 
 module "dashboard_runner_usage" {

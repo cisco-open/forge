@@ -31,8 +31,8 @@ resource "signalfx_time_chart" "lambda_throttle_attempt_rate" {
   description = "Regional throttled-attempt percentage for Forge production Lambda functions. Warning baselines: use1 0.5%, usw2 20%, euw1 65% sustained for 10m."
 
   program_text = <<-EOF
-throttles = data('Throttles', filter=(${local.aws_platform_filter}) and filter('namespace', 'AWS/Lambda') and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='5m').sum(by=['aws_region'])
-invocations = data('Invocations', filter=(${local.aws_platform_filter}) and filter('namespace', 'AWS/Lambda') and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='5m').sum(by=['aws_region'])
+throttles = data('Throttles', filter=(${local.aws_platform_filter}) and (${var.lambda_dimension_filter}) and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='5m').sum(by=['aws_region'])
+invocations = data('Invocations', filter=(${local.aws_platform_filter}) and (${var.lambda_dimension_filter}) and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='5m').sum(by=['aws_region'])
 throttle_attempt_rate = (throttles / (throttles + invocations)).scale(100).publish(label='A')
 EOF
 
@@ -63,7 +63,7 @@ resource "signalfx_time_chart" "lambda_throttle_count" {
   name        = "Forge AWS Lambda throttle count"
   description = "Five-minute Forge Lambda throttle count by AWS region. Use with the regional throttle-attempt rate and customer-impact signals; do not page on count alone."
 
-  program_text = "A = data('Throttles', filter=(${local.aws_platform_filter}) and filter('namespace', 'AWS/Lambda') and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='5m').sum(by=['aws_region']).publish(label='A')"
+  program_text = "A = data('Throttles', filter=(${local.aws_platform_filter}) and (${var.lambda_dimension_filter}) and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='5m').sum(by=['aws_region']).publish(label='A')"
 
   plot_type                 = "LineChart"
   axes_precision            = 0

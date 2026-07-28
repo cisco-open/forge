@@ -19,7 +19,7 @@ locals {
   build_queue_filter            = "filter('QueueName', '*-queued-builds') and (not filter('QueueName', '*_dead_letter'))"
   control_plane_filter          = "(${local.aws_platform_filter}) and (not filter('aws_tag_TenantName', '*'))"
   control_plane_queue_filter    = "filter('namespace', 'AWS/SQS') and filter('QueueName', '*')"
-  control_plane_lambda_filter   = "filter('namespace', 'AWS/Lambda') and filter('aws_function_name', '*')"
+  control_plane_lambda_filter   = "(${var.lambda_dimension_filter}) and filter('aws_function_name', '*')"
   dead_letter_queue_name_filter = "filter('QueueName', '*dead-letter*', '*dead_letter*', '*dlq*', '*DLQ*')"
 }
 

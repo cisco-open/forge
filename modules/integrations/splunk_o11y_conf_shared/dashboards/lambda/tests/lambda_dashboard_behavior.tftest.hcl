@@ -1,8 +1,9 @@
 mock_provider "signalfx" {}
 
 variables {
-  tenant_names    = ["tenant-b", "tenant-a"]
-  dashboard_group = "forge-dashboard-group"
+  tenant_names            = ["tenant-b", "tenant-a"]
+  dashboard_group         = "forge-dashboard-group"
+  lambda_dimension_filter = "filter('namespace', 'AWS/Lambda') and filter('Resource', '*') and (not filter('ExecutedVersion', '*'))"
   dynamic_variables = [
     {
       property               = "aws_region"
@@ -51,10 +52,11 @@ run "lambda_dashboard_contract" {
         strcontains(program_text, "filter('aws_tag_ForgeModuleRef', '*')")
         && strcontains(program_text, "aws_function_name")
         && !strcontains(program_text, "aws_function_version")
-        && !strcontains(program_text, "filter('ExecutedVersion', '*')")
+        && strcontains(program_text, "filter('Resource', '*')")
+        && strcontains(program_text, "not filter('ExecutedVersion', '*')")
       )
     ])
-    error_message = "Standard Lambda module charts must use the Forge module reference tag and function name instead of version dimensions."
+    error_message = "Standard Lambda module charts must use the Forge module reference tag, function name, and canonical resource-level dimensions."
   }
 
   assert {
