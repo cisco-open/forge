@@ -38,9 +38,10 @@ run "billing_dashboard_wiring_contract" {
     condition = (
       signalfx_dashboard.billing.name == "Forge Billing and Cost - AWS"
       && signalfx_dashboard.billing.dashboard_group == "forge-dashboard-group"
+      && signalfx_dashboard.billing.time_range == "-31d"
       && length(signalfx_dashboard.billing.chart) == 8
     )
-    error_message = "Billing dashboard must keep its name, group input, and chart count."
+    error_message = "Billing dashboard must keep its name, group input, 31-day default time range, and chart count."
   }
 
   assert {
