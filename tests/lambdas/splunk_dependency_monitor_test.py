@@ -923,7 +923,7 @@ def test_aws_client_requires_explicit_region(monkeypatch, aws):
         handler.aws_client('ssm')
 
 
-def test_ssm_client_uses_bounded_standard_retries(monkeypatch, aws):
+def test_ssm_client_uses_adaptive_retries(monkeypatch, aws):
     handler = _load_handler(monkeypatch)
     captured = {}
 
@@ -942,8 +942,8 @@ def test_ssm_client_uses_bounded_standard_retries(monkeypatch, aws):
     assert config.connect_timeout == 5
     assert config.read_timeout == 10
     assert config.retries == {
-        'mode': 'standard',
-        'total_max_attempts': 4,
+        'mode': 'adaptive',
+        'total_max_attempts': 8,
     }
 
 

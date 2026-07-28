@@ -33,7 +33,7 @@ TENANT_PARAMETER_SUFFIX = '/github_ghes_org'
 SSM_CLIENT_CONFIG = Config(
     connect_timeout=5,
     read_timeout=10,
-    retries={'mode': 'standard', 'total_max_attempts': 4},
+    retries={'mode': 'adaptive', 'total_max_attempts': 8},
 )
 
 queued_datapoints: list[dict[str, Any]] = []
