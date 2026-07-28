@@ -116,6 +116,20 @@ resource "signalfx_single_value_chart" "firehose_freshness" {
   }
 }
 
+resource "signalfx_time_chart" "delivery_health_alerts" {
+  name             = "Runner-log delivery alerts"
+  description      = "Detector events for Firehose delivery failures, stale delivery, and runner-log DLQ occupancy."
+  program_text     = "A = alerts(detector_id='${var.detector_id}').publish(label='Runner-log delivery alerts')"
+  plot_type        = "LineChart"
+  show_event_lines = true
+  time_range       = 3600
+
+  viz_options {
+    display_name = "Delivery alerts"
+    label        = "A"
+  }
+}
+
 resource "signalfx_time_chart" "sqs_state" {
   name             = "Runner-log queue state"
   description      = "Visible, in-flight, and dead-letter runner-log messages by AWS region."
@@ -412,78 +426,85 @@ resource "signalfx_dashboard" "runner_logs_ingestion" {
     height   = 1
   }
   chart {
-    chart_id = signalfx_time_chart.sqs_state.id
+    chart_id = signalfx_time_chart.delivery_health_alerts.id
     row      = 1
+    column   = 0
+    width    = 12
+    height   = 1
+  }
+  chart {
+    chart_id = signalfx_time_chart.sqs_state.id
+    row      = 2
     column   = 0
     width    = 6
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.sqs_flow.id
-    row      = 1
+    row      = 2
     column   = 6
     width    = 6
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.lambda_concurrency.id
-    row      = 2
+    row      = 3
     column   = 0
     width    = 4
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.lambda_duration.id
-    row      = 2
+    row      = 3
     column   = 4
     width    = 4
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.lambda_failures.id
-    row      = 2
+    row      = 3
     column   = 8
     width    = 4
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.kinesis_records.id
-    row      = 3
+    row      = 4
     column   = 0
     width    = 4
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.kinesis_throughput.id
-    row      = 3
+    row      = 4
     column   = 4
     width    = 4
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.kinesis_iterator_age.id
-    row      = 3
+    row      = 4
     column   = 8
     width    = 4
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.firehose_delivery.id
-    row      = 4
+    row      = 5
     column   = 0
     width    = 6
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.firehose_latency.id
-    row      = 4
+    row      = 5
     column   = 6
     width    = 6
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.oldest_message_trend.id
-    row      = 5
+    row      = 6
     column   = 0
     width    = 12
     height   = 1

@@ -43,6 +43,7 @@ run "integrations_splunk_o11y_conf_shared_contract" {
       "detector_id             = module.detector_aws_regional_health.lambda_control_plane_detector_id",
       "dynamic_variables = var.dashboard_variables.kinesis_control_plane.dynamic_variables",
       "dynamic_variables       = var.dashboard_variables.runner_logs_ingestion.dynamic_variables",
+      "detector_id             = module.detector_aws_regional_health.runner_log_delivery_detector_id",
       "dynamic_variables = var.dashboard_variables.sqs_control_plane.dynamic_variables",
       "detector_id       = module.detector_aws_regional_health.sqs_control_plane_detector_id",
       "Forge Impact and tenant health detectors must use the same tenant_names.",

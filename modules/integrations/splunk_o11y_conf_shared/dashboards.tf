@@ -102,6 +102,7 @@ module "dashboard_runner_logs_ingestion" {
 
   dynamic_variables       = var.dashboard_variables.runner_logs_ingestion.dynamic_variables
   dashboard_group         = signalfx_dashboard_group.forgecicd.id
+  detector_id             = module.detector_aws_regional_health.runner_log_delivery_detector_id
   lambda_dimension_filter = local.lambda_dimension_filter
 }
 

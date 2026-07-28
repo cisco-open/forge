@@ -16,6 +16,11 @@ variable "dashboard_group" {
   type        = string
 }
 
+variable "detector_id" {
+  description = "Runner-log delivery health detector ID used to display trigger and clear events."
+  type        = string
+}
+
 variable "lambda_dimension_filter" {
   description = "Canonical AWS Lambda resource-level SignalFlow filter."
   type        = string
