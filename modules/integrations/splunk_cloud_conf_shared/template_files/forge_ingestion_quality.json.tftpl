@@ -116,55 +116,65 @@
                 },
                 "structure": [
                     {
-                        "item": "sourcetype_inventory_table",
-                        "position": {
-                            "h": 360,
-                            "w": 460,
-                            "x": 0,
-                            "y": 0
-                        },
-                        "type": "block"
-                    },
+                                                                                                                                                "item": "operator_guide",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 170,
+                                                                                                                                                    "w": 1200,
+                                                                                                                                                    "x": 0,
+                                                                                                                                                    "y": 0
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            },
                     {
-                        "item": "volume_anomaly_chart",
-                        "position": {
-                            "h": 360,
-                            "w": 740,
-                            "x": 460,
-                            "y": 0
-                        },
-                        "type": "block"
-                    },
+                                                                                                                                                "item": "missing_fields_table",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 380,
+                                                                                                                                                    "w": 1200,
+                                                                                                                                                    "x": 0,
+                                                                                                                                                    "y": 170
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            },
                     {
-                        "item": "source_inventory_table",
-                        "position": {
-                            "h": 420,
-                            "w": 600,
-                            "x": 0,
-                            "y": 360
-                        },
-                        "type": "block"
-                    },
+                                                                                                                                                "item": "volume_anomaly_chart",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 360,
+                                                                                                                                                    "w": 740,
+                                                                                                                                                    "x": 0,
+                                                                                                                                                    "y": 550
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            },
                     {
-                        "item": "ingestion_quality_table",
-                        "position": {
-                            "h": 420,
-                            "w": 600,
-                            "x": 600,
-                            "y": 360
-                        },
-                        "type": "block"
-                    },
+                                                                                                                                                "item": "ingestion_quality_table",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 420,
+                                                                                                                                                    "w": 600,
+                                                                                                                                                    "x": 0,
+                                                                                                                                                    "y": 910
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            },
                     {
-                        "item": "missing_fields_table",
-                        "position": {
-                            "h": 380,
-                            "w": 1200,
-                            "x": 0,
-                            "y": 780
-                        },
-                        "type": "block"
-                    }
+                                                                                                                                                "item": "sourcetype_inventory_table",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 360,
+                                                                                                                                                    "w": 460,
+                                                                                                                                                    "x": 600,
+                                                                                                                                                    "y": 910
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            },
+                    {
+                                                                                                                                                "item": "source_inventory_table",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 420,
+                                                                                                                                                    "w": 600,
+                                                                                                                                                    "x": 0,
+                                                                                                                                                    "y": 1330
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            }
                 ],
                 "type": "grid"
             }
@@ -181,6 +191,14 @@
     },
     "title": "Forge Ingestion Quality",
     "visualizations": {
+        "operator_guide": {
+            "options": {
+                "fontSize": "default",
+                "markdown": "### How to use this dashboard\nStart with missing structured fields and runner-log ingestion quality, then use source and sourcetype inventory to locate the affected pipeline. **Healthy:** missing-field panels are empty and expected sources continue arriving; high volume alone is not failure. **Action:** identify the source, sourcetype, tenant, and last event before checking Firehose, Kinesis, S3, Lambda, or Splunk delivery. **Ownership:** shared ingestion configuration belongs to Forge; malformed tenant-emitted events belong to the producer; Splunk or AWS delivery outages may be external."
+            },
+            "title": "How should I use this dashboard?",
+            "type": "splunk.markdown"
+        },
         "ingestion_quality_table": {
             "dataSources": {
                 "primary": "ingestion_quality_search"
@@ -190,7 +208,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Runner Log Ingestion Quality",
+            "description": "Answers \"Are runner logs arriving with required fields?\" with a time series over the selected global range. Healthy: error, retry, delay, or backlog series remain at the established baseline; activity volume alone is not a failure. Failure: a sustained adverse series aligns with affected jobs or resources. Action: use the actionable table above for tenant and resource identifiers before opening raw events.",
+            "title": "Are runner logs arriving with required fields?",
             "type": "splunk.table"
         },
         "missing_fields_table": {
@@ -202,7 +221,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Missing Structured Fields",
+            "description": "Answers \"Which events are missing structured fields?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. Failure: one or more rows persist or affect workflow jobs. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
+            "title": "Which events are missing structured fields?",
             "type": "splunk.table"
         },
         "source_inventory_table": {
@@ -214,7 +234,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Top Sources",
+            "description": "Answers \"Which sources produce the most events?\" for the selected filters and time range. Healthy depends on the workflow stage and is not inferred from a high count alone. Action: identify the affected tenant and resource, then use the next causal-stage panel or raw details to verify impact.",
+            "title": "Which sources produce the most events?",
             "type": "splunk.table"
         },
         "sourcetype_inventory_table": {
@@ -226,7 +247,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Sourcetype Inventory",
+            "description": "Answers \"Which sourcetypes are arriving?\" for the selected filters and time range. Healthy depends on the workflow stage and is not inferred from a high count alone. Action: identify the affected tenant and resource, then use the next causal-stage panel or raw details to verify impact.",
+            "title": "Which sourcetypes are arriving?",
             "type": "splunk.table"
         },
         "volume_anomaly_chart": {
@@ -236,7 +258,8 @@
             "options": {},
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "High-Volume Sourcetype Trend",
+            "description": "Answers \"Is ingestion volume changing unexpectedly?\" with a time series over the selected global range. Healthy: error, retry, delay, or backlog series remain at the established baseline; activity volume alone is not a failure. Failure: a sustained adverse series aligns with affected jobs or resources. Action: use the actionable table above for tenant and resource identifiers before opening raw events.",
+            "title": "Is ingestion volume changing unexpectedly?",
             "type": "splunk.line"
         }
     }

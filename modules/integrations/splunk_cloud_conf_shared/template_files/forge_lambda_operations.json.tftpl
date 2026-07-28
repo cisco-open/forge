@@ -125,55 +125,65 @@
                 },
                 "structure": [
                     {
-                        "item": "lambda_errors_table",
-                        "position": {
-                            "h": 360,
-                            "w": 700,
-                            "x": 0,
-                            "y": 0
-                        },
-                        "type": "block"
-                    },
+                                                                                                                                                "item": "operator_guide",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 170,
+                                                                                                                                                    "w": 1200,
+                                                                                                                                                    "x": 0,
+                                                                                                                                                    "y": 0
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            },
                     {
-                        "item": "lambda_error_trend_chart",
-                        "position": {
-                            "h": 360,
-                            "w": 500,
-                            "x": 700,
-                            "y": 0
-                        },
-                        "type": "block"
-                    },
+                                                                                                                                                "item": "lambda_errors_table",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 360,
+                                                                                                                                                    "w": 700,
+                                                                                                                                                    "x": 0,
+                                                                                                                                                    "y": 170
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            },
                     {
-                        "item": "runner_tag_failures_table",
-                        "position": {
-                            "h": 360,
-                            "w": 600,
-                            "x": 0,
-                            "y": 360
-                        },
-                        "type": "block"
-                    },
+                                                                                                                                                "item": "runner_tag_failures_table",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 360,
+                                                                                                                                                    "w": 600,
+                                                                                                                                                    "x": 0,
+                                                                                                                                                    "y": 530
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            },
                     {
-                        "item": "ingestion_retries_table",
-                        "position": {
-                            "h": 360,
-                            "w": 600,
-                            "x": 600,
-                            "y": 360
-                        },
-                        "type": "block"
-                    },
+                                                                                                                                                "item": "ingestion_retries_table",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 360,
+                                                                                                                                                    "w": 600,
+                                                                                                                                                    "x": 600,
+                                                                                                                                                    "y": 530
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            },
                     {
-                        "item": "lambda_samples_table",
-                        "position": {
-                            "h": 420,
-                            "w": 1200,
-                            "x": 0,
-                            "y": 720
-                        },
-                        "type": "block"
-                    }
+                                                                                                                                                "item": "lambda_error_trend_chart",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 360,
+                                                                                                                                                    "w": 500,
+                                                                                                                                                    "x": 0,
+                                                                                                                                                    "y": 890
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            },
+                    {
+                                                                                                                                                "item": "lambda_samples_table",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 420,
+                                                                                                                                                    "w": 1200,
+                                                                                                                                                    "x": 0,
+                                                                                                                                                    "y": 1250
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            }
                 ],
                 "type": "grid"
             }
@@ -190,6 +200,14 @@
     },
     "title": "Forge Lambda Operations",
     "visualizations": {
+        "operator_guide": {
+            "options": {
+                "fontSize": "default",
+                "markdown": "### How to use this dashboard\nStart with errors by Lambda and category, then inspect a unique request sample and retry outcome. **Healthy:** error and retry panels are empty or remain at the established healthy baseline; one duplicated stack trace is one invocation, not multiple failures. **Action:** identify Lambda, tenant, region, request ID, operation, and downstream dependency before assigning cause. **Ownership:** deterministic shared-code failures belong to Forge; tenant resource permissions belong to tenant configuration; AWS, GitHub, or Splunk failures may be external."
+            },
+            "title": "How should I use this dashboard?",
+            "type": "splunk.markdown"
+        },
         "ingestion_retries_table": {
             "dataSources": {
                 "primary": "ingestion_retries_search"
@@ -199,7 +217,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Splunk S3 Runner Log Ingestion Retries",
+            "description": "Answers \"Which runner-log ingestion retries need attention?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. Failure: one or more rows persist or affect workflow jobs. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
+            "title": "Which runner-log ingestion retries need attention?",
             "type": "splunk.table"
         },
         "lambda_error_trend_chart": {
@@ -209,7 +228,8 @@
             "options": {},
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Lambda Error Trend",
+            "description": "Answers \"Are Lambda errors increasing?\" with a time series over the selected global range. Healthy: error, retry, delay, or backlog series remain at the established baseline; activity volume alone is not a failure. Failure: a sustained adverse series aligns with affected jobs or resources. Action: use the actionable table above for tenant and resource identifiers before opening raw events.",
+            "title": "Are Lambda errors increasing?",
             "type": "splunk.line"
         },
         "lambda_errors_table": {
@@ -221,7 +241,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Lambda Errors by Category",
+            "description": "Answers \"Which Lambda error categories are affecting production?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. Failure: one or more rows persist or affect workflow jobs. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
+            "title": "Which Lambda error categories are affecting production?",
             "type": "splunk.table"
         },
         "lambda_samples_table": {
@@ -233,7 +254,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Latest Lambda Error Samples",
+            "description": "Answers \"What failed in the latest unique Lambda invocations?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. Failure: one or more rows persist or affect workflow jobs. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
+            "title": "What failed in the latest unique Lambda invocations?",
             "type": "splunk.table"
         },
         "runner_tag_failures_table": {
@@ -245,7 +267,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "EC2 Runner Tagging Failures",
+            "description": "Answers \"Which runner-tagging operations failed?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. Failure: one or more rows persist or affect workflow jobs. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
+            "title": "Which runner-tagging operations failed?",
             "type": "splunk.table"
         }
     }

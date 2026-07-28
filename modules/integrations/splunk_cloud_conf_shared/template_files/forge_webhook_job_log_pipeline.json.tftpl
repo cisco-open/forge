@@ -137,65 +137,75 @@
                 },
                 "structure": [
                     {
-                        "item": "pipeline_stage_table",
-                        "position": {
-                            "h": 360,
-                            "w": 640,
-                            "x": 0,
-                            "y": 0
-                        },
-                        "type": "block"
-                    },
+                                                                                                                                                "item": "operator_guide",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 170,
+                                                                                                                                                    "w": 1200,
+                                                                                                                                                    "x": 0,
+                                                                                                                                                    "y": 0
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            },
                     {
-                        "item": "pipeline_trend_chart",
-                        "position": {
-                            "h": 360,
-                            "w": 560,
-                            "x": 640,
-                            "y": 0
-                        },
-                        "type": "block"
-                    },
+                                                                                                                                                "item": "archiver_errors_table",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 380,
+                                                                                                                                                    "w": 600,
+                                                                                                                                                    "x": 0,
+                                                                                                                                                    "y": 170
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            },
                     {
-                        "item": "dispatcher_repos_table",
-                        "position": {
-                            "h": 380,
-                            "w": 600,
-                            "x": 0,
-                            "y": 360
-                        },
-                        "type": "block"
-                    },
+                                                                                                                                                "item": "pipeline_stage_table",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 360,
+                                                                                                                                                    "w": 640,
+                                                                                                                                                    "x": 0,
+                                                                                                                                                    "y": 550
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            },
                     {
-                        "item": "archiver_errors_table",
-                        "position": {
-                            "h": 380,
-                            "w": 600,
-                            "x": 600,
-                            "y": 360
-                        },
-                        "type": "block"
-                    },
+                                                                                                                                                "item": "dispatcher_repos_table",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 380,
+                                                                                                                                                    "w": 600,
+                                                                                                                                                    "x": 0,
+                                                                                                                                                    "y": 910
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            },
                     {
-                        "item": "redrive_activity_table",
-                        "position": {
-                            "h": 360,
-                            "w": 600,
-                            "x": 0,
-                            "y": 740
-                        },
-                        "type": "block"
-                    },
+                                                                                                                                                "item": "dispatcher_to_json_table",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 360,
+                                                                                                                                                    "w": 600,
+                                                                                                                                                    "x": 600,
+                                                                                                                                                    "y": 910
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            },
                     {
-                        "item": "dispatcher_to_json_table",
-                        "position": {
-                            "h": 360,
-                            "w": 600,
-                            "x": 600,
-                            "y": 740
-                        },
-                        "type": "block"
-                    }
+                                                                                                                                                "item": "pipeline_trend_chart",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 360,
+                                                                                                                                                    "w": 560,
+                                                                                                                                                    "x": 0,
+                                                                                                                                                    "y": 1290
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            },
+                    {
+                                                                                                                                                "item": "redrive_activity_table",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 360,
+                                                                                                                                                    "w": 600,
+                                                                                                                                                    "x": 560,
+                                                                                                                                                    "y": 1290
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            }
                 ],
                 "type": "grid"
             }
@@ -212,6 +222,14 @@
     },
     "title": "Forge Webhook Job Log Pipeline",
     "visualizations": {
+        "operator_guide": {
+            "options": {
+                "fontSize": "default",
+                "markdown": "### How to use this dashboard\nStart with pipeline-stage completeness, archiver failures, and DLQ redrive activity, then compare dispatcher and archived-object counts for the same repository and time window. **Healthy:** accepted jobs progress to archived JSON and ingestion without sustained DLQ or archiver errors; unequal broad totals alone are not proof of loss. **Action:** identify tenant, repository, workflow job, delivery, SQS message, S3 object, and retry outcome. **Ownership:** shared pipeline defects belong to Forge; tenant webhook configuration belongs to the tenant; GitHub, AWS, or Splunk delivery outages may be external."
+            },
+            "title": "How should I use this dashboard?",
+            "type": "splunk.markdown"
+        },
         "archiver_errors_table": {
             "dataSources": {
                 "primary": "archiver_errors_search"
@@ -221,7 +239,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Archiver Errors",
+            "description": "Answers \"Which job-log archive operations failed?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. Failure: one or more rows persist or affect workflow jobs. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
+            "title": "Which job-log archive operations failed?",
             "type": "splunk.table"
         },
         "dispatcher_repos_table": {
@@ -233,7 +252,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Dispatcher Enqueues by Repo",
+            "description": "Answers \"Which repositories enqueue job-log work?\" for the selected filters and time range. Healthy depends on the workflow stage and is not inferred from a high count alone. Action: identify the affected tenant and resource, then use the next causal-stage panel or raw details to verify impact.",
+            "title": "Which repositories enqueue job-log work?",
             "type": "splunk.table"
         },
         "dispatcher_to_json_table": {
@@ -245,7 +265,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Dispatcher to Archived JSON Counts",
+            "description": "Answers \"Do dispatcher and archived-object counts remain consistent?\" for the selected filters and time range. Healthy depends on the workflow stage and is not inferred from a high count alone. Action: identify the affected tenant and resource, then use the next causal-stage panel or raw details to verify impact.",
+            "title": "Do dispatcher and archived-object counts remain consistent?",
             "type": "splunk.table"
         },
         "pipeline_stage_table": {
@@ -257,7 +278,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Pipeline Stage Summary",
+            "description": "Answers \"Where is the job-log pipeline losing progress?\" for the selected filters and time range. Healthy depends on the workflow stage and is not inferred from a high count alone. Action: identify the affected tenant and resource, then use the next causal-stage panel or raw details to verify impact.",
+            "title": "Where is the job-log pipeline losing progress?",
             "type": "splunk.table"
         },
         "pipeline_trend_chart": {
@@ -267,7 +289,8 @@
             "options": {},
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Pipeline Trend",
+            "description": "Answers \"Is job-log pipeline health changing?\" with a time series over the selected global range. Healthy: error, retry, delay, or backlog series remain at the established baseline; activity volume alone is not a failure. Failure: a sustained adverse series aligns with affected jobs or resources. Action: use the actionable table above for tenant and resource identifiers before opening raw events.",
+            "title": "Is job-log pipeline health changing?",
             "type": "splunk.line"
         },
         "redrive_activity_table": {
@@ -279,7 +302,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "DLQ Redrive Activity",
+            "description": "Answers \"Are DLQ messages being recovered?\" with a time series over the selected global range. Healthy: error, retry, delay, or backlog series remain at the established baseline; activity volume alone is not a failure. Failure: a sustained adverse series aligns with affected jobs or resources. Action: use the actionable table above for tenant and resource identifiers before opening raw events.",
+            "title": "Are DLQ messages being recovered?",
             "type": "splunk.table"
         }
     }
