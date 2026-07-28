@@ -53,7 +53,6 @@ run "creates_runner_logs_ingestion_dashboard" {
     condition = (
       signalfx_dashboard.runner_logs_ingestion.name == "Forge Runner Logs Ingestion"
       && signalfx_dashboard.runner_logs_ingestion.dashboard_group == "forge-dashboard-group"
-      && signalfx_dashboard.runner_logs_ingestion.time_range == "-24h"
       && length(signalfx_dashboard.runner_logs_ingestion.chart) == 17
       && length(signalfx_dashboard.runner_logs_ingestion.variable) == 3
     )

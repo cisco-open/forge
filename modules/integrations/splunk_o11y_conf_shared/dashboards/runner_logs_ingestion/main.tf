@@ -346,7 +346,7 @@ resource "signalfx_dashboard" "runner_logs_ingestion" {
   name            = "Forge Runner Logs Ingestion"
   description     = "End-to-end health of the Forge runner-log ingestion path from SQS through Lambda and Kinesis to Firehose and Splunk HEC."
   dashboard_group = var.dashboard_group
-  time_range      = "-24h"
+  time_range      = "-1h"
 
   lifecycle {
     replace_triggered_by = [
