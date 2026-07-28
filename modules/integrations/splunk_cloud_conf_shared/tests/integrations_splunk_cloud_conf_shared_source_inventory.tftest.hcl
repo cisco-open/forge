@@ -26,6 +26,7 @@ run "integrations_splunk_cloud_conf_shared_contract" {
       "resource \"splunk_data_ui_views\" \"forge_tenant_logs\"",
       "resource \"splunk_data_ui_views\" \"forge_troubleshooting\"",
       "resource \"splunk_data_ui_views\" \"forge_trust_failures\"",
+      "resource \"splunk_saved_searches\" \"forge_iam_trust_failures\"",
       "resource \"splunk_data_ui_views\" \"forge_webhook_job_log_pipeline\"",
       "resource \"splunk_configs_conf\" \"forgecicd_aws_billing_cur\"",
       "resource \"splunk_configs_conf\" \"forgecicd_cloudwatchlogs\"",
