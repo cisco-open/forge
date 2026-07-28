@@ -137,22 +137,12 @@
                 },
                 "structure": [
                     {
-                                                                                                                                                "item": "operator_guide",
-                                                                                                                                                "position": {
-                                                                                                                                                    "h": 170,
-                                                                                                                                                    "w": 1200,
-                                                                                                                                                    "x": 0,
-                                                                                                                                                    "y": 0
-                                                                                                                                                },
-                                                                                                                                                "type": "block"
-                                                                                                                                            },
-                    {
                                                                                                                                                 "item": "archiver_errors_table",
                                                                                                                                                 "position": {
                                                                                                                                                     "h": 380,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 170
+                                                                                                                                                    "y": 0
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -162,7 +152,7 @@
                                                                                                                                                     "h": 360,
                                                                                                                                                     "w": 640,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 550
+                                                                                                                                                    "y": 380
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -172,7 +162,7 @@
                                                                                                                                                     "h": 380,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 910
+                                                                                                                                                    "y": 740
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -182,7 +172,7 @@
                                                                                                                                                     "h": 360,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 600,
-                                                                                                                                                    "y": 910
+                                                                                                                                                    "y": 740
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -192,7 +182,7 @@
                                                                                                                                                     "h": 360,
                                                                                                                                                     "w": 560,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 1290
+                                                                                                                                                    "y": 1120
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -202,7 +192,7 @@
                                                                                                                                                     "h": 360,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 560,
-                                                                                                                                                    "y": 1290
+                                                                                                                                                    "y": 1120
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             }
@@ -222,14 +212,6 @@
     },
     "title": "Forge Webhook Job Log Pipeline",
     "visualizations": {
-        "operator_guide": {
-            "options": {
-                "fontSize": "default",
-                "markdown": "### How to use this dashboard\nStart with pipeline-stage completeness, archiver failures, and DLQ redrive activity, then compare dispatcher and archived-object counts for the same repository and time window. **Healthy:** accepted jobs progress to archived JSON and ingestion without sustained DLQ or archiver errors; unequal broad totals alone are not proof of loss. **Action:** identify tenant, repository, workflow job, delivery, SQS message, S3 object, and retry outcome. **Ownership:** shared pipeline defects belong to Forge; tenant webhook configuration belongs to the tenant; GitHub, AWS, or Splunk delivery outages may be external."
-            },
-            "title": "How should I use this dashboard?",
-            "type": "splunk.markdown"
-        },
         "archiver_errors_table": {
             "dataSources": {
                 "primary": "archiver_errors_search"
@@ -265,7 +247,7 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "description": "Answers \"Do dispatcher and archived-object counts remain consistent?\" for the selected filters and time range. Healthy depends on the workflow stage and is not inferred from a high count alone. Action: identify the affected tenant and resource, then use the next causal-stage panel or raw details to verify impact.",
+            "description": "Answers \"Do dispatcher and archived-object counts remain consistent?\" for the selected filters and time range. Unequal broad totals alone are not proof of loss. Action: identify a specific failed archive operation or workflow-job gap before escalating the pipeline.",
             "title": "Do dispatcher and archived-object counts remain consistent?",
             "type": "splunk.table"
         },

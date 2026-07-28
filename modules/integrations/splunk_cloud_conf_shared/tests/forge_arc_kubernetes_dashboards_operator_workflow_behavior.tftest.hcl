@@ -37,18 +37,17 @@ run "orders_arc_and_kubernetes_dashboards_for_operator_triage" {
         splunk_data_ui_views.forge_arc_k8s_runner_lifecycle.eai_data,
         splunk_data_ui_views.forge_kubernetes_storage_and_network.eai_data,
       ] :
-      strcontains(body, "How should I use this dashboard?")
-      && strcontains(body, "Healthy:")
-      && strcontains(body, "Action:")
+      !strcontains(body, "\"operator_guide\"")
+      && !strcontains(body, "\"type\": \"splunk.markdown\"")
       && strcontains(body, "\"description\": \"Answers")
     ])
-    error_message = "Every ARC and Kubernetes dashboard must provide operator guidance and panel-level healthy/action semantics."
+    error_message = "ARC and Kubernetes dashboards must keep guidance in compact panel descriptions."
   }
 
   assert {
     condition = (
-      can(regex("\"item\": \"operator_guide\"[\\s\\S]*\"item\": \"init_failures_table\"[\\s\\S]*\"item\": \"dind_trend_chart\"[\\s\\S]*\"item\": \"runner_version_table\"", splunk_data_ui_views.forge_arc_dind_runner_lifecycle.eai_data))
-      && can(regex("\"item\": \"operator_guide\"[\\s\\S]*\"item\": \"k8s_pod_events_table\"[\\s\\S]*\"item\": \"k8s_hook_trend_chart\"[\\s\\S]*\"item\": \"k8s_runner_version_table\"", splunk_data_ui_views.forge_arc_k8s_runner_lifecycle.eai_data))
+      can(regex("\"item\": \"init_failures_table\"[\\s\\S]*\"item\": \"dind_trend_chart\"[\\s\\S]*\"item\": \"runner_version_table\"", splunk_data_ui_views.forge_arc_dind_runner_lifecycle.eai_data))
+      && can(regex("\"item\": \"k8s_pod_events_table\"[\\s\\S]*\"item\": \"k8s_hook_trend_chart\"[\\s\\S]*\"item\": \"k8s_runner_version_table\"", splunk_data_ui_views.forge_arc_k8s_runner_lifecycle.eai_data))
     )
     error_message = "ARC lifecycle dashboards must place actionable pod, PVC, hook, and init failures before trends and inventory."
   }

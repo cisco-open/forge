@@ -132,14 +132,6 @@
         }
     },
     "visualizations": {
-        "operator_guide": {
-            "options": {
-                "fontSize": "default",
-                "markdown": "### How to use this dashboard\nStart with queued-job windows and runner timing, then drill into the affected repository, workflow, job, and runner. **Healthy:** queue and duration remain near that runner lane's historical baseline; non-empty usage panels are expected. **Action:** filter to one tenant and repository before comparing runner groups or changing capacity. **Ownership:** runner-platform failures belong to Forge; lane configuration belongs to the tenant; unusually expensive jobs are workload pressure."
-            },
-            "title": "How should I use this dashboard?",
-            "type": "splunk.markdown"
-        },
         "queued_windows_table": {
             "containerOptions": {},
             "dataSources": {
@@ -399,22 +391,12 @@
                 },
                 "structure": [
                     {
-                                                                                                                                                "item": "operator_guide",
-                                                                                                                                                "position": {
-                                                                                                                                                    "h": 170,
-                                                                                                                                                    "w": 1200,
-                                                                                                                                                    "x": 0,
-                                                                                                                                                    "y": 0
-                                                                                                                                                },
-                                                                                                                                                "type": "block"
-                                                                                                                                            },
-                    {
                                                                                                                                                 "item": "queued_windows_table",
                                                                                                                                                 "position": {
                                                                                                                                                     "h": 360,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 170
+                                                                                                                                                    "y": 0
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -424,7 +406,7 @@
                                                                                                                                                     "h": 360,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 600,
-                                                                                                                                                    "y": 170
+                                                                                                                                                    "y": 0
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -434,7 +416,7 @@
                                                                                                                                                     "h": 360,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 530
+                                                                                                                                                    "y": 360
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -444,7 +426,7 @@
                                                                                                                                                     "h": 360,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 600,
-                                                                                                                                                    "y": 530
+                                                                                                                                                    "y": 360
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -454,7 +436,7 @@
                                                                                                                                                     "h": 360,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 890
+                                                                                                                                                    "y": 720
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -464,7 +446,7 @@
                                                                                                                                                     "h": 720,
                                                                                                                                                     "w": 1200,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 1250
+                                                                                                                                                    "y": 1080
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -474,7 +456,7 @@
                                                                                                                                                     "h": 360,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 1970
+                                                                                                                                                    "y": 1800
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -484,7 +466,7 @@
                                                                                                                                                     "h": 420,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 600,
-                                                                                                                                                    "y": 1970
+                                                                                                                                                    "y": 1800
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -494,7 +476,7 @@
                                                                                                                                                     "h": 420,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 2390
+                                                                                                                                                    "y": 2220
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             }

@@ -113,22 +113,12 @@
                 },
                 "structure": [
                     {
-                                                                                                                                                "item": "operator_guide",
-                                                                                                                                                "position": {
-                                                                                                                                                    "h": 170,
-                                                                                                                                                    "w": 1200,
-                                                                                                                                                    "x": 0,
-                                                                                                                                                    "y": 0
-                                                                                                                                                },
-                                                                                                                                                "type": "block"
-                                                                                                                                            },
-                    {
                                                                                                                                                 "item": "validator_access_denied_table",
                                                                                                                                                 "position": {
                                                                                                                                                     "h": 520,
                                                                                                                                                     "w": 480,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 170
+                                                                                                                                                    "y": 0
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -138,7 +128,7 @@
                                                                                                                                                     "h": 420,
                                                                                                                                                     "w": 760,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 690
+                                                                                                                                                    "y": 520
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -148,7 +138,7 @@
                                                                                                                                                     "h": 420,
                                                                                                                                                     "w": 440,
                                                                                                                                                     "x": 760,
-                                                                                                                                                    "y": 690
+                                                                                                                                                    "y": 520
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -158,7 +148,7 @@
                                                                                                                                                     "h": 520,
                                                                                                                                                     "w": 720,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 1110
+                                                                                                                                                    "y": 940
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             }
@@ -178,14 +168,6 @@
     },
     "title": "Forge Trust Failures",
     "visualizations": {
-        "operator_guide": {
-            "options": {
-                "fontSize": "default",
-                "markdown": "### How to use this dashboard\nStart with AssumeRole and AccessDenied failures, then inspect the latest validation record and affected role. **Healthy:** failure panels are empty; successful validation or unrelated role activity is not a failure. **Action:** identify validator tenant, Forge role, tenant role, AWS account, denied operation, and whether TagSession was attempted. **Ownership:** validator defects belong to Forge; trust policy, permissions, KMS, and session-tag conditions belong to tenant configuration; STS outages are external."
-            },
-            "title": "How should I use this dashboard?",
-            "type": "splunk.markdown"
-        },
         "assume_role_failures_table": {
             "dataSources": {
                 "primary": "assume_role_failures_search"
@@ -195,7 +177,7 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "description": "Answers \"Which roles fail AssumeRole?\" for the selected filters and time range. Healthy depends on the workflow stage and is not inferred from a high count alone. Action: identify the affected tenant and resource, then use the next causal-stage panel or raw details to verify impact.",
+            "description": "Answers \"Which roles fail AssumeRole?\" for the selected filters and time range. Validate the exact principal, target role, denied action, trust conditions, and TagSession requirement. Action: use the tenant and role identifiers to inspect the matching IAM trust policy.",
             "title": "Which roles fail AssumeRole?",
             "type": "splunk.table"
         },

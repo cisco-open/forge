@@ -125,22 +125,12 @@
                 },
                 "structure": [
                     {
-                                                                                                                                                "item": "operator_guide",
-                                                                                                                                                "position": {
-                                                                                                                                                    "h": 170,
-                                                                                                                                                    "w": 1200,
-                                                                                                                                                    "x": 0,
-                                                                                                                                                    "y": 0
-                                                                                                                                                },
-                                                                                                                                                "type": "block"
-                                                                                                                                            },
-                    {
                                                                                                                                                 "item": "lambda_errors_table",
                                                                                                                                                 "position": {
                                                                                                                                                     "h": 360,
                                                                                                                                                     "w": 700,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 170
+                                                                                                                                                    "y": 0
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -150,7 +140,7 @@
                                                                                                                                                     "h": 360,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 530
+                                                                                                                                                    "y": 360
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -160,7 +150,7 @@
                                                                                                                                                     "h": 360,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 600,
-                                                                                                                                                    "y": 530
+                                                                                                                                                    "y": 360
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -170,7 +160,7 @@
                                                                                                                                                     "h": 360,
                                                                                                                                                     "w": 500,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 890
+                                                                                                                                                    "y": 720
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -180,7 +170,7 @@
                                                                                                                                                     "h": 420,
                                                                                                                                                     "w": 1200,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 1250
+                                                                                                                                                    "y": 1080
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             }
@@ -200,14 +190,6 @@
     },
     "title": "Forge Lambda Operations",
     "visualizations": {
-        "operator_guide": {
-            "options": {
-                "fontSize": "default",
-                "markdown": "### How to use this dashboard\nStart with errors by Lambda and category, then inspect a unique request sample and retry outcome. **Healthy:** error and retry panels are empty or remain at the established healthy baseline; one duplicated stack trace is one invocation, not multiple failures. **Action:** identify Lambda, tenant, region, request ID, operation, and downstream dependency before assigning cause. **Ownership:** deterministic shared-code failures belong to Forge; tenant resource permissions belong to tenant configuration; AWS, GitHub, or Splunk failures may be external."
-            },
-            "title": "How should I use this dashboard?",
-            "type": "splunk.markdown"
-        },
         "ingestion_retries_table": {
             "dataSources": {
                 "primary": "ingestion_retries_search"

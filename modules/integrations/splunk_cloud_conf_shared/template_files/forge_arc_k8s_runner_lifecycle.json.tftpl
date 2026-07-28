@@ -137,22 +137,12 @@
                 },
                 "structure": [
                     {
-                                                                                                                                                "item": "operator_guide",
-                                                                                                                                                "position": {
-                                                                                                                                                    "h": 170,
-                                                                                                                                                    "w": 1200,
-                                                                                                                                                    "x": 0,
-                                                                                                                                                    "y": 0
-                                                                                                                                                },
-                                                                                                                                                "type": "block"
-                                                                                                                                            },
-                    {
                                                                                                                                                 "item": "k8s_hook_categories_table",
                                                                                                                                                 "position": {
                                                                                                                                                     "h": 360,
                                                                                                                                                     "w": 640,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 170
+                                                                                                                                                    "y": 0
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -162,7 +152,7 @@
                                                                                                                                                     "h": 380,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 530
+                                                                                                                                                    "y": 360
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -172,7 +162,7 @@
                                                                                                                                                     "h": 380,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 600,
-                                                                                                                                                    "y": 530
+                                                                                                                                                    "y": 360
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -182,7 +172,7 @@
                                                                                                                                                     "h": 360,
                                                                                                                                                     "w": 560,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 910
+                                                                                                                                                    "y": 740
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -192,7 +182,7 @@
                                                                                                                                                     "h": 380,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 560,
-                                                                                                                                                    "y": 910
+                                                                                                                                                    "y": 740
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -202,7 +192,7 @@
                                                                                                                                                     "h": 380,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 1290
+                                                                                                                                                    "y": 1120
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             }
@@ -222,14 +212,6 @@
     },
     "title": "Forge ARC K8S Runner Lifecycle",
     "visualizations": {
-        "operator_guide": {
-            "options": {
-                "fontSize": "default",
-                "markdown": "### How to use this dashboard\nStart with pod, PVC, and hook-sidecar failures; use lifecycle activity, versions, and log volume only after impact is established. **Healthy:** failure panels are empty while lifecycle and volume panels may show normal work. **Action:** identify the tenant and scale set, then inspect listener capacity, pending pods, scheduling, storage, image, and networking evidence. **Ownership:** shared ARC/Kubernetes faults belong to the Forge platform; scale-set configuration and workload demand belong to the tenant; registry or cloud-service failures may be external."
-            },
-            "title": "How should I use this dashboard?",
-            "type": "splunk.markdown"
-        },
         "k8s_hook_categories_table": {
             "dataSources": {
                 "primary": "k8s_hook_categories_search"

@@ -113,22 +113,12 @@
                 },
                 "structure": [
                     {
-                                                                                                                                                "item": "operator_guide",
-                                                                                                                                                "position": {
-                                                                                                                                                    "h": 170,
-                                                                                                                                                    "w": 1200,
-                                                                                                                                                    "x": 0,
-                                                                                                                                                    "y": 0
-                                                                                                                                                },
-                                                                                                                                                "type": "block"
-                                                                                                                                            },
-                    {
                                                                                                                                                 "item": "queue_pressure_table",
                                                                                                                                                 "position": {
                                                                                                                                                     "h": 420,
                                                                                                                                                     "w": 720,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 170
+                                                                                                                                                    "y": 0
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -138,7 +128,7 @@
                                                                                                                                                     "h": 460,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 590
+                                                                                                                                                    "y": 420
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -148,7 +138,7 @@
                                                                                                                                                     "h": 460,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 600,
-                                                                                                                                                    "y": 590
+                                                                                                                                                    "y": 420
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -158,7 +148,7 @@
                                                                                                                                                     "h": 420,
                                                                                                                                                     "w": 480,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 1050
+                                                                                                                                                    "y": 880
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             }
@@ -178,14 +168,6 @@
     },
     "title": "Forge Runner Capacity",
     "visualizations": {
-        "operator_guide": {
-            "options": {
-                "fontSize": "default",
-                "markdown": "### How to use this dashboard\nStart with sustained queue pressure, then compare ARC runner-set state or EC2 pool symptoms for the same runner group. **Healthy:** queue delay stays near the lane's historical baseline and capacity signals show progress; one elevated percentile is not enough to infer failure. **Action:** identify tenant, labels, runner group, provider, and time window before changing capacity. **Ownership:** shared controller limits belong to Forge; lane size and mapping belong to tenant configuration; unusually heavy jobs are workload pressure."
-            },
-            "title": "How should I use this dashboard?",
-            "type": "splunk.markdown"
-        },
         "arc_runner_state_table": {
             "dataSources": {
                 "primary": "arc_runner_state_search"
@@ -221,7 +203,7 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "description": "Answers \"Which runner groups have sustained queue pressure?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. Failure: one or more rows persist or affect workflow jobs. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
+            "description": "Answers \"Which runner groups have sustained queue pressure?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. One elevated percentile is not enough to infer failure. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
             "title": "Which runner groups have sustained queue pressure?",
             "type": "splunk.table"
         },

@@ -290,22 +290,12 @@
                 },
                 "structure": [
                     {
-                                                                                                                                                "item": "operator_guide",
-                                                                                                                                                "position": {
-                                                                                                                                                    "h": 170,
-                                                                                                                                                    "w": 1200,
-                                                                                                                                                    "x": 0,
-                                                                                                                                                    "y": 0
-                                                                                                                                                },
-                                                                                                                                                "type": "block"
-                                                                                                                                            },
-                    {
                                                                                                                                                 "item": "eks_api_errors_table",
                                                                                                                                                 "position": {
                                                                                                                                                     "h": 420,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 170
+                                                                                                                                                    "y": 0
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -315,7 +305,7 @@
                                                                                                                                                     "h": 420,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 600,
-                                                                                                                                                    "y": 170
+                                                                                                                                                    "y": 0
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -325,7 +315,7 @@
                                                                                                                                                     "h": 420,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 0,
-                                                                                                                                                    "y": 590
+                                                                                                                                                    "y": 420
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             },
@@ -335,7 +325,7 @@
                                                                                                                                                     "h": 420,
                                                                                                                                                     "w": 600,
                                                                                                                                                     "x": 600,
-                                                                                                                                                    "y": 590
+                                                                                                                                                    "y": 420
                                                                                                                                                 },
                                                                                                                                                 "type": "block"
                                                                                                                                             }
@@ -543,14 +533,6 @@
     },
     "title": "Forge Troubleshooting",
     "visualizations": {
-        "operator_guide": {
-            "options": {
-                "fontSize": "default",
-                "markdown": "### How to use this dashboard\nStart with failed-job hot spots and the smallest affected tenant, repository, runner group, or resource, then move to the matching Lambda, EC2, ARC/Kubernetes, trust, or ingestion panel. **Healthy:** actionable failure panels are empty while inventory and activity panels may contain normal traffic. **Action:** correlate one workflow job or request across adjacent dashboards before assigning cause. **Ownership:** separate Forge code, shared platform configuration, tenant configuration, workload pressure, and external dependencies."
-            },
-            "title": "How should I use this dashboard?",
-            "type": "splunk.markdown"
-        },
         "arc_listener_activity_chart": {
             "dataSources": {
                 "primary": "arc_listener_activity_search"

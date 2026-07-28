@@ -37,18 +37,18 @@ run "makes_investigation_dashboards_explicitly_diagnostic" {
         splunk_data_ui_views.forge_tenant_logs.eai_data,
         splunk_data_ui_views.forge_troubleshooting.eai_data,
       ] :
-      strcontains(body, "How should I use this dashboard?")
-      && strcontains(body, "Healthy:")
-      && strcontains(body, "Action:")
+      !strcontains(body, "\"operator_guide\"")
+      && !strcontains(body, "\"type\": \"splunk.markdown\"")
+      && strcontains(body, "\"description\":")
     ])
-    error_message = "Investigation dashboards must explain that their data is diagnostic and provide a next action."
+    error_message = "Investigation dashboards must keep guidance in compact panel descriptions rather than a dedicated guide row."
   }
 
   assert {
     condition = (
       strcontains(splunk_data_ui_views.forge_tenant_logs.eai_data, "Which tenant log events match the investigation?")
       && strcontains(splunk_data_ui_views.forge_tenant_logs.eai_data, "an empty result can mean no matching retained events")
-      && strcontains(splunk_data_ui_views.forge_tenant_logs.eai_data, "raw logs provide evidence but do not assign")
+      && strcontains(splunk_data_ui_views.forge_tenant_logs.eai_data, "Raw logs provide evidence but do not assign")
     )
     error_message = "Tenant logs must not present an empty raw-event result as proof of health or assign ownership by itself."
   }
@@ -57,7 +57,7 @@ run "makes_investigation_dashboards_explicitly_diagnostic" {
     condition = (
       strcontains(splunk_data_ui_views.forge_ci_job_details.eai_data, "\"description\": \"Answers")
       && strcontains(splunk_data_ui_views.forge_troubleshooting.eai_data, "\"description\": \"Answers")
-      && can(regex("\"item\": \"operator_guide\"[\\s\\S]*\"item\": \"queued_windows_table\"[\\s\\S]*\"item\": \"ci_job_details_table\"", splunk_data_ui_views.forge_ci_job_details.eai_data))
+      && can(regex("\"item\": \"queued_windows_table\"[\\s\\S]*\"item\": \"ci_job_details_table\"", splunk_data_ui_views.forge_ci_job_details.eai_data))
     )
     error_message = "CI and troubleshooting panels must have question-oriented descriptions and leave high-cardinality job detail after queue diagnostics."
   }
