@@ -13,6 +13,10 @@ FIXTURES_DIR = Path(__file__).with_name('fixtures')
 
 def _load_splunk(monkeypatch):
     monkeypatch.setenv('KINESIS_STREAM_NAME', 'splunk-runner-logs-test')
+    monkeypatch.setenv(
+        'SQS_QUEUE_URL',
+        'https://sqs.us-west-2.amazonaws.com/123456789012/runner-logs',
+    )
     return load_handler_module('splunk_s3_runner_logs')
 
 
@@ -268,26 +272,244 @@ def test_ship_lines_raises_when_kinesis_retries_are_exhausted(
     assert 'shardId-000' in caplog.text
 
 
-def test_ship_lines_skips_oversized_payload(monkeypatch, aws):
+def test_ship_lines_splits_oversized_log_line(monkeypatch, aws):
     mod = _load_splunk(monkeypatch)
-    calls = []
+    records = []
 
     class _Kinesis:
         def put_records(self, **kwargs):
-            calls.append(kwargs)
-            return {'FailedRecordCount': 0, 'Records': []}
+            records.extend(kwargs['Records'])
+            return {
+                'FailedRecordCount': 0,
+                'Records': [{} for _record in kwargs['Records']],
+            }
 
     monkeypatch.setattr(mod, 'kinesis_client', _Kinesis())
+    monkeypatch.setattr(mod, 'MAX_KINESIS_RECORD_BYTES', 1000)
+    monkeypatch.setattr(mod, 'LONG_LINE_RECORD_TARGET_BYTES', 800)
 
+    line = 'x' * 2000
     shipped = mod.ship_lines_to_kinesis(
-        ['x' * 1_000_000],
+        [line],
+        'forge-gh-logs',
+        'acme/app/99/1/4242.log',
+        {'chunked': 'overridden-by-internal-field'},
+    )
+
+    events = [json.loads(record['Data'].decode()) for record in records]
+    event_ids = {event['fields']['forge_event_id'] for event in events}
+    partition_keys = [record['PartitionKey'] for record in records]
+
+    assert shipped == len(records)
+    assert len(records) > 1
+    assert ''.join(event['event'] for event in events) == line
+    assert len(event_ids) == 1
+    assert partition_keys == [
+        mod.partition_key_for_line(
+            'forge-gh-logs',
+            'acme/app/99/1/4242.log',
+            0,
+            chunk_index,
+        )
+        for chunk_index in range(len(records))
+    ]
+    assert len(partition_keys) == len(set(partition_keys))
+    assert all(len(record['Data']) <= 800 for record in records)
+    assert [
+        event['fields']['chunk_index'] for event in events
+    ] == list(range(len(events)))
+    assert all(
+        all((
+            event['fields']['chunked'] == 'true',
+            event['fields']['chunk_count'] == len(events),
+            event['fields']['original_line_bytes'] == len(line.encode()),
+        ))
+        for event in events
+    )
+
+
+def test_ship_lines_splits_unicode_without_corrupting_raw_event(
+    monkeypatch, aws
+):
+    mod = _load_splunk(monkeypatch)
+    records = []
+
+    class _Kinesis:
+        def put_records(self, **kwargs):
+            records.extend(kwargs['Records'])
+            return {
+                'FailedRecordCount': 0,
+                'Records': [{} for _record in kwargs['Records']],
+            }
+
+    monkeypatch.setattr(mod, 'kinesis_client', _Kinesis())
+    monkeypatch.setattr(mod, 'MAX_KINESIS_RECORD_BYTES', 1000)
+    monkeypatch.setattr(mod, 'LONG_LINE_RECORD_TARGET_BYTES', 800)
+
+    line = '🙂\\"' * 500
+    shipped = mod.ship_lines_to_kinesis(
+        [line],
         'forge-gh-logs',
         'acme/app/99/1/4242.log',
         {},
     )
 
-    assert shipped == 0
-    assert calls == []
+    events = [json.loads(record['Data'].decode()) for record in records]
+
+    assert shipped == len(records)
+    assert len(records) > 1
+    assert ''.join(event['event'] for event in events) == line
+    assert all(len(record['Data']) <= 800 for record in records)
+    assert all(
+        event['fields']['original_line_bytes'] == len(line.encode('utf-8'))
+        for event in events
+    )
+
+
+def test_read_s3_object_line_chunk_preserves_line_boundaries(
+    monkeypatch, s3_kms
+):
+    mod = _load_splunk(monkeypatch)
+    bucket = s3_kms['buckets']['alpha']
+    key = 'acme/app/99/1/line-boundaries.log'
+    payload = b'one\ntwo-long\nthree'
+    s3_kms['s3'].put_object(Bucket=bucket, Key=key, Body=payload)
+
+    first_lines, first_offset = mod.read_s3_object_line_chunk(
+        bucket,
+        key,
+        0,
+        5,
+    )
+    second_lines, final_offset = mod.read_s3_object_line_chunk(
+        bucket,
+        key,
+        first_offset,
+        5,
+    )
+
+    assert first_lines == ['one', 'two-long']
+    assert first_offset == len(b'one\ntwo-long\n')
+    assert second_lines == ['three']
+    assert final_offset == len(payload)
+
+
+def test_lambda_handler_checkpoints_large_log_after_successful_chunk(
+    monkeypatch, s3_kms
+):
+    mod = _load_splunk(monkeypatch)
+    bucket = s3_kms['buckets']['alpha']
+    key = 'acme/app/99/1/checkpoint.log'
+    payload = (
+        b'2026-07-03T22:26:04.000Z one\n'
+        b'continued second\n'
+        b'continued third\n'
+    )
+    kinesis_events = []
+    kinesis_timestamps = []
+    checkpoint_messages = []
+
+    class _Kinesis:
+        def put_records(self, **kwargs):
+            for record in kwargs['Records']:
+                event = json.loads(record['Data'].decode())
+                kinesis_events.append(event['event'])
+                kinesis_timestamps.append(event['time'])
+            return {
+                'FailedRecordCount': 0,
+                'Records': [{} for _record in kwargs['Records']],
+            }
+
+    class _SQS:
+        def send_message(self, **kwargs):
+            checkpoint_messages.append(json.loads(kwargs['MessageBody']))
+            return {'MessageId': 'checkpoint-1'}
+
+    monkeypatch.setattr(mod, 'kinesis_client', _Kinesis())
+    monkeypatch.setattr(mod, 'sqs_client', _SQS())
+    monkeypatch.setattr(mod, 'LOG_CHUNK_BYTES', 10)
+    s3_kms['s3'].put_object(Bucket=bucket, Key=key, Body=payload)
+
+    initial_event = {
+        'Records': [{
+            'body': json.dumps({
+                'Records': [{
+                    's3': {
+                        'bucket': {'name': bucket},
+                        'object': {'key': key, 'size': len(payload)},
+                    },
+                }],
+            }),
+        }],
+    }
+
+    initial_result = mod.lambda_handler(initial_event, None)
+
+    assert json.loads(initial_result['body']) == {'lines': 1}
+    assert kinesis_events == ['2026-07-03T22:26:04.000Z one']
+    assert len(checkpoint_messages) == 1
+    checkpoint = checkpoint_messages.pop()
+    checkpoint_data = checkpoint[mod.CHECKPOINT_FIELD]
+    assert checkpoint_data == {
+        'version': 1,
+        'bucket': bucket,
+        'key': key,
+        'offset': len(b'2026-07-03T22:26:04.000Z one\n'),
+        'object_size': len(payload),
+        'last_timestamp': 1783117564.0,
+    }
+
+    continuation_lines = 0
+    while True:
+        continuation_result = mod.lambda_handler(
+            {'Records': [{'body': json.dumps(checkpoint)}]},
+            None,
+        )
+        continuation_lines += json.loads(continuation_result['body'])['lines']
+        if not checkpoint_messages:
+            break
+        checkpoint = checkpoint_messages.pop()
+
+    assert continuation_lines == 2
+    assert kinesis_events == [
+        '2026-07-03T22:26:04.000Z one',
+        'continued second',
+        'continued third',
+    ]
+    assert kinesis_timestamps == [1783117564.0] * 3
+    assert checkpoint_messages == []
+
+
+def test_process_s3_object_does_not_checkpoint_failed_chunk(
+    monkeypatch, s3_kms
+):
+    mod = _load_splunk(monkeypatch)
+    bucket = s3_kms['buckets']['alpha']
+    key = 'acme/app/99/1/failed-chunk.log'
+    payload = b'first line\nsecond line\n'
+    checkpoint_messages = []
+
+    class _SQS:
+        def send_message(self, **kwargs):
+            checkpoint_messages.append(kwargs)
+            return {'MessageId': 'unexpected'}
+
+    def _fail_shipping(*_args, **_kwargs):
+        raise RuntimeError('Kinesis unavailable')
+
+    monkeypatch.setattr(mod, 'sqs_client', _SQS())
+    monkeypatch.setattr(mod, 'ship_lines_to_kinesis', _fail_shipping)
+    monkeypatch.setattr(mod, 'LOG_CHUNK_BYTES', 5)
+    s3_kms['s3'].put_object(Bucket=bucket, Key=key, Body=payload)
+
+    with pytest.raises(RuntimeError, match='Kinesis unavailable'):
+        mod.process_s3_object(
+            bucket,
+            key,
+            object_size=len(payload),
+        )
+
+    assert checkpoint_messages == []
 
 
 def test_lambda_handler_streams_log_lines_with_sidecar_fields(

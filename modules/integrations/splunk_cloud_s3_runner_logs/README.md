@@ -16,7 +16,9 @@ Forge archives job logs and operational logs because runners are destroyed after
 ## Operational Notes
 
 - Splunk HEC endpoint and secret configuration must be correct before enabling delivery.
-- The SQS event source concurrency cap and DLQ receive threshold are configurable, defaulting to 40 concurrent invocations and 100 receives.
+- The SQS event source concurrency cap and DLQ receive threshold are configurable, defaulting to 40 concurrent invocations and 5 receives.
+- `.log` objects are processed in line-aligned 8 MiB chunks. Each successful chunk enqueues the next byte offset on the same SQS queue, preserving timestamp state across invocations.
+- Individual `.log` lines whose wrapped HEC event exceeds 1,000,000 bytes are split into UTF-8-safe records targeting at most 750 KiB. The records retain the original timestamp and include `forge_event_id`, `chunked`, `chunk_index`, `chunk_count`, and `original_line_bytes` HEC fields.
 - The scheduled redrive Lambda moves DLQ messages back to the runner-log event queue every ten minutes.
 - Use the backup bucket, DLQ, and redrive Lambda logs when logs are missing from Splunk.
 - The S3 event path should match the job-log archiver bucket layout.
@@ -91,8 +93,9 @@ Forge archives job logs and operational logs because runners are destroyed after
 | <a name="input_lambda_event_source_mapping_maximum_concurrency"></a> [lambda\_event\_source\_mapping\_maximum\_concurrency](#input\_lambda\_event\_source\_mapping\_maximum\_concurrency) | Maximum concurrent Lambda invocations for the runner-log SQS event source mapping. | `number` | `40` | no |
 | <a name="input_log_level"></a> [log\_level](#input\_log\_level) | Log level for application logging (e.g., INFO, DEBUG, WARN, ERROR) | `string` | `"INFO"` | no |
 | <a name="input_logging_retention_in_days"></a> [logging\_retention\_in\_days](#input\_logging\_retention\_in\_days) | Log retention period in days | `number` | `3` | no |
+| <a name="input_runner_log_chunk_size_bytes"></a> [runner\_log\_chunk\_size\_bytes](#input\_runner\_log\_chunk\_size\_bytes) | Maximum bytes processed from a runner .log object before continuing from a line-aligned SQS checkpoint. | `number` | `8388608` | no |
 | <a name="input_splunk_hec_endpoint"></a> [splunk\_hec\_endpoint](#input\_splunk\_hec\_endpoint) | Full URL of Splunk HEC endpoint | `string` | n/a | yes |
-| <a name="input_sqs_redrive_max_receive_count"></a> [sqs\_redrive\_max\_receive\_count](#input\_sqs\_redrive\_max\_receive\_count) | Number of source-queue receives allowed before a runner-log message moves to the DLQ. | `number` | `100` | no |
+| <a name="input_sqs_redrive_max_receive_count"></a> [sqs\_redrive\_max\_receive\_count](#input\_sqs\_redrive\_max\_receive\_count) | Number of source-queue receives allowed before a runner-log message moves to the DLQ. | `number` | `5` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to apply to resources. | `map(string)` | n/a | yes |
 
 ## Outputs

@@ -1,6 +1,6 @@
 resource "aws_sqs_queue" "log_events_queue" {
   name                       = "splunk-s3-runner-logs-events"
-  visibility_timeout_seconds = 900
+  visibility_timeout_seconds = local.lambda_timeout_seconds * 6
   message_retention_seconds  = 86400
   kms_master_key_id          = aws_kms_key.splunk_s3_runner_logs.arn
   redrive_policy = jsonencode({

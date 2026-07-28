@@ -30,6 +30,21 @@ variable "log_level" {
   default     = "INFO"
 }
 
+variable "runner_log_chunk_size_bytes" {
+  description = "Maximum bytes processed from a runner .log object before continuing from a line-aligned SQS checkpoint."
+  type        = number
+  default     = 8388608
+
+  validation {
+    condition = (
+      var.runner_log_chunk_size_bytes >= 1048576
+      && var.runner_log_chunk_size_bytes <= 268435456
+      && floor(var.runner_log_chunk_size_bytes) == var.runner_log_chunk_size_bytes
+    )
+    error_message = "runner_log_chunk_size_bytes must be an integer between 1 MiB and 256 MiB."
+  }
+}
+
 variable "lambda_event_source_mapping_maximum_concurrency" {
   description = "Maximum concurrent Lambda invocations for the runner-log SQS event source mapping."
   type        = number
@@ -48,7 +63,7 @@ variable "lambda_event_source_mapping_maximum_concurrency" {
 variable "sqs_redrive_max_receive_count" {
   description = "Number of source-queue receives allowed before a runner-log message moves to the DLQ."
   type        = number
-  default     = 100
+  default     = 5
 
   validation {
     condition = (

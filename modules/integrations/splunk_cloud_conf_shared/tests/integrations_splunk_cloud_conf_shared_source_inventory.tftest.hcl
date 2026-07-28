@@ -44,6 +44,7 @@ run "integrations_splunk_cloud_conf_shared_contract" {
       "resource \"splunk_configs_conf\" \"forgecicd_kube_container_log_hook\"",
       "resource \"splunk_configs_conf\" \"forgecicd_runner_logs_json\"",
       "resource \"splunk_configs_conf\" \"forgecicd_runner_logs_logs\"",
+      "\"TRUNCATE\"                                        = \"1000000\"",
       "resource \"splunk_configs_conf\" \"forgecicd_billing_cur_instance_id\"",
       "resource \"splunk_configs_conf\" \"forgecicd_billing_cur_volume_id\"",
       "resource \"splunk_configs_conf\" \"forgecicd_cloudwatchlogs_runner_tenant_fields\"",
