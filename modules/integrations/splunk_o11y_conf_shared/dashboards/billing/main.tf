@@ -274,13 +274,139 @@ EOF
   }
 }
 
+resource "signalfx_time_chart" "non_tenant_cost_per_module" {
+  name        = "Non-tenant cost per module"
+  description = "Shows unblended AWS cost for shared Forge modules that are not attributed to a tenant."
+
+  program_text = <<-EOF
+A = data('forge.per_service.cost_usd', filter=filter('forgecicd_scope', 'module'))
+B = A.max(by=['usage_date', 'service', 'forgecicd_module_group', 'forgecicd_module', 'usage_month', 'usage_year'])
+C = B.sum(by=['forgecicd_module_group', 'forgecicd_module', 'usage_month', 'usage_year'])
+C.publish(label='current')
+EOF
+
+  plot_type                 = "AreaChart"
+  axes_precision            = 0
+  on_chart_legend_dimension = "forgecicd_module"
+  time_range                = 3600
+
+  histogram_options {
+    color_theme = "gold"
+  }
+
+  viz_options {
+    axis         = "left"
+    color        = "blue"
+    display_name = "current"
+    label        = "current"
+  }
+}
+
+resource "signalfx_time_chart" "non_tenant_net_cost_per_module" {
+  name        = "Non-tenant net cost per module"
+  description = "Shows net AWS cost for shared Forge modules that are not attributed to a tenant."
+
+  program_text = <<-EOF
+A = data('forge.per_service.net_cost_usd', filter=filter('forgecicd_scope', 'module'))
+B = A.max(by=['usage_date', 'service', 'forgecicd_module_group', 'forgecicd_module', 'usage_month', 'usage_year'])
+C = B.sum(by=['forgecicd_module_group', 'forgecicd_module', 'usage_month', 'usage_year'])
+C.publish(label='current')
+EOF
+
+  plot_type                 = "AreaChart"
+  axes_precision            = 0
+  on_chart_legend_dimension = "forgecicd_module"
+  time_range                = 3600
+
+  histogram_options {
+    color_theme = "gold"
+  }
+
+  viz_options {
+    axis         = "left"
+    color        = "blue"
+    display_name = "current"
+    label        = "current"
+  }
+}
+
+resource "signalfx_time_chart" "non_tenant_net_cost_per_service" {
+  name        = "Non-tenant net cost per AWS service"
+  description = "Shows net AWS service cost across shared Forge modules that are not attributed to a tenant."
+
+  program_text = <<-EOF
+A = data('forge.per_service.net_cost_usd', filter=filter('forgecicd_scope', 'module'))
+B = A.max(by=['usage_date', 'service', 'forgecicd_module_group', 'forgecicd_module', 'usage_month', 'usage_year'])
+C = B.sum(by=['service', 'usage_month', 'usage_year'])
+C.publish(label='current')
+EOF
+
+  plot_type                 = "AreaChart"
+  axes_precision            = 0
+  on_chart_legend_dimension = "service"
+  time_range                = 3600
+
+  histogram_options {
+    color_theme = "gold"
+  }
+
+  viz_options {
+    axis         = "left"
+    color        = "blue"
+    display_name = "current"
+    label        = "current"
+  }
+}
+
+resource "signalfx_list_chart" "top_non_tenant_module_service_net_cost" {
+  name        = "Top non-tenant module/service net cost"
+  description = "Ranks shared Forge module and AWS service combinations by current net cost."
+
+  program_text = <<-EOF
+A = data('forge.per_service.net_cost_usd', filter=filter('forgecicd_scope', 'module'))
+B = A.max(by=['usage_date', 'service', 'forgecicd_module_group', 'forgecicd_module', 'usage_month', 'usage_year'])
+C = B.sum(by=['forgecicd_module_group', 'forgecicd_module', 'service']).top(count=20).publish(label='A')
+EOF
+
+  sort_by = "-value"
+
+  disable_sampling        = false
+  hide_missing_values     = true
+  max_precision           = 4
+  secondary_visualization = "None"
+  time_range              = 3600
+  unit_prefix             = "Metric"
+
+  legend_options_fields {
+    enabled  = true
+    property = "forgecicd_module_group"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "forgecicd_module"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "service"
+  }
+  legend_options_fields {
+    enabled  = false
+    property = "sf_metric"
+  }
+
+  viz_options {
+    display_name = "Net cost"
+    label        = "A"
+  }
+}
+
 resource "terraform_data" "dashboard_parent" {
   triggers_replace = var.dashboard_group
 }
 
 resource "signalfx_dashboard" "billing" {
   name            = "Forge Billing and Cost - AWS"
-  description     = "AWS billing cost and net cost for Forge, separated from OpenCost allocation estimates."
+  description     = "AWS billing cost and net cost for tenant and non-tenant Forge resources, separated from OpenCost allocation estimates."
   dashboard_group = var.dashboard_group
 
   lifecycle {
@@ -375,6 +501,38 @@ resource "signalfx_dashboard" "billing" {
   chart {
     chart_id = signalfx_list_chart.top_tenant_service_net_cost.id
     row      = 3
+    column   = 6
+    width    = 6
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_time_chart.non_tenant_cost_per_module.id
+    row      = 4
+    column   = 0
+    width    = 6
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_time_chart.non_tenant_net_cost_per_module.id
+    row      = 4
+    column   = 6
+    width    = 6
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_time_chart.non_tenant_net_cost_per_service.id
+    row      = 5
+    column   = 0
+    width    = 6
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_list_chart.top_non_tenant_module_service_net_cost.id
+    row      = 5
     column   = 6
     width    = 6
     height   = 1

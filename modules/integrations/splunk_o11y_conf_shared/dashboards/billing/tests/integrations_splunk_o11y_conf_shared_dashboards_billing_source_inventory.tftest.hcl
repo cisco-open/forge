@@ -16,6 +16,10 @@ run "integrations_splunk_o11y_conf_shared_dashboards_billing_source_inventory" {
       "resource \"signalfx_time_chart\" \"total_net_cost\"",
       "resource \"signalfx_time_chart\" \"runner_related_net_cost\"",
       "resource \"signalfx_list_chart\" \"top_tenant_service_net_cost\"",
+      "resource \"signalfx_time_chart\" \"non_tenant_cost_per_module\"",
+      "resource \"signalfx_time_chart\" \"non_tenant_net_cost_per_module\"",
+      "resource \"signalfx_time_chart\" \"non_tenant_net_cost_per_service\"",
+      "resource \"signalfx_list_chart\" \"top_non_tenant_module_service_net_cost\"",
       "resource \"terraform_data\" \"dashboard_parent\"",
       "terraform_data.dashboard_parent,",
       "resource \"signalfx_dashboard\" \"billing\"",
@@ -28,7 +32,7 @@ run "integrations_splunk_o11y_conf_shared_dashboards_billing_source_inventory" {
   }
 
   assert {
-    condition     = output.expected_literal_count == 11
-    error_message = "Source inventory must keep 11 module-specific Terraform and lifecycle literals pinned."
+    condition     = output.expected_literal_count == 15
+    error_message = "Source inventory must keep 15 module-specific Terraform and lifecycle literals pinned."
   }
 }

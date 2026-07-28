@@ -4,18 +4,20 @@ This module creates the billing dashboard for Forge costs in Splunk Observabilit
 
 ## Why This Module Exists
 
-Cost is one of the core Forge operating signals because runner choices involve trade-offs between latency, isolation, and spend. This dashboard helps compare tenant and service cost trends instead of guessing.
+Cost is one of the core Forge operating signals because runner choices involve trade-offs between latency, isolation, and spend. This dashboard helps compare tenant, shared module, and service cost trends instead of guessing.
 
 ## What It Manages
 
 - Charts for cost and net cost by service and tenant.
 - Top tenant/service cost lists.
+- Charts for non-tenant cost and net cost by shared Forge module and AWS service.
+- Top non-tenant module/service cost lists.
 - Runner-related cost summaries.
 - Dashboard placement in the shared Forge O11y group.
 
 ## Operational Notes
 
-- The dashboard is only as accurate as billing exports, tags, and tenant dimensions.
+- The dashboard is only as accurate as billing exports, AppRegistry tags, and tenant or module dimensions.
 - Expect billing data to lag behind live infrastructure state.
 - Use this when reviewing warm pools, DinD node pools, and tenant right-sizing.
 
@@ -43,11 +45,15 @@ No modules.
 | Name | Type |
 | ---- | ---- |
 | [signalfx_dashboard.billing](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/dashboard) | resource |
+| [signalfx_list_chart.top_non_tenant_module_service_net_cost](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
 | [signalfx_list_chart.top_tenant_service_net_cost](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
 | [signalfx_time_chart.cost_per_service](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.cost_per_tenant](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.net_cost_per_service](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.net_cost_per_tenant](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
+| [signalfx_time_chart.non_tenant_cost_per_module](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
+| [signalfx_time_chart.non_tenant_net_cost_per_module](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
+| [signalfx_time_chart.non_tenant_net_cost_per_service](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.runner_related_net_cost](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.total_cost](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.total_net_cost](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
