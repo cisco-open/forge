@@ -145,62 +145,95 @@ locals {
         title           = "Forge GitHub Webhook Workflow Job Events"
         type            = "splunk.table"
       }
-      delivery_chain_gaps_table = {
+      queued_webhook_dispatch_coverage_table = {
         dataSources = {
-          primary = "delivery_chain_gaps_search"
+          primary = "queued_webhook_dispatch_coverage_search"
         }
         options = {
           count = 50
         }
         showLastUpdated = true
         showProgressBar = false
-        title           = "Webhook Delivery Chain Gaps Older Than 5 Minutes"
+        title           = "Queued Webhook to Dispatcher Coverage"
         type            = "splunk.table"
+      }
+      webhook_relay_health_chart = {
+        dataSources = {
+          primary = "webhook_relay_health_search"
+        }
+        options         = {}
+        showLastUpdated = true
+        showProgressBar = false
+        title           = "Shared Webhook Relay Health"
+        type            = "splunk.line"
       }
     }
     dataSources = {
-      delivery_chain_gaps_search = {
-        name = "Webhook delivery-chain gaps"
+      queued_webhook_dispatch_coverage_search = {
+        name = "Queued webhook to dispatcher coverage"
         options = {
           enableSmartSources = true
           query              = <<-EOT
             index="${var.splunk_conf.index}" sourcetype IN ("aws:cloudwatchlogs","aws:cloudwatchlogs:forgecicd")
-            (source="*:/aws/lambda/*validate-signature*" OR source="*:/aws/lambda/*webhook*" OR source="*:/aws/lambda/*dispatch-to-runner*")
-            | spath path=github.github-delivery output=delivery
-            | spath path=github.workflowJobId output=workflow_job_id
-            | spath path=github.repository output=repository
-            | rex field=_raw "(?i)(?:delivery|github-delivery)[=: ]+(?<raw_delivery>[0-9a-f-]{20,})"
-            | rex field=_raw "(?:Job ID:|workflowJobId[=: ])(?<raw_job_id>\\d+)"
-            | eval delivery=coalesce(delivery,raw_delivery), workflow_job_id=coalesce(workflow_job_id,raw_job_id)
+            ((source="*:/aws/lambda/*webhook*" "Github event")
+              OR (source="*:/aws/lambda/*dispatch-to-runner*" ("Successfully dispatched job for" OR "Received event contains runner labels")))
+            | spath path=github.github-event output=github_event
+            | spath path=github.status output=job_status
+            | spath path=github.workflowJobId output=webhook_job_id
+            | spath path=github.repository output=webhook_repository
+            | rex field=_raw "(?i)Job ID:\\s*(?<dispatch_job_id>\\d+)"
+            | rex field=_raw "Successfully dispatched job for (?<dispatch_repository>[^ ]+) to the queue\\(s\\) (?<queued_urls>[^ ]+)"
+            | eval workflow_job_id=coalesce(webhook_job_id,dispatch_job_id), repository=coalesce(webhook_repository,dispatch_repository)
             | eval stage=case(
-                like(source,"%validate-signature%"),"relay",
-                like(source,"%dispatch-to-runner%") OR searchmatch("Successfully dispatched job for"),"dispatch",
-                like(source,"%webhook%"),"tenant_webhook",
+                github_event="workflow_job" AND job_status="queued","queued_webhook",
+                like(source,"%dispatch-to-runner%") AND (searchmatch("Successfully dispatched job for") OR searchmatch("Received event contains runner labels")),"dispatcher_decision",
                 true(),"other")
-            | where isnotnull(delivery) OR isnotnull(workflow_job_id)
-            | eventstats values(workflow_job_id) as workflow_ids_by_delivery by delivery
-            | eval workflow_job_id=coalesce(workflow_job_id,mvindex(workflow_ids_by_delivery,0))
-            | eventstats values(delivery) as deliveries_by_workflow_job by workflow_job_id
-            | eval delivery=coalesce(delivery,mvindex(deliveries_by_workflow_job,0))
-            | eval correlation_id=coalesce(delivery,workflow_job_id)
+            | where stage!="other" AND isnotnull(workflow_job_id)
             | stats min(_time) as first_seen max(_time) as last_seen
-                max(eval(stage="relay")) as relay
-                max(eval(stage="tenant_webhook")) as tenant_webhook
-                max(eval(stage="dispatch")) as dispatch
-                values(delivery) as delivery
-                values(workflow_job_id) as workflow_job_id
+                max(eval(if(stage="queued_webhook",1,0))) as queued_webhook
+                max(eval(if(stage="dispatcher_decision",1,0))) as dispatcher_decision
                 latest(forgecicd_tenant) as forgecicd_tenant
                 latest(repository) as repository
-                values(source) as sources
-                by correlation_id
+                values(queued_urls) as queued_urls
+                by workflow_job_id
             | where "$tenant$"="*" OR forgecicd_tenant="$tenant$"
             | where "$repository$"="*" OR like(repository, "%$repository$%")
             | eval age_seconds=now()-first_seen
-            | where age_seconds>300 AND (relay=0 OR tenant_webhook=0 OR dispatch=0)
-            | eval missing_stages=mvjoin(mvappend(if(relay=0,"relay",null()),if(tenant_webhook=0,"tenant_webhook",null()),if(dispatch=0,"dispatch",null())),", ")
-            | convert ctime(first_seen) ctime(last_seen)
-            | table correlation_id delivery workflow_job_id forgecicd_tenant repository missing_stages age_seconds first_seen last_seen sources
-            | sort - age_seconds
+            | where queued_webhook=1 AND age_seconds>300
+            | eval missing_dispatcher_decision=if(dispatcher_decision=0,1,0)
+            | stats count as queued_jobs
+                sum(dispatcher_decision) as dispatcher_decisions
+                sum(missing_dispatcher_decision) as gaps
+                values(eval(if(missing_dispatcher_decision=1,workflow_job_id,null()))) as missing_workflow_job_ids
+                max(eval(if(missing_dispatcher_decision=1,age_seconds,null()))) as oldest_gap_seconds
+                by forgecicd_tenant repository
+            | sort - gaps - queued_jobs
+          EOT
+          queryParameters = {
+            earliest = "$global_time.earliest$"
+            latest   = "$global_time.latest$"
+          }
+        }
+        type = "ds.search"
+      }
+      webhook_relay_health_search = {
+        name = "Shared webhook relay health"
+        options = {
+          enableSmartSources = true
+          query              = <<-EOT
+            index="${var.splunk_conf.index}" sourcetype IN ("aws:cloudwatchlogs","aws:cloudwatchlogs:forgecicd")
+            source="*:/aws/lambda/*validate-signature*"
+            | rex field=_raw "FailedEntryCount['\\\"]?[:=]\\s*(?<failed_entries>\\d+)"
+            | eval relay_status=case(
+                searchmatch("Signature mismatch"),"signature_rejected",
+                searchmatch("Unhandled exception in validate_signature lambda") OR searchmatch("Task timed out") OR searchmatch("Runtime.ExitError") OR searchmatch("\"level\":\"ERROR\""),"lambda_error",
+                searchmatch("Event forwarded to EventBridge") AND tonumber(failed_entries)>0,"eventbridge_failed",
+                searchmatch("Event forwarded to EventBridge") AND tonumber(failed_entries)=0,"eventbridge_forwarded",
+                searchmatch("Event forwarded to EventBridge"),"eventbridge_unknown",
+                searchmatch("Received GitHub webhook"),"received",
+                true(),"other")
+            | where relay_status!="other"
+            | timechart span=15m count by relay_status
           EOT
           queryParameters = {
             earliest = "$global_time.earliest$"
@@ -638,11 +671,21 @@ locals {
               type = "block"
             },
             {
-              item = "delivery_chain_gaps_table"
+              item = "queued_webhook_dispatch_coverage_table"
               position = {
                 h = 480
-                w = 1200
+                w = 720
                 x = 0
+                y = 1920
+              }
+              type = "block"
+            },
+            {
+              item = "webhook_relay_health_chart"
+              position = {
+                h = 480
+                w = 480
+                x = 720
                 y = 1920
               }
               type = "block"
