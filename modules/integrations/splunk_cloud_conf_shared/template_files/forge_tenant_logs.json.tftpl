@@ -73,6 +73,14 @@
         }
     },
     "visualizations": {
+        "operator_guide": {
+            "options": {
+                "fontSize": "default",
+                "markdown": "### How to use this dashboard\nUse this raw-event dashboard after a health dashboard identifies a tenant, instance, service, or request. **Healthy:** expected sources continue arriving; an empty result only means the current filters matched no retained events. **Action:** narrow the time range and correlate unique request, workflow job, run, runner, and instance identifiers. **Ownership:** raw logs provide evidence but do not assign Forge, tenant, workload, or external ownership by themselves."
+            },
+            "title": "How should I use this dashboard?",
+            "type": "splunk.markdown"
+        },
         "viz_KuqTQOYc": {
             "containerOptions": {},
             "context": {},
@@ -82,6 +90,8 @@
             "options": {},
             "showLastUpdated": false,
             "showProgressBar": false,
+            "description": "Shows retained raw Forge events for the selected tenant, log type, instance, and global time range. Healthy is not determined by row count; an empty result can mean no matching retained events. Action: correlate request, workflow-job, run, runner, instance, and region identifiers with the dashboard that identified impact.",
+            "title": "Which tenant log events match the investigation?",
             "type": "splunk.events"
         }
     },
@@ -131,15 +141,25 @@
                 },
                 "structure": [
                     {
-                        "item": "viz_KuqTQOYc",
-                        "position": {
-                            "h": 626,
-                            "w": 1440,
-                            "x": 0,
-                            "y": 0
-                        },
-                        "type": "block"
-                    }
+                                                                                                                                                "item": "operator_guide",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 170,
+                                                                                                                                                    "w": 1200,
+                                                                                                                                                    "x": 0,
+                                                                                                                                                    "y": 0
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            },
+                    {
+                                                                                                                                                "item": "viz_KuqTQOYc",
+                                                                                                                                                "position": {
+                                                                                                                                                    "h": 626,
+                                                                                                                                                    "w": 1440,
+                                                                                                                                                    "x": 0,
+                                                                                                                                                    "y": 170
+                                                                                                                                                },
+                                                                                                                                                "type": "block"
+                                                                                                                                            }
                 ],
                 "type": "grid"
             }
