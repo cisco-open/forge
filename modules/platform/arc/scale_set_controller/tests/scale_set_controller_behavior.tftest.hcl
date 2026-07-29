@@ -45,8 +45,11 @@ run "scale_set_controller_contract" {
       && helm_release.gha_runner_scale_set_controller[0].cleanup_on_fail == true
       && helm_release.gha_runner_scale_set_controller[0].timeout == 1200
       && strcontains(helm_release.gha_runner_scale_set_controller[0].values[0], "debug")
+      && strcontains(helm_release.gha_runner_scale_set_controller[0].values[0], "controllerManagerAddr: \":8080\"")
+      && strcontains(helm_release.gha_runner_scale_set_controller[0].values[0], "listenerEndpoint: \"/metrics\"")
+      && strcontains(helm_release.gha_runner_scale_set_controller[0].values[0], "prometheus.io/scrape: \"true\"")
     )
-    error_message = "ARC controller Helm release must keep chart inputs, safety flags, timeout, and lower-case log level values."
+    error_message = "ARC controller Helm release must keep chart inputs, safety flags, timeout, lower-case log level values, and annotated Prometheus metrics endpoints."
   }
 }
 

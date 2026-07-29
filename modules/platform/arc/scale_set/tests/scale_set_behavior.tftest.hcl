@@ -96,8 +96,11 @@ run "scale_set_contract" {
       && strcontains(helm_release.gha_runner_scale_set[0].values[0], "tenant-a-linux")
       && strcontains(helm_release.gha_runner_scale_set[0].values[0], "forge-runners")
       && strcontains(helm_release.gha_runner_scale_set[0].values[0], "https://github.com/cisco-open")
+      && strcontains(helm_release.gha_runner_scale_set[0].values[0], "prometheus.io/scrape: \"true\"")
+      && strcontains(helm_release.gha_runner_scale_set[0].values[0], "gha_job_startup_duration_seconds")
+      && strcontains(helm_release.gha_runner_scale_set[0].values[0], "job_workflow_target")
     )
-    error_message = "ARC scale set Helm release must render runner set name, runner group, and GitHub config URL from inputs."
+    error_message = "ARC scale set Helm release must render runner configuration and annotated high-cardinality listener metrics."
   }
 
   assert {
@@ -132,8 +135,10 @@ run "scale_set_dind_contract" {
       && strcontains(helm_release.gha_runner_scale_set[0].values[0], "tenant-a-dind")
       && strcontains(helm_release.gha_runner_scale_set[0].values[0], "docker:dind-rootless")
       && strcontains(helm_release.gha_runner_scale_set[0].values[0], "pod-identity-token-custom")
+      && strcontains(helm_release.gha_runner_scale_set[0].values[0], "gha_completed_jobs_total")
+      && strcontains(helm_release.gha_runner_scale_set[0].values[0], "job_workflow_name")
     )
-    error_message = "DinD scale sets must skip tenant k8s RBAC, keep service account and Pod Identity wiring, and render GHES/DinD Helm values."
+    error_message = "DinD scale sets must keep tenant isolation, Pod Identity wiring, GHES/DinD values, and high-cardinality listener metrics."
   }
 }
 

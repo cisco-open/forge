@@ -19,6 +19,8 @@ In Forge, the Kubernetes lane turns GitHub Actions jobs into ephemeral pods. Thi
 - `migrate_arc_cluster` is the blue/green cutover switch; it should be true only during an intentional tenant migration.
 - The DinD path depends on tenant-specific node pools for blast-radius isolation.
 - Provider configuration resolves from the EKS cluster name, so changing the target cluster name repoints the in-cluster resources.
+- The controller and scale-set listeners expose `/metrics` on port `8080` with Prometheus discovery annotations.
+- Listener metrics retain repository, job, event, result, and workflow dimensions. The managed Prometheus chart and Splunk OTel Prometheus autodiscovery can scrape the same endpoints independently; do not add Prometheus remote write to the collector unless direct collector scraping is disabled.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
