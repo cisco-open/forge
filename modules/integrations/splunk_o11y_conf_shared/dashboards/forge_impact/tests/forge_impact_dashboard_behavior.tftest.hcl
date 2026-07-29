@@ -126,6 +126,14 @@ run "forge_impact_dashboard_wiring_contract" {
   }
 
   assert {
+    condition = length([
+      for chart in signalfx_dashboard.forge_impact.chart : chart
+      if chart.chart_id == signalfx_time_chart.tenant_health_alerts.id && chart.row == 0
+    ]) == 1
+    error_message = "Tenant impact must lead with active alerts."
+  }
+
+  assert {
     condition = alltrue([
       contains([for chart in signalfx_dashboard.forge_impact.chart : chart.chart_id], signalfx_list_chart.top_tenants_lambda_errors.id),
       contains([for chart in signalfx_dashboard.forge_impact.chart : chart.chart_id], signalfx_list_chart.top_tenants_ec2_memory.id),

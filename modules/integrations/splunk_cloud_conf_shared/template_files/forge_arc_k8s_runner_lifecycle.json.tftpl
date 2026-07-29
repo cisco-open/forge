@@ -147,42 +147,12 @@
                         "type": "block"
                     },
                     {
-                        "item": "k8s_hook_trend_chart",
-                        "position": {
-                            "h": 360,
-                            "w": 560,
-                            "x": 640,
-                            "y": 0
-                        },
-                        "type": "block"
-                    },
-                    {
-                        "item": "k8s_runner_volume_table",
-                        "position": {
-                            "h": 380,
-                            "w": 600,
-                            "x": 0,
-                            "y": 360
-                        },
-                        "type": "block"
-                    },
-                    {
-                        "item": "k8s_runner_version_table",
-                        "position": {
-                            "h": 380,
-                            "w": 600,
-                            "x": 600,
-                            "y": 360
-                        },
-                        "type": "block"
-                    },
-                    {
                         "item": "k8s_pod_events_table",
                         "position": {
                             "h": 380,
                             "w": 600,
                             "x": 0,
-                            "y": 740
+                            "y": 360
                         },
                         "type": "block"
                     },
@@ -192,7 +162,37 @@
                             "h": 380,
                             "w": 600,
                             "x": 600,
+                            "y": 360
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "k8s_hook_trend_chart",
+                        "position": {
+                            "h": 360,
+                            "w": 560,
+                            "x": 0,
                             "y": 740
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "k8s_runner_volume_table",
+                        "position": {
+                            "h": 380,
+                            "w": 600,
+                            "x": 560,
+                            "y": 740
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "k8s_runner_version_table",
+                        "position": {
+                            "h": 380,
+                            "w": 600,
+                            "x": 0,
+                            "y": 1120
                         },
                         "type": "block"
                     }
@@ -221,7 +221,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Hook Sidecar Signals",
+            "description": "Answers \"Which hook-sidecar failures need attention?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. Failure: one or more rows persist or affect workflow jobs. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
+            "title": "Which hook-sidecar failures need attention?",
             "type": "splunk.table"
         },
         "k8s_hook_trend_chart": {
@@ -231,7 +232,8 @@
             "options": {},
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Hook Sidecar Trend",
+            "description": "Answers \"Are hook-sidecar failures increasing?\" with a time series over the selected global range. Healthy: error, retry, delay, or backlog series remain at the established baseline; activity volume alone is not a failure. Failure: a sustained adverse series aligns with affected jobs or resources. Action: use the actionable table above for tenant and resource identifiers before opening raw events.",
+            "title": "Are hook-sidecar failures increasing?",
             "type": "splunk.line"
         },
         "k8s_pod_events_table": {
@@ -243,7 +245,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "K8s Pod and PVC Events",
+            "description": "Answers \"Which runner pods or PVCs need attention?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. Failure: one or more rows persist or affect workflow jobs. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
+            "title": "Which runner pods or PVCs need attention?",
             "type": "splunk.table"
         },
         "k8s_pod_scale_set_events_table": {
@@ -255,7 +258,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "K8s Pod and PVC Events by Scale Set",
+            "description": "Answers \"Which scale sets have pod or PVC impact?\" for the selected filters and time range. Healthy depends on the workflow stage and is not inferred from a high count alone. Action: identify the affected tenant and resource, then use the next causal-stage panel or raw details to verify impact.",
+            "title": "Which scale sets have pod or PVC impact?",
             "type": "splunk.table"
         },
         "k8s_runner_version_table": {
@@ -267,7 +271,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "K8s Runner Versions",
+            "description": "Answers \"Which Kubernetes runner versions are active?\" with investigation detail. Healthy is not determined by row count; expected activity may be non-empty, while an empty result can also reflect filters or retention. Action: use this panel only after an impact or failure panel identifies the tenant, repository, workflow job, request, runner, pod, node, or AWS resource to correlate.",
+            "title": "Which Kubernetes runner versions are active?",
             "type": "splunk.table"
         },
         "k8s_runner_volume_table": {
@@ -279,7 +284,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "K8s Runner Log Volume",
+            "description": "Answers \"Are Kubernetes runner logs still arriving?\" with a time series over the selected global range. Healthy: error, retry, delay, or backlog series remain at the established baseline; activity volume alone is not a failure. Failure: a sustained adverse series aligns with affected jobs or resources. Action: use the actionable table above for tenant and resource identifiers before opening raw events.",
+            "title": "Are Kubernetes runner logs still arriving?",
             "type": "splunk.table"
         }
     }

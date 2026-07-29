@@ -60,8 +60,16 @@ resource "signalfx_dashboard" "forge_impact" {
   }
 
   chart {
-    chart_id = signalfx_list_chart.top_tenants_lambda_errors.id
+    chart_id = signalfx_time_chart.tenant_health_alerts.id
     row      = 0
+    column   = 0
+    width    = 12
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_list_chart.top_tenants_lambda_errors.id
+    row      = 1
     column   = 0
     width    = 4
     height   = 1
@@ -69,7 +77,7 @@ resource "signalfx_dashboard" "forge_impact" {
 
   chart {
     chart_id = signalfx_list_chart.top_tenants_lambda_throttles.id
-    row      = 0
+    row      = 1
     column   = 4
     width    = 4
     height   = 1
@@ -77,7 +85,7 @@ resource "signalfx_dashboard" "forge_impact" {
 
   chart {
     chart_id = signalfx_list_chart.top_tenants_ec2_memory.id
-    row      = 0
+    row      = 1
     column   = 8
     width    = 4
     height   = 1
@@ -85,47 +93,15 @@ resource "signalfx_dashboard" "forge_impact" {
 
   chart {
     chart_id = signalfx_list_chart.top_tenants_ec2_cpu.id
-    row      = 1
-    column   = 0
-    width    = 4
-    height   = 1
-  }
-
-  chart {
-    chart_id = signalfx_list_chart.top_tenants_k8s_pending_pods.id
     row      = 2
     column   = 0
     width    = 4
-    height   = 1
-  }
-
-  chart {
-    chart_id = signalfx_list_chart.top_tenants_k8s_failed_pods.id
-    row      = 2
-    column   = 4
-    width    = 4
-    height   = 1
-  }
-
-  chart {
-    chart_id = signalfx_list_chart.top_tenants_sqs_backlog.id
-    row      = 3
-    column   = 0
-    width    = 6
-    height   = 1
-  }
-
-  chart {
-    chart_id = signalfx_list_chart.top_tenants_sqs_dlq_backlog.id
-    row      = 3
-    column   = 6
-    width    = 6
     height   = 1
   }
 
   chart {
     chart_id = signalfx_list_chart.top_tenants_ec2_disk.id
-    row      = 1
+    row      = 2
     column   = 4
     width    = 4
     height   = 1
@@ -133,14 +109,6 @@ resource "signalfx_dashboard" "forge_impact" {
 
   chart {
     chart_id = signalfx_list_chart.top_tenants_ec2_status_failures.id
-    row      = 1
-    column   = 8
-    width    = 4
-    height   = 1
-  }
-
-  chart {
-    chart_id = signalfx_list_chart.top_tenants_k8s_restarts.id
     row      = 2
     column   = 8
     width    = 4
@@ -148,7 +116,31 @@ resource "signalfx_dashboard" "forge_impact" {
   }
 
   chart {
-    chart_id = signalfx_list_chart.top_tenants_ebs_queue_length.id
+    chart_id = signalfx_list_chart.top_tenants_k8s_pending_pods.id
+    row      = 3
+    column   = 0
+    width    = 4
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_list_chart.top_tenants_k8s_failed_pods.id
+    row      = 3
+    column   = 4
+    width    = 4
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_list_chart.top_tenants_k8s_restarts.id
+    row      = 3
+    column   = 8
+    width    = 4
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_list_chart.top_tenants_sqs_backlog.id
     row      = 4
     column   = 0
     width    = 6
@@ -156,7 +148,7 @@ resource "signalfx_dashboard" "forge_impact" {
   }
 
   chart {
-    chart_id = signalfx_list_chart.top_tenants_ebs_iops_exceeded.id
+    chart_id = signalfx_list_chart.top_tenants_sqs_dlq_backlog.id
     row      = 4
     column   = 6
     width    = 6
@@ -164,10 +156,18 @@ resource "signalfx_dashboard" "forge_impact" {
   }
 
   chart {
-    chart_id = signalfx_time_chart.tenant_health_alerts.id
+    chart_id = signalfx_list_chart.top_tenants_ebs_queue_length.id
     row      = 5
     column   = 0
-    width    = 12
+    width    = 6
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_list_chart.top_tenants_ebs_iops_exceeded.id
+    row      = 5
+    column   = 6
+    width    = 6
     height   = 1
   }
 }

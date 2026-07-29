@@ -143,7 +143,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Queued Jobs by Time Window",
+            "description": "Answers \"Where is queued-job pressure concentrated?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. Failure: one or more rows persist or affect workflow jobs. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
+            "title": "Where is queued-job pressure concentrated?",
             "type": "splunk.table"
         },
         "runner_type_repo_windows_table": {
@@ -157,7 +158,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Busiest Windows by Runner Type and Repo",
+            "description": "Answers \"Which repositories create the busiest runner windows?\" with investigation detail. Healthy is not determined by row count; expected activity may be non-empty, while an empty result can also reflect filters or retention. Action: use this panel only after an impact or failure panel identifies the tenant, repository, workflow job, request, runner, pod, node, or AWS resource to correlate.",
+            "title": "Which repositories create the busiest runner windows?",
             "type": "splunk.table"
         },
         "runner_type_timing_table": {
@@ -171,7 +173,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Runner Type Timing",
+            "description": "Answers \"Which runner types have unusual queue or run time?\" for the selected filters and time range. Healthy depends on the workflow stage and is not inferred from a high count alone. Action: identify the affected tenant and resource, then use the next causal-stage panel or raw details to verify impact.",
+            "title": "Which runner types have unusual queue or run time?",
             "type": "splunk.table"
         },
         "runner_type_usage_window_chart": {
@@ -183,7 +186,8 @@
             "options": {},
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Runner Type Usage by Time Window",
+            "description": "Answers \"How is runner usage changing?\" with investigation detail. Healthy is not determined by row count; expected activity may be non-empty, while an empty result can also reflect filters or retention. Action: use this panel only after an impact or failure panel identifies the tenant, repository, workflow job, request, runner, pod, node, or AWS resource to correlate.",
+            "title": "How is runner usage changing?",
             "type": "splunk.line"
         },
         "workflow_run_duration_chart": {
@@ -195,7 +199,8 @@
             "options": {},
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Average Workflow Run Duration by Time Window",
+            "description": "Answers \"Is workflow duration changing?\" with a time series over the selected global range. Healthy: error, retry, delay, or backlog series remain at the established baseline; activity volume alone is not a failure. Failure: a sustained adverse series aligns with affected jobs or resources. Action: use the actionable table above for tenant and resource identifiers before opening raw events.",
+            "title": "Is workflow duration changing?",
             "type": "splunk.line"
         },
         "workflow_run_duration_table": {
@@ -209,7 +214,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Workflow Run Duration by Workflow",
+            "description": "Answers \"Which workflows take the longest?\" for the selected filters and time range. Healthy depends on the workflow stage and is not inferred from a high count alone. Action: identify the affected tenant and resource, then use the next causal-stage panel or raw details to verify impact.",
+            "title": "Which workflows take the longest?",
             "type": "splunk.table"
         },
         "runner_type_workflow_windows_table": {
@@ -223,7 +229,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Busiest Windows by Runner Type and Workflow Job",
+            "description": "Answers \"Which workflow jobs drive the busiest windows?\" with investigation detail. Healthy is not determined by row count; expected activity may be non-empty, while an empty result can also reflect filters or retention. Action: use this panel only after an impact or failure panel identifies the tenant, repository, workflow job, request, runner, pod, node, or AWS resource to correlate.",
+            "title": "Which workflow jobs drive the busiest windows?",
             "type": "splunk.table"
         },
         "workflow_runner_usage_table": {
@@ -237,7 +244,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Workflow Job Runner Usage",
+            "description": "Answers \"Which runners handled each workflow job?\" for the selected filters and time range. Healthy depends on the workflow stage and is not inferred from a high count alone. Action: identify the affected tenant and resource, then use the next causal-stage panel or raw details to verify impact.",
+            "title": "Which runners handled each workflow job?",
             "type": "splunk.table"
         },
         "ci_job_details_table": {
@@ -251,7 +259,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "CI Job Details",
+            "description": "Answers \"Which CI jobs need investigation?\" for the selected filters and time range. Healthy depends on the workflow stage and is not inferred from a high count alone. Action: identify the affected tenant and resource, then use the next causal-stage panel or raw details to verify impact.",
+            "title": "Which CI jobs need investigation?",
             "type": "splunk.table"
         }
     },
@@ -382,42 +391,22 @@
                 },
                 "structure": [
                     {
+                        "item": "queued_windows_table",
+                        "position": {
+                            "h": 360,
+                            "w": 600,
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
                         "item": "runner_type_timing_table",
                         "position": {
                             "h": 360,
                             "w": 600,
-                            "x": 0,
-                            "y": 0
-                        },
-                        "type": "block"
-                    },
-                    {
-                        "item": "workflow_runner_usage_table",
-                        "position": {
-                            "h": 360,
-                            "w": 600,
                             "x": 600,
                             "y": 0
-                        },
-                        "type": "block"
-                    },
-                    {
-                        "item": "workflow_run_duration_chart",
-                        "position": {
-                            "h": 360,
-                            "w": 600,
-                            "x": 0,
-                            "y": 360
-                        },
-                        "type": "block"
-                    },
-                    {
-                        "item": "runner_type_usage_window_chart",
-                        "position": {
-                            "h": 360,
-                            "w": 600,
-                            "x": 600,
-                            "y": 360
                         },
                         "type": "block"
                     },
@@ -427,37 +416,27 @@
                             "h": 360,
                             "w": 600,
                             "x": 0,
-                            "y": 720
+                            "y": 360
                         },
                         "type": "block"
                     },
                     {
-                        "item": "queued_windows_table",
+                        "item": "workflow_run_duration_chart",
                         "position": {
                             "h": 360,
                             "w": 600,
                             "x": 600,
-                            "y": 720
+                            "y": 360
                         },
                         "type": "block"
                     },
                     {
-                        "item": "runner_type_repo_windows_table",
+                        "item": "workflow_runner_usage_table",
                         "position": {
-                            "h": 420,
+                            "h": 360,
                             "w": 600,
                             "x": 0,
-                            "y": 1080
-                        },
-                        "type": "block"
-                    },
-                    {
-                        "item": "runner_type_workflow_windows_table",
-                        "position": {
-                            "h": 420,
-                            "w": 600,
-                            "x": 600,
-                            "y": 1080
+                            "y": 720
                         },
                         "type": "block"
                     },
@@ -467,7 +446,37 @@
                             "h": 720,
                             "w": 1200,
                             "x": 0,
-                            "y": 1500
+                            "y": 1080
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "runner_type_usage_window_chart",
+                        "position": {
+                            "h": 360,
+                            "w": 600,
+                            "x": 0,
+                            "y": 1800
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "runner_type_repo_windows_table",
+                        "position": {
+                            "h": 420,
+                            "w": 600,
+                            "x": 600,
+                            "y": 1800
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "runner_type_workflow_windows_table",
+                        "position": {
+                            "h": 420,
+                            "w": 600,
+                            "x": 0,
+                            "y": 2220
                         },
                         "type": "block"
                     }

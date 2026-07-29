@@ -113,12 +113,22 @@
                 },
                 "structure": [
                     {
+                        "item": "validator_access_denied_table",
+                        "position": {
+                            "h": 520,
+                            "w": 480,
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
                         "item": "assume_role_failures_table",
                         "position": {
                             "h": 420,
                             "w": 760,
                             "x": 0,
-                            "y": 0
+                            "y": 520
                         },
                         "type": "block"
                     },
@@ -128,7 +138,7 @@
                             "h": 420,
                             "w": 440,
                             "x": 760,
-                            "y": 0
+                            "y": 520
                         },
                         "type": "block"
                     },
@@ -138,17 +148,7 @@
                             "h": 520,
                             "w": 720,
                             "x": 0,
-                            "y": 420
-                        },
-                        "type": "block"
-                    },
-                    {
-                        "item": "validator_access_denied_table",
-                        "position": {
-                            "h": 520,
-                            "w": 480,
-                            "x": 720,
-                            "y": 420
+                            "y": 940
                         },
                         "type": "block"
                     }
@@ -177,7 +177,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Basic AssumeRole Failures",
+            "description": "Answers \"Which roles fail AssumeRole?\" for the selected filters and time range. Validate the exact principal, target role, denied action, trust conditions, and TagSession requirement. Action: use the tenant and role identifiers to inspect the matching IAM trust policy.",
+            "title": "Which roles fail AssumeRole?",
             "type": "splunk.table"
         },
         "latest_validation_table": {
@@ -189,6 +190,7 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
+            "description": "Answers \"Latest Validation Detail?\" with investigation detail. Healthy is not determined by row count; expected activity may be non-empty, while an empty result can also reflect filters or retention. Action: use this panel only after an impact or failure panel identifies the tenant, repository, workflow job, request, runner, pod, node, or AWS resource to correlate.",
             "title": "Latest Validation Detail",
             "type": "splunk.table"
         },
@@ -199,7 +201,8 @@
             "options": {},
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Trust Failure Trend",
+            "description": "Answers \"Are trust failures increasing?\" with a time series over the selected global range. Healthy: error, retry, delay, or backlog series remain at the established baseline; activity volume alone is not a failure. Failure: a sustained adverse series aligns with affected jobs or resources. Action: use the actionable table above for tenant and resource identifiers before opening raw events.",
+            "title": "Are trust failures increasing?",
             "type": "splunk.line"
         },
         "validator_access_denied_table": {
@@ -211,7 +214,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Validator AccessDenied Errors",
+            "description": "Answers \"Which validator operations receive AccessDenied?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. Failure: one or more rows persist or affect workflow jobs. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
+            "title": "Which validator operations receive AccessDenied?",
             "type": "splunk.table"
         }
     }

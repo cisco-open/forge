@@ -40,7 +40,15 @@ run "creates_dependency_health_dashboard" {
 
   assert {
     condition     = length(signalfx_dashboard.dependency_health.chart) == 6
-    error_message = "The dashboard must retain GitHub, AWS, rate-limit, latency, telemetry, and central alert coverage."
+    error_message = "The dashboard must retain its GitHub, AWS, rate-limit, latency, telemetry, and central alert coverage."
+  }
+
+  assert {
+    condition = length([
+      for chart in signalfx_dashboard.dependency_health.chart : chart
+      if chart.chart_id == signalfx_time_chart.tenant_health_alerts.id && chart.row == 0
+    ]) == 1
+    error_message = "The dependency dashboard must lead with active alerts."
   }
 
   assert {

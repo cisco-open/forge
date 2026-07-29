@@ -116,10 +116,10 @@
                 },
                 "structure": [
                     {
-                        "item": "sourcetype_inventory_table",
+                        "item": "missing_fields_table",
                         "position": {
-                            "h": 360,
-                            "w": 460,
+                            "h": 380,
+                            "w": 1200,
                             "x": 0,
                             "y": 0
                         },
@@ -130,8 +130,28 @@
                         "position": {
                             "h": 360,
                             "w": 740,
-                            "x": 460,
-                            "y": 0
+                            "x": 0,
+                            "y": 380
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "ingestion_quality_table",
+                        "position": {
+                            "h": 420,
+                            "w": 600,
+                            "x": 0,
+                            "y": 740
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "sourcetype_inventory_table",
+                        "position": {
+                            "h": 360,
+                            "w": 460,
+                            "x": 600,
+                            "y": 740
                         },
                         "type": "block"
                     },
@@ -141,27 +161,7 @@
                             "h": 420,
                             "w": 600,
                             "x": 0,
-                            "y": 360
-                        },
-                        "type": "block"
-                    },
-                    {
-                        "item": "ingestion_quality_table",
-                        "position": {
-                            "h": 420,
-                            "w": 600,
-                            "x": 600,
-                            "y": 360
-                        },
-                        "type": "block"
-                    },
-                    {
-                        "item": "missing_fields_table",
-                        "position": {
-                            "h": 380,
-                            "w": 1200,
-                            "x": 0,
-                            "y": 780
+                            "y": 1160
                         },
                         "type": "block"
                     }
@@ -190,7 +190,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Runner Log Ingestion Quality",
+            "description": "Answers \"Are runner logs arriving with required fields?\" with a time series over the selected global range. Healthy: error, retry, delay, or backlog series remain at the established baseline; activity volume alone is not a failure. Failure: a sustained adverse series aligns with affected jobs or resources. Action: use the actionable table above for tenant and resource identifiers before opening raw events.",
+            "title": "Are runner logs arriving with required fields?",
             "type": "splunk.table"
         },
         "missing_fields_table": {
@@ -202,7 +203,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Missing Structured Fields",
+            "description": "Answers \"Which events are missing structured fields?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. Failure: one or more rows persist or affect workflow jobs. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
+            "title": "Which events are missing structured fields?",
             "type": "splunk.table"
         },
         "source_inventory_table": {
@@ -214,7 +216,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Top Sources",
+            "description": "Answers \"Which sources produce the most events?\" for the selected filters and time range. Healthy depends on the workflow stage and is not inferred from a high count alone. Action: identify the affected tenant and resource, then use the next causal-stage panel or raw details to verify impact.",
+            "title": "Which sources produce the most events?",
             "type": "splunk.table"
         },
         "sourcetype_inventory_table": {
@@ -226,7 +229,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Sourcetype Inventory",
+            "description": "Answers \"Which sourcetypes are arriving?\" for the selected filters and time range. Healthy depends on the workflow stage and is not inferred from a high count alone. Action: identify the affected tenant and resource, then use the next causal-stage panel or raw details to verify impact.",
+            "title": "Which sourcetypes are arriving?",
             "type": "splunk.table"
         },
         "volume_anomaly_chart": {
@@ -236,7 +240,8 @@
             "options": {},
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "High-Volume Sourcetype Trend",
+            "description": "Answers \"Is ingestion volume changing unexpectedly?\" with a time series over the selected global range. Healthy: error, retry, delay, or backlog series remain at the established baseline; activity volume alone is not a failure. Failure: a sustained adverse series aligns with affected jobs or resources. Action: use the actionable table above for tenant and resource identifiers before opening raw events.",
+            "title": "Is ingestion volume changing unexpectedly?",
             "type": "splunk.line"
         }
     }

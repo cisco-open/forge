@@ -123,16 +123,6 @@
                         "type": "block"
                     },
                     {
-                        "item": "queue_trend_chart",
-                        "position": {
-                            "h": 420,
-                            "w": 480,
-                            "x": 720,
-                            "y": 0
-                        },
-                        "type": "block"
-                    },
-                    {
                         "item": "arc_runner_state_table",
                         "position": {
                             "h": 460,
@@ -149,6 +139,16 @@
                             "w": 600,
                             "x": 600,
                             "y": 420
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "queue_trend_chart",
+                        "position": {
+                            "h": 420,
+                            "w": 480,
+                            "x": 0,
+                            "y": 880
                         },
                         "type": "block"
                     }
@@ -177,7 +177,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "ARC Runner Set State",
+            "description": "Answers \"Can ARC runner sets accept more work?\" for the selected filters and time range. Healthy depends on the workflow stage and is not inferred from a high count alone. Action: identify the affected tenant and resource, then use the next causal-stage panel or raw details to verify impact.",
+            "title": "Can ARC runner sets accept more work?",
             "type": "splunk.table"
         },
         "ec2_pool_symptoms_table": {
@@ -189,7 +190,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "EC2 Runner Pool Symptoms",
+            "description": "Answers \"Which EC2 runner pools show capacity symptoms?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. Failure: one or more rows persist or affect workflow jobs. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
+            "title": "Which EC2 runner pools show capacity symptoms?",
             "type": "splunk.table"
         },
         "queue_pressure_table": {
@@ -201,7 +203,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Queue Pressure by Runner Group",
+            "description": "Answers \"Which runner groups have sustained queue pressure?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. One elevated percentile is not enough to infer failure. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
+            "title": "Which runner groups have sustained queue pressure?",
             "type": "splunk.table"
         },
         "queue_trend_chart": {
@@ -211,7 +214,8 @@
             "options": {},
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Queue p95 Trend",
+            "description": "Answers \"Is runner-group queue latency increasing?\" with a time series over the selected global range. Healthy: error, retry, delay, or backlog series remain at the established baseline; activity volume alone is not a failure. Failure: a sustained adverse series aligns with affected jobs or resources. Action: use the actionable table above for tenant and resource identifiers before opening raw events.",
+            "title": "Is runner-group queue latency increasing?",
             "type": "splunk.line"
         }
     }

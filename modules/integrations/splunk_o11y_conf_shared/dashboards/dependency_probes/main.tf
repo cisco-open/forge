@@ -237,8 +237,16 @@ resource "signalfx_dashboard" "dependency_health" {
   }
 
   chart {
-    chart_id = signalfx_list_chart.github_availability.id
+    chart_id = signalfx_time_chart.tenant_health_alerts.id
     row      = 0
+    column   = 0
+    width    = 12
+    height   = 1
+  }
+
+  chart {
+    chart_id = signalfx_list_chart.github_availability.id
+    row      = 1
     column   = 0
     width    = 4
     height   = 1
@@ -246,7 +254,7 @@ resource "signalfx_dashboard" "dependency_health" {
 
   chart {
     chart_id = signalfx_list_chart.ssm_availability.id
-    row      = 0
+    row      = 1
     column   = 4
     width    = 4
     height   = 1
@@ -254,7 +262,7 @@ resource "signalfx_dashboard" "dependency_health" {
 
   chart {
     chart_id = signalfx_list_chart.rate_limit_budget.id
-    row      = 0
+    row      = 1
     column   = 8
     width    = 4
     height   = 1
@@ -262,14 +270,6 @@ resource "signalfx_dashboard" "dependency_health" {
 
   chart {
     chart_id = signalfx_time_chart.latency.id
-    row      = 1
-    column   = 0
-    width    = 12
-    height   = 1
-  }
-
-  chart {
-    chart_id = signalfx_time_chart.probe_execution.id
     row      = 2
     column   = 0
     width    = 12
@@ -277,7 +277,7 @@ resource "signalfx_dashboard" "dependency_health" {
   }
 
   chart {
-    chart_id = signalfx_time_chart.tenant_health_alerts.id
+    chart_id = signalfx_time_chart.probe_execution.id
     row      = 3
     column   = 0
     width    = 12

@@ -137,32 +137,12 @@
                 },
                 "structure": [
                     {
-                        "item": "dind_categories_table",
-                        "position": {
-                            "h": 360,
-                            "w": 640,
-                            "x": 0,
-                            "y": 0
-                        },
-                        "type": "block"
-                    },
-                    {
-                        "item": "dind_trend_chart",
-                        "position": {
-                            "h": 360,
-                            "w": 560,
-                            "x": 640,
-                            "y": 0
-                        },
-                        "type": "block"
-                    },
-                    {
                         "item": "init_failures_table",
                         "position": {
                             "h": 380,
                             "w": 600,
                             "x": 0,
-                            "y": 360
+                            "y": 0
                         },
                         "type": "block"
                     },
@@ -172,12 +152,32 @@
                             "h": 380,
                             "w": 600,
                             "x": 600,
-                            "y": 360
+                            "y": 0
                         },
                         "type": "block"
                     },
                     {
-                        "item": "runner_version_table",
+                        "item": "dind_categories_table",
+                        "position": {
+                            "h": 360,
+                            "w": 640,
+                            "x": 0,
+                            "y": 380
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "dind_trend_chart",
+                        "position": {
+                            "h": 360,
+                            "w": 560,
+                            "x": 640,
+                            "y": 380
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "dind_runner_volume_table",
                         "position": {
                             "h": 360,
                             "w": 600,
@@ -187,7 +187,7 @@
                         "type": "block"
                     },
                     {
-                        "item": "dind_runner_volume_table",
+                        "item": "runner_version_table",
                         "position": {
                             "h": 360,
                             "w": 600,
@@ -221,7 +221,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "ARC DIND and Hook Categories",
+            "description": "Answers \"Which ARC DIND lifecycle signals are occurring?\" for the selected filters and time range. Healthy depends on the workflow stage and is not inferred from a high count alone. Action: identify the affected tenant and resource, then use the next causal-stage panel or raw details to verify impact.",
+            "title": "Which ARC DIND lifecycle signals are occurring?",
             "type": "splunk.table"
         },
         "dind_trend_chart": {
@@ -231,7 +232,8 @@
             "options": {},
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "ARC DIND and Hook Trend",
+            "description": "Answers \"Are ARC DIND lifecycle signals changing?\" with a time series over the selected global range. Healthy: error, retry, delay, or backlog series remain at the established baseline; activity volume alone is not a failure. Failure: a sustained adverse series aligns with affected jobs or resources. Action: use the actionable table above for tenant and resource identifiers before opening raw events.",
+            "title": "Are ARC DIND lifecycle signals changing?",
             "type": "splunk.line"
         },
         "hook_sidecar_table": {
@@ -243,7 +245,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Hook Sidecar Signals",
+            "description": "Answers \"Which hook-sidecar failures need attention?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. Failure: one or more rows persist or affect workflow jobs. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
+            "title": "Which hook-sidecar failures need attention?",
             "type": "splunk.table"
         },
         "init_failures_table": {
@@ -255,7 +258,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Init Container Failures",
+            "description": "Answers \"Which init containers are failing?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. Failure: one or more rows persist or affect workflow jobs. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
+            "title": "Which init containers are failing?",
             "type": "splunk.table"
         },
         "runner_version_table": {
@@ -267,7 +271,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Runner Versions",
+            "description": "Answers \"Which runner versions are active?\" with investigation detail. Healthy is not determined by row count; expected activity may be non-empty, while an empty result can also reflect filters or retention. Action: use this panel only after an impact or failure panel identifies the tenant, repository, workflow job, request, runner, pod, node, or AWS resource to correlate.",
+            "title": "Which runner versions are active?",
             "type": "splunk.table"
         },
         "dind_runner_volume_table": {
@@ -279,7 +284,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "DIND Runner Log Volume",
+            "description": "Answers \"Are DIND runner logs still arriving?\" with a time series over the selected global range. Healthy: error, retry, delay, or backlog series remain at the established baseline; activity volume alone is not a failure. Failure: a sustained adverse series aligns with affected jobs or resources. Action: use the actionable table above for tenant and resource identifiers before opening raw events.",
+            "title": "Are DIND runner logs still arriving?",
             "type": "splunk.table"
         }
     }

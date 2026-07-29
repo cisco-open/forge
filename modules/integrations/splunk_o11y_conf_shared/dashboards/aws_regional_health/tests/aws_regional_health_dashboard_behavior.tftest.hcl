@@ -56,6 +56,14 @@ run "creates_regional_platform_dashboard" {
   }
 
   assert {
+    condition = length([
+      for chart in signalfx_dashboard.aws_regional_health.chart : chart
+      if chart.chart_id == signalfx_time_chart.queue_health_alerts.id && chart.row == 0
+    ]) == 1
+    error_message = "The regional platform dashboard must lead with active alerts."
+  }
+
+  assert {
     condition = alltrue([
       for program_text in [
         signalfx_time_chart.lambda_throttle_attempt_rate.program_text,
