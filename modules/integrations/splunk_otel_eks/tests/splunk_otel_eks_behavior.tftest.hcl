@@ -122,4 +122,9 @@ run "splunk_otel_eks_contract" {
     )
     error_message = "Splunk OTel Helm release must keep chart identity and configured cluster, platform index, and Prometheus autodiscovery values."
   }
+
+  assert {
+    condition     = aws_servicecatalogappregistry_application.this.name == "integrations_splunk_otel_eks_forge-euw1-dev_us-east-1"
+    error_message = "Splunk OTel EKS AppRegistry application names must include the cluster and AWS region."
+  }
 }

@@ -96,4 +96,9 @@ run "teleport_parent_contract" {
     )
     error_message = "Teleport outputs must expose role ARN, cluster/account identity, and tenant group mapping."
   }
+
+  assert {
+    condition     = aws_servicecatalogappregistry_application.this.name == "integrations_teleport_forge-euw1-dev_us-east-1"
+    error_message = "Teleport AppRegistry application names must include the cluster and AWS region."
+  }
 }
