@@ -47,7 +47,8 @@
                 "^.*\\.tf$"
             ],
             "matchStrings": [
-                "download_lambdas\\.sh\"\\s*,\\s*\"[^\"]+\"\\s*,\\s*\"(?<currentValue>v\\d+\\.\\d+\\.\\d+)\""
+                "download_lambdas\\.sh\"\\s*,\\s*\"[^\"]+\"\\s*,\\s*\"(?<currentValue>v\\d+\\.\\d+\\.\\d+)\"",
+                "terraform-aws-github-runner-ref\\s*=\\s*\"(?<currentValue>v\\d+\\.\\d+\\.\\d+)\""
             ],
             "depNameTemplate": "github-aws-runners/terraform-aws-github-runner",
             "datasourceTemplate": "github-tags",

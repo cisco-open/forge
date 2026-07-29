@@ -2,6 +2,12 @@ locals {
   # Templatized userdata (cloud-init) file.
   user_data_prefix               = "${path.module}/template_files"
   userdata_template_post_install = "${local.user_data_prefix}/post_install.tftpl"
+  terraform_aws_github_runner_tags = merge(
+    var.tenant_configs.tags,
+    {
+      terraform-aws-github-runner-ref = "v7.10.0"
+    }
+  )
   webhook_api_gateway_access_log_format = jsonencode({
     apiId                   = "$context.apiId"
     domainName              = "$context.domainName"
@@ -141,9 +147,9 @@ module "runners" {
     enable = true
   }
 
-  lambda_tags          = var.tenant_configs.tags
-  tags                 = var.tenant_configs.tags
-  parameter_store_tags = var.tenant_configs.tags
+  lambda_tags          = local.terraform_aws_github_runner_tags
+  tags                 = local.terraform_aws_github_runner_tags
+  parameter_store_tags = local.terraform_aws_github_runner_tags
 
   # Verbose logging.
   log_level = var.runner_configs.log_level
