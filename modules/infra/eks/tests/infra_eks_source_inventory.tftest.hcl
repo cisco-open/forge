@@ -15,6 +15,7 @@ run "infra_eks_contract" {
       "resource \"aws_eks_addon\" \"aws_ebs_csi_driver\"",
       "resource \"aws_eks_addon\" \"eks_pod_identity_agent\"",
       "resource \"aws_eks_addon\" \"coredns\"",
+      "name = \"infra_eks_$${var.cluster_name}_$${var.aws_region}\"",
       "resource \"null_resource\" \"patch_calico_installation\"",
       "resource \"null_resource\" \"wait_for_cluster\"",
       "resource \"null_resource\" \"karpenter\"",
