@@ -51,6 +51,15 @@ def lambda_handler(event, _context):
 
     total_lines = 0
     for r in records:
+        message_id = r.get('messageId') or 'unknown'
+        receive_count = r.get(
+            'attributes', {}
+        ).get('ApproximateReceiveCount') or 'unknown'
+        LOG.info(
+            'sqs_message_received message_id=%s receive_count=%s',
+            message_id,
+            receive_count,
+        )
         body = r.get('body')
         if not body:
             continue
@@ -62,7 +71,11 @@ def lambda_handler(event, _context):
 
         checkpoint = body_json.get(CHECKPOINT_FIELD)
         if checkpoint is not None:
-            total_lines += process_log_checkpoint(checkpoint)
+            total_lines += process_log_checkpoint(
+                checkpoint,
+                sqs_message_id=message_id,
+                sqs_receive_count=receive_count,
+            )
             continue
 
         for s3_rec in body_json.get('Records', []):
@@ -77,6 +90,8 @@ def lambda_handler(event, _context):
                 bucket,
                 key,
                 object_size=object_size,
+                sqs_message_id=message_id,
+                sqs_receive_count=receive_count,
             )
 
     return {'statusCode': 200, 'body': json.dumps({'lines': total_lines})}
@@ -89,10 +104,15 @@ def process_s3_object(
     object_size: int | None = None,
     start_offset: int = 0,
     last_timestamp: float | None = None,
+    sqs_message_id: str = 'unknown',
+    sqs_receive_count: str = 'unknown',
 ) -> int:
     """Process a JSON object or one bounded, line-aligned log chunk."""
     LOG.info(
-        'processing_object bucket=%s key=%s offset=%d',
+        'processing_object message_id=%s receive_count=%s '
+        'bucket=%s key=%s offset=%d',
+        sqs_message_id,
+        sqs_receive_count,
         bucket,
         key,
         start_offset,
@@ -162,8 +182,10 @@ def process_s3_object(
     )
     last_timestamp = timestamp_after_lines(lines, last_timestamp)
     LOG.info(
-        'object_chunk_complete bucket=%s key=%s offset=%d next_offset=%d '
-        'size=%d lines=%d',
+        'object_chunk_complete message_id=%s receive_count=%s '
+        'bucket=%s key=%s offset=%d next_offset=%d size=%d lines=%d',
+        sqs_message_id,
+        sqs_receive_count,
         bucket,
         key,
         start_offset,
@@ -179,6 +201,7 @@ def process_s3_object(
             next_offset,
             object_size,
             last_timestamp,
+            parent_message_id=sqs_message_id,
         )
     else:
         LOG.info('object_complete bucket=%s key=%s lines=%d',
@@ -186,7 +209,12 @@ def process_s3_object(
     return shipped
 
 
-def process_log_checkpoint(checkpoint: Any) -> int:
+def process_log_checkpoint(
+    checkpoint: Any,
+    *,
+    sqs_message_id: str = 'unknown',
+    sqs_receive_count: str = 'unknown',
+) -> int:
     """Validate and process a continuation message from the runner-log queue."""
     if not isinstance(checkpoint, dict):
         raise ValueError('Runner-log checkpoint must be an object')
@@ -224,6 +252,8 @@ def process_log_checkpoint(checkpoint: Any) -> int:
         object_size=object_size,
         start_offset=offset,
         last_timestamp=last_timestamp,
+        sqs_message_id=sqs_message_id,
+        sqs_receive_count=sqs_receive_count,
     )
 
 
@@ -233,6 +263,8 @@ def enqueue_log_checkpoint(
     offset: int,
     object_size: int,
     last_timestamp: float | None,
+    *,
+    parent_message_id: str = 'unknown',
 ) -> None:
     """Enqueue the next byte offset after the current chunk is fully shipped."""
     if not SQS_QUEUE_URL:
@@ -247,12 +279,16 @@ def enqueue_log_checkpoint(
             'last_timestamp': last_timestamp,
         },
     }
-    sqs_client.send_message(
+    response = sqs_client.send_message(
         QueueUrl=SQS_QUEUE_URL,
         MessageBody=json.dumps(body, separators=(',', ':')),
     )
+    checkpoint_message_id = response.get('MessageId') or 'unknown'
     LOG.info(
-        'object_checkpoint_enqueued bucket=%s key=%s offset=%d size=%d',
+        'object_checkpoint_enqueued parent_message_id=%s message_id=%s '
+        'bucket=%s key=%s offset=%d size=%d',
+        parent_message_id,
+        checkpoint_message_id,
         bucket,
         key,
         offset,
