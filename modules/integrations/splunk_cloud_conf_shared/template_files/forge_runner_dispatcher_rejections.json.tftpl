@@ -10,7 +10,7 @@
             "name": "Dispatcher rejection examples",
             "options": {
                 "enableSmartSources": true,
-                "query": "index=\"${splunk_index}\" forgecicd_log_type=\"dispatch-to-runner\" (level=\"WARN\" OR level=\"ERROR\" OR level=\"warn\" OR level=\"error\")\n| eval tenant=coalesce(forgecicd_tenant,\"unknown\"), request_id=coalesce('aws-request-id',aws_request_id)\n| rex field=message \"runner labels '(?<runner_labels>[^']+)' from '(?<repo>[^']+)'\"\n| rex field=message \"Job ID: (?<job_id>\\d+), Job Name: (?<job_name>.*), Run ID: (?<run_id>\\d+)\"\n| rex field=message \"Queue (?<queue_id>[^: ]+)\"\n| eval runner_labels=coalesce(forgecicd_dispatcher_runner_labels,runner_labels), repo=coalesce(forgecicd_dispatcher_repository,repo), job_id=coalesce(forgecicd_dispatcher_job_id,job_id), job_name=coalesce(forgecicd_dispatcher_job_name,job_name), run_id=coalesce(forgecicd_dispatcher_run_id,run_id)\n| eval signal=case(\n    match(message,\"runner labels .* are not accepted\"), \"labels_not_accepted\",\n    match(message,\"matches non-dynamic labels but does not allow dynamic labels\"), \"dynamic_labels_not_enabled\",\n    match(message,\"dynamic label .* does not match policy\"), \"dynamic_label_policy_reject\",\n    match(message,\"No queue accepts the dynamic labels\"), \"no_dynamic_label_queue\",\n    match(message,\"Dynamic label exceeds max length\"), \"dynamic_label_too_long\",\n    match(message,\"Dynamic label contains invalid characters\"), \"dynamic_label_invalid_chars\",\n    match(message,\"Failed to handle webhook event\"), \"webhook_handler_failed\",\n    match(message,\"Failed to send event to EventBridge\"), \"eventbridge_send_failed\",\n    match(message,\"Unsupported event type\"), \"unsupported_event_type\",\n    match(message,\"Received event from unauthorized repository\"), \"unauthorized_repository\",\n    true(), \"other_warn_error\")\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$environment$\"=\"*\" OR like(environment,\"%$environment$%\")\n| where \"$repo$\"=\"*\" OR like(repo,\"%$repo$%\")\n| where \"$signal$\"=\"*\" OR signal=\"$signal$\"\n| eval event_time=strftime(_time,\"%Y-%m-%d %H:%M:%S\"), sample=substr(message,1,500)\n| table event_time tenant environment signal repo runner_labels queue_id job_id job_name run_id request_id service sample\n| sort - event_time\n| head 200\n",
+                "query": "index=\"${splunk_index}\" sourcetype IN (\"aws:cloudwatchlogs\",\"aws:cloudwatchlogs:forgecicd\") source=\"*:/aws/lambda/*dispatch-to-runner:*\"\n| search forgecicd_log_type=\"dispatch-to-runner\" (level=\"WARN\" OR level=\"ERROR\" OR level=\"warn\" OR level=\"error\")\n| eval tenant=coalesce(forgecicd_tenant,\"unknown\"), request_id=coalesce('aws-request-id',aws_request_id)\n| rex field=message \"runner labels '(?<runner_labels>[^']+)' from '(?<repo>[^']+)'\"\n| rex field=message \"Job ID: (?<job_id>\\d+), Job Name: (?<job_name>.*), Run ID: (?<run_id>\\d+)\"\n| rex field=message \"Queue (?<queue_id>[^: ]+)\"\n| eval runner_labels=coalesce(forgecicd_dispatcher_runner_labels,runner_labels), repo=coalesce(forgecicd_dispatcher_repository,repo), job_id=coalesce(forgecicd_dispatcher_job_id,job_id), job_name=coalesce(forgecicd_dispatcher_job_name,job_name), run_id=coalesce(forgecicd_dispatcher_run_id,run_id)\n| eval signal=case(\n    match(message,\"runner labels .* are not accepted\"), \"labels_not_accepted\",\n    match(message,\"matches non-dynamic labels but does not allow dynamic labels\"), \"dynamic_labels_not_enabled\",\n    match(message,\"dynamic label .* does not match policy\"), \"dynamic_label_policy_reject\",\n    match(message,\"No queue accepts the dynamic labels\"), \"no_dynamic_label_queue\",\n    match(message,\"Dynamic label exceeds max length\"), \"dynamic_label_too_long\",\n    match(message,\"Dynamic label contains invalid characters\"), \"dynamic_label_invalid_chars\",\n    match(message,\"Failed to handle webhook event\"), \"webhook_handler_failed\",\n    match(message,\"Failed to send event to EventBridge\"), \"eventbridge_send_failed\",\n    match(message,\"Unsupported event type\"), \"unsupported_event_type\",\n    match(message,\"Received event from unauthorized repository\"), \"unauthorized_repository\",\n    true(), \"other_warn_error\")\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$environment$\"=\"*\" OR like(environment,\"%$environment$%\")\n| where \"$repo$\"=\"*\" OR like(repo,\"%$repo$%\")\n| where \"$signal$\"=\"*\" OR signal=\"$signal$\"\n| eval event_time=strftime(_time,\"%Y-%m-%d %H:%M:%S\"), sample=substr(message,1,500)\n| table event_time tenant environment signal repo runner_labels queue_id job_id job_name run_id request_id service sample\n| sort - event_time\n| head 200\n",
                 "queryParameters": {
                     "earliest": "$global_time.earliest$",
                     "latest": "$global_time.latest$"
@@ -22,7 +22,7 @@
             "name": "Dispatcher rejection summary",
             "options": {
                 "enableSmartSources": true,
-                "query": "index=\"${splunk_index}\" forgecicd_log_type=\"dispatch-to-runner\" (level=\"WARN\" OR level=\"ERROR\" OR level=\"warn\" OR level=\"error\")\n| eval tenant=coalesce(forgecicd_tenant,\"unknown\"), request_id=coalesce('aws-request-id',aws_request_id)\n| rex field=message \"runner labels '(?<runner_labels>[^']+)' from '(?<repo>[^']+)'\"\n| rex field=message \"Job ID: (?<job_id>\\d+), Job Name: (?<job_name>.*), Run ID: (?<run_id>\\d+)\"\n| rex field=message \"Queue (?<queue_id>[^: ]+)\"\n| eval runner_labels=coalesce(forgecicd_dispatcher_runner_labels,runner_labels), repo=coalesce(forgecicd_dispatcher_repository,repo), job_id=coalesce(forgecicd_dispatcher_job_id,job_id), job_name=coalesce(forgecicd_dispatcher_job_name,job_name), run_id=coalesce(forgecicd_dispatcher_run_id,run_id)\n| eval signal=case(\n    match(message,\"runner labels .* are not accepted\"), \"labels_not_accepted\",\n    match(message,\"matches non-dynamic labels but does not allow dynamic labels\"), \"dynamic_labels_not_enabled\",\n    match(message,\"dynamic label .* does not match policy\"), \"dynamic_label_policy_reject\",\n    match(message,\"No queue accepts the dynamic labels\"), \"no_dynamic_label_queue\",\n    match(message,\"Dynamic label exceeds max length\"), \"dynamic_label_too_long\",\n    match(message,\"Dynamic label contains invalid characters\"), \"dynamic_label_invalid_chars\",\n    match(message,\"Failed to handle webhook event\"), \"webhook_handler_failed\",\n    match(message,\"Failed to send event to EventBridge\"), \"eventbridge_send_failed\",\n    match(message,\"Unsupported event type\"), \"unsupported_event_type\",\n    match(message,\"Received event from unauthorized repository\"), \"unauthorized_repository\",\n    true(), \"other_warn_error\")\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$environment$\"=\"*\" OR like(environment,\"%$environment$%\")\n| where \"$repo$\"=\"*\" OR like(repo,\"%$repo$%\")\n| where \"$signal$\"=\"*\" OR signal=\"$signal$\"\n| stats count as events dc(request_id) as lambda_invocations dc(job_id) as jobs dc(run_id) as runs dc(repo) as repos values(queue_id) as queues values(service) as services min(_time) as first_time max(_time) as last_time by tenant environment signal level module\n| eval duration_minutes=round((last_time-first_time)/60,1), first_seen=strftime(first_time,\"%Y-%m-%d %H:%M:%S\"), last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| eval pattern=case(events>=1000 AND duration_minutes>=60,\"persistent\", events>=50,\"repeating\", events>=5,\"burst\", true(),\"single\")\n| fields tenant environment signal pattern events jobs runs repos lambda_invocations duration_minutes first_seen last_seen level module services queues\n| sort - events\n",
+                "query": "index=\"${splunk_index}\" sourcetype IN (\"aws:cloudwatchlogs\",\"aws:cloudwatchlogs:forgecicd\") source=\"*:/aws/lambda/*dispatch-to-runner:*\"\n| search forgecicd_log_type=\"dispatch-to-runner\" (level=\"WARN\" OR level=\"ERROR\" OR level=\"warn\" OR level=\"error\")\n| eval tenant=coalesce(forgecicd_tenant,\"unknown\"), request_id=coalesce('aws-request-id',aws_request_id)\n| rex field=message \"runner labels '(?<runner_labels>[^']+)' from '(?<repo>[^']+)'\"\n| rex field=message \"Job ID: (?<job_id>\\d+), Job Name: (?<job_name>.*), Run ID: (?<run_id>\\d+)\"\n| rex field=message \"Queue (?<queue_id>[^: ]+)\"\n| eval runner_labels=coalesce(forgecicd_dispatcher_runner_labels,runner_labels), repo=coalesce(forgecicd_dispatcher_repository,repo), job_id=coalesce(forgecicd_dispatcher_job_id,job_id), job_name=coalesce(forgecicd_dispatcher_job_name,job_name), run_id=coalesce(forgecicd_dispatcher_run_id,run_id)\n| eval signal=case(\n    match(message,\"runner labels .* are not accepted\"), \"labels_not_accepted\",\n    match(message,\"matches non-dynamic labels but does not allow dynamic labels\"), \"dynamic_labels_not_enabled\",\n    match(message,\"dynamic label .* does not match policy\"), \"dynamic_label_policy_reject\",\n    match(message,\"No queue accepts the dynamic labels\"), \"no_dynamic_label_queue\",\n    match(message,\"Dynamic label exceeds max length\"), \"dynamic_label_too_long\",\n    match(message,\"Dynamic label contains invalid characters\"), \"dynamic_label_invalid_chars\",\n    match(message,\"Failed to handle webhook event\"), \"webhook_handler_failed\",\n    match(message,\"Failed to send event to EventBridge\"), \"eventbridge_send_failed\",\n    match(message,\"Unsupported event type\"), \"unsupported_event_type\",\n    match(message,\"Received event from unauthorized repository\"), \"unauthorized_repository\",\n    true(), \"other_warn_error\")\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$environment$\"=\"*\" OR like(environment,\"%$environment$%\")\n| where \"$repo$\"=\"*\" OR like(repo,\"%$repo$%\")\n| where \"$signal$\"=\"*\" OR signal=\"$signal$\"\n| stats count as events dc(request_id) as lambda_invocations dc(job_id) as jobs dc(run_id) as runs dc(repo) as repos values(queue_id) as queues values(service) as services min(_time) as first_time max(_time) as last_time by tenant environment signal level module\n| eval duration_minutes=round((last_time-first_time)/60,1), first_seen=strftime(first_time,\"%Y-%m-%d %H:%M:%S\"), last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\"), age_minutes=round((now()-last_time)/60,1)\n| eval pattern=case(events>=1000 AND duration_minutes>=60,\"persistent\", events>=50,\"repeating\", events>=5,\"burst\", true(),\"single\")\n| fields tenant environment signal pattern events jobs runs repos lambda_invocations duration_minutes age_minutes first_seen last_seen level module services queues\n| sort - events\n",
                 "queryParameters": {
                     "earliest": "$global_time.earliest$",
                     "latest": "$global_time.latest$"
@@ -34,7 +34,7 @@
             "name": "Rejected labels",
             "options": {
                 "enableSmartSources": true,
-                "query": "index=\"${splunk_index}\" forgecicd_log_type=\"dispatch-to-runner\" (level=\"WARN\" OR level=\"ERROR\" OR level=\"warn\" OR level=\"error\")\n| eval tenant=coalesce(forgecicd_tenant,\"unknown\")\n| rex field=message \"runner labels '(?<runner_labels>[^']+)' from '(?<repo>[^']+)'\"\n| rex field=message \"Job ID: (?<job_id>\\d+), Job Name: (?<job_name>.*), Run ID: (?<run_id>\\d+)\"\n| eval runner_labels=coalesce(forgecicd_dispatcher_runner_labels,runner_labels), repo=coalesce(forgecicd_dispatcher_repository,repo), job_id=coalesce(forgecicd_dispatcher_job_id,job_id), job_name=coalesce(forgecicd_dispatcher_job_name,job_name), run_id=coalesce(forgecicd_dispatcher_run_id,run_id)\n| eval signal=case(\n    match(message,\"runner labels .* are not accepted\"), \"labels_not_accepted\",\n    match(message,\"matches non-dynamic labels but does not allow dynamic labels\"), \"dynamic_labels_not_enabled\",\n    match(message,\"dynamic label .* does not match policy\"), \"dynamic_label_policy_reject\",\n    match(message,\"No queue accepts the dynamic labels\"), \"no_dynamic_label_queue\",\n    match(message,\"Dynamic label exceeds max length\"), \"dynamic_label_too_long\",\n    match(message,\"Dynamic label contains invalid characters\"), \"dynamic_label_invalid_chars\",\n    true(), \"other_warn_error\")\n| where isnotnull(runner_labels)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$environment$\"=\"*\" OR like(environment,\"%$environment$%\")\n| where \"$repo$\"=\"*\" OR like(repo,\"%$repo$%\")\n| where \"$signal$\"=\"*\" OR signal=\"$signal$\"\n| stats count as events dc(repo) as repos dc(job_id) as jobs dc(run_id) as runs latest(_time) as last_time by tenant runner_labels signal\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n| head 100\n",
+                "query": "index=\"${splunk_index}\" sourcetype IN (\"aws:cloudwatchlogs\",\"aws:cloudwatchlogs:forgecicd\") source=\"*:/aws/lambda/*dispatch-to-runner:*\"\n| search forgecicd_log_type=\"dispatch-to-runner\" (level=\"WARN\" OR level=\"ERROR\" OR level=\"warn\" OR level=\"error\")\n| eval tenant=coalesce(forgecicd_tenant,\"unknown\")\n| rex field=message \"runner labels '(?<runner_labels>[^']+)' from '(?<repo>[^']+)'\"\n| rex field=message \"Job ID: (?<job_id>\\d+), Job Name: (?<job_name>.*), Run ID: (?<run_id>\\d+)\"\n| eval runner_labels=coalesce(forgecicd_dispatcher_runner_labels,runner_labels), repo=coalesce(forgecicd_dispatcher_repository,repo), job_id=coalesce(forgecicd_dispatcher_job_id,job_id), job_name=coalesce(forgecicd_dispatcher_job_name,job_name), run_id=coalesce(forgecicd_dispatcher_run_id,run_id)\n| eval signal=case(\n    match(message,\"runner labels .* are not accepted\"), \"labels_not_accepted\",\n    match(message,\"matches non-dynamic labels but does not allow dynamic labels\"), \"dynamic_labels_not_enabled\",\n    match(message,\"dynamic label .* does not match policy\"), \"dynamic_label_policy_reject\",\n    match(message,\"No queue accepts the dynamic labels\"), \"no_dynamic_label_queue\",\n    match(message,\"Dynamic label exceeds max length\"), \"dynamic_label_too_long\",\n    match(message,\"Dynamic label contains invalid characters\"), \"dynamic_label_invalid_chars\",\n    true(), \"other_warn_error\")\n| where isnotnull(runner_labels)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$environment$\"=\"*\" OR like(environment,\"%$environment$%\")\n| where \"$repo$\"=\"*\" OR like(repo,\"%$repo$%\")\n| where \"$signal$\"=\"*\" OR signal=\"$signal$\"\n| stats count as events dc(repo) as repos dc(job_id) as jobs dc(run_id) as runs latest(_time) as last_time by tenant runner_labels signal\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\"), age_minutes=round((now()-last_time)/60,1)\n| sort - events\n| head 100\n",
                 "queryParameters": {
                     "earliest": "$global_time.earliest$",
                     "latest": "$global_time.latest$"
@@ -46,7 +46,7 @@
             "name": "Rejected repositories",
             "options": {
                 "enableSmartSources": true,
-                "query": "index=\"${splunk_index}\" forgecicd_log_type=\"dispatch-to-runner\" (level=\"WARN\" OR level=\"ERROR\" OR level=\"warn\" OR level=\"error\")\n| eval tenant=coalesce(forgecicd_tenant,\"unknown\")\n| rex field=message \"runner labels '(?<runner_labels>[^']+)' from '(?<repo>[^']+)'\"\n| rex field=message \"Job ID: (?<job_id>\\d+), Job Name: (?<job_name>.*), Run ID: (?<run_id>\\d+)\"\n| eval runner_labels=coalesce(forgecicd_dispatcher_runner_labels,runner_labels), repo=coalesce(forgecicd_dispatcher_repository,repo), job_id=coalesce(forgecicd_dispatcher_job_id,job_id), job_name=coalesce(forgecicd_dispatcher_job_name,job_name), run_id=coalesce(forgecicd_dispatcher_run_id,run_id)\n| eval signal=case(\n    match(message,\"runner labels .* are not accepted\"), \"labels_not_accepted\",\n    match(message,\"matches non-dynamic labels but does not allow dynamic labels\"), \"dynamic_labels_not_enabled\",\n    match(message,\"dynamic label .* does not match policy\"), \"dynamic_label_policy_reject\",\n    match(message,\"No queue accepts the dynamic labels\"), \"no_dynamic_label_queue\",\n    match(message,\"Dynamic label exceeds max length\"), \"dynamic_label_too_long\",\n    match(message,\"Dynamic label contains invalid characters\"), \"dynamic_label_invalid_chars\",\n    match(message,\"Failed to handle webhook event\"), \"webhook_handler_failed\",\n    match(message,\"Failed to send event to EventBridge\"), \"eventbridge_send_failed\",\n    match(message,\"Unsupported event type\"), \"unsupported_event_type\",\n    match(message,\"Received event from unauthorized repository\"), \"unauthorized_repository\",\n    true(), \"other_warn_error\")\n| eval repo=coalesce(repo,\"unknown\")\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$environment$\"=\"*\" OR like(environment,\"%$environment$%\")\n| where \"$repo$\"=\"*\" OR like(repo,\"%$repo$%\")\n| where \"$signal$\"=\"*\" OR signal=\"$signal$\"\n| stats count as events dc(job_id) as jobs dc(run_id) as runs values(runner_labels) as labels latest(_time) as last_time by tenant repo signal\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n| head 100\n",
+                "query": "index=\"${splunk_index}\" sourcetype IN (\"aws:cloudwatchlogs\",\"aws:cloudwatchlogs:forgecicd\") source=\"*:/aws/lambda/*dispatch-to-runner:*\"\n| search forgecicd_log_type=\"dispatch-to-runner\" (level=\"WARN\" OR level=\"ERROR\" OR level=\"warn\" OR level=\"error\")\n| eval tenant=coalesce(forgecicd_tenant,\"unknown\")\n| rex field=message \"runner labels '(?<runner_labels>[^']+)' from '(?<repo>[^']+)'\"\n| rex field=message \"Job ID: (?<job_id>\\d+), Job Name: (?<job_name>.*), Run ID: (?<run_id>\\d+)\"\n| eval runner_labels=coalesce(forgecicd_dispatcher_runner_labels,runner_labels), repo=coalesce(forgecicd_dispatcher_repository,repo), job_id=coalesce(forgecicd_dispatcher_job_id,job_id), job_name=coalesce(forgecicd_dispatcher_job_name,job_name), run_id=coalesce(forgecicd_dispatcher_run_id,run_id)\n| eval signal=case(\n    match(message,\"runner labels .* are not accepted\"), \"labels_not_accepted\",\n    match(message,\"matches non-dynamic labels but does not allow dynamic labels\"), \"dynamic_labels_not_enabled\",\n    match(message,\"dynamic label .* does not match policy\"), \"dynamic_label_policy_reject\",\n    match(message,\"No queue accepts the dynamic labels\"), \"no_dynamic_label_queue\",\n    match(message,\"Dynamic label exceeds max length\"), \"dynamic_label_too_long\",\n    match(message,\"Dynamic label contains invalid characters\"), \"dynamic_label_invalid_chars\",\n    match(message,\"Failed to handle webhook event\"), \"webhook_handler_failed\",\n    match(message,\"Failed to send event to EventBridge\"), \"eventbridge_send_failed\",\n    match(message,\"Unsupported event type\"), \"unsupported_event_type\",\n    match(message,\"Received event from unauthorized repository\"), \"unauthorized_repository\",\n    true(), \"other_warn_error\")\n| eval repo=coalesce(repo,\"unknown\")\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$environment$\"=\"*\" OR like(environment,\"%$environment$%\")\n| where \"$repo$\"=\"*\" OR like(repo,\"%$repo$%\")\n| where \"$signal$\"=\"*\" OR signal=\"$signal$\"\n| stats count as events dc(job_id) as jobs dc(run_id) as runs values(runner_labels) as labels latest(_time) as last_time by tenant repo signal\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\"), age_minutes=round((now()-last_time)/60,1)\n| sort - events\n| head 100\n",
                 "queryParameters": {
                     "earliest": "$global_time.earliest$",
                     "latest": "$global_time.latest$"
@@ -58,7 +58,7 @@
             "name": "Dispatcher rejection trend",
             "options": {
                 "enableSmartSources": true,
-                "query": "index=\"${splunk_index}\" forgecicd_log_type=\"dispatch-to-runner\" (level=\"WARN\" OR level=\"ERROR\" OR level=\"warn\" OR level=\"error\")\n| eval tenant=coalesce(forgecicd_tenant,\"unknown\")\n| rex field=message \"runner labels '(?<runner_labels>[^']+)' from '(?<repo>[^']+)'\"\n| eval runner_labels=coalesce(forgecicd_dispatcher_runner_labels,runner_labels), repo=coalesce(forgecicd_dispatcher_repository,repo)\n| eval signal=case(\n    match(message,\"runner labels .* are not accepted\"), \"labels_not_accepted\",\n    match(message,\"matches non-dynamic labels but does not allow dynamic labels\"), \"dynamic_labels_not_enabled\",\n    match(message,\"dynamic label .* does not match policy\"), \"dynamic_label_policy_reject\",\n    match(message,\"No queue accepts the dynamic labels\"), \"no_dynamic_label_queue\",\n    match(message,\"Dynamic label exceeds max length\"), \"dynamic_label_too_long\",\n    match(message,\"Dynamic label contains invalid characters\"), \"dynamic_label_invalid_chars\",\n    match(message,\"Failed to handle webhook event\"), \"webhook_handler_failed\",\n    match(message,\"Failed to send event to EventBridge\"), \"eventbridge_send_failed\",\n    match(message,\"Unsupported event type\"), \"unsupported_event_type\",\n    match(message,\"Received event from unauthorized repository\"), \"unauthorized_repository\",\n    true(), \"other_warn_error\")\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$environment$\"=\"*\" OR like(environment,\"%$environment$%\")\n| where \"$repo$\"=\"*\" OR like(repo,\"%$repo$%\")\n| where \"$signal$\"=\"*\" OR signal=\"$signal$\"\n| timechart span=15m count by signal limit=12\n",
+                "query": "index=\"${splunk_index}\" sourcetype IN (\"aws:cloudwatchlogs\",\"aws:cloudwatchlogs:forgecicd\") source=\"*:/aws/lambda/*dispatch-to-runner:*\"\n| search forgecicd_log_type=\"dispatch-to-runner\" (level=\"WARN\" OR level=\"ERROR\" OR level=\"warn\" OR level=\"error\")\n| eval tenant=coalesce(forgecicd_tenant,\"unknown\")\n| rex field=message \"runner labels '(?<runner_labels>[^']+)' from '(?<repo>[^']+)'\"\n| eval runner_labels=coalesce(forgecicd_dispatcher_runner_labels,runner_labels), repo=coalesce(forgecicd_dispatcher_repository,repo)\n| eval signal=case(\n    match(message,\"runner labels .* are not accepted\"), \"labels_not_accepted\",\n    match(message,\"matches non-dynamic labels but does not allow dynamic labels\"), \"dynamic_labels_not_enabled\",\n    match(message,\"dynamic label .* does not match policy\"), \"dynamic_label_policy_reject\",\n    match(message,\"No queue accepts the dynamic labels\"), \"no_dynamic_label_queue\",\n    match(message,\"Dynamic label exceeds max length\"), \"dynamic_label_too_long\",\n    match(message,\"Dynamic label contains invalid characters\"), \"dynamic_label_invalid_chars\",\n    match(message,\"Failed to handle webhook event\"), \"webhook_handler_failed\",\n    match(message,\"Failed to send event to EventBridge\"), \"eventbridge_send_failed\",\n    match(message,\"Unsupported event type\"), \"unsupported_event_type\",\n    match(message,\"Received event from unauthorized repository\"), \"unauthorized_repository\",\n    true(), \"other_warn_error\")\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$environment$\"=\"*\" OR like(environment,\"%$environment$%\")\n| where \"$repo$\"=\"*\" OR like(repo,\"%$repo$%\")\n| where \"$signal$\"=\"*\" OR signal=\"$signal$\"\n| timechart span=15m count by signal limit=12\n",
                 "queryParameters": {
                     "earliest": "$global_time.earliest$",
                     "latest": "$global_time.latest$"
@@ -191,32 +191,22 @@
                 },
                 "structure": [
                     {
-                        "item": "dispatcher_rejection_summary_table",
-                        "position": {
-                            "h": 380,
-                            "w": 700,
-                            "x": 0,
-                            "y": 0
-                        },
-                        "type": "block"
-                    },
-                    {
-                        "item": "dispatcher_rejection_trend_chart",
-                        "position": {
-                            "h": 380,
-                            "w": 500,
-                            "x": 700,
-                            "y": 0
-                        },
-                        "type": "block"
-                    },
-                    {
                         "item": "dispatcher_rejection_top_repos_table",
                         "position": {
                             "h": 360,
                             "w": 600,
                             "x": 0,
-                            "y": 380
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "dispatcher_rejection_summary_table",
+                        "position": {
+                            "h": 380,
+                            "w": 700,
+                            "x": 0,
+                            "y": 360
                         },
                         "type": "block"
                     },
@@ -225,8 +215,18 @@
                         "position": {
                             "h": 360,
                             "w": 600,
+                            "x": 0,
+                            "y": 740
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "dispatcher_rejection_trend_chart",
+                        "position": {
+                            "h": 380,
+                            "w": 500,
                             "x": 600,
-                            "y": 380
+                            "y": 740
                         },
                         "type": "block"
                     },
@@ -236,7 +236,7 @@
                             "h": 440,
                             "w": 1200,
                             "x": 0,
-                            "y": 740
+                            "y": 1120
                         },
                         "type": "block"
                     }
@@ -265,7 +265,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Latest Rejection Samples",
+            "description": "Answers \"Why were the latest workflow jobs rejected?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. Failure: one or more rows persist or affect workflow jobs. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
+            "title": "Why were the latest workflow jobs rejected?",
             "type": "splunk.table"
         },
         "dispatcher_rejection_summary_table": {
@@ -277,7 +278,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Rejection Summary",
+            "description": "Answers \"Which dispatcher rejection reasons are active?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. Failure: one or more rows persist or affect workflow jobs. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
+            "title": "Which dispatcher rejection reasons are active?",
             "type": "splunk.table"
         },
         "dispatcher_rejection_top_labels_table": {
@@ -289,7 +291,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Rejected Labels",
+            "description": "Answers \"Which labels are being rejected?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. Failure: one or more rows persist or affect workflow jobs. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
+            "title": "Which labels are being rejected?",
             "type": "splunk.table"
         },
         "dispatcher_rejection_top_repos_table": {
@@ -301,7 +304,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Rejected Repositories",
+            "description": "Answers \"Which repositories are affected by rejections?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. Failure: one or more rows persist or affect workflow jobs. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
+            "title": "Which repositories are affected by rejections?",
             "type": "splunk.table"
         },
         "dispatcher_rejection_trend_chart": {
@@ -311,7 +315,8 @@
             "options": {},
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Rejection Trend",
+            "description": "Answers \"Are dispatcher rejections increasing?\" with a time series over the selected global range. Healthy: error, retry, delay, or backlog series remain at the established baseline; activity volume alone is not a failure. Failure: a sustained adverse series aligns with affected jobs or resources. Action: use the actionable table above for tenant and resource identifiers before opening raw events.",
+            "title": "Are dispatcher rejections increasing?",
             "type": "splunk.line"
         }
     }

@@ -149,9 +149,9 @@
                 },
                 "structure": [
                     {
-                        "item": "alert_quality_table",
+                        "item": "hotspots_table",
                         "position": {
-                            "h": 330,
+                            "h": 390,
                             "w": 600,
                             "x": 0,
                             "y": 0
@@ -159,9 +159,9 @@
                         "type": "block"
                     },
                     {
-                        "item": "decision_trend_chart",
+                        "item": "failure_summary_table",
                         "position": {
-                            "h": 330,
+                            "h": 390,
                             "w": 600,
                             "x": 600,
                             "y": 0
@@ -174,37 +174,7 @@
                             "h": 360,
                             "w": 600,
                             "x": 0,
-                            "y": 330
-                        },
-                        "type": "block"
-                    },
-                    {
-                        "item": "worker_outcome_trend_chart",
-                        "position": {
-                            "h": 360,
-                            "w": 600,
-                            "x": 600,
-                            "y": 330
-                        },
-                        "type": "block"
-                    },
-                    {
-                        "item": "hotspots_table",
-                        "position": {
-                            "h": 390,
-                            "w": 600,
-                            "x": 0,
-                            "y": 690
-                        },
-                        "type": "block"
-                    },
-                    {
-                        "item": "failure_summary_table",
-                        "position": {
-                            "h": 390,
-                            "w": 600,
-                            "x": 600,
-                            "y": 690
+                            "y": 390
                         },
                         "type": "block"
                     },
@@ -214,7 +184,37 @@
                             "h": 420,
                             "w": 1200,
                             "x": 0,
-                            "y": 1080
+                            "y": 750
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "alert_quality_table",
+                        "position": {
+                            "h": 330,
+                            "w": 600,
+                            "x": 0,
+                            "y": 1170
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "decision_trend_chart",
+                        "position": {
+                            "h": 330,
+                            "w": 600,
+                            "x": 600,
+                            "y": 1170
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "worker_outcome_trend_chart",
+                        "position": {
+                            "h": 360,
+                            "w": 600,
+                            "x": 0,
+                            "y": 1500
                         },
                         "type": "block"
                     }
@@ -243,7 +243,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Alert Quality and Receiver Decisions",
+            "description": "Answers \"Are stuck-job alerts producing actionable receiver decisions?\" with a time series over the selected global range. Healthy: error, retry, delay, or backlog series remain at the established baseline; activity volume alone is not a failure. Failure: a sustained adverse series aligns with affected jobs or resources. Action: use the actionable table above for tenant and resource identifiers before opening raw events.",
+            "title": "Are stuck-job alerts producing actionable receiver decisions?",
             "type": "splunk.table"
         },
         "decision_trend_chart": {
@@ -253,7 +254,8 @@
             "options": {},
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Receiver Decision Trend",
+            "description": "Answers \"Are receiver skips or rejections increasing?\" with a time series over the selected global range. Healthy: error, retry, delay, or backlog series remain at the established baseline; activity volume alone is not a failure. Failure: a sustained adverse series aligns with affected jobs or resources. Action: use the actionable table above for tenant and resource identifiers before opening raw events.",
+            "title": "Are receiver skips or rejections increasing?",
             "type": "splunk.line"
         },
         "failure_summary_table": {
@@ -265,7 +267,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Failures and Warnings",
+            "description": "Answers \"Which redelivery failures or warnings need action?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. Failure: one or more rows persist or affect workflow jobs. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
+            "title": "Which redelivery failures or warnings need action?",
             "type": "splunk.table"
         },
         "hotspots_table": {
@@ -277,7 +280,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Tenant and Repository Hot Spots",
+            "description": "Answers \"Which tenants or repositories are repeatedly affected?\" for the selected filters and time range. Healthy depends on the workflow stage and is not inferred from a high count alone. Action: identify the affected tenant and resource, then use the next causal-stage panel or raw details to verify impact.",
+            "title": "Which tenants or repositories are repeatedly affected?",
             "type": "splunk.table"
         },
         "stuck_job_control_plane_path_table": {
@@ -289,7 +293,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Stuck Job Control-Plane Path",
+            "description": "Answers \"Where are stuck jobs stopping in the control-plane path?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. Failure: one or more rows persist or affect workflow jobs. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
+            "title": "Where are stuck jobs stopping in the control-plane path?",
             "type": "splunk.table"
         },
         "worker_outcome_summary_table": {
@@ -301,7 +306,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Worker Outcomes",
+            "description": "Answers \"Did redelivery workers reach a terminal outcome?\" for the selected filters and time range. Healthy depends on the workflow stage and is not inferred from a high count alone. Action: identify the affected tenant and resource, then use the next causal-stage panel or raw details to verify impact.",
+            "title": "Did redelivery workers reach a terminal outcome?",
             "type": "splunk.table"
         },
         "worker_outcome_trend_chart": {
@@ -311,7 +317,8 @@
             "options": {},
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Worker Outcome Trend",
+            "description": "Answers \"Are redelivery worker failures increasing?\" with a time series over the selected global range. Healthy: error, retry, delay, or backlog series remain at the established baseline; activity volume alone is not a failure. Failure: a sustained adverse series aligns with affected jobs or resources. Action: use the actionable table above for tenant and resource identifiers before opening raw events.",
+            "title": "Are redelivery worker failures increasing?",
             "type": "splunk.line"
         }
     }
