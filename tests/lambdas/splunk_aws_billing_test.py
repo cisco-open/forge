@@ -335,6 +335,40 @@ def test_extract_arn_parts_for_module_application(monkeypatch, aws):
 
 
 @pytest.mark.parametrize(
+    'config_aliases',
+    [
+        'custom-cwl',
+        'cwl',
+        'secmeta',
+        'custom-cwl_cwl',
+        'custom-cwl_secmeta',
+        'cwl_secmeta',
+        'custom-cwl_cwl_secmeta',
+    ],
+)
+def test_extract_arn_parts_for_cloud_data_manager_config_aliases(
+    monkeypatch,
+    aws,
+    config_aliases,
+):
+    common = _load_billing_module(monkeypatch, 'common')
+
+    parts = common.extract_arn_parts(
+        'arn:aws:resource-groups:us-west-2:123456789012:'
+        'group/integrations_splunk_cloud_data_manager_'
+        f'{config_aliases}_us-west-2/resources'
+    )
+
+    assert parts == {
+        'aws_region': 'us-west-2',
+        'account_id': '123456789012',
+        'forgecicd_module_group': 'integrations',
+        'forgecicd_module': 'splunk_cloud_data_manager',
+        'forgecicd_scope': 'module',
+    }
+
+
+@pytest.mark.parametrize(
     ('application_name', 'module_name'),
     [
         (
