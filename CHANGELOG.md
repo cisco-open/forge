@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.9.1](https://github.com/cisco-open/forge/compare/v4.9.0...v4.9.1) (2026-07-29)
+
+
+### Bug Fixes
+
+* **splunk:** make data manager application names unique ([#596](https://github.com/cisco-open/forge/issues/596)) ([64ebf6e](https://github.com/cisco-open/forge/commit/64ebf6ecdf490cb1e28e75061f2d7e80f732c1af))
+
 ## [4.9.0](https://github.com/cisco-open/forge/compare/v4.8.0...v4.9.0) (2026-07-29)
 
 
