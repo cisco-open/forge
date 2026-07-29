@@ -35,6 +35,7 @@ run "infra_eks_contract" {
       "output \"kubeconfig\"",
       "provider \"aws\"",
       "provider \"kubectl\"",
+      "awsApplication = aws_servicecatalogappregistry_application.this.application_tag[\"awsApplication\"]",
     ]
   }
 
