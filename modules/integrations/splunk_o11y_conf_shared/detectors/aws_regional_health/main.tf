@@ -35,7 +35,8 @@ resource "signalfx_detector" "runner_log_delivery_health" {
 
   program_text = <<-EOF
 records = data('DeliveryToSplunk.Records', filter=(${local.control_plane_filter}) and (${local.runner_log_firehose_filter}) and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='5m').sum(by=['aws_region', 'DeliveryStreamName'])
-success_pct = data('DeliveryToSplunk.Success', filter=(${local.control_plane_filter}) and (${local.runner_log_firehose_filter}) and filter('stat', 'mean'), rollup='average').mean(over='5m').mean(by=['aws_region', 'DeliveryStreamName'])
+success_ratio = data('DeliveryToSplunk.Success', filter=(${local.control_plane_filter}) and (${local.runner_log_firehose_filter}) and filter('stat', 'mean'), rollup='average').mean(over='5m').mean(by=['aws_region', 'DeliveryStreamName'])
+failure_pct = (1 - success_ratio) * 100
 freshness = data('DeliveryToSplunk.DataFreshness', filter=(${local.control_plane_filter}) and (${local.runner_log_firehose_filter}) and filter('stat', 'upper'), rollup='max').max(over='5m').max(by=['aws_region', 'DeliveryStreamName'])
 source_lag = data('KinesisMillisBehindLatest', filter=(${local.control_plane_filter}) and (${local.runner_log_firehose_filter}) and filter('stat', 'upper'), rollup='max').max(over='5m').max(by=['aws_region'])
 source_reads = data('DataReadFromKinesisStream.Records', filter=(${local.control_plane_filter}) and (${local.runner_log_firehose_filter}) and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='5m').sum(by=['aws_region'])
@@ -43,7 +44,7 @@ source_incoming = data('IncomingRecords', filter=(${local.control_plane_filter})
 source_throttles = data('ThrottledGetRecords', filter=(${local.control_plane_filter}) and (${local.runner_log_firehose_filter}) and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='5m').sum(by=['aws_region']) + data('ThrottledGetShardIterator', filter=(${local.control_plane_filter}) and (${local.runner_log_firehose_filter}) and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='5m').sum(by=['aws_region'])
 dlq = data('ApproximateNumberOfMessagesVisible', filter=(${local.control_plane_filter}) and (${local.runner_log_dlq_filter}) and filter('stat', 'upper'), rollup='latest').max(over='5m').max(by=['aws_region', 'QueueName'])
 detect(when(dlq > 0, '5m'), off=when(dlq == 0, '15m')).publish('Runner-log DLQ contains messages')
-detect(when((records > 0) and (success_pct < 100), '5m'), off=when((success_pct == 100) or (records == 0), '10m')).publish('Runner-log Splunk delivery failure')
+detect(when((failure_pct > 0) and (records > 0), '5m'), off=when((failure_pct <= 0) or (records == 0), '10m')).publish('Runner-log Splunk delivery failure')
 detect(when((records > 0) and (freshness > 300), '10m'), off=when(freshness <= 240, '10m')).publish('Runner-log Splunk delivery stale')
 detect(when(source_lag > 300000, '10m'), off=when(source_lag < 60000, '10m')).publish('Runner-log Firehose source lag warning')
 detect(when((source_lag > 900000) or ((source_lag > 300000) and (source_reads < 1) and (source_incoming > 0)), '10m'), off=when(source_lag < 60000, '10m')).publish('Runner-log Firehose source lag critical')
@@ -58,7 +59,7 @@ EOF
   }
 
   rule {
-    description   = "Runner-log delivery success remains below 100 percent for the configured 300-second retry window"
+    description   = "Runner-log delivery failure percentage remains above zero for the configured 300-second retry window"
     severity      = "Critical"
     detect_label  = "Runner-log Splunk delivery failure"
     notifications = var.detector_notifications
