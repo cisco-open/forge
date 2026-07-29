@@ -97,11 +97,11 @@ resource "aws_kms_key" "regional" {
   enable_key_rotation = true
   tags = merge(
     local.all_security_tags,
-    each.value == var.aws_region ? aws_servicecatalogappregistry_application.this.application_tag : aws_servicecatalogappregistry_application.replica[each.value].application_tag,
+    aws_servicecatalogappregistry_application.this[each.value].application_tag,
   )
   tags_all = merge(
     local.all_security_tags,
-    each.value == var.aws_region ? aws_servicecatalogappregistry_application.this.application_tag : aws_servicecatalogappregistry_application.replica[each.value].application_tag,
+    aws_servicecatalogappregistry_application.this[each.value].application_tag,
   )
 }
 
@@ -125,14 +125,8 @@ resource "aws_secretsmanager_secret" "cicd_secrets" {
   description             = each.value.description
   kms_key_id              = aws_kms_key.regional[var.aws_region].arn
   recovery_window_in_days = each.value.recovery_days
-  tags = merge(
-    local.all_security_tags,
-    aws_servicecatalogappregistry_application.this.application_tag,
-  )
-  tags_all = merge(
-    local.all_security_tags,
-    aws_servicecatalogappregistry_application.this.application_tag,
-  )
+  tags                    = local.all_security_tags
+  tags_all                = local.all_security_tags
 
   dynamic "replica" {
     for_each = var.replica_regions
@@ -144,10 +138,16 @@ resource "aws_secretsmanager_secret" "cicd_secrets" {
 
 }
 
-# Replica blocks do not support tags, so manage each replica's regional
-# AppRegistry association through the regional Secrets Manager endpoint.
-resource "aws_secretsmanager_tag" "cicd_secret_replica_application" {
-  for_each = local.secret_replica_application_tags
+# Manage every secret's AppRegistry association through its regional
+# Secrets Manager endpoint, including the primary region.
+resource "aws_secretsmanager_tag" "cicd_secret_application" {
+  for_each = {
+    for replica in setproduct(keys(aws_secretsmanager_secret.cicd_secrets), local.all_regions) :
+    "${replica[0]}:${replica[1]}" => {
+      secret_name = replica[0]
+      region      = replica[1]
+    }
+  }
   provider = aws.by_region[each.value.region]
 
   secret_id = replace(
@@ -156,7 +156,7 @@ resource "aws_secretsmanager_tag" "cicd_secret_replica_application" {
     ":${each.value.region}:",
   )
   key   = "awsApplication"
-  value = aws_servicecatalogappregistry_application.replica[each.value.region].application_tag["awsApplication"]
+  value = aws_servicecatalogappregistry_application.this[each.value.region].application_tag["awsApplication"]
 }
 
 # Force a delay between secret creation and seeding. We only need a few
