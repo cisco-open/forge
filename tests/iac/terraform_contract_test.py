@@ -532,6 +532,10 @@ def test_splunk_runner_logs_caps_parallel_sqs_scaling() -> None:
     )
     assert '"sqs:SendMessage"' in lambda_tf
     assert 'batch_size                         = 1' in event_source
+    assert (
+        'function_response_types            = ["ReportBatchItemFailures"]'
+        in event_source
+    )
     assert re.search(r'(?m)^\s*scaling_config\s*{', event_source)
     assert (
         'maximum_concurrency = '

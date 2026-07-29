@@ -526,12 +526,16 @@ def test_lambda_handler_logs_sqs_retry_identity(monkeypatch, aws, caplog):
         return 0
 
     monkeypatch.setattr(mod, 'process_log_checkpoint', _process_checkpoint)
+    monkeypatch.setattr(mod.time, 'time', lambda: 2000.0)
 
     result = mod.lambda_handler(
         {
             'Records': [{
                 'messageId': 'retried-message-1',
-                'attributes': {'ApproximateReceiveCount': '3'},
+                'attributes': {
+                    'ApproximateReceiveCount': '3',
+                    'SentTimestamp': '1990000',
+                },
                 'body': json.dumps({mod.CHECKPOINT_FIELD: checkpoint}),
             }],
         },
@@ -539,8 +543,10 @@ def test_lambda_handler_logs_sqs_retry_identity(monkeypatch, aws, caplog):
     )
 
     assert json.loads(result['body']) == {'lines': 0}
+    assert result['batchItemFailures'] == []
     assert (
-        'sqs_message_received message_id=retried-message-1 receive_count=3'
+        'sqs_message_received message_id=retried-message-1 receive_count=3 '
+        'sent_timestamp=1990000 age_seconds=10.000'
         in caplog.text
     )
     assert checkpoint_calls == [(
@@ -550,6 +556,78 @@ def test_lambda_handler_logs_sqs_retry_identity(monkeypatch, aws, caplog):
             'sqs_receive_count': '3',
         },
     )]
+
+
+def test_lambda_handler_reports_invalid_json_as_batch_failure(
+    monkeypatch, aws, caplog
+):
+    mod = _load_splunk(monkeypatch)
+
+    result = mod.lambda_handler(
+        {
+            'Records': [{
+                'messageId': 'invalid-json-message',
+                'attributes': {
+                    'ApproximateReceiveCount': '2',
+                    'SentTimestamp': 'invalid',
+                },
+                'body': '{not-json',
+            }],
+        },
+        None,
+    )
+
+    assert json.loads(result['body']) == {'lines': 0}
+    assert result['batchItemFailures'] == [{
+        'itemIdentifier': 'invalid-json-message',
+    }]
+    assert (
+        'sqs_message_failed message_id=invalid-json-message receive_count=2 '
+        'sent_timestamp=invalid age_seconds=unknown'
+        in caplog.text
+    )
+
+
+def test_lambda_handler_reports_json_ingestion_failure(
+    monkeypatch, s3_kms, caplog
+):
+    mod = _load_splunk(monkeypatch)
+    bucket = s3_kms['buckets']['alpha']
+    key = 'acme/app/99/1/failed.json'
+    s3_kms['s3'].put_object(Bucket=bucket, Key=key, Body=b'{"ok":true}')
+
+    def _fail_shipping(*_args, **_kwargs):
+        raise RuntimeError('Kinesis unavailable')
+
+    monkeypatch.setattr(mod, 'ship_lines_to_kinesis', _fail_shipping)
+
+    result = mod.lambda_handler(
+        {
+            'Records': [{
+                'messageId': 'failed-json-message',
+                'attributes': {'ApproximateReceiveCount': '1'},
+                'body': json.dumps({
+                    'Records': [{
+                        's3': {
+                            'bucket': {'name': bucket},
+                            'object': {'key': key},
+                        },
+                    }],
+                }),
+            }],
+        },
+        None,
+    )
+
+    assert json.loads(result['body']) == {'lines': 0}
+    assert result['batchItemFailures'] == [{
+        'itemIdentifier': 'failed-json-message',
+    }]
+    assert 'json_object_failed' in caplog.text
+    assert (
+        'sqs_message_failed message_id=failed-json-message receive_count=1'
+        in caplog.text
+    )
 
 
 def test_process_s3_object_does_not_checkpoint_failed_chunk(

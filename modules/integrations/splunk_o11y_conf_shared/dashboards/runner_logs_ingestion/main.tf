@@ -277,7 +277,7 @@ EOF
 
 resource "signalfx_time_chart" "kinesis_iterator_age" {
   name         = "Runner-log Kinesis iterator age"
-  description  = "Maximum Firehose consumer lag on the runner-log stream."
+  description  = "Maximum lag across all GetRecords consumers on the runner-log stream. Use the Firehose source-reader lag panel to isolate the managed Firehose consumer."
   program_text = "A = data('GetRecords.IteratorAgeMilliseconds', filter=(${local.aws_platform_filter}) and (${local.kinesis_filter}) and filter('stat', 'upper'), rollup='max').max(over='5m').max(by=['aws_region', 'StreamName']).publish(label='A')"
   plot_type    = "LineChart"
   time_range   = 3600
@@ -286,6 +286,65 @@ resource "signalfx_time_chart" "kinesis_iterator_age" {
     display_name = "Iterator age"
     label        = "A"
     value_unit   = "Millisecond"
+  }
+}
+
+resource "signalfx_time_chart" "firehose_source_lag" {
+  name         = "Runner-log Firehose source-reader lag"
+  description  = "Firehose-specific distance from the newest record in the source Kinesis stream. This distinguishes a managed Firehose reader pause from another Kinesis consumer."
+  program_text = "A = data('KinesisMillisBehindLatest', filter=(${local.aws_platform_filter}) and (${local.firehose_filter}) and filter('stat', 'upper'), rollup='max').max(over='5m').max(by=['aws_region', 'DeliveryStreamName']).publish(label='A')"
+  plot_type    = "LineChart"
+  time_range   = 21600
+
+  viz_options {
+    display_name = "Firehose source lag"
+    label        = "A"
+    value_unit   = "Millisecond"
+  }
+}
+
+resource "signalfx_time_chart" "firehose_source_reads" {
+  name             = "Runner-log Firehose source reads"
+  description      = "Records and bytes read by Firehose from the source Kinesis stream per five minutes."
+  program_text     = <<-EOF
+records = data('DataReadFromKinesisStream.Records', filter=(${local.aws_platform_filter}) and (${local.firehose_filter}) and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='5m').sum(by=['aws_region', 'DeliveryStreamName']).publish(label='A')
+bytes = data('DataReadFromKinesisStream.Bytes', filter=(${local.aws_platform_filter}) and (${local.firehose_filter}) and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='5m').sum(by=['aws_region', 'DeliveryStreamName']).publish(label='B')
+EOF
+  plot_type        = "LineChart"
+  disable_sampling = true
+  time_range       = 21600
+
+  viz_options {
+    axis         = "left"
+    display_name = "Records read"
+    label        = "A"
+  }
+  viz_options {
+    axis         = "right"
+    display_name = "Bytes read"
+    label        = "B"
+    value_unit   = "Byte"
+  }
+}
+
+resource "signalfx_time_chart" "firehose_source_throttles" {
+  name             = "Runner-log Firehose source throttles"
+  description      = "Firehose GetRecords and GetShardIterator throttling against the source Kinesis stream per five minutes."
+  program_text     = <<-EOF
+get_records = data('ThrottledGetRecords', filter=(${local.aws_platform_filter}) and (${local.firehose_filter}) and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='5m').sum(by=['aws_region', 'DeliveryStreamName']).publish(label='A')
+get_shard_iterator = data('ThrottledGetShardIterator', filter=(${local.aws_platform_filter}) and (${local.firehose_filter}) and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='5m').sum(by=['aws_region', 'DeliveryStreamName']).publish(label='B')
+EOF
+  plot_type        = "ColumnChart"
+  disable_sampling = true
+  time_range       = 21600
+
+  viz_options {
+    display_name = "GetRecords throttled"
+    label        = "A"
+  }
+  viz_options {
+    display_name = "GetShardIterator throttled"
+    label        = "B"
   }
 }
 
@@ -499,9 +558,30 @@ resource "signalfx_dashboard" "runner_logs_ingestion" {
   }
   chart {
     chart_id = signalfx_time_chart.oldest_message_trend.id
-    row      = 6
+    row      = 7
     column   = 0
     width    = 12
+    height   = 1
+  }
+  chart {
+    chart_id = signalfx_time_chart.firehose_source_lag.id
+    row      = 6
+    column   = 0
+    width    = 4
+    height   = 1
+  }
+  chart {
+    chart_id = signalfx_time_chart.firehose_source_reads.id
+    row      = 6
+    column   = 4
+    width    = 4
+    height   = 1
+  }
+  chart {
+    chart_id = signalfx_time_chart.firehose_source_throttles.id
+    row      = 6
+    column   = 8
+    width    = 4
     height   = 1
   }
 }

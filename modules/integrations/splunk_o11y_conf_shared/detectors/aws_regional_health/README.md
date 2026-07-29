@@ -19,6 +19,12 @@ level because their baselines vary materially by tenant and region. The
 control-plane detector only evaluates shared functions without a TenantName
 tag and requires sustained throttling before alerting.
 
+The runner-log delivery detector also monitors the Firehose Kinesis source
+reader. It warns when the reader remains more than five minutes behind for 10
+minutes, becomes critical above 15 minutes or when input continues while reads
+stop, and reports sustained source-reader throttling. It clears lag alerts only
+after lag remains below one minute for 10 minutes.
+
 ## Ownership and configuration
 
 This detector is an internal submodule of `splunk_o11y_conf_shared`; deploy the
