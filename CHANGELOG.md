@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.9.2](https://github.com/cisco-open/forge/compare/v4.9.1...v4.9.2) (2026-07-29)
+
+
+### Bug Fixes
+
+* **runner-logs:** correct delivery failure detector ([#598](https://github.com/cisco-open/forge/issues/598)) ([2e5871a](https://github.com/cisco-open/forge/commit/2e5871a999adbc5a9f10d874fb77b35a8294b71f))
+
 ## [4.9.1](https://github.com/cisco-open/forge/compare/v4.9.0...v4.9.1) (2026-07-29)
 
 
