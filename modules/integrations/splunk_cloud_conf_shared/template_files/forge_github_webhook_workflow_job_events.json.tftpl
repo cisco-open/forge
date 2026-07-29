@@ -1,0 +1,508 @@
+{
+    "applicationProperties": {
+        "collapseNavigation": true
+    },
+    "dataSources": {
+        "canceled_jobs_search": {
+            "name": "Canceled workflow_job events",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype IN (\"aws:cloudwatchlogs\",\"aws:cloudwatchlogs:forgecicd\") source=\"*:/aws/lambda/*-webhook:*\" \"Github event\"\n| spath path=github.github-event output=github_event\n| spath path=github.repository output=repository\n| spath path=github.action output=action\n| spath path=github.status output=status\n| spath path=github.conclusion output=conclusion\n| spath path=github.name output=job\n| spath path=github.workflowJobId output=workflow_job_id\n| spath path=github.workflowJobUrl output=workflow_job_url\n| spath path=github.runId output=run_id\n| spath path=github.runAttempt output=run_attempt\n| spath path=github.runUrl output=run_url\n| spath path=github.workflowName output=workflow_name\n| spath path=github.labels{} output=labels\n| spath path=github.headSha output=head_sha\n| spath path=github.headBranch output=head_branch\n| spath path=github.created_at output=created_at\n| spath path=github.started_at output=started_at\n| spath path=github.completed_at output=completed_at\n| spath path=github.github-delivery output=delivery_id\n| where github_event=\"workflow_job\" AND status=\"completed\" AND conclusion=\"cancelled\"\n| where \"$tenant$\"=\"*\" OR forgecicd_tenant=\"$tenant$\"\n| where \"$repository$\"=\"*\" OR like(repository, \"%$repository$%\")\n| where \"$workflow$\"=\"*\" OR like(workflow_name, \"%$workflow$%\")\n| where \"$branch$\"=\"*\" OR like(head_branch, \"%$branch$%\")\n| eval started_epoch=strptime(started_at, \"%Y-%m-%dT%H:%M:%SZ\")\n| eval completed_epoch=strptime(completed_at, \"%Y-%m-%dT%H:%M:%SZ\")\n| eval duration=if(isnotnull(completed_epoch) AND isnotnull(started_epoch), tostring(completed_epoch-started_epoch, \"duration\"), null())\n| table _time forgecicd_tenant repository workflow_name head_branch head_sha labels job workflow_job_id workflow_job_url run_id run_attempt run_url conclusion created_at started_at completed_at duration delivery_id xray_trace_id message\n| sort - _time\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "failed_jobs_search": {
+            "name": "Failed workflow_job events",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype IN (\"aws:cloudwatchlogs\",\"aws:cloudwatchlogs:forgecicd\") source=\"*:/aws/lambda/*-webhook:*\" \"Github event\"\n| spath path=github.github-event output=github_event\n| spath path=github.repository output=repository\n| spath path=github.action output=action\n| spath path=github.status output=status\n| spath path=github.conclusion output=conclusion\n| spath path=github.name output=job\n| spath path=github.workflowJobId output=workflow_job_id\n| spath path=github.workflowJobUrl output=workflow_job_url\n| spath path=github.runId output=run_id\n| spath path=github.runAttempt output=run_attempt\n| spath path=github.runUrl output=run_url\n| spath path=github.workflowName output=workflow_name\n| spath path=github.labels{} output=labels\n| spath path=github.headSha output=head_sha\n| spath path=github.headBranch output=head_branch\n| spath path=github.created_at output=created_at\n| spath path=github.started_at output=started_at\n| spath path=github.completed_at output=completed_at\n| spath path=github.github-delivery output=delivery_id\n| where github_event=\"workflow_job\" AND status=\"completed\" AND conclusion=\"failure\"\n| where \"$tenant$\"=\"*\" OR forgecicd_tenant=\"$tenant$\"\n| where \"$repository$\"=\"*\" OR like(repository, \"%$repository$%\")\n| where \"$workflow$\"=\"*\" OR like(workflow_name, \"%$workflow$%\")\n| where \"$branch$\"=\"*\" OR like(head_branch, \"%$branch$%\")\n| eval started_epoch=strptime(started_at, \"%Y-%m-%dT%H:%M:%SZ\")\n| eval completed_epoch=strptime(completed_at, \"%Y-%m-%dT%H:%M:%SZ\")\n| eval duration=if(isnotnull(completed_epoch) AND isnotnull(started_epoch), tostring(completed_epoch-started_epoch, \"duration\"), null())\n| table _time forgecicd_tenant repository workflow_name head_branch head_sha labels job workflow_job_id workflow_job_url run_id run_attempt run_url conclusion created_at started_at completed_at duration delivery_id xray_trace_id message\n| sort - _time\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "github_webhook_workflow_jobs_search": {
+            "name": "GitHub webhook workflow_job events",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype IN (\"aws:cloudwatchlogs\",\"aws:cloudwatchlogs:forgecicd\") source=\"*:/aws/lambda/*-webhook:*\" \"Github event\"\n| spath path=github.github-event output=github_event\n| spath path=github.repository output=repository\n| spath path=github.action output=action\n| spath path=github.status output=status\n| spath path=github.conclusion output=conclusion\n| spath path=github.name output=job\n| spath path=github.workflowJobId output=workflow_job_id\n| spath path=github.workflowJobUrl output=workflow_job_url\n| spath path=github.runId output=run_id\n| spath path=github.runAttempt output=run_attempt\n| spath path=github.runUrl output=run_url\n| spath path=github.workflowName output=workflow_name\n| spath path=github.labels{} output=labels\n| spath path=github.headSha output=head_sha\n| spath path=github.headBranch output=head_branch\n| spath path=github.created_at output=created_at\n| spath path=github.started_at output=started_at\n| spath path=github.completed_at output=completed_at\n| spath path=github.github-delivery output=delivery_id\n| spath path=github.github-hook-id output=hook_id\n| spath path=github.github-hook-installation-target-id output=installation_target_id\n| where github_event=\"workflow_job\"\n| where \"$tenant$\"=\"*\" OR forgecicd_tenant=\"$tenant$\"\n| where \"$repository$\"=\"*\" OR like(repository, \"%$repository$%\")\n| where \"$workflow$\"=\"*\" OR like(workflow_name, \"%$workflow$%\")\n| where \"$branch$\"=\"*\" OR like(head_branch, \"%$branch$%\")\n| eval aws_region=coalesce(aws_region, region, Region)\n| eval aws_request_id='aws-request-id'\n| eval started_epoch=strptime(started_at, \"%Y-%m-%dT%H:%M:%SZ\")\n| eval completed_epoch=strptime(completed_at, \"%Y-%m-%dT%H:%M:%SZ\")\n| eval duration=if(isnotnull(completed_epoch) AND isnotnull(started_epoch), tostring(completed_epoch-started_epoch, \"duration\"), null())\n| table _time timestamp forgecicd_tenant forgecicd_region_alias forgecicd_vpc_alias aws_region forgecicd_log_type repository workflow_name head_branch head_sha labels github_event action status conclusion job workflow_job_id workflow_job_url run_id run_attempt run_url created_at started_at completed_at duration delivery_id hook_id installation_target_id aws_request_id xray_trace_id message\n| sort - _time\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "queued_jobs_base_search": {
+            "name": "Queued workflow jobs without a later start event",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype IN (\"aws:cloudwatchlogs\",\"aws:cloudwatchlogs:forgecicd\") source=\"*:/aws/lambda/*-webhook:*\"\n| spath path=github.github-event output=github_event\n| spath path=github.status output=job_status\n| spath path=github.workflowJobId output=workflow_job_id\n| spath path=github.repository output=repository\n| spath path=github.workflowName output=workflow_name\n| spath path=github.headBranch output=head_branch\n| spath path=github.headSha output=head_sha\n| spath path=github.labels{} output=labels\n| spath path=github.name output=job_name\n| spath path=github.workflowJobUrl output=workflow_job_url\n| spath path=github.runId output=run_id\n| spath path=github.runAttempt output=run_attempt\n| spath path=github.runUrl output=run_url\n| spath path=github.created_at output=created_at\n| spath path=github.started_at output=started_at\n| eval stage=case(\n    github_event=\"workflow_job\" AND job_status=\"queued\",\"queued_webhook\",\n    github_event=\"workflow_job\" AND job_status=\"in_progress\",\"runner_in_progress\",\n    github_event=\"workflow_job\" AND job_status=\"completed\",\"runner_completed\",\n    true(),\"other\")\n| where stage!=\"other\" AND isnotnull(workflow_job_id)\n| stats min(eval(if(stage=\"queued_webhook\",_time,null()))) as queued_time\n    max(eval(if(stage=\"queued_webhook\",1,0))) as queued_webhook\n    max(eval(if(stage=\"runner_in_progress\" OR stage=\"runner_completed\",1,0))) as runner_started\n    latest(forgecicd_tenant) as forgecicd_tenant\n    latest(repository) as repository\n    latest(workflow_name) as workflow_name\n    latest(head_branch) as head_branch\n    latest(head_sha) as head_sha\n    values(labels) as labels\n    latest(job_name) as job_name\n    latest(workflow_job_url) as workflow_job_url\n    latest(run_id) as run_id\n    latest(run_attempt) as run_attempt\n    latest(run_url) as run_url\n    latest(created_at) as created_at\n    latest(started_at) as started_at\n    by workflow_job_id\n| where \"$tenant$\"=\"*\" OR forgecicd_tenant=\"$tenant$\"\n| where \"$repository$\"=\"*\" OR like(repository, \"%$repository$%\")\n| where \"$workflow$\"=\"*\" OR like(workflow_name, \"%$workflow$%\")\n| where \"$branch$\"=\"*\" OR like(head_branch, \"%$branch$%\")\n| eval age_seconds=now()-queued_time\n| where queued_webhook=1 AND runner_started=0 AND age_seconds>900 AND age_seconds<=86400\n| fields workflow_job_id forgecicd_tenant repository workflow_name head_branch head_sha labels job_name workflow_job_url run_id run_attempt run_url created_at started_at queued_time age_seconds\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "queued_jobs_search": {
+            "name": "Workflow jobs still queued",
+            "options": {
+                "extend": "queued_jobs_base_search",
+                "query": "| eval stuck_minutes=round(age_seconds/60,1), queued_since=strftime(queued_time,\"%Y-%m-%d %H:%M:%S\")\n| eval operator_action=\"Validate labels and tenant mapping, then follow webhook, dispatcher, SQS, and the matching EC2 or ARC capacity path.\"\n| table forgecicd_tenant repository workflow_name head_branch labels job_name workflow_job_id workflow_job_url run_id run_attempt run_url queued_since stuck_minutes operator_action\n| sort - stuck_minutes\n"
+            },
+            "type": "ds.chain"
+        },
+        "queued_jobs_summary_search": {
+            "name": "Queued workflow-job summary",
+            "options": {
+                "extend": "queued_jobs_base_search",
+                "query": "| stats count as queued_jobs dc(forgecicd_tenant) as affected_tenants max(age_seconds) as oldest_queued_seconds\n| eval queued_jobs=coalesce(queued_jobs,0), affected_tenants=coalesce(affected_tenants,0), oldest_queued_minutes=round(coalesce(oldest_queued_seconds,0)/60,1)\n| fields queued_jobs affected_tenants oldest_queued_minutes\n"
+            },
+            "type": "ds.chain"
+        },
+        "tenant_health_summary_search": {
+            "name": "Per-tenant job health",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype IN (\"aws:cloudwatchlogs\",\"aws:cloudwatchlogs:forgecicd\") source=\"*:/aws/lambda/*-webhook:*\" \"Github event\"\n| spath path=github.github-event output=github_event\n| spath path=github.repository output=repository\n| spath path=github.action output=action\n| spath path=github.status output=status\n| spath path=github.conclusion output=conclusion\n| spath path=github.workflowName output=workflow_name\n| spath path=github.headBranch output=head_branch\n| where github_event=\"workflow_job\"\n| where \"$tenant$\"=\"*\" OR forgecicd_tenant=\"$tenant$\"\n| where \"$repository$\"=\"*\" OR like(repository, \"%$repository$%\")\n| where \"$workflow$\"=\"*\" OR like(workflow_name, \"%$workflow$%\")\n| where \"$branch$\"=\"*\" OR like(head_branch, \"%$branch$%\")\n| eval failed=if(status=\"completed\" AND conclusion=\"failure\", 1, 0)\n| eval canceled=if(status=\"completed\" AND (conclusion=\"cancelled\" OR conclusion=\"canceled\"), 1, 0)\n| stats sum(failed) as failed_jobs sum(canceled) as canceled_jobs count as workflow_jobs by forgecicd_tenant\n| where failed_jobs>0 OR canceled_jobs>0\n| sort - failed_jobs - canceled_jobs\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "webhook_relay_base_search": {
+            "name": "Shared webhook relay events",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype IN (\"aws:cloudwatchlogs\",\"aws:cloudwatchlogs:forgecicd\")\nsource=\"*:/aws/lambda/*validate-signature*\"\n| spath path=level output=log_level\n| rex field=_raw \"FailedEntryCount['\\\\\\\"]?[:=]\\\\s*(?<failed_entries>\\\\d+)\"\n| eval relay_status=case(\n    searchmatch(\"Signature mismatch\"),\"signature_rejected\",\n    searchmatch(\"Unhandled exception in validate_signature lambda\") OR searchmatch(\"Task timed out\") OR searchmatch(\"Runtime.ExitError\") OR log_level=\"ERROR\",\"lambda_error\",\n    searchmatch(\"Event forwarded to EventBridge\") AND tonumber(failed_entries)>0,\"eventbridge_failed\",\n    searchmatch(\"Event forwarded to EventBridge\") AND tonumber(failed_entries)=0,\"eventbridge_forwarded\",\n    searchmatch(\"Event forwarded to EventBridge\"),\"eventbridge_unknown\",\n    searchmatch(\"Received GitHub webhook\"),\"received\",\n    true(),\"other\")\n| where relay_status!=\"other\"\n| fields _time relay_status source\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "webhook_relay_health_search": {
+            "name": "Shared webhook relay health trend",
+            "options": {
+                "extend": "webhook_relay_base_search",
+                "query": "| timechart span=15m count by relay_status"
+            },
+            "type": "ds.chain"
+        },
+        "webhook_relay_summary_search": {
+            "name": "Shared webhook relay failure summary",
+            "options": {
+                "extend": "webhook_relay_base_search",
+                "query": "| stats sum(eval(if(relay_status=\"eventbridge_failed\" OR relay_status=\"lambda_error\",1,0))) as relay_failures\n| eval relay_failures=coalesce(relay_failures,0)\n"
+            },
+            "type": "ds.chain"
+        },
+        "workflow_activity_trend_search": {
+            "name": "Workflow-job activity trend",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype IN (\"aws:cloudwatchlogs\",\"aws:cloudwatchlogs:forgecicd\") source=\"*:/aws/lambda/*-webhook:*\"\n| spath path=github.github-event output=github_event\n| spath path=github.workflowJobId output=workflow_job_id\n| spath path=github.repository output=repository\n| spath path=github.workflowName output=workflow_name\n| spath path=github.headBranch output=head_branch\n| spath path=github.status output=status\n| where github_event=\"workflow_job\" AND status IN (\"queued\",\"in_progress\",\"completed\")\n| where \"$tenant$\"=\"*\" OR forgecicd_tenant=\"$tenant$\"\n| where \"$repository$\"=\"*\" OR like(repository, \"%$repository$%\")\n| where \"$workflow$\"=\"*\" OR like(workflow_name, \"%$workflow$%\")\n| where \"$branch$\"=\"*\" OR like(head_branch, \"%$branch$%\")\n| timechart span=15m dc(workflow_job_id) by status\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "workflow_branch_summary_search": {
+            "name": "Workflow and branch activity",
+            "options": {
+                "enableSmartSources": true,
+                "query": "index=\"${splunk_index}\" sourcetype IN (\"aws:cloudwatchlogs\",\"aws:cloudwatchlogs:forgecicd\") source=\"*:/aws/lambda/*-webhook:*\" \"Github event\"\n| spath path=github.github-event output=github_event\n| spath path=github.repository output=repository\n| spath path=github.action output=action\n| spath path=github.status output=status\n| spath path=github.conclusion output=conclusion\n| spath path=github.workflowJobId output=workflow_job_id\n| spath path=github.workflowName output=workflow_name\n| spath path=github.labels{} output=labels\n| spath path=github.headBranch output=head_branch\n| spath path=github.headSha output=head_sha\n| where github_event=\"workflow_job\"\n| where \"$tenant$\"=\"*\" OR forgecicd_tenant=\"$tenant$\"\n| where \"$repository$\"=\"*\" OR like(repository, \"%$repository$%\")\n| where \"$workflow$\"=\"*\" OR like(workflow_name, \"%$workflow$%\")\n| where \"$branch$\"=\"*\" OR like(head_branch, \"%$branch$%\")\n| eval queued=if(action=\"queued\", 1, 0)\n| eval in_progress=if(action=\"in_progress\", 1, 0)\n| eval completed=if(action=\"completed\", 1, 0)\n| eval failures=if(status=\"completed\" AND conclusion=\"failure\", 1, 0)\n| eval canceled=if(status=\"completed\" AND (conclusion=\"cancelled\" OR conclusion=\"canceled\"), 1, 0)\n| stats count as events dc(workflow_job_id) as jobs sum(queued) as queued sum(in_progress) as in_progress sum(completed) as completed sum(failures) as failures sum(canceled) as canceled values(labels) as labels latest(head_sha) as head_sha latest(_time) as last_time by forgecicd_tenant repository workflow_name head_branch\n| eval last_seen=strftime(last_time, \"%Y-%m-%dT%H:%M:%S%Z\")\n| table forgecicd_tenant repository workflow_name head_branch head_sha labels events jobs queued in_progress completed failures canceled last_seen\n| sort - failures - queued - events\n",
+                "queryParameters": {
+                    "earliest": "$global_time.earliest$",
+                    "latest": "$global_time.latest$"
+                }
+            },
+            "type": "ds.search"
+        }
+    },
+    "defaults": {
+        "dataSources": {
+            "ds.search": {
+                "options": {
+                    "queryParameters": {
+                        "earliest": "$global_time.earliest$",
+                        "latest": "$global_time.latest$"
+                    }
+                }
+            }
+        }
+    },
+    "description": "Operator view of shared webhook ingress, queued-job aging, workflow outcomes, trends, and raw workflow_job events. Empty actionable tables are healthy.",
+    "inputs": {
+        "input_branch": {
+            "options": {
+                "defaultValue": "*",
+                "token": "branch"
+            },
+            "title": "Head Branch",
+            "type": "input.text"
+        },
+        "input_global_time": {
+            "options": {
+                "defaultValue": "-24h@h,now",
+                "token": "global_time"
+            },
+            "title": "Global Time Range",
+            "type": "input.timerange"
+        },
+        "input_repository": {
+            "options": {
+                "defaultValue": "*",
+                "token": "repository"
+            },
+            "title": "Repository",
+            "type": "input.text"
+        },
+        "input_tenant": {
+            "options": {
+                "defaultValue": "*",
+                "items": ${jsonencode(
+                    concat(
+                        [{ label = "All", value = "*" }],
+                        [for tenant in tenants : { label = tenant, value = tenant }]
+                    )
+                )},
+                "token": "tenant"
+            },
+            "title": "Forge Tenant",
+            "type": "input.dropdown"
+        },
+        "input_workflow": {
+            "options": {
+                "defaultValue": "*",
+                "token": "workflow"
+            },
+            "title": "Workflow",
+            "type": "input.text"
+        }
+    },
+    "layout": {
+        "globalInputs": [
+            "input_global_time",
+            "input_tenant",
+            "input_repository",
+            "input_workflow",
+            "input_branch"
+        ],
+        "layoutDefinitions": {
+            "layout": {
+                "options": {
+                    "gutterSize": 9
+                },
+                "structure": [
+                    {
+                        "item": "queued_jobs_single",
+                        "position": {
+                            "h": 220,
+                            "w": 300,
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "affected_tenants_single",
+                        "position": {
+                            "h": 220,
+                            "w": 300,
+                            "x": 300,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "oldest_queued_job_single",
+                        "position": {
+                            "h": 220,
+                            "w": 300,
+                            "x": 600,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "relay_failures_single",
+                        "position": {
+                            "h": 220,
+                            "w": 300,
+                            "x": 900,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "queued_jobs_table",
+                        "position": {
+                            "h": 360,
+                            "w": 1200,
+                            "x": 0,
+                            "y": 220
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "webhook_relay_health_chart",
+                        "position": {
+                            "h": 360,
+                            "w": 1200,
+                            "x": 0,
+                            "y": 580
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "tenant_health_summary_table",
+                        "position": {
+                            "h": 260,
+                            "w": 1200,
+                            "x": 0,
+                            "y": 940
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "workflow_activity_trend_chart",
+                        "position": {
+                            "h": 360,
+                            "w": 1200,
+                            "x": 0,
+                            "y": 1200
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "failed_jobs_table",
+                        "position": {
+                            "h": 360,
+                            "w": 600,
+                            "x": 0,
+                            "y": 1560
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "canceled_jobs_table",
+                        "position": {
+                            "h": 360,
+                            "w": 600,
+                            "x": 600,
+                            "y": 1560
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "workflow_branch_summary_table",
+                        "position": {
+                            "h": 340,
+                            "w": 1200,
+                            "x": 0,
+                            "y": 1920
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "github_webhook_workflow_jobs_table",
+                        "position": {
+                            "h": 620,
+                            "w": 1200,
+                            "x": 0,
+                            "y": 2260
+                        },
+                        "type": "block"
+                    }
+                ],
+                "type": "grid"
+            }
+        },
+        "options": {},
+        "tabs": {
+            "items": [
+                {
+                    "label": "Workflow Jobs",
+                    "layoutId": "layout"
+                }
+            ]
+        }
+    },
+    "title": "Forge GitHub Webhook Workflow Job Events",
+    "visualizations": {
+        "affected_tenants_single": {
+            "dataSources": {
+                "primary": "queued_jobs_summary_search"
+            },
+            "description": "Tenants with at least one workflow job queued for more than 15 minutes and no later in_progress or completed event. Healthy: 0.",
+            "options": {
+                "majorValue": "> primary | seriesByName('affected_tenants') | lastPoint()",
+                "sparklineDisplay": "off",
+                "trendDisplay": "off"
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Tenants with queued workflow jobs",
+            "type": "splunk.singlevalue"
+        },
+        "canceled_jobs_table": {
+            "dataSources": {
+                "primary": "canceled_jobs_search"
+            },
+            "description": "Workflow jobs that completed with a canceled conclusion. Cancellation may be user- or workflow-driven and is not automatically a platform failure.",
+            "options": {
+                "count": 20
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Which workflow jobs were canceled?",
+            "type": "splunk.table"
+        },
+        "failed_jobs_table": {
+            "dataSources": {
+                "primary": "failed_jobs_search"
+            },
+            "description": "Workflow jobs that completed with a failure conclusion. These are workload outcomes, not proof of a Forge failure. Inspect the workflow run and runner logs before assigning ownership.",
+            "options": {
+                "count": 20
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Which workflow jobs completed with failure?",
+            "type": "splunk.table"
+        },
+        "github_webhook_workflow_jobs_table": {
+            "dataSources": {
+                "primary": "github_webhook_workflow_jobs_search"
+            },
+            "description": "Raw tenant workflow_job webhook events for investigation after a summary or diagnostic panel identifies impact. Use delivery, workflow-job, run, request, and trace identifiers where available.",
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Which workflow-job webhook events were received?",
+            "type": "splunk.table"
+        },
+        "oldest_queued_job_single": {
+            "dataSources": {
+                "primary": "queued_jobs_summary_search"
+            },
+            "description": "Age in minutes of the oldest workflow job still queued, capped at the existing 24-hour investigation boundary. Healthy: 0.",
+            "options": {
+                "majorValue": "> primary | seriesByName('oldest_queued_minutes') | lastPoint()",
+                "sparklineDisplay": "off",
+                "trendDisplay": "off",
+                "unit": "min"
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Oldest queued workflow job",
+            "type": "splunk.singlevalue"
+        },
+        "queued_jobs_single": {
+            "dataSources": {
+                "primary": "queued_jobs_summary_search"
+            },
+            "description": "Workflow jobs observed as queued without a later in_progress or completed event after 15 minutes and no more than 24 hours. Healthy: 0.",
+            "options": {
+                "majorValue": "> primary | seriesByName('queued_jobs') | lastPoint()",
+                "sparklineDisplay": "off",
+                "trendDisplay": "off"
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Workflow jobs still queued",
+            "type": "splunk.singlevalue"
+        },
+        "queued_jobs_table": {
+            "dataSources": {
+                "primary": "queued_jobs_search"
+            },
+            "description": "Only workflow jobs queued for more than 15 minutes without a later in_progress or completed event appear. Healthy: no rows. Follow the operator action through labels, dispatcher, SQS, and the relevant EC2 or ARC capacity path.",
+            "options": {
+                "count": 50
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Which workflow jobs remain queued?",
+            "type": "splunk.table"
+        },
+        "relay_failures_single": {
+            "dataSources": {
+                "primary": "webhook_relay_summary_search"
+            },
+            "description": "Confirmed EventBridge forwarding failures or shared relay Lambda errors. Healthy: 0. Signature rejections remain visible in the relay trend but are not counted as platform failures.",
+            "options": {
+                "majorValue": "> primary | seriesByName('relay_failures') | lastPoint()",
+                "sparklineDisplay": "off",
+                "trendDisplay": "off"
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Shared relay platform failures",
+            "type": "splunk.singlevalue"
+        },
+        "tenant_health_summary_table": {
+            "dataSources": {
+                "primary": "tenant_health_summary_search"
+            },
+            "description": "Tenant workload outcomes for completed workflow jobs. These are not automatically Forge failures. Healthy depends on the workload; inspect the job URLs and repository workflow before assigning platform ownership.",
+            "options": {
+                "count": 20
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Which tenants have failed or canceled workflow jobs?",
+            "type": "splunk.table"
+        },
+        "webhook_relay_health_chart": {
+            "dataSources": {
+                "primary": "webhook_relay_health_search"
+            },
+            "description": "Shared-platform relay receipt, signature rejection, EventBridge forwarding, and Lambda failures. Receipt should be explained by forwarding or rejection; inspect relay Lambda logs when failure series are non-zero.",
+            "options": {},
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Is the shared webhook relay forwarding events?",
+            "type": "splunk.line"
+        },
+        "workflow_activity_trend_chart": {
+            "dataSources": {
+                "primary": "workflow_activity_trend_search"
+            },
+            "description": "Distinct workflow jobs observed in queued, in_progress, and completed states over time. Use the shape to identify sustained changes; status volume alone is not a failure signal.",
+            "options": {},
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "How is workflow-job activity trending?",
+            "type": "splunk.line"
+        },
+        "workflow_branch_summary_table": {
+            "dataSources": {
+                "primary": "workflow_branch_summary_search"
+            },
+            "description": "Workflow-job activity grouped by tenant, repository, workflow, and branch. Use this diagnostic view after identifying impact; high activity alone is not a failure.",
+            "options": {
+                "count": 30
+            },
+            "showLastUpdated": true,
+            "showProgressBar": false,
+            "title": "Where is workflow-job activity concentrated?",
+            "type": "splunk.table"
+        }
+    }
+}
