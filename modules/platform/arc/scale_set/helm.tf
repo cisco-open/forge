@@ -70,6 +70,7 @@ resource "helm_release" "gha_runner_scale_set" {
         runner_role                  = aws_iam_role.runner_role.arn
         tenant                       = var.controller.namespace
         debug                        = lower(var.log_level) == "debug"
+        metrics_values               = file("${path.module}/template_files/metrics.yml.tftpl")
       }
     )
   ]

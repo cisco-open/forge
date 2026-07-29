@@ -1,0 +1,74 @@
+listenerTemplate:
+  metadata:
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/metrics"
+      prometheus.io/port: "8080"
+  spec:
+    containers:
+      - name: listener
+
+listenerMetrics:
+  counters:
+    gha_started_jobs_total:
+      labels:
+        - repository
+        - organization
+        - enterprise
+        - job_name
+        - event_name
+        - job_workflow_ref
+        - job_workflow_name
+        - job_workflow_target
+    gha_completed_jobs_total:
+      labels:
+        - repository
+        - organization
+        - enterprise
+        - job_name
+        - event_name
+        - job_result
+        - job_workflow_ref
+        - job_workflow_name
+        - job_workflow_target
+
+  gauges:
+    gha_assigned_jobs:
+      labels: [name, namespace, repository, organization, enterprise]
+    gha_running_jobs:
+      labels: [name, namespace, repository, organization, enterprise]
+    gha_registered_runners:
+      labels: [name, namespace, repository, organization, enterprise]
+    gha_busy_runners:
+      labels: [name, namespace, repository, organization, enterprise]
+    gha_min_runners:
+      labels: [name, namespace, repository, organization, enterprise]
+    gha_max_runners:
+      labels: [name, namespace, repository, organization, enterprise]
+    gha_desired_runners:
+      labels: [name, namespace, repository, organization, enterprise]
+    gha_idle_runners:
+      labels: [name, namespace, repository, organization, enterprise]
+
+  histograms:
+    gha_job_startup_duration_seconds:
+      labels:
+        - repository
+        - organization
+        - enterprise
+        - job_name
+        - event_name
+        - job_workflow_ref
+        - job_workflow_name
+        - job_workflow_target
+    gha_job_execution_duration_seconds:
+      labels:
+        - repository
+        - organization
+        - enterprise
+        - job_name
+        - event_name
+        - job_result
+        - job_workflow_ref
+        - job_workflow_name
+        - job_workflow_target
