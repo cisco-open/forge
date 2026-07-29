@@ -47,7 +47,8 @@ module "dashboard_arc_runner_operations" {
     signalfx = signalfx
   }
 
-  dynamic_variables = var.dashboard_variables.runner_k8s.dynamic_variables
+  tenant_names      = var.dashboard_variables.arc_runner_operations.tenant_names
+  dynamic_variables = var.dashboard_variables.arc_runner_operations.dynamic_variables
   dashboard_group   = signalfx_dashboard_group.forgecicd.id
 }
 

@@ -11,6 +11,8 @@ run "integrations_splunk_o11y_conf_shared_contract" {
       "module \"dashboard_runner_ec2\"",
       "module \"dashboard_runner_k8s\"",
       "module \"dashboard_arc_runner_operations\"",
+      "tenant_names      = var.dashboard_variables.arc_runner_operations.tenant_names",
+      "dynamic_variables = var.dashboard_variables.arc_runner_operations.dynamic_variables",
       "module \"dashboard_k8s_control_plane\"",
       "module \"dashboard_lambda\"",
       "module \"dashboard_lambda_control_plane\"",

@@ -22,7 +22,7 @@ modules/integrations/splunk_o11y_conf_shared/detectors/aws_regional_health
 | Forge Runner Usage                       | How many EC2 and Kubernetes runners are active or were used in the selected window?               | `dashboard_variables.forge_impact`                          |
 | Forge Tenant - EC2 Runners               | Are EC2 runner hosts healthy, and which hosts are missing the Splunk OTel agent?                  | `dashboard_variables.runner_ec2`                            |
 | Forge Tenant - K8S Runners               | Are tenant ARC runner pods healthy and adequately resourced?                                      | `dashboard_variables.runner_k8s`                            |
-| Forge ARC Runner Operations              | Is ARC accepting, starting, and completing jobs with sufficient registered runner capacity?       | `dashboard_variables.runner_k8s`                            |
+| Forge ARC Runner Operations              | Is ARC accepting, starting, and completing jobs with sufficient registered runner capacity?       | `dashboard_variables.arc_runner_operations`                 |
 | Forge Control Plane - Kubernetes         | Are shared cluster, node, platform pod, and telemetry components healthy?                         | `dashboard_variables.runner_k8s`, `k8s_platform_namespaces` |
 | Forge Tenant - Lambdas                   | Are Forge Lambdas failing, throttled, slow, or concentrated on a function version?                | `dashboard_variables.lambda`                                |
 | Forge Control Plane - Lambdas            | Are shared Forge Lambdas failing, throttled, or slow?                                             | `dashboard_variables.lambda_control_plane`                  |

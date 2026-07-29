@@ -2,6 +2,7 @@ mock_provider "signalfx" {}
 
 variables {
   dashboard_group = "forge-dashboard-group"
+  tenant_names    = ["tenant-b", "tenant-a"]
   dynamic_variables = [
     {
       property               = "k8s.cluster.name"
@@ -23,9 +24,11 @@ run "arc_operator_flow_contract" {
       signalfx_single_value_chart.active_scale_sets.name == "Active ARC scale sets"
       && strcontains(signalfx_single_value_chart.active_scale_sets.program_text, "gha_desired_runners")
       && strcontains(signalfx_single_value_chart.active_scale_sets.program_text, "filter('k8s.cluster.name', 'forge-euw1-prod') or filter('k8s.cluster.name', 'forge-use1-prod')")
+      && strcontains(signalfx_single_value_chart.active_scale_sets.program_text, "filter('k8s.namespace.name', 'tenant-a') or filter('k8s.namespace.name', 'tenant-b')")
       && strcontains(signalfx_single_value_chart.running_listeners.program_text, "gha_controller_running_listeners")
       && strcontains(signalfx_single_value_chart.failed_ephemeral_runners.program_text, "gha_controller_failed_ephemeral_runners")
       && strcontains(signalfx_time_chart.controller_state.program_text, "gha_controller_pending_ephemeral_runners")
+      && strcontains(signalfx_time_chart.controller_state.program_text, "filter('k8s.namespace.name', 'tenant-a') or filter('k8s.namespace.name', 'tenant-b')")
     )
     error_message = "ARC dashboard must begin with cluster-scoped telemetry freshness and controller state."
   }
@@ -49,6 +52,7 @@ run "arc_operator_flow_contract" {
       strcontains(signalfx_time_chart.job_throughput.program_text, "gha_started_jobs_total")
       && strcontains(signalfx_time_chart.job_throughput.program_text, "gha_completed_jobs_total")
       && length(regexall("rollup='rate'", signalfx_time_chart.job_throughput.program_text)) == 2
+      && strcontains(signalfx_time_chart.job_throughput.program_text, "filter('k8s.namespace.name', 'tenant-a') or filter('k8s.namespace.name', 'tenant-b')")
       && strcontains(signalfx_time_chart.completion_outcomes.program_text, "job_result")
       && strcontains(signalfx_time_chart.success_rate.program_text, "filter('job_result', 'success')")
     )
@@ -61,6 +65,7 @@ run "arc_operator_flow_contract" {
       && strcontains(signalfx_time_chart.execution_latency.program_text, "histogram('gha_job_execution_duration_seconds'")
       && length(regexall("percentile\\(pct=", signalfx_time_chart.startup_latency.program_text)) == 3
       && length(regexall("percentile\\(pct=", signalfx_time_chart.execution_latency.program_text)) == 3
+      && strcontains(signalfx_time_chart.startup_latency.program_text, "filter('k8s.namespace.name', 'tenant-a') or filter('k8s.namespace.name', 'tenant-b')")
       && strcontains(signalfx_list_chart.slow_workflows.program_text, "job_workflow_name")
     )
     error_message = "ARC latency charts must use native P50, P90, and P99 histograms and retain workflow drilldown."
@@ -94,6 +99,9 @@ run "arc_dashboard_layout_contract" {
       signalfx_dashboard.arc_runner_operations.name == "Forge ARC Runner Operations"
       && signalfx_dashboard.arc_runner_operations.dashboard_group == "forge-dashboard-group"
       && signalfx_dashboard.arc_runner_operations.time_range == "-1h"
+      && signalfx_dashboard.arc_runner_operations.variable[0].property == "k8s.namespace.name"
+      && signalfx_dashboard.arc_runner_operations.variable[0].values_suggested == toset(["tenant-a", "tenant-b"])
+      && signalfx_dashboard.arc_runner_operations.variable[0].restricted_suggestions
       && length(signalfx_dashboard.arc_runner_operations.chart) == 16
       && contains([for chart in signalfx_dashboard.arc_runner_operations.chart : chart.chart_id], signalfx_single_value_chart.active_scale_sets.id)
       && contains([for chart in signalfx_dashboard.arc_runner_operations.chart : chart.chart_id], signalfx_time_chart.startup_latency.id)

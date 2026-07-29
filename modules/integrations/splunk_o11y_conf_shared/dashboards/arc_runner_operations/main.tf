@@ -3,9 +3,13 @@ locals {
     for variable in var.dynamic_variables : variable.values_suggested
     if variable.property == "k8s.cluster.name"
   ])))
-  arc_cluster_filter = length(local.arc_cluster_names) > 0 ? join(" or ", [
+  arc_configured_cluster_filter = length(local.arc_cluster_names) > 0 ? join(" or ", [
     for cluster_name in local.arc_cluster_names : "filter('k8s.cluster.name', '${cluster_name}')"
   ]) : "filter('k8s.cluster.name', '__forge_cluster_scope_not_configured__')"
+  arc_tenant_namespace_filter = length(var.tenant_names) > 0 ? join(" or ", [
+    for tenant_name in sort(var.tenant_names) : "filter('k8s.namespace.name', '${tenant_name}')"
+  ]) : "filter('k8s.namespace.name', '__forge_tenant_scope_not_configured__')"
+  arc_cluster_filter       = "(${local.arc_configured_cluster_filter}) and (${local.arc_tenant_namespace_filter})"
   arc_scale_set_dimensions = "['k8s.cluster.name', 'namespace', 'name']"
 }
 
@@ -463,6 +467,16 @@ resource "signalfx_dashboard" "arc_runner_operations" {
     replace_triggered_by = [
       terraform_data.dashboard_parent,
     ]
+  }
+
+  variable {
+    property               = "k8s.namespace.name"
+    alias                  = "ForgeCICD Tenant Name"
+    description            = "Limit ARC controller and listener metrics to a configured tenant namespace."
+    values                 = []
+    value_required         = false
+    values_suggested       = sort(var.tenant_names)
+    restricted_suggestions = true
   }
 
   dynamic "variable" {

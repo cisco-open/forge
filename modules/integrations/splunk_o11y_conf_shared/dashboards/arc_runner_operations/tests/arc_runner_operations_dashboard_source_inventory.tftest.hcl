@@ -29,6 +29,8 @@ run "arc_runner_operations_dashboard_source_inventory" {
       "gha_started_jobs_total",
       "gha_job_startup_duration_seconds",
       "job_workflow_target",
+      "filter('k8s.namespace.name'",
+      "ForgeCICD Tenant Name",
     ]
   }
 
@@ -38,7 +40,7 @@ run "arc_runner_operations_dashboard_source_inventory" {
   }
 
   assert {
-    condition     = output.expected_literal_count == 21
+    condition     = output.expected_literal_count == 23
     error_message = "ARC dashboard source inventory count must remain pinned."
   }
 }

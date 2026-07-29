@@ -17,6 +17,14 @@ latency are evidence that must be correlated with sustained user impact,
 Kubernetes state, and logs before changing a runner lane or assigning
 ownership.
 
+The dashboard owns its variable scope through
+`dashboard_variables.arc_runner_operations`. Its optional tenant selector uses
+the OpenTelemetry resource dimension `k8s.namespace.name`, while the
+`k8s.cluster.name` dynamic variable supplies the ARC cluster selector and
+configured cluster allow-list. Both dimensions are applied to every chart so
+operators can keep controller, listener, counter, and histogram views on the
+same tenant and cluster.
+
 ## Telemetry Contract
 
 - Listener gauges: `gha_assigned_jobs`, `gha_running_jobs`,
@@ -81,6 +89,7 @@ No modules.
 | ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_dashboard_group"></a> [dashboard\_group](#input\_dashboard\_group) | Splunk Observability dashboard group ID. | `string` | n/a | yes |
 | <a name="input_dynamic_variables"></a> [dynamic\_variables](#input\_dynamic\_variables) | Cluster and environment variables applied to the ARC dashboard. | <pre>list(object({<br/>    property               = string<br/>    alias                  = string<br/>    description            = string<br/>    values                 = list(string)<br/>    value_required         = bool<br/>    values_suggested       = list(string)<br/>    restricted_suggestions = bool<br/>  }))</pre> | `[]` | no |
+| <a name="input_tenant_names"></a> [tenant\_names](#input\_tenant\_names) | Forge tenant namespaces available in the ARC dashboard selector and metric scope. | `list(string)` | n/a | yes |
 
 ## Outputs
 

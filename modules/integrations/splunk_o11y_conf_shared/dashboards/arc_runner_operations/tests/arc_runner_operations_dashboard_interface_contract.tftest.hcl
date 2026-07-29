@@ -10,6 +10,7 @@ run "arc_runner_operations_dashboard_interface_contract" {
     expected_input_variables = [
       "dashboard_group",
       "dynamic_variables",
+      "tenant_names",
     ]
     expected_output_values = []
     expected_interface_literals = [
@@ -28,6 +29,9 @@ run "arc_runner_operations_dashboard_interface_contract" {
       "restricted_suggestions = bool",
       "}))",
       "default = []",
+      "variable \"tenant_names\"",
+      "description = \"Forge tenant namespaces available in the ARC dashboard selector and metric scope.\"",
+      "type        = list(string)",
     ]
   }
 

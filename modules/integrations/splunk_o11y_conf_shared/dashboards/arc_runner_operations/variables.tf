@@ -3,6 +3,11 @@ variable "dashboard_group" {
   type        = string
 }
 
+variable "tenant_names" {
+  description = "Forge tenant namespaces available in the ARC dashboard selector and metric scope."
+  type        = list(string)
+}
+
 variable "dynamic_variables" {
   description = "Cluster and environment variables applied to the ARC dashboard."
   type = list(object({

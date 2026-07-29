@@ -35,6 +35,7 @@ run "integrations_splunk_o11y_conf_shared_interface_contract" {
       "variable \"dashboard_variables\"",
       "type = object({",
       "runner_k8s = object({",
+      "arc_runner_operations = object({",
       "tenant_names = list(string)",
       "dynamic_variables = list(object({",
       "property               = string",
@@ -154,7 +155,7 @@ run "integrations_splunk_o11y_conf_shared_interface_contract" {
     condition = (
       output.expected_input_variable_count == 13
       && output.expected_output_value_count == 0
-      && output.expected_interface_literal_count == 98
+      && output.expected_interface_literal_count == 99
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }
