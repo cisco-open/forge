@@ -119,7 +119,7 @@ resource "signalfx_single_value_chart" "firehose_freshness" {
 resource "signalfx_time_chart" "delivery_health_alerts" {
   name             = "Runner-log delivery alerts"
   description      = "Detector events for Firehose delivery failures, stale delivery, and runner-log DLQ occupancy."
-  program_text     = "A = alerts(detector_id='${var.detector_id}').publish(label='Runner-log delivery alerts')"
+  program_text     = "A = alerts(detector_id='${var.detector_id}').publish(label='A')"
   plot_type        = "LineChart"
   show_event_lines = true
   time_range       = 3600
