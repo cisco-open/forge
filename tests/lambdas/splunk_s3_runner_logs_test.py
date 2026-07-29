@@ -395,7 +395,7 @@ def test_read_s3_object_line_chunk_preserves_line_boundaries(
 
 
 def test_lambda_handler_checkpoints_large_log_after_successful_chunk(
-    monkeypatch, s3_kms
+    monkeypatch, s3_kms, caplog
 ):
     mod = _load_splunk(monkeypatch)
     bucket = s3_kms['buckets']['alpha']
@@ -432,6 +432,8 @@ def test_lambda_handler_checkpoints_large_log_after_successful_chunk(
 
     initial_event = {
         'Records': [{
+            'messageId': 'source-message-1',
+            'attributes': {'ApproximateReceiveCount': '1'},
             'body': json.dumps({
                 'Records': [{
                     's3': {
@@ -446,6 +448,19 @@ def test_lambda_handler_checkpoints_large_log_after_successful_chunk(
     initial_result = mod.lambda_handler(initial_event, None)
 
     assert json.loads(initial_result['body']) == {'lines': 1}
+    assert (
+        'sqs_message_received message_id=source-message-1 receive_count=1'
+        in caplog.text
+    )
+    assert (
+        'processing_object message_id=source-message-1 receive_count=1'
+        in caplog.text
+    )
+    assert (
+        'object_checkpoint_enqueued parent_message_id=source-message-1 '
+        'message_id=checkpoint-1'
+        in caplog.text
+    )
     assert kinesis_events == ['2026-07-03T22:26:04.000Z one']
     assert len(checkpoint_messages) == 1
     checkpoint = checkpoint_messages.pop()
@@ -462,7 +477,13 @@ def test_lambda_handler_checkpoints_large_log_after_successful_chunk(
     continuation_lines = 0
     while True:
         continuation_result = mod.lambda_handler(
-            {'Records': [{'body': json.dumps(checkpoint)}]},
+            {
+                'Records': [{
+                    'messageId': 'checkpoint-1',
+                    'attributes': {'ApproximateReceiveCount': '1'},
+                    'body': json.dumps(checkpoint),
+                }],
+            },
             None,
         )
         continuation_lines += json.loads(continuation_result['body'])['lines']
@@ -478,6 +499,57 @@ def test_lambda_handler_checkpoints_large_log_after_successful_chunk(
     ]
     assert kinesis_timestamps == [1783117564.0] * 3
     assert checkpoint_messages == []
+    assert (
+        'sqs_message_received message_id=checkpoint-1 receive_count=1'
+        in caplog.text
+    )
+    assert (
+        'processing_object message_id=checkpoint-1 receive_count=1'
+        in caplog.text
+    )
+
+
+def test_lambda_handler_logs_sqs_retry_identity(monkeypatch, aws, caplog):
+    mod = _load_splunk(monkeypatch)
+    checkpoint_calls = []
+    checkpoint = {
+        'version': 1,
+        'bucket': 'forge-gh-logs',
+        'key': 'acme/app/99/1/retry.log',
+        'offset': 1024,
+        'object_size': 2048,
+        'last_timestamp': None,
+    }
+
+    def _process_checkpoint(*args, **kwargs):
+        checkpoint_calls.append((args, kwargs))
+        return 0
+
+    monkeypatch.setattr(mod, 'process_log_checkpoint', _process_checkpoint)
+
+    result = mod.lambda_handler(
+        {
+            'Records': [{
+                'messageId': 'retried-message-1',
+                'attributes': {'ApproximateReceiveCount': '3'},
+                'body': json.dumps({mod.CHECKPOINT_FIELD: checkpoint}),
+            }],
+        },
+        None,
+    )
+
+    assert json.loads(result['body']) == {'lines': 0}
+    assert (
+        'sqs_message_received message_id=retried-message-1 receive_count=3'
+        in caplog.text
+    )
+    assert checkpoint_calls == [(
+        (checkpoint,),
+        {
+            'sqs_message_id': 'retried-message-1',
+            'sqs_receive_count': '3',
+        },
+    )]
 
 
 def test_process_s3_object_does_not_checkpoint_failed_chunk(
