@@ -15,6 +15,7 @@ import sys
 import types
 from pathlib import Path
 
+import pytest
 from conftest import requires_aws
 
 pytestmark = requires_aws
@@ -329,6 +330,45 @@ def test_extract_arn_parts_for_module_application(monkeypatch, aws):
         'account_id': '123456789012',
         'forgecicd_module_group': 'integrations',
         'forgecicd_module': 'splunk_aws_billing',
+        'forgecicd_scope': 'module',
+    }
+
+
+@pytest.mark.parametrize(
+    ('application_name', 'module_name'),
+    [
+        (
+            'integrations_teleport_forge-euw1-dev_us-west-2',
+            'teleport_forge-euw1-dev',
+        ),
+        (
+            'integrations_splunk_otel_eks_forge-euw1-dev_us-west-2',
+            'splunk_otel_eks_forge-euw1-dev',
+        ),
+        (
+            'infra_eks_forge-euw1-dev_us-west-2',
+            'eks_forge-euw1-dev',
+        ),
+    ],
+)
+def test_extract_arn_parts_for_uniquely_named_module_application(
+    monkeypatch,
+    aws,
+    application_name,
+    module_name,
+):
+    common = _load_billing_module(monkeypatch, 'common')
+
+    parts = common.extract_arn_parts(
+        'arn:aws:resource-groups:us-west-2:123456789012:'
+        f'group/{application_name}/resources'
+    )
+
+    assert parts == {
+        'aws_region': 'us-west-2',
+        'account_id': '123456789012',
+        'forgecicd_module_group': application_name.split('_', 1)[0],
+        'forgecicd_module': module_name,
         'forgecicd_scope': 'module',
     }
 

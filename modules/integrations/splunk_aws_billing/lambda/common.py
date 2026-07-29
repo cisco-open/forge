@@ -202,7 +202,7 @@ MODULE_APPLICATION_ARN = re.compile(
     r'(?P<account_id>\d+):'
     r'group/'
     r'(?P<forgecicd_module_group>helpers|infra|integrations)_'
-    r'(?P<forgecicd_module>[a-z0-9_]+)_'
+    r'(?P<forgecicd_module>[a-z0-9_-]+)_'
     r'(?P=aws_region)'
     r'/resources'
 )
