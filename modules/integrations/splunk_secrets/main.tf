@@ -95,8 +95,8 @@ resource "aws_kms_key" "regional" {
 
   description         = "Customer managed CMK for Splunk Secrets in ${each.key}"
   enable_key_rotation = true
-  tags                = local.all_security_tags
-  tags_all            = local.all_security_tags
+  tags                = local.all_security_tags_by_region[each.value]
+  tags_all            = local.all_security_tags_by_region[each.value]
 }
 
 resource "aws_kms_alias" "regional_alias" {
@@ -119,8 +119,8 @@ resource "aws_secretsmanager_secret" "cicd_secrets" {
   description             = each.value.description
   kms_key_id              = aws_kms_key.regional[var.aws_region].arn
   recovery_window_in_days = each.value.recovery_days
-  tags                    = local.all_security_tags
-  tags_all                = local.all_security_tags
+  tags                    = local.secret_security_tags
+  tags_all                = local.secret_security_tags
 
   dynamic "replica" {
     for_each = var.replica_regions
