@@ -112,7 +112,8 @@ run "creates_runner_logs_ingestion_dashboard" {
       && strcontains(signalfx_time_chart.firehose_latency.program_text, "DeliveryToSplunk.DataFreshness")
       && strcontains(signalfx_time_chart.firehose_latency.program_text, "DeliveryToSplunk.DataAckLatency")
       && strcontains(signalfx_time_chart.delivery_health_alerts.program_text, "alerts(detector_id='runner-log-delivery-detector-id')")
-      && strcontains(signalfx_time_chart.delivery_health_alerts.program_text, ".publish(label='A')")
+      && strcontains(signalfx_time_chart.delivery_health_alerts.program_text, ".publish(label='Runner-log delivery alerts')")
+      && length(signalfx_time_chart.delivery_health_alerts.viz_options) == 0
       && signalfx_time_chart.delivery_health_alerts.show_event_lines
       && signalfx_time_chart.delivery_health_alerts.time_range == 3600
     )
