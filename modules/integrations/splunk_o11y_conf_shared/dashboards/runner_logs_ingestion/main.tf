@@ -123,11 +123,6 @@ resource "signalfx_time_chart" "delivery_health_alerts" {
   plot_type        = "LineChart"
   show_event_lines = true
   time_range       = 3600
-
-  viz_options {
-    display_name = "Delivery alerts"
-    label        = "A"
-  }
 }
 
 resource "signalfx_time_chart" "sqs_state" {
