@@ -30,6 +30,9 @@ has been discussed in the past, or if the change was already implemented but not
 We expect new pull requests to include tests for any affected behavior, and, as we follow semantic versioning, we may
 reserve breaking changes until the next major version release.
 
+See the [Developer Test Guide](docs/developer.md) for the repository test
+suites, when to use each one, and their local validation commands.
+
 ## Other Ways to Contribute
 
 We welcome anyone that wants to contribute to `Forge` to triage and reply to open issues to help troubleshoot

@@ -50,6 +50,7 @@ nav:
   - Home: index.md
   - Motivation: motivation.md
   - Architecture: architecture.md
+  - Developer Test Guide: developer.md
   - Getting Started:
       - Overview: getting-started/index.md
       - Platform Engineer Quick Start: getting-started/platform-engineer.md
