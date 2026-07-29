@@ -570,7 +570,6 @@ forge-github-app-register = [
 ]
 lambda-tests = [
     { name = "boto3" },
-    { name = "botocore" },
     { name = "cryptography" },
     { name = "hypothesis" },
     { name = "moto", extra = ["all"] },
@@ -588,7 +587,6 @@ pre-commit-image = [
 ]
 smoke-tests = [
     { name = "boto3" },
-    { name = "botocore" },
     { name = "pytest" },
 ]
 
@@ -603,7 +601,6 @@ forge-github-app-register = [
 ]
 lambda-tests = [
     { name = "boto3", specifier = "==1.43.47" },
-    { name = "botocore", specifier = "==1.43.52" },
     { name = "cryptography", specifier = "==49.0.0" },
     { name = "hypothesis", specifier = "==6.163.0" },
     { name = "moto", extras = ["all"], specifier = "==5.2.2" },
@@ -621,7 +618,6 @@ pre-commit-image = [
 ]
 smoke-tests = [
     { name = "boto3", specifier = "==1.43.47" },
-    { name = "botocore", specifier = "==1.43.52" },
     { name = "pytest", specifier = "==9.1.1" },
 ]
 
