@@ -95,8 +95,14 @@ resource "aws_kms_key" "regional" {
 
   description         = "Customer managed CMK for Splunk Secrets in ${each.key}"
   enable_key_rotation = true
-  tags                = local.all_security_tags_by_region[each.value]
-  tags_all            = local.all_security_tags_by_region[each.value]
+  tags = merge(
+    local.all_security_tags,
+    each.value == var.aws_region ? aws_servicecatalogappregistry_application.this.application_tag : aws_servicecatalogappregistry_application.replica[each.value].application_tag,
+  )
+  tags_all = merge(
+    local.all_security_tags,
+    each.value == var.aws_region ? aws_servicecatalogappregistry_application.this.application_tag : aws_servicecatalogappregistry_application.replica[each.value].application_tag,
+  )
 }
 
 resource "aws_kms_alias" "regional_alias" {
@@ -119,8 +125,14 @@ resource "aws_secretsmanager_secret" "cicd_secrets" {
   description             = each.value.description
   kms_key_id              = aws_kms_key.regional[var.aws_region].arn
   recovery_window_in_days = each.value.recovery_days
-  tags                    = local.all_security_tags
-  tags_all                = local.all_security_tags
+  tags = merge(
+    local.all_security_tags,
+    aws_servicecatalogappregistry_application.this.application_tag,
+  )
+  tags_all = merge(
+    local.all_security_tags,
+    aws_servicecatalogappregistry_application.this.application_tag,
+  )
 
   dynamic "replica" {
     for_each = var.replica_regions
@@ -144,7 +156,7 @@ resource "aws_secretsmanager_tag" "cicd_secret_replica_application" {
     ":${each.value.region}:",
   )
   key   = "awsApplication"
-  value = local.application_tags_by_region[each.value.region]["awsApplication"]
+  value = aws_servicecatalogappregistry_application.replica[each.value.region].application_tag["awsApplication"]
 }
 
 # Force a delay between secret creation and seeding. We only need a few
