@@ -20,4 +20,16 @@ locals {
   }
 
   all_security_tags = local.all_security_tags_by_region[var.aws_region]
+
+  secret_replica_application_tags = {
+    for replica in flatten([
+      for secret in local.secrets : [
+        for region in var.replica_regions : {
+          key         = "${secret.name}:${region}"
+          secret_name = secret.name
+          region      = region
+        }
+      ]
+    ]) : replica.key => replica
+  }
 }

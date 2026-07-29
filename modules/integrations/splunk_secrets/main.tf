@@ -132,6 +132,21 @@ resource "aws_secretsmanager_secret" "cicd_secrets" {
 
 }
 
+# Replica blocks do not support tags, so manage each replica's regional
+# AppRegistry association through the regional Secrets Manager endpoint.
+resource "aws_secretsmanager_tag" "cicd_secret_replica_application" {
+  for_each = local.secret_replica_application_tags
+  provider = aws.by_region[each.value.region]
+
+  secret_id = replace(
+    aws_secretsmanager_secret.cicd_secrets[each.value.secret_name].arn,
+    ":${var.aws_region}:",
+    ":${each.value.region}:",
+  )
+  key   = "awsApplication"
+  value = local.application_tags_by_region[each.value.region]["awsApplication"]
+}
+
 # Force a delay between secret creation and seeding. We only need a few
 # seconds, but if we don't do this, we get into a bad state requiring manual
 # intervention and/or manual forced-deletion of secrets.

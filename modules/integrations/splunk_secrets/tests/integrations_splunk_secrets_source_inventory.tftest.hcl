@@ -11,6 +11,7 @@ run "integrations_splunk_secrets_contract" {
       "resource \"aws_kms_key\" \"regional\"",
       "resource \"aws_kms_alias\" \"regional_alias\"",
       "resource \"aws_secretsmanager_secret\" \"cicd_secrets\"",
+      "resource \"aws_secretsmanager_tag\" \"cicd_secret_replica_application\"",
       "resource \"time_sleep\" \"wait_60_seconds\"",
       "resource \"aws_secretsmanager_secret_version\" \"cicd_secrets\"",
       "data \"aws_secretsmanager_random_password\" \"secret_seeds\"",
