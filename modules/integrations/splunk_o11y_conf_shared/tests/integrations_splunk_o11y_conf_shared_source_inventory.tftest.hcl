@@ -10,6 +10,7 @@ run "integrations_splunk_o11y_conf_shared_contract" {
     expected_literals = [
       "module \"dashboard_runner_ec2\"",
       "module \"dashboard_runner_k8s\"",
+      "module \"dashboard_arc_runner_operations\"",
       "module \"dashboard_k8s_control_plane\"",
       "module \"dashboard_lambda\"",
       "module \"dashboard_lambda_control_plane\"",
