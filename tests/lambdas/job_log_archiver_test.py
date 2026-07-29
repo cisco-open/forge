@@ -80,6 +80,17 @@ def _log_response(body=b'log-bytes', status_code=200):
     )
 
 
+def test_ssm_client_uses_adaptive_retries(aws):
+    mod = load_handler_module('job_log_archiver')
+
+    assert mod.SSM_CLIENT_CONFIG.connect_timeout == 5
+    assert mod.SSM_CLIENT_CONFIG.read_timeout == 10
+    assert mod.SSM_CLIENT_CONFIG.retries == {
+        'mode': 'adaptive',
+        'total_max_attempts': 8,
+    }
+
+
 def test_logs_written_only_to_configured_tenant_bucket(
     monkeypatch, s3_kms, ssm
 ):

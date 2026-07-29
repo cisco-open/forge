@@ -22,7 +22,7 @@ LOG.setLevel(getattr(logging, level_str, logging.INFO))
 SSM_CLIENT_CONFIG = Config(
     connect_timeout=5,
     read_timeout=10,
-    retries={'mode': 'standard', 'total_max_attempts': 4},
+    retries={'mode': 'adaptive', 'total_max_attempts': 8},
 )
 
 SSM = boto3.client('ssm', config=SSM_CLIENT_CONFIG)
