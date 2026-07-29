@@ -1,5 +1,21 @@
 # Changelog
 
+## [4.9.0](https://github.com/cisco-open/forge/compare/v4.8.0...v4.9.0) (2026-07-29)
+
+
+### Features
+
+* **arc:** export high-cardinality metrics ([#589](https://github.com/cisco-open/forge/issues/589)) ([2aaf962](https://github.com/cisco-open/forge/commit/2aaf9625226e7128c8b0b21d7f9ddc10a56eaa38))
+* **o11y:** add ARC runner operations dashboard ([#594](https://github.com/cisco-open/forge/issues/594)) ([98ea15e](https://github.com/cisco-open/forge/commit/98ea15e4b5670160d416252d8ef64b2247f556ad))
+
+
+### Bug Fixes
+
+* **eks:** keep AppRegistry tag key static ([#592](https://github.com/cisco-open/forge/issues/592)) ([224b78f](https://github.com/cisco-open/forge/commit/224b78fbafd429b54a77530d97d9256d43da356d))
+* **observability:** remove alert chart plot options ([#591](https://github.com/cisco-open/forge/issues/591)) ([0ce0b5f](https://github.com/cisco-open/forge/commit/0ce0b5ffa131b51737cd43e2f37c25fd1329a6f4))
+* **runner-logs:** improve ingestion recovery signals ([#588](https://github.com/cisco-open/forge/issues/588)) ([8da3428](https://github.com/cisco-open/forge/commit/8da34282446d0bca4e795038b2540335fca7a134))
+* **service-catalog:** support cluster-scoped application names ([#590](https://github.com/cisco-open/forge/issues/590)) ([e465be7](https://github.com/cisco-open/forge/commit/e465be73454f775c8fe80ef1fefb824db4ac0bf2))
+
 ## [4.8.0](https://github.com/cisco-open/forge/compare/v4.7.0...v4.8.0) (2026-07-29)
 
 
