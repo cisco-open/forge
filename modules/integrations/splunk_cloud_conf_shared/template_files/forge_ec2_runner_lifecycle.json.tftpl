@@ -159,16 +159,6 @@
                         "type": "block"
                     },
                     {
-                        "item": "lifecycle_lambda_trend_chart",
-                        "position": {
-                            "h": 360,
-                            "w": 560,
-                            "x": 640,
-                            "y": 0
-                        },
-                        "type": "block"
-                    },
-                    {
                         "item": "scale_capacity_table",
                         "position": {
                             "h": 360,
@@ -209,12 +199,22 @@
                         "type": "block"
                     },
                     {
+                        "item": "lifecycle_lambda_trend_chart",
+                        "position": {
+                            "h": 360,
+                            "w": 560,
+                            "x": 0,
+                            "y": 1100
+                        },
+                        "type": "block"
+                    },
+                    {
                         "item": "runner_version_table",
                         "position": {
                             "h": 360,
                             "w": 1200,
                             "x": 0,
-                            "y": 1100
+                            "y": 1460
                         },
                         "type": "block"
                     }
@@ -243,7 +243,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "AMI and SSM Update Failures",
+            "description": "Answers \"Which AMI or SSM updates failed?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. Failure: one or more rows persist or affect workflow jobs. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
+            "title": "Which AMI or SSM updates failed?",
             "type": "splunk.table"
         },
         "hook_activity_table": {
@@ -255,7 +256,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Runner Hook Activity",
+            "description": "Answers \"What happened during runner hooks?\" for the selected filters and time range. Healthy depends on the workflow stage and is not inferred from a high count alone. Action: identify the affected tenant and resource, then use the next causal-stage panel or raw details to verify impact.",
+            "title": "What happened during runner hooks?",
             "type": "splunk.table"
         },
         "lifecycle_lambda_table": {
@@ -267,7 +269,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "EC2 Lifecycle Lambda Signals",
+            "description": "Answers \"Which EC2 lifecycle signals need attention?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. Failure: one or more rows persist or affect workflow jobs. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
+            "title": "Which EC2 lifecycle signals need attention?",
             "type": "splunk.table"
         },
         "lifecycle_lambda_trend_chart": {
@@ -277,7 +280,8 @@
             "options": {},
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "EC2 Lifecycle Lambda Trend",
+            "description": "Answers \"Are EC2 lifecycle failures increasing?\" with a time series over the selected global range. Healthy: error, retry, delay, or backlog series remain at the established baseline; activity volume alone is not a failure. Failure: a sustained adverse series aligns with affected jobs or resources. Action: use the actionable table above for tenant and resource identifiers before opening raw events.",
+            "title": "Are EC2 lifecycle failures increasing?",
             "type": "splunk.line"
         },
         "runner_log_symptoms_table": {
@@ -289,7 +293,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Runner Instance Log Symptoms",
+            "description": "Answers \"Which runner instances show failure symptoms?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. Failure: one or more rows persist or affect workflow jobs. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
+            "title": "Which runner instances show failure symptoms?",
             "type": "splunk.table"
         },
         "runner_version_table": {
@@ -301,7 +306,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Runner Versions",
+            "description": "Answers \"Which runner versions are active?\" with investigation detail. Healthy is not determined by row count; expected activity may be non-empty, while an empty result can also reflect filters or retention. Action: use this panel only after an impact or failure panel identifies the tenant, repository, workflow job, request, runner, pod, node, or AWS resource to correlate.",
+            "title": "Which runner versions are active?",
             "type": "splunk.table"
         },
         "scale_capacity_table": {
@@ -313,7 +319,8 @@
             },
             "showLastUpdated": true,
             "showProgressBar": false,
-            "title": "Scale Capacity and AWS API Errors",
+            "description": "Answers \"Which capacity or AWS API errors blocked runners?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. Failure: one or more rows persist or affect workflow jobs. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
+            "title": "Which capacity or AWS API errors blocked runners?",
             "type": "splunk.table"
         }
     }
