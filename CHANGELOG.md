@@ -1,5 +1,19 @@
 # Changelog
 
+## [4.8.0](https://github.com/cisco-open/forge/compare/v4.7.0...v4.8.0) (2026-07-29)
+
+
+### Features
+
+* **logs:** trace runner log message processing ([#582](https://github.com/cisco-open/forge/issues/582)) ([3feefb5](https://github.com/cisco-open/forge/commit/3feefb5f84310eca88aa0fa3ed70cc76c1ab1de2))
+* **runners:** tag resources with module version ([#581](https://github.com/cisco-open/forge/issues/581)) ([6a2c995](https://github.com/cisco-open/forge/commit/6a2c995b4e888fb90f94ff19ae69e06fdf717810))
+
+
+### Bug Fixes
+
+* **eks:** disable automatic instance refresh ([#572](https://github.com/cisco-open/forge/issues/572)) ([8492fd6](https://github.com/cisco-open/forge/commit/8492fd658c72c70fd09b4713ffe32eb9b6d699df))
+* **forge-runners:** harden archiver SSM retries ([#585](https://github.com/cisco-open/forge/issues/585)) ([19c94f0](https://github.com/cisco-open/forge/commit/19c94f031841e472ce3971eade532e361c5f9be9))
+
 ## [4.7.0](https://github.com/cisco-open/forge/compare/v4.6.0...v4.7.0) (2026-07-28)
 
 
