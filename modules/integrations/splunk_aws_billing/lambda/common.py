@@ -196,6 +196,20 @@ TENANT_APPLICATION_ARN = re.compile(
     r'/resources'
 )
 
+SPLUNK_CLOUD_DATA_MANAGER_APPLICATION_ARN = re.compile(
+    r'arn:aws:resource-groups:'
+    r'(?P<aws_region>[\w-]+):'
+    r'(?P<account_id>\d+):'
+    r'group/'
+    r'(?P<forgecicd_module_group>integrations)_'
+    r'(?P<forgecicd_module>splunk_cloud_data_manager)'
+    r'(?:_custom-cwl)?'
+    r'(?:_cwl)?'
+    r'(?:_secmeta)?_'
+    r'(?P=aws_region)'
+    r'/resources'
+)
+
 MODULE_APPLICATION_ARN = re.compile(
     r'arn:aws:resource-groups:'
     r'(?P<aws_region>[\w-]+):'
@@ -211,6 +225,13 @@ MODULE_APPLICATION_ARN = re.compile(
 def extract_arn_parts(arn):
     if not isinstance(arn, str):
         return None
+
+    match = SPLUNK_CLOUD_DATA_MANAGER_APPLICATION_ARN.fullmatch(arn)
+    if match:
+        return {
+            **match.groupdict(),
+            'forgecicd_scope': 'module',
+        }
 
     match = MODULE_APPLICATION_ARN.fullmatch(arn)
     if match:
