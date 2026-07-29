@@ -47,54 +47,96 @@ def lambda_handler(event, _context):
     records = event.get('Records', [])
     if not records:
         LOG.info('lambda_no_records')
-        return {'statusCode': 200, 'body': 'No messages'}
+        return {
+            'statusCode': 200,
+            'body': 'No messages',
+            'batchItemFailures': [],
+        }
 
     total_lines = 0
+    batch_item_failures = []
     for r in records:
         message_id = r.get('messageId') or 'unknown'
-        receive_count = r.get(
-            'attributes', {}
-        ).get('ApproximateReceiveCount') or 'unknown'
+        attributes = r.get('attributes', {})
+        receive_count = attributes.get('ApproximateReceiveCount') or 'unknown'
+        sent_timestamp = attributes.get('SentTimestamp') or 'unknown'
+        message_age_seconds = sqs_message_age_seconds(sent_timestamp)
         LOG.info(
-            'sqs_message_received message_id=%s receive_count=%s',
+            'sqs_message_received message_id=%s receive_count=%s '
+            'sent_timestamp=%s age_seconds=%s',
             message_id,
             receive_count,
+            sent_timestamp,
+            (
+                f'{message_age_seconds:.3f}'
+                if message_age_seconds is not None
+                else 'unknown'
+            ),
         )
-        body = r.get('body')
-        if not body:
-            continue
         try:
+            body = r.get('body')
+            if not body:
+                raise ValueError('SQS message body is empty')
             body_json = json.loads(body)
-        except json.JSONDecodeError:
-            LOG.warning('invalid_json_body_skip')
-            continue
-
-        checkpoint = body_json.get(CHECKPOINT_FIELD)
-        if checkpoint is not None:
-            total_lines += process_log_checkpoint(
-                checkpoint,
-                sqs_message_id=message_id,
-                sqs_receive_count=receive_count,
-            )
-            continue
-
-        for s3_rec in body_json.get('Records', []):
-            bucket = s3_rec.get('s3', {}).get('bucket', {}).get('name')
-            object_data = s3_rec.get('s3', {}).get('object', {})
-            key = object_data.get('key')
-            object_size = object_data.get('size')
-            if not bucket or not key:
-                LOG.warning('missing_bucket_or_key')
+            checkpoint = body_json.get(CHECKPOINT_FIELD)
+            if checkpoint is not None:
+                total_lines += process_log_checkpoint(
+                    checkpoint,
+                    sqs_message_id=message_id,
+                    sqs_receive_count=receive_count,
+                )
                 continue
-            total_lines += process_s3_object(
-                bucket,
-                key,
-                object_size=object_size,
-                sqs_message_id=message_id,
-                sqs_receive_count=receive_count,
-            )
 
-    return {'statusCode': 200, 'body': json.dumps({'lines': total_lines})}
+            s3_records = body_json.get('Records')
+            if not isinstance(s3_records, list) or not s3_records:
+                raise ValueError('SQS message contains no S3 records')
+
+            for s3_rec in s3_records:
+                bucket = s3_rec.get('s3', {}).get('bucket', {}).get('name')
+                object_data = s3_rec.get('s3', {}).get('object', {})
+                key = object_data.get('key')
+                object_size = object_data.get('size')
+                if not bucket or not key:
+                    raise ValueError(
+                        'S3 notification is missing bucket or key')
+                total_lines += process_s3_object(
+                    bucket,
+                    key,
+                    object_size=object_size,
+                    sqs_message_id=message_id,
+                    sqs_receive_count=receive_count,
+                )
+        except Exception as err:  # noqa: BLE001
+            LOG.exception(
+                'sqs_message_failed message_id=%s receive_count=%s '
+                'sent_timestamp=%s age_seconds=%s err=%s',
+                message_id,
+                receive_count,
+                sent_timestamp,
+                (
+                    f'{message_age_seconds:.3f}'
+                    if message_age_seconds is not None
+                    else 'unknown'
+                ),
+                err,
+            )
+            batch_item_failures.append({'itemIdentifier': message_id})
+            continue
+
+    return {
+        'statusCode': 200,
+        'body': json.dumps({'lines': total_lines}),
+        'batchItemFailures': batch_item_failures,
+    }
+
+
+def sqs_message_age_seconds(sent_timestamp: str) -> float | None:
+    """Return the non-negative age of an SQS message from SentTimestamp."""
+    try:
+        sent_timestamp_seconds = int(sent_timestamp) / 1000
+    except (TypeError, ValueError):
+        return None
+    return max(0.0, time.time() - sent_timestamp_seconds)
 
 
 def process_s3_object(
@@ -136,13 +178,13 @@ def process_s3_object(
                 len(raw),
             )
         except Exception as json_err:  # pragma: no cover
-            LOG.warning(
+            LOG.exception(
                 'json_object_failed bucket=%s key=%s err=%s',
                 bucket,
                 key,
                 json_err,
             )
-            return 0
+            raise
         LOG.info('object_complete bucket=%s key=%s lines=%d',
                  bucket, key, shipped)
         return shipped

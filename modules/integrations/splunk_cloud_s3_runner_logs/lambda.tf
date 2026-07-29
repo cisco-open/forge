@@ -111,6 +111,7 @@ resource "aws_lambda_event_source_mapping" "sqs_to_lambda" {
   function_name                      = module.splunk_s3_runner_logs_lambda.lambda_function_arn
   batch_size                         = 1
   maximum_batching_window_in_seconds = 0
+  function_response_types            = ["ReportBatchItemFailures"]
   enabled                            = true
 
   scaling_config {
