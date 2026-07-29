@@ -22,6 +22,7 @@ modules/integrations/splunk_o11y_conf_shared/detectors/aws_regional_health
 | Forge Runner Usage                       | How many EC2 and Kubernetes runners are active or were used in the selected window?               | `dashboard_variables.forge_impact`                          |
 | Forge Tenant - EC2 Runners               | Are EC2 runner hosts healthy, and which hosts are missing the Splunk OTel agent?                  | `dashboard_variables.runner_ec2`                            |
 | Forge Tenant - K8S Runners               | Are tenant ARC runner pods healthy and adequately resourced?                                      | `dashboard_variables.runner_k8s`                            |
+| Forge ARC Runner Operations              | Is ARC accepting, starting, and completing jobs with sufficient registered runner capacity?       | `dashboard_variables.arc_runner_operations`                 |
 | Forge Control Plane - Kubernetes         | Are shared cluster, node, platform pod, and telemetry components healthy?                         | `dashboard_variables.runner_k8s`, `k8s_platform_namespaces` |
 | Forge Tenant - Lambdas                   | Are Forge Lambdas failing, throttled, slow, or concentrated on a function version?                | `dashboard_variables.lambda`                                |
 | Forge Control Plane - Lambdas            | Are shared Forge Lambdas failing, throttled, or slow?                                             | `dashboard_variables.lambda_control_plane`                  |
@@ -138,6 +139,38 @@ high or low job execution is not enough to change a runner class.
 | Pod phase trend                             | Are pending, failed, or unknown pods accumulating?                        |
 | Container restarts                          | Which tenant containers restart most frequently?                          |
 | Pod termination and shutdown reasons        | Why are tenant pods terminating or shutting down?                         |
+
+## Forge ARC Runner Operations
+
+This is the ARC demand-to-workload operator dashboard. Start with telemetry
+and controller state, confirm whether desired runners became registered
+runners, compare job arrival and completion rates, then use the
+high-cardinality workflow panels to identify the affected workload.
+
+| Chart                                        | Operational question                                                                                          |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Active ARC scale sets                        | How many scale sets currently report desired-runner telemetry?                                                |
+| Registered runners                           | How much registered ARC runner capacity is currently available?                                               |
+| Running ARC listeners                        | How many listeners does the controller currently report as running?                                           |
+| Failed ephemeral runners                     | Does the controller currently report failed ephemeral runners?                                                |
+| ARC controller runner state                  | Did runner demand reach pending, running, or failed Kubernetes runner state?                                  |
+| Runner and job pressure by scale set         | How do assigned and running-or-queued jobs compare with desired, registered, busy, idle, and maximum runners? |
+| Scale sets below desired registered capacity | Which scale sets have a positive desired-minus-registered capacity gap?                                       |
+| Runner utilization by scale set              | Which scale sets have the highest busy-to-registered runner ratio?                                            |
+| Job arrival and completion throughput        | Are started and completed job rates moving together?                                                          |
+| Completion outcomes                          | Which GitHub job results make up current completion traffic?                                                  |
+| Job success rate                             | What share of completed jobs succeeded, with job volume considered?                                           |
+| Job startup latency                          | Are P50, P90, or P99 assignment-to-start delays increasing?                                                   |
+| Job execution duration                       | Are P50, P90, or P99 workload execution durations increasing?                                                 |
+| Top workflow and job demand                  | Which repositories, workflows, jobs, and events produce the most completions?                                 |
+| Slow startup fingerprints                    | Which repository, workflow, job, and event combinations have the highest P90 startup delay?                   |
+| Non-successful job fingerprints              | Which repository, workflow, job, result, ref, and target combinations require log and run drilldown?          |
+
+ARC listener counters reset when a listener restarts, so throughput panels use
+rates instead of raw totals. The latency panels use native histograms exported
+by the Splunk OTel Collector. Treat utilization, capacity gaps, latency, and
+job failures as evidence to correlate with Kubernetes state, GitHub runs, and
+Splunk logs—not as standalone proof of a Forge platform defect.
 
 ## Forge Control Plane - Kubernetes
 

@@ -9,6 +9,16 @@ dashboard_variables:
   runner_k8s:
     tenant_names: [acme]
     dynamic_variables: []
+  arc_runner_operations:
+    tenant_names: [acme]
+    dynamic_variables:
+      - property: k8s.cluster.name
+        alias: Kubernetes cluster
+        description: Forge ARC clusters that emit controller and listener metrics.
+        values: []
+        value_required: false
+        values_suggested: [forge-euw1-prod]
+        restricted_suggestions: true
   runner_ec2:
     tenant_names: [acme]
     dynamic_variables: []

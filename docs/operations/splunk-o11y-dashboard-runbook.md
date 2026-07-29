@@ -15,6 +15,8 @@ event sequence and retrieve error details.
 1. Prove that the expected telemetry source is fresh.
 1. Open `Forge Tenant Impact` to identify the affected tenant and subsystem.
 1. Open the narrow resource or dependency dashboard.
+1. For ARC demand or latency, open `Forge ARC Runner Operations` and follow
+   controller state → capacity → throughput → workflow fingerprint.
 1. Record the tenant, region, cluster, and affected resource dimensions.
 1. Correlate the same window in Splunk Cloud logs and the source platform.
 
@@ -31,26 +33,27 @@ Do not treat an empty chart as healthy until freshness is established.
 
 ## Which Dashboard First
 
-| Symptom                                                             | Start here                                    | Then open                                                               |
-| ------------------------------------------------------------------- | --------------------------------------------- | ----------------------------------------------------------------------- |
-| The symptom is unclear.                                             | Forge Tenant Impact                           | The highest-ranked subsystem dashboard                                  |
-| GitHub authentication, runner API, or rate limits are suspected.    | Forge External Dependency Health              | Splunk Cloud control-plane logs and the regional monitor Lambda logs    |
-| EC2 runners are slow, unhealthy, or missing telemetry.              | Forge Tenant - EC2 Runners                    | Forge EC2 Runner Lifecycle and Forge Runner Capacity in Splunk Cloud    |
-| ARC tenant pods are pending, restarting, or resource constrained.   | Forge Tenant - K8S Runners                    | Forge Control Plane - Kubernetes and ARC lifecycle logs                 |
-| Several ARC tenants fail in one cluster.                            | Forge Control Plane - Kubernetes              | Kubernetes Storage and Network in Splunk Cloud                          |
-| Lambdas fail, throttle, or become slow.                             | Forge Tenant - Lambdas                        | Forge Lambda Operations in Splunk Cloud                                 |
-| Shared Lambdas fail, throttle, or become slow.                      | Forge Control Plane - Lambdas                 | Matching regional control-plane Lambda logs                             |
-| Shared Kinesis streams throttle, lag, or become slow.               | Forge Control Plane - Kinesis                 | Kinesis producers, consumers, and matching Lambda/Firehose logs         |
-| Work accumulates or enters a DLQ.                                   | Forge Tenant - SQS                            | Webhook pipeline, dispatcher, redrive, or control-plane logs            |
-| Shared work accumulates or enters a DLQ.                            | Forge Control Plane - SQS                     | Matching regional control-plane queue producer and consumer logs        |
-| Tenant or shared S3 storage grows unexpectedly.                     | Forge Tenant - S3 or Forge Control Plane - S3 | Bucket lifecycle, retention, and producer logs                          |
-| An AWS service approaches its configured account or regional limit. | Forge Control Plane - AWS Service Limits      | AWS Trusted Advisor, Service Quotas, and the service-specific dashboard |
-| Regional Lambda throttling or queued-build saturation is suspected. | Forge AWS Regional Platform Health            | Tenant Lambda/SQS dashboards and matching regional control-plane logs   |
-| Lock, dedupe, or support-table operations fail.                     | Forge Tenant - DynamoDB                       | The Lambda and SQS dashboards, then matching logs                       |
-| Runners or pods show storage pressure.                              | Forge Tenant - EBS                            | EC2 lifecycle or Kubernetes storage logs                                |
-| Runner adoption or runtime is the question.                         | Forge Runner Usage                            | EC2 or K8S runner dashboard                                             |
-| AWS invoice cost is the question.                                   | Forge Billing and Cost - AWS                  | Billing export and tenant-tag validation                                |
-| Kubernetes allocation cost is the question.                         | Forge Billing and Cost - OpenCost             | Runner K8S and cluster allocation metrics                               |
+| Symptom                                                                 | Start here                                    | Then open                                                               |
+| ----------------------------------------------------------------------- | --------------------------------------------- | ----------------------------------------------------------------------- |
+| The symptom is unclear.                                                 | Forge Tenant Impact                           | The highest-ranked subsystem dashboard                                  |
+| GitHub authentication, runner API, or rate limits are suspected.        | Forge External Dependency Health              | Splunk Cloud control-plane logs and the regional monitor Lambda logs    |
+| EC2 runners are slow, unhealthy, or missing telemetry.                  | Forge Tenant - EC2 Runners                    | Forge EC2 Runner Lifecycle and Forge Runner Capacity in Splunk Cloud    |
+| ARC jobs start slowly, do not complete, or exhaust registered capacity. | Forge ARC Runner Operations                   | Forge Tenant - K8S Runners, then ARC lifecycle and Kubernetes logs      |
+| ARC tenant pods are pending, restarting, or resource constrained.       | Forge Tenant - K8S Runners                    | Forge Control Plane - Kubernetes and ARC lifecycle logs                 |
+| Several ARC tenants fail in one cluster.                                | Forge Control Plane - Kubernetes              | Kubernetes Storage and Network in Splunk Cloud                          |
+| Lambdas fail, throttle, or become slow.                                 | Forge Tenant - Lambdas                        | Forge Lambda Operations in Splunk Cloud                                 |
+| Shared Lambdas fail, throttle, or become slow.                          | Forge Control Plane - Lambdas                 | Matching regional control-plane Lambda logs                             |
+| Shared Kinesis streams throttle, lag, or become slow.                   | Forge Control Plane - Kinesis                 | Kinesis producers, consumers, and matching Lambda/Firehose logs         |
+| Work accumulates or enters a DLQ.                                       | Forge Tenant - SQS                            | Webhook pipeline, dispatcher, redrive, or control-plane logs            |
+| Shared work accumulates or enters a DLQ.                                | Forge Control Plane - SQS                     | Matching regional control-plane queue producer and consumer logs        |
+| Tenant or shared S3 storage grows unexpectedly.                         | Forge Tenant - S3 or Forge Control Plane - S3 | Bucket lifecycle, retention, and producer logs                          |
+| An AWS service approaches its configured account or regional limit.     | Forge Control Plane - AWS Service Limits      | AWS Trusted Advisor, Service Quotas, and the service-specific dashboard |
+| Regional Lambda throttling or queued-build saturation is suspected.     | Forge AWS Regional Platform Health            | Tenant Lambda/SQS dashboards and matching regional control-plane logs   |
+| Lock, dedupe, or support-table operations fail.                         | Forge Tenant - DynamoDB                       | The Lambda and SQS dashboards, then matching logs                       |
+| Runners or pods show storage pressure.                                  | Forge Tenant - EBS                            | EC2 lifecycle or Kubernetes storage logs                                |
+| Runner adoption or runtime is the question.                             | Forge Runner Usage                            | EC2 or K8S runner dashboard                                             |
+| AWS invoice cost is the question.                                       | Forge Billing and Cost - AWS                  | Billing export and tenant-tag validation                                |
+| Kubernetes allocation cost is the question.                             | Forge Billing and Cost - OpenCost             | Runner K8S and cluster allocation metrics                               |
 
 ## Freshness Before Severity
 
@@ -153,6 +156,31 @@ Apocalypse: tenant runner pods fail across several namespaces or clusters.
 
 Action: capture cluster, namespace, pod, node, phase, and termination reason.
 If several tenants share the symptom, move to `Forge Control Plane - Kubernetes`. Otherwise correlate with the tenant ARC lifecycle logs.
+
+### Forge ARC Runner Operations
+
+Purpose: connect ARC controller and listener health to runner supply, job
+throughput, outcomes, startup delay, execution duration, and the repository or
+workflow producing demand.
+
+Normal: listener and scale-set telemetry is fresh, desired and registered
+runners converge, started and completed rates move together, and latency
+follows the workload baseline.
+
+Problem: failed ephemeral runners persist, desired runners remain above
+registered runners, started jobs repeatedly outpace completions, or startup
+latency rises with pending or failed Kubernetes runner state.
+
+Action: capture cluster, scale set, organization, repository, workflow, job,
+event, result, workflow ref, workflow target, and time window. Use startup
+latency to investigate ARC scaling, scheduling, registration, images, or
+storage. Use execution duration and non-success fingerprints to open the
+matching GitHub run and determine whether the mechanism belongs to the
+workload, runner lane, Forge platform, or an external dependency.
+
+Listener counters reset when the listener restarts, so read their rate charts
+rather than raw totals. Do not treat high utilization, a short capacity gap,
+or one slow job as a confirmed incident or resizing decision.
 
 ### Forge Control Plane - Kubernetes
 

@@ -40,6 +40,18 @@ module "dashboard_runner_k8s" {
   }
 }
 
+module "dashboard_arc_runner_operations" {
+  source = "./dashboards/arc_runner_operations"
+
+  providers = {
+    signalfx = signalfx
+  }
+
+  tenant_names      = var.dashboard_variables.arc_runner_operations.tenant_names
+  dynamic_variables = var.dashboard_variables.arc_runner_operations.dynamic_variables
+  dashboard_group   = signalfx_dashboard_group.forgecicd.id
+}
+
 module "dashboard_k8s_control_plane" {
   source = "./dashboards/k8s_control_plane"
 

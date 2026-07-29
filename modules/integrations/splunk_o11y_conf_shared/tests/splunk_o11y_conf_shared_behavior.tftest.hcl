@@ -38,8 +38,32 @@ variables {
   dashboard_group_name   = "Forge Dashboards"
   dashboard_variables = {
     runner_k8s = {
-      tenant_names      = ["tenant-a"]
-      dynamic_variables = []
+      tenant_names = ["tenant-a"]
+      dynamic_variables = [
+        {
+          property               = "k8s.cluster.name"
+          alias                  = "Kubernetes cluster"
+          description            = "Kubernetes runner cluster."
+          values                 = []
+          value_required         = false
+          values_suggested       = ["runner-k8s-cluster"]
+          restricted_suggestions = true
+        },
+      ]
+    }
+    arc_runner_operations = {
+      tenant_names = ["arc-tenant"]
+      dynamic_variables = [
+        {
+          property               = "k8s.cluster.name"
+          alias                  = "ARC cluster"
+          description            = "ARC metrics cluster."
+          values                 = []
+          value_required         = false
+          values_suggested       = ["arc-metrics-cluster"]
+          restricted_suggestions = true
+        },
+      ]
     }
     runner_ec2 = {
       tenant_names      = ["tenant-a"]
