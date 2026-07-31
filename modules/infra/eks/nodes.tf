@@ -10,7 +10,7 @@ data "aws_ami" "eks_default" {
 module "self_managed_node_group" {
   #checkov:skip=CKV_TF_1:Module source uses Renovate-managed version tags; commit SHA pinning is an accepted policy tradeoff.
   source  = "terraform-aws-modules/eks/aws//modules/self-managed-node-group"
-  version = "21.24.0"
+  version = "21.24.1"
 
   name                = var.cluster_name
   cluster_name        = var.cluster_name
