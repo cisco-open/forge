@@ -233,7 +233,7 @@ repos:
         exclude: (docs/operations/repo-blueprints/)
 
   - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: 05fd71a57a467ccf5598f7e836d3af4cf9225abb  # frozen: v1.108.0
+    rev: bf9dd9c695ddaf238af36f179049202358ec22b7  # frozen: v1.108.1
     hooks:
       - id: terraform_fmt
         name: Terraform · Formatter
