@@ -33,7 +33,7 @@ The controller is the Kubernetes-side reconciler that watches GitHub demand and 
 | Name | Version |
 | ---- | ------- |
 | <a name="provider_helm"></a> [helm](#provider\_helm) | 3.2.0 |
-| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | 3.2.0 |
+| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | 3.2.1 |
 
 ## Modules
 

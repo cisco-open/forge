@@ -51,7 +51,7 @@ Operationally, this sits in the same control-plane path as runner scaling, job-l
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 6.47 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.57.1 |
 
 ## Modules
 
@@ -75,6 +75,7 @@ Operationally, this sits in the same control-plane path as runner scaling, job-l
 | [aws_cloudwatch_log_delivery_destination.cwlogs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_delivery_destination) | resource |
 | [aws_cloudwatch_log_delivery_source.error_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_delivery_source) | resource |
 | [aws_cloudwatch_log_delivery_source.info_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_delivery_source) | resource |
+| [aws_cloudwatch_log_group.api_gateway_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
 | [aws_cloudwatch_log_group.event_bus_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
 | [aws_cloudwatch_log_group.validate_signature_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
 | [aws_cloudwatch_log_resource_policy.source](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_resource_policy) | resource |
@@ -91,13 +92,10 @@ Operationally, this sits in the same control-plane path as runner scaling, job-l
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
-| <a name="input_aws_profile"></a> [aws\_profile](#input\_aws\_profile) | AWS profile to use. | `string` | `null` | no |
-| <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | AWS region to use. | `string` | `null` | no |
-| <a name="input_default_tags"></a> [default\_tags](#input\_default\_tags) | Default provider tags to apply to resources. | `map(string)` | `{}` | no |
 | <a name="input_destination_account_id"></a> [destination\_account\_id](#input\_destination\_account\_id) | Destination (receiver) AWS account ID | `string` | n/a | yes |
 | <a name="input_destination_event_bus_name"></a> [destination\_event\_bus\_name](#input\_destination\_event\_bus\_name) | Destination bus name in destination account | `string` | n/a | yes |
 | <a name="input_destination_region"></a> [destination\_region](#input\_destination\_region) | Destination region (omit for same as source) | `string` | `null` | no |
-| <a name="input_event_source"></a> [event\_source](#input\_event\_source) | EventBridge source field for emitted events | `string` | `"github.webhook"` | no |
+| <a name="input_event_source"></a> [event\_source](#input\_event\_source) | EventBridge source field for emitted events | `string` | `"webhook.relay"` | no |
 | <a name="input_log_level"></a> [log\_level](#input\_log\_level) | Log level for application logging (e.g., INFO, DEBUG, WARN, ERROR) | `string` | `"INFO"` | no |
 | <a name="input_logging_retention_in_days"></a> [logging\_retention\_in\_days](#input\_logging\_retention\_in\_days) | Log retention period in days | `number` | `3` | no |
 | <a name="input_name_prefix"></a> [name\_prefix](#input\_name\_prefix) | Prefix for created resources | `string` | `"webhook-relay-source"` | no |

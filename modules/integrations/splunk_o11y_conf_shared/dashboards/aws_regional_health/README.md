@@ -126,6 +126,7 @@ No modules.
 | <a name="input_dashboard_group"></a> [dashboard\_group](#input\_dashboard\_group) | Splunk Observability dashboard group ID. | `string` | n/a | yes |
 | <a name="input_detector_id"></a> [detector\_id](#input\_detector\_id) | AWS regional platform detector ID linked to queue-health charts. | `string` | n/a | yes |
 | <a name="input_dynamic_variables"></a> [dynamic\_variables](#input\_dynamic\_variables) | AWS account, region, and product-family dashboard variable definitions used to scope regional platform health. | <pre>list(object({<br/>    property               = string<br/>    alias                  = string<br/>    description            = string<br/>    values                 = list(string)<br/>    value_required         = bool<br/>    values_suggested       = list(string)<br/>    restricted_suggestions = bool<br/>  }))</pre> | n/a | yes |
+| <a name="input_lambda_dimension_filter"></a> [lambda\_dimension\_filter](#input\_lambda\_dimension\_filter) | Canonical AWS Lambda resource-level SignalFlow filter. | `string` | n/a | yes |
 
 ## Outputs
 

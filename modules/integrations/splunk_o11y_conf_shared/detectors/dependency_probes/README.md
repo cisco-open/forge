@@ -49,6 +49,7 @@ No modules.
 | <a name="input_detector_config"></a> [detector\_config](#input\_detector\_config) | Thresholds and durations for the dependency rules in tenant health detectors. | <pre>object({<br/>    failure_duration                   = string<br/>    no_data_duration                   = string<br/>    no_data_fill_duration              = string<br/>    rate_limit_duration                = string<br/>    rate_limit_remaining_pct_threshold = number<br/>  })</pre> | n/a | yes |
 | <a name="input_detector_name_prefix"></a> [detector\_name\_prefix](#input\_detector\_name\_prefix) | Prefix to use for Splunk Observability detector names. | `string` | n/a | yes |
 | <a name="input_detector_notifications"></a> [detector\_notifications](#input\_detector\_notifications) | Detector notification destinations. | `list(string)` | n/a | yes |
+| <a name="input_lambda_dimension_filter"></a> [lambda\_dimension\_filter](#input\_lambda\_dimension\_filter) | Canonical AWS Lambda resource-level SignalFlow filter. | `string` | n/a | yes |
 | <a name="input_team"></a> [team](#input\_team) | Splunk Observability team ID. | `string` | n/a | yes |
 | <a name="input_tenant_names"></a> [tenant\_names](#input\_tenant\_names) | Forge tenants that require independent health detectors. | `list(string)` | n/a | yes |
 

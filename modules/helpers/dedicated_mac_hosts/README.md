@@ -20,7 +20,7 @@ This module allocates EC2 Mac Dedicated Hosts, groups them with AWS Resource Gro
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.54.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.57.1 |
 
 ## Modules
 
@@ -34,6 +34,7 @@ No modules.
 | [aws_licensemanager_license_configuration.mac_dedicated_host_license_configuration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/licensemanager_license_configuration) | resource |
 | [aws_resourcegroups_group.mac_host_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/resourcegroups_group) | resource |
 | [aws_resourcegroups_resource.mac_host_membership](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/resourcegroups_resource) | resource |
+| [aws_servicecatalogappregistry_application.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/servicecatalogappregistry_application) | resource |
 
 ## Inputs
 
