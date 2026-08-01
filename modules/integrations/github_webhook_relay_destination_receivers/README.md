@@ -31,7 +31,7 @@ The Forge control plane emits useful workflow events, but the consumers may live
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.57.1 |
 
 ## Modules
 
@@ -44,6 +44,7 @@ The Forge control plane emits useful workflow events, but the consumers may live
 
 | Name | Type |
 | ---- | ---- |
+| [aws_servicecatalogappregistry_application.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/servicecatalogappregistry_application) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 
 ## Inputs
@@ -57,6 +58,7 @@ The Forge control plane emits useful workflow events, but the consumers may live
 | <a name="input_log_level"></a> [log\_level](#input\_log\_level) | Log level for application logging (e.g., INFO, DEBUG, WARN, ERROR) | `string` | `"INFO"` | no |
 | <a name="input_logging_retention_in_days"></a> [logging\_retention\_in\_days](#input\_logging\_retention\_in\_days) | Number of days to retain logs. | `number` | `3` | no |
 | <a name="input_reader_config"></a> [reader\_config](#input\_reader\_config) | Configuration for the reader to fetch secrets. | <pre>object({<br/>    enable_secret_fetch    = bool<br/>    source_secret_role_arn = string<br/>    source_secret_arn      = string<br/>    source_secret_region   = string<br/>  })</pre> | n/a | yes |
+| <a name="input_reader_role_name"></a> [reader\_role\_name](#input\_reader\_role\_name) | IAM role name used by the destination reader to fetch secrets. | `string` | `"forge-github-webhook-relay-secret-reader"` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to apply to resources. | `map(string)` | n/a | yes |
 | <a name="input_webhook_relay_destination_config"></a> [webhook\_relay\_destination\_config](#input\_webhook\_relay\_destination\_config) | Configuration for webhook relay destination. | <pre>object({<br/>    name_prefix                = string<br/>    destination_event_bus_name = string<br/>    source_account_id          = string<br/>  })</pre> | n/a | yes |
 

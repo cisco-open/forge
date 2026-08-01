@@ -23,7 +23,7 @@ suggestions fail closed instead of querying every AWS resource.
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | < 10.0.0 |
+| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.33.0 |
 | <a name="provider_terraform"></a> [terraform](#provider\_terraform) | n/a |
 
 ## Modules

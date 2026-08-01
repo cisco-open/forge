@@ -166,7 +166,7 @@ drill-down.
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.56.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.57.1 |
 | <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.33.0 |
 
 ## Modules

@@ -32,7 +32,7 @@ Forge runners are ephemeral, so logs are the durable evidence trail. This module
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.52.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.57.1 |
 | <a name="provider_splunk"></a> [splunk](#provider\_splunk) | 1.5.3 |
 
 ## Modules
@@ -93,6 +93,7 @@ No modules.
 | [splunk_configs_conf.forgecicd_scale_down_aws_runner_instance_id](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_scale_down_orphan_runner_instance_id](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_scale_down_runner_instance_id](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
+| [splunk_configs_conf.forgecicd_shared_lambda_fields](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_stuck_workflow_job_dispatcher_delivery_attempt](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_stuck_workflow_job_dispatcher_generic_fields](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_stuck_workflow_job_dispatcher_key_fields](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |

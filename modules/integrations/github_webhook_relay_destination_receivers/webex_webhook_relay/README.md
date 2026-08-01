@@ -60,7 +60,7 @@ The secret is stored in Secrets Manager and read by the Lambda at runtime. Treat
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.57.1 |
 | <a name="provider_time"></a> [time](#provider\_time) | 0.14.0 |
 
 ## Modules

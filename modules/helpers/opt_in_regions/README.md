@@ -29,7 +29,7 @@ Forge can run tenants across regions, but AWS opt-in regions must be enabled bef
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.57.1 |
 
 ## Modules
 
@@ -40,6 +40,7 @@ No modules.
 | Name | Type |
 | ---- | ---- |
 | [aws_account_region.enabled_regions](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/account_region) | resource |
+| [aws_servicecatalogappregistry_application.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/servicecatalogappregistry_application) | resource |
 
 ## Inputs
 

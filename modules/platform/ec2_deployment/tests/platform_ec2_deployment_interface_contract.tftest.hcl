@@ -56,7 +56,7 @@ run "platform_ec2_deployment_interface_contract" {
       "runner_architecture                                            = string",
       "extra_labels                                                   = list(string)",
       "enable_dynamic_labels                                          = optional(bool, false)",
-      "ec2_dynamic_labels_policy                                      = optional(any, null)",
+      "aws_dynamic_labels_policy                                      = optional(any, null)",
       "lambda_event_source_mapping_batch_size                         = optional(number, 10)",
       "lambda_event_source_mapping_maximum_batching_window_in_seconds = optional(number, 0)",
       "redrive_build_queue = optional(object({",
@@ -106,6 +106,7 @@ run "platform_ec2_deployment_interface_contract" {
       "tags           = map(string)",
       "lambda_event_source_mapping_batch_size                         = val[\"lambda_event_source_mapping_batch_size\"]",
       "lambda_event_source_mapping_maximum_batching_window_in_seconds = val[\"lambda_event_source_mapping_maximum_batching_window_in_seconds\"]",
+      "awsDynamicLabelsPolicy = val[\"aws_dynamic_labels_policy\"]",
       "redrive_build_queue = val[\"redrive_build_queue\"]",
       "output \"ec2_runners_ami_name_map\"",
       "value = {",
@@ -158,7 +159,7 @@ run "platform_ec2_deployment_interface_contract" {
     condition = (
       output.expected_input_variable_count == 4
       && output.expected_output_value_count == 6
-      && output.expected_interface_literal_count == 104
+      && output.expected_interface_literal_count == 105
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }
