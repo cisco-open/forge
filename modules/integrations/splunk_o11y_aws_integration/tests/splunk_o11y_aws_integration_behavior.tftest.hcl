@@ -11,6 +11,20 @@ mock_provider "aws" {
       secret_string = "mock-splunk-access-token"
     }
   }
+
+  mock_resource "aws_servicecatalogappregistry_application" {
+    defaults = {
+      application_tag = {
+        awsApplication = "arn:aws:resource-groups:us-east-1:123456789012:group/splunk-o11y"
+      }
+    }
+  }
+
+  mock_resource "aws_cloudformation_stack" {
+    defaults = {
+      id = "arn:aws:cloudformation:us-east-1:123456789012:stack/splunk-integration/mock-stack-id"
+    }
+  }
 }
 
 variables {
@@ -47,5 +61,29 @@ run "splunk_o11y_cloudformation_stack_contract" {
       && aws_cloudformation_stack.splunk_integration.tags.Env == "test"
     )
     error_message = "Splunk o11y AWS integration stack must keep IAM capabilities and merged Forge tags."
+  }
+
+  assert {
+    condition = (
+      terraform_data.cloudwatch_metric_stream_tags.input.aws_profile == "test"
+      && terraform_data.cloudwatch_metric_stream_tags.input.region == "us-east-1"
+      && terraform_data.cloudwatch_metric_stream_tags.input.stack_id == "arn:aws:cloudformation:us-east-1:123456789012:stack/splunk-integration/mock-stack-id"
+      && terraform_data.cloudwatch_metric_stream_tags.input.stream_name_prefix == "splunk-metric-stream-"
+      && terraform_data.cloudwatch_metric_stream_tags.input.tags.Product == "Forge"
+      && terraform_data.cloudwatch_metric_stream_tags.input.tags.Env == "test"
+      && terraform_data.cloudwatch_metric_stream_tags.input.tags.awsApplication == "arn:aws:resource-groups:us-east-1:123456789012:group/splunk-o11y"
+    )
+    error_message = "Metric Stream tag management must retain the stack identity, configured profile and region, discovery prefix, and merged Forge tags."
+  }
+
+  assert {
+    condition = (
+      length(terraform_data.cloudwatch_metric_stream_tags.triggers_replace) == 4
+      && terraform_data.cloudwatch_metric_stream_tags.triggers_replace[0] == terraform_data.cloudwatch_metric_stream_tags.input.stack_id
+      && terraform_data.cloudwatch_metric_stream_tags.triggers_replace[1] == "https://example.com/splunk-integration.yaml"
+      && terraform_data.cloudwatch_metric_stream_tags.triggers_replace[2] == filesha256("${path.module}/scripts/manage_cloudwatch_metric_stream_tags.sh")
+      && terraform_data.cloudwatch_metric_stream_tags.triggers_replace[3] == sha256(jsonencode(terraform_data.cloudwatch_metric_stream_tags.input.tags))
+    )
+    error_message = "Metric Stream tag management must replace on stack, template, script, or desired-tag changes."
   }
 }
