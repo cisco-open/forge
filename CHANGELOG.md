@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.10.0](https://github.com/cisco-open/forge/compare/v4.9.4...v4.10.0) (2026-08-03)
+
+
+### Features
+
+* **splunk:** tag managed metric stream ([#612](https://github.com/cisco-open/forge/issues/612)) ([56fe16d](https://github.com/cisco-open/forge/commit/56fe16deee0b514fa31de246184381736d6c9174))
+
+
+### Bug Fixes
+
+* **billing:** parse AppRegistry application IDs ([#611](https://github.com/cisco-open/forge/issues/611)) ([11917f4](https://github.com/cisco-open/forge/commit/11917f4f375eb95be91bf8451573b814cb2f7952))
+
 ## [4.9.4](https://github.com/cisco-open/forge/compare/v4.9.3...v4.9.4) (2026-08-03)
 
 
