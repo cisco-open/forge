@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.9.4](https://github.com/cisco-open/forge/compare/v4.9.3...v4.9.4) (2026-08-03)
+
+
+### Bug Fixes
+
+* remove service application from github_webhook_relay_destination ([#607](https://github.com/cisco-open/forge/issues/607)) ([b49c8ab](https://github.com/cisco-open/forge/commit/b49c8abc05a14ea0f8ac47aa04912c6e590fe1c6))
+* **splunk:** update runner queries for v7.10.1 ([#609](https://github.com/cisco-open/forge/issues/609)) ([e8081cc](https://github.com/cisco-open/forge/commit/e8081cc3b04ecaabce0f3ec15c6855f6d5d66a96))
+
 ## [4.9.3](https://github.com/cisco-open/forge/compare/v4.9.2...v4.9.3) (2026-08-01)
 
 
