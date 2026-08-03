@@ -61,4 +61,16 @@ run "orders_ec2_failure_dashboards_for_operator_triage" {
     )
     error_message = "EC2 failure dashboards must place scope and actionable failures before trends and request drilldowns."
   }
+
+  assert {
+    condition = (
+      can(jsondecode(local.forge_ec2_run_instances_scale_up_failures_definition))
+      && strcontains(splunk_data_ui_views.forge_ec2_run_instances_scale_up_failures.eai_data, "RunInstances request failed for dedicated host.")
+      && strcontains(splunk_data_ui_views.forge_ec2_run_instances_scale_up_failures.eai_data, "RunInstances did not create every requested instance.")
+      && strcontains(splunk_data_ui_views.forge_ec2_run_instances_scale_up_failures.eai_data, "SQS messages will be retried.")
+      && strcontains(splunk_data_ui_views.forge_ec2_run_instances_scale_up_failures.eai_data, "messageIds{}")
+      && strcontains(splunk_data_ui_views.forge_ec2_run_instances_scale_up_failures.eai_data, "nonRetryableErrorCount")
+    )
+    error_message = "RunInstances searches must use only the v7.10.1 failure and retry log contract."
+  }
 }

@@ -36,7 +36,7 @@ resource "splunk_configs_conf" "forgecicd_pool_target_size" {
   name = "transforms/forgecicd_pool_target_size"
 
   variables = {
-    REGEX      = "Checking current pool size against pool of size: ([0-9]+)"
+    REGEX      = "Checking current ec2 pool size against pool of size: ([0-9]+)"
     FORMAT     = "forgecicd_pool_target_size::$1"
     SOURCE_KEY = "_raw"
     CLEAN_KEYS = "0"
@@ -206,7 +206,7 @@ resource "splunk_configs_conf" "forgecicd_scale_down_aws_runner_instance_id" {
   name = "transforms/forgecicd_scale_down_aws_runner_instance_id"
 
   variables = {
-    REGEX      = "AWS runner instance '(i-[0-9a-f]+)'"
+    REGEX      = "EC2 runner '(i-[0-9a-f]+)'"
     FORMAT     = "forgecicd_runner_instance_id::$1"
     SOURCE_KEY = "_raw"
     CLEAN_KEYS = "0"
