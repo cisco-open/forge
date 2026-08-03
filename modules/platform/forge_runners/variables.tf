@@ -27,7 +27,7 @@ variable "ec2_deployment_specs" {
       runner_architecture                                            = string
       extra_labels                                                   = list(string)
       enable_dynamic_labels                                          = optional(bool, false)
-      ec2_dynamic_labels_policy                                      = optional(any, null)
+      aws_dynamic_labels_policy                                      = optional(any, null)
       lambda_event_source_mapping_batch_size                         = optional(number, 10)
       lambda_event_source_mapping_maximum_batching_window_in_seconds = optional(number, 0)
       redrive_build_queue = optional(object({
@@ -98,7 +98,7 @@ variable "ec2_deployment_specs" {
                         this runner pool.
     - enable_dynamic_labels: Enables dynamic `ghr-` labels for this runner
                         pool.
-    - ec2_dynamic_labels_policy: Optional policy for `ghr-ec2-*` labels for
+    - aws_dynamic_labels_policy: Optional policy for `ghr-ec2-*` labels for
                         this runner pool.
     - lambda_event_source_mapping_batch_size: Optional maximum number of queued
                         jobs passed to the scale-up Lambda per invocation.

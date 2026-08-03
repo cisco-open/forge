@@ -33,7 +33,7 @@ Most runner AWS-auth failures happen at the ownership boundary between Forge and
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.51.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.57.1 |
 
 ## Modules
 
@@ -71,6 +71,7 @@ Most runner AWS-auth failures happen at the ownership boundary between Forge and
 | <a name="input_prefix"></a> [prefix](#input\_prefix) | Prefix for all resources | `string` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to created resources. | `map(string)` | `{}` | no |
 | <a name="input_tenant_iam_roles"></a> [tenant\_iam\_roles](#input\_tenant\_iam\_roles) | List of IAM role ARNs that the runners will assume to test trust relationships. | `list(string)` | `[]` | no |
+| <a name="input_validation_max_workers"></a> [validation\_max\_workers](#input\_validation\_max\_workers) | Maximum number of tenant trust relationships validated concurrently for each Forge role. | `number` | `8` | no |
 
 ## Outputs
 

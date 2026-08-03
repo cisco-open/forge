@@ -85,7 +85,7 @@ locals {
       ]
       enable_userdata                                                = true
       enable_dynamic_labels                                          = try(spec.enable_dynamic_labels, false)
-      ec2_dynamic_labels_policy                                      = try(spec.ec2_dynamic_labels_policy, null)
+      aws_dynamic_labels_policy                                      = try(spec.aws_dynamic_labels_policy, null)
       lambda_event_source_mapping_batch_size                         = try(spec.lambda_event_source_mapping_batch_size, 10)
       lambda_event_source_mapping_maximum_batching_window_in_seconds = try(spec.lambda_event_source_mapping_maximum_batching_window_in_seconds, 0)
       redrive_build_queue                                            = try(spec.redrive_build_queue, {})

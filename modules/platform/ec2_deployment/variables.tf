@@ -31,7 +31,7 @@ variable "runner_configs" {
       runner_architecture                                            = string
       extra_labels                                                   = list(string)
       enable_dynamic_labels                                          = optional(bool, false)
-      ec2_dynamic_labels_policy                                      = optional(any, null)
+      aws_dynamic_labels_policy                                      = optional(any, null)
       lambda_event_source_mapping_batch_size                         = optional(number, 10)
       lambda_event_source_mapping_maximum_batching_window_in_seconds = optional(number, 0)
       redrive_build_queue = optional(object({

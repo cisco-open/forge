@@ -84,6 +84,7 @@ No modules.
 | [signalfx_detector.aws_control_plane_health](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/detector) | resource |
 | [signalfx_detector.aws_regional_platform_health](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/detector) | resource |
 | [signalfx_detector.aws_sqs_control_plane_health](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/detector) | resource |
+| [signalfx_detector.runner_log_delivery_health](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/detector) | resource |
 
 ## Inputs
 
@@ -92,6 +93,7 @@ No modules.
 | <a name="input_detector_name_prefix"></a> [detector\_name\_prefix](#input\_detector\_name\_prefix) | Prefix to use for Splunk Observability detector names. | `string` | n/a | yes |
 | <a name="input_detector_notifications"></a> [detector\_notifications](#input\_detector\_notifications) | Detector notification destinations. | `list(string)` | n/a | yes |
 | <a name="input_dynamic_variables"></a> [dynamic\_variables](#input\_dynamic\_variables) | Dynamic metric property definitions used to scope regional platform detectors. | <pre>list(object({<br/>    property               = string<br/>    alias                  = string<br/>    description            = string<br/>    values                 = list(string)<br/>    value_required         = bool<br/>    values_suggested       = list(string)<br/>    restricted_suggestions = bool<br/>  }))</pre> | n/a | yes |
+| <a name="input_lambda_dimension_filter"></a> [lambda\_dimension\_filter](#input\_lambda\_dimension\_filter) | Canonical AWS Lambda resource-level SignalFlow filter. | `string` | n/a | yes |
 | <a name="input_team"></a> [team](#input\_team) | Splunk Observability team ID. | `string` | n/a | yes |
 
 ## Outputs
@@ -100,5 +102,6 @@ No modules.
 | ---- | ----------- |
 | <a name="output_detector_id"></a> [detector\_id](#output\_detector\_id) | AWS regional platform detector ID for linking queue-health charts. |
 | <a name="output_lambda_control_plane_detector_id"></a> [lambda\_control\_plane\_detector\_id](#output\_lambda\_control\_plane\_detector\_id) | AWS Lambda control-plane detector ID for linking Lambda health charts. |
+| <a name="output_runner_log_delivery_detector_id"></a> [runner\_log\_delivery\_detector\_id](#output\_runner\_log\_delivery\_detector\_id) | Runner-log delivery integrity detector ID. |
 | <a name="output_sqs_control_plane_detector_id"></a> [sqs\_control\_plane\_detector\_id](#output\_sqs\_control\_plane\_detector\_id) | AWS SQS control-plane detector ID for linking SQS health charts. |
 <!-- END_TF_DOCS -->

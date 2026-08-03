@@ -106,7 +106,7 @@ the dependency-probe tenants configured in the shared Observability module.
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.56.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.57.1 |
 
 ## Modules
 
@@ -122,6 +122,7 @@ the dependency-probe tenants configured in the shared Observability module.
 | [aws_cloudwatch_event_target.dependency_monitor](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_target) | resource |
 | [aws_cloudwatch_log_group.dependency_monitor](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
 | [aws_lambda_permission.eventbridge_invoke](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission) | resource |
+| [aws_servicecatalogappregistry_application.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/servicecatalogappregistry_application) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_iam_policy_document.dependency_monitor](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
@@ -138,7 +139,7 @@ the dependency-probe tenants configured in the shared Observability module.
 | <a name="input_github_api_version"></a> [github\_api\_version](#input\_github\_api\_version) | GitHub REST API version sent by every regional dependency probe. | `string` | `"2022-11-28"` | no |
 | <a name="input_github_timeout_seconds"></a> [github\_timeout\_seconds](#input\_github\_timeout\_seconds) | Timeout for each GitHub API request. | `number` | `10` | no |
 | <a name="input_log_level"></a> [log\_level](#input\_log\_level) | Lambda log level. | `string` | `"INFO"` | no |
-| <a name="input_logging_retention_in_days"></a> [logging\_retention\_in\_days](#input\_logging\_retention\_in\_days) | Number of days to retain dependency-probe Lambda logs. | `number` | `14` | no |
+| <a name="input_logging_retention_in_days"></a> [logging\_retention\_in\_days](#input\_logging\_retention\_in\_days) | Number of days to retain dependency-probe Lambda logs. | `number` | `3` | no |
 | <a name="input_schedule_expression"></a> [schedule\_expression](#input\_schedule\_expression) | EventBridge schedule for tenant dependency probes. | `string` | `"cron(*/5 * * * ? *)"` | no |
 | <a name="input_splunk_dependency_monitor_config"></a> [splunk\_dependency\_monitor\_config](#input\_splunk\_dependency\_monitor\_config) | Splunk Cloud HEC and Splunk Observability metric-ingest configuration. | <pre>object({<br/>    splunk_hec_url     = string<br/>    splunk_index       = string<br/>    splunk_metrics_url = string<br/>  })</pre> | n/a | yes |
 | <a name="input_splunk_http_timeout_seconds"></a> [splunk\_http\_timeout\_seconds](#input\_splunk\_http\_timeout\_seconds) | Timeout for batched Splunk Cloud and Splunk O11y HTTP requests. | `number` | `10` | no |

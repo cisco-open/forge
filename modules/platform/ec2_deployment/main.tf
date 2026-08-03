@@ -186,7 +186,7 @@ module "runners" {
         )
         exactMatch             = true
         enableDynamicLabels    = val["enable_dynamic_labels"]
-        ec2DynamicLabelsPolicy = val["ec2_dynamic_labels_policy"]
+        awsDynamicLabelsPolicy = val["aws_dynamic_labels_policy"]
       }
       redrive_build_queue = val["redrive_build_queue"]
       runner_config = {
