@@ -38,7 +38,7 @@ lambda-tests = [
     "requests==2.34.2",
     "cryptography==49.0.0",
     "responses==0.26.2",
-    "hypothesis==6.163.1",
+    "hypothesis==6.165.0",
 ]
 
 # Dev/test deps for the MiniStack smoke suite under tests/smoke.
