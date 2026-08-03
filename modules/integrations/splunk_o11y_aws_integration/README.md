@@ -11,12 +11,16 @@ Forge uses Splunk Observability for AWS metrics while Splunk Cloud handles logs.
 - A CloudFormation stack created from the configured template URL.
 - Secret lookups for Splunk access material.
 - Region, ingest URL, and tagging inputs for the integration.
+- Application of the common Forge tags to the regional Splunk-managed CloudWatch Metric Stream.
 
 ## Operational Notes
 
 - This module depends on a valid Splunk-provided template URL.
 - CloudFormation failures should be debugged in both Terraform output and the CloudFormation events.
 - Use the common integration module for IAM role setup when needed.
+- Metric Stream tag management requires the AWS CLI and `cloudwatch:ListMetricStreams`, `cloudwatch:TagResource`, and `cloudwatch:UntagResource` permissions for the configured AWS profile.
+- The tag helper finds exactly one stream in the configured region whose name starts with `splunk-metric-stream-`. It waits up to 15 minutes for a newly configured stream and fails rather than choosing arbitrarily if multiple streams match.
+- Tag drift outside Terraform is not detected unless the stack, template, or desired tag map changes and replaces the helper.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -31,6 +35,7 @@ Forge uses Splunk Observability for AWS metrics while Splunk Cloud handles logs.
 | Name | Version |
 | ---- | ------- |
 | <a name="provider_aws"></a> [aws](#provider\_aws) | 6.57.1 |
+| <a name="provider_terraform"></a> [terraform](#provider\_terraform) | n/a |
 
 ## Modules
 
@@ -42,6 +47,7 @@ No modules.
 | ---- | ---- |
 | [aws_cloudformation_stack.splunk_integration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudformation_stack) | resource |
 | [aws_servicecatalogappregistry_application.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/servicecatalogappregistry_application) | resource |
+| [terraform_data.cloudwatch_metric_stream_tags](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data) | resource |
 | [aws_secretsmanager_secret.secrets](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/secretsmanager_secret) | data source |
 | [aws_secretsmanager_secret_version.secrets](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/secretsmanager_secret_version) | data source |
 
