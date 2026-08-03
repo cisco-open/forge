@@ -26,6 +26,7 @@ BILLING_DIR = Path(__file__).resolve().parents[2].joinpath(
     'splunk_aws_billing',
     'lambda',
 )
+APPREGISTRY_APPLICATION_ID = 'abcdefghijklmnopqrstuvwxyz'
 
 
 def _fake_pandas():
@@ -298,12 +299,23 @@ def test_o11y_delivery_exhaustion_returns_false_and_emits_failure_metric(
     assert metrics[0]['MetricData'][0]['MetricName'] == 'DeliveryFailures'
 
 
-def test_extract_arn_parts_for_resource_group_application(monkeypatch, aws):
+@pytest.mark.parametrize(
+    'application_id',
+    [
+        'abcdefghijklmnopqrstuv',
+        APPREGISTRY_APPLICATION_ID,
+    ],
+)
+def test_extract_arn_parts_for_resource_group_application(
+    monkeypatch,
+    aws,
+    application_id,
+):
     common = _load_billing_module(monkeypatch, 'common')
 
     parts = common.extract_arn_parts(
         'arn:aws:resource-groups:us-west-2:123456789012:'
-        'group/acgw-usw2-dev/resources'
+        f'group/acgw-usw2-dev/{application_id}'
     )
 
     assert parts == {
@@ -322,7 +334,8 @@ def test_extract_arn_parts_for_module_application(monkeypatch, aws):
 
     parts = common.extract_arn_parts(
         'arn:aws:resource-groups:us-west-2:123456789012:'
-        'group/integrations_splunk_aws_billing_us-west-2/resources'
+        'group/integrations_splunk_aws_billing_us-west-2/'
+        f'{APPREGISTRY_APPLICATION_ID}'
     )
 
     assert parts == {
@@ -356,7 +369,7 @@ def test_extract_arn_parts_for_cloud_data_manager_config_aliases(
     parts = common.extract_arn_parts(
         'arn:aws:resource-groups:us-west-2:123456789012:'
         'group/integrations_splunk_cloud_data_manager_'
-        f'{config_aliases}_us-west-2/resources'
+        f'{config_aliases}_us-west-2/{APPREGISTRY_APPLICATION_ID}'
     )
 
     assert parts == {
@@ -395,7 +408,7 @@ def test_extract_arn_parts_for_uniquely_named_module_application(
 
     parts = common.extract_arn_parts(
         'arn:aws:resource-groups:us-west-2:123456789012:'
-        f'group/{application_name}/resources'
+        f'group/{application_name}/{APPREGISTRY_APPLICATION_ID}'
     )
 
     assert parts == {
@@ -411,15 +424,25 @@ def test_extract_arn_parts_requires_a_complete_match(monkeypatch, aws):
     common = _load_billing_module(monkeypatch, 'common')
     tenant_arn = (
         'arn:aws:resource-groups:us-west-2:123456789012:'
-        'group/acgw-usw2-dev/resources'
+        f'group/acgw-usw2-dev/{APPREGISTRY_APPLICATION_ID}'
     )
     module_arn = (
         'arn:aws:resource-groups:us-west-2:123456789012:'
-        'group/helpers_ecr_us-west-2/resources'
+        f'group/helpers_ecr_us-west-2/{APPREGISTRY_APPLICATION_ID}'
     )
 
     assert common.extract_arn_parts(f'prefix-{tenant_arn}') is None
     assert common.extract_arn_parts(f'{tenant_arn}/extra') is None
+    for invalid_application_id in (
+        'resources',
+        APPREGISTRY_APPLICATION_ID[:21],
+        f'{APPREGISTRY_APPLICATION_ID}0',
+        f'{APPREGISTRY_APPLICATION_ID[:-1]}-',
+    ):
+        assert common.extract_arn_parts(tenant_arn.replace(
+            APPREGISTRY_APPLICATION_ID,
+            invalid_application_id,
+        )) is None
     assert common.extract_arn_parts(module_arn.replace(
         'helpers_ecr_us-west-2',
         'helpers_ecr_us-east-1',
@@ -434,7 +457,7 @@ def test_per_service_event_body_rounds_costs(monkeypatch, aws):
         'line_item_product_code': 'AmazonEC2',
         'user_aws_application': (
             'arn:aws:resource-groups:us-west-2:123456789012:'
-            'group/acgw-usw2-dev/resources'
+            f'group/acgw-usw2-dev/{APPREGISTRY_APPLICATION_ID}'
         ),
         'line_item_unblended_cost': '1.234565',
         'line_item_net_unblended_cost': '2.000004',
@@ -495,7 +518,7 @@ def test_per_service_batches_events_and_o11y_metrics(monkeypatch, aws):
             'line_item_product_code': 'AmazonEC2',
             'user_aws_application': (
                 'arn:aws:resource-groups:us-west-2:123456789012:'
-                'group/acgw-usw2-dev/resources'
+                f'group/acgw-usw2-dev/{APPREGISTRY_APPLICATION_ID}'
             ),
             'line_item_unblended_cost': '1.00',
             'line_item_net_unblended_cost': '0.90',
@@ -505,7 +528,8 @@ def test_per_service_batches_events_and_o11y_metrics(monkeypatch, aws):
             'line_item_product_code': 'AmazonS3',
             'user_aws_application': (
                 'arn:aws:resource-groups:us-west-2:123456789012:'
-                'group/acgw-usw2-dev/resources'
+                'group/integrations_splunk_aws_billing_us-west-2/'
+                f'{APPREGISTRY_APPLICATION_ID}'
             ),
             'line_item_unblended_cost': '2.00',
             'line_item_net_unblended_cost': '1.80',
@@ -521,6 +545,11 @@ def test_per_service_batches_events_and_o11y_metrics(monkeypatch, aws):
         'forge.per_service.cost_usd',
         'forge.per_service.net_cost_usd',
     ]
+    second_event = mod.json.loads(splunk_batches[1][0])['event']
+    assert second_event['forgecicd_scope'] == 'module'
+    assert second_event['forgecicd_module_group'] == 'integrations'
+    assert second_event['forgecicd_module'] == 'splunk_aws_billing'
+    assert metric_batches[1][0]['dimensions']['forgecicd_scope'] == 'module'
 
 
 def test_per_service_skips_rows_with_unsupported_applications(
@@ -574,7 +603,7 @@ def test_per_resource_batches_include_resource_dimensions(monkeypatch, aws):
             'line_item_resource_id': 'bucket-1',
             'user_aws_application': (
                 'arn:aws:resource-groups:us-west-2:123456789012:'
-                'group/acgw-usw2-dev/resources'
+                f'group/acgw-usw2-dev/{APPREGISTRY_APPLICATION_ID}'
             ),
             'line_item_unblended_cost': '0.10',
             'line_item_net_unblended_cost': '0.08',
