@@ -36,7 +36,7 @@ lambda-tests = [
     # tests import handlers the same way the Lambda runtime does.
     "PyJWT==2.13.0",
     "requests==2.34.2",
-    "cryptography==49.0.0",
+    "cryptography==50.0.0",
     "responses==0.26.2",
     "hypothesis==6.165.0",
 ]
