@@ -185,6 +185,10 @@ def send_metric_to_o11y_batch(metrics):
     return True
 
 
+# AWS Resource Groups application-tag ARNs end with an application ID.
+APPREGISTRY_APPLICATION_ID_PATTERN = r'[A-Za-z0-9]{22,26}'
+
+
 TENANT_APPLICATION_ARN = re.compile(
     r'arn:aws:resource-groups:'
     r'(?P<aws_region>[\w-]+):'
@@ -193,7 +197,7 @@ TENANT_APPLICATION_ARN = re.compile(
     r'(?P<forgecicd_tenant>[a-z0-9]+)-'
     r'(?P<forgecicd_region_alias>[a-z0-9]+)-'
     r'(?P<forgecicd_vpc_alias>[a-z0-9]+)'
-    r'/resources'
+    rf'/{APPREGISTRY_APPLICATION_ID_PATTERN}'
 )
 
 SPLUNK_CLOUD_DATA_MANAGER_APPLICATION_ARN = re.compile(
@@ -207,7 +211,7 @@ SPLUNK_CLOUD_DATA_MANAGER_APPLICATION_ARN = re.compile(
     r'(?:_cwl)?'
     r'(?:_secmeta)?_'
     r'(?P=aws_region)'
-    r'/resources'
+    rf'/{APPREGISTRY_APPLICATION_ID_PATTERN}'
 )
 
 MODULE_APPLICATION_ARN = re.compile(
@@ -218,7 +222,7 @@ MODULE_APPLICATION_ARN = re.compile(
     r'(?P<forgecicd_module_group>helpers|infra|integrations)_'
     r'(?P<forgecicd_module>[a-z0-9_-]+)_'
     r'(?P=aws_region)'
-    r'/resources'
+    rf'/{APPREGISTRY_APPLICATION_ID_PATTERN}'
 )
 
 
