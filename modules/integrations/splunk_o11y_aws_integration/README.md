@@ -20,7 +20,7 @@ Forge uses Splunk Observability for AWS metrics while Splunk Cloud handles logs.
 - Use the common integration module for IAM role setup when needed.
 - Metric Stream tag management requires the AWS CLI and `cloudwatch:ListMetricStreams`, `cloudwatch:TagResource`, and `cloudwatch:UntagResource` permissions for the configured AWS profile.
 - The tag helper finds exactly one stream in the configured region whose name starts with `splunk-metric-stream-`. It waits up to 15 minutes for a newly configured stream and fails rather than choosing arbitrarily if multiple streams match.
-- Tag drift outside Terraform is not detected unless the stack, template, or desired tag map changes and replaces the helper.
+- Tag drift outside Terraform is not detected unless the stack, template, helper script, or desired tag map changes and replaces the helper.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
