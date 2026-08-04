@@ -83,7 +83,7 @@ repos:
   # Commit Message Hooks
   # ---------------------
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: 6afcd8e9560ddf1b9a5032262a0be26540e85fb3  # frozen: v4.16.5
+    rev: 93c7b51d860138c34a0613756c0151209b88d56f  # frozen: v4.17.0
     hooks:
       - id: commitizen
         name: Git · Validate commit message
@@ -135,7 +135,7 @@ repos:
   # Docker Hooks
   # ---------------------
   - repo: https://github.com/hadolint/hadolint
-    rev: 4e697ba704fd23b2409b947a319c19c3ee54d24f  # frozen: v2.14.0
+    rev: 2eece55955ced00200be9729e9728cb7dacca505  # frozen: v2.15.1
     hooks:
       - id: hadolint
         name: Docker · Linter

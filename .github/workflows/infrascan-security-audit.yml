@@ -52,7 +52,7 @@ jobs:
             ./ .infrascan-src/
 
       - name: Run InfraScan
-        uses: soldevelo/infrascan@bf26ef988a5a9a4f303e5b9c5753ea66ccc9da87 # v1.0.10
+        uses: soldevelo/infrascan@6ac75eba22afd7abfa59d22188b6fd73f5a0896f # v1.1.0
         with:
           directory: .infrascan-src
           scanner: comprehensive
