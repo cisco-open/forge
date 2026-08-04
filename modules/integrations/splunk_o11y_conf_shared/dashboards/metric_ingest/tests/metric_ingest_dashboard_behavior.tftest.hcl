@@ -14,10 +14,6 @@ mock_provider "signalfx" {
 
 variables {
   dashboard_group = "forge-dashboard-group"
-  ingest_sources = [
-    "dependency-monitor",
-    "aws-billing",
-  ]
   token_ids = [
     "ForgeProdToken02",
     "ForgeDevToken01",
@@ -33,15 +29,14 @@ run "creates_metric_ingest_dashboard" {
       signalfx_dashboard.metric_ingest.name == "Forge Metric API Ingestion Health"
       && signalfx_dashboard.metric_ingest.dashboard_group == "forge-dashboard-group"
       && signalfx_dashboard.metric_ingest.time_range == "-1h"
-      && length(signalfx_dashboard.metric_ingest.chart) == 10
+      && length(signalfx_dashboard.metric_ingest.chart) == 9
       && length([for chart in signalfx_dashboard.metric_ingest.chart : chart if chart.chart_id == "time-chart-id"]) == 8
-      && length([for chart in signalfx_dashboard.metric_ingest.chart : chart if chart.chart_id == "list-chart-id"]) == 2
+      && length([for chart in signalfx_dashboard.metric_ingest.chart : chart if chart.chart_id == "list-chart-id"]) == 1
       && length([for chart in signalfx_dashboard.metric_ingest.chart : chart if chart.chart_id == "time-chart-id" && chart.row == 0 && chart.column == 0 && chart.width == 12 && chart.height == 2]) == 1
       && length([for chart in signalfx_dashboard.metric_ingest.chart : chart if chart.chart_id == "time-chart-id" && chart.row == 5 && chart.column == 0 && chart.width == 12 && chart.height == 1]) == 1
       && length([for chart in signalfx_dashboard.metric_ingest.chart : chart if chart.chart_id == "list-chart-id" && chart.row == 6 && chart.column == 0 && chart.width == 12 && chart.height == 2]) == 1
-      && length([for chart in signalfx_dashboard.metric_ingest.chart : chart if chart.chart_id == "list-chart-id" && chart.row == 8 && chart.column == 0 && chart.width == 12 && chart.height == 2]) == 1
     )
-    error_message = "The metric-ingest dashboard must keep its name, parent group, one-hour range, full-width problem overview, seven detailed time charts, and two list charts."
+    error_message = "The metric-ingest dashboard must keep its name, parent group, one-hour range, full-width problem overview, seven detailed time charts, and one token-usage list chart."
   }
 
   assert {
@@ -55,7 +50,6 @@ run "creates_metric_ingest_dashboard" {
       && signalfx_time_chart.metadata_rest.plot_type == "LineChart"
       && signalfx_time_chart.cloudwatch_metric_stream.plot_type == "ColumnChart"
       && signalfx_list_chart.usage_objects.name == "Metric usage and objects by token"
-      && signalfx_list_chart.retained_metrics_by_source.name == "Metric names by ingest source"
       && toset([for field in signalfx_time_chart.problem_overview.legend_options_fields : field.property]) == toset([
         "tokenName",
         "tokenId",
@@ -72,10 +66,6 @@ run "creates_metric_ingest_dashboard" {
         ] : contains(toset([for field in chart.legend_options_fields : field.property]), "sf_originatingMetric")
       ])
       && contains(toset([for field in signalfx_list_chart.usage_objects.legend_options_fields : field.property]), "sf_originatingMetric")
-      && toset([for field in signalfx_list_chart.retained_metrics_by_source.legend_options_fields : field.property]) == toset([
-        "metric_name",
-        "forgecicd_ingest_source",
-      ])
     )
     error_message = "Metric-ingest diagnostics must retain the intended line, area, column, and list visualizations."
   }
@@ -121,6 +111,7 @@ run "creates_metric_ingest_dashboard" {
     condition = (
       length(var.token_ids) == 3
       && length(toset(var.token_ids)) == 3
+      && length(signalfx_dashboard.metric_ingest.variable) == 1
       && signalfx_dashboard.metric_ingest.variable[0].property == "tokenId"
       && signalfx_dashboard.metric_ingest.variable[0].alias == "Token ID"
       && signalfx_dashboard.metric_ingest.variable[0].values_suggested == toset(var.token_ids)
@@ -144,28 +135,6 @@ run "creates_metric_ingest_dashboard" {
       ])
     )
     error_message = "The token selector and every token chart must interpolate, sort, and restrict queries to the configured owned token IDs."
-  }
-
-  assert {
-    condition = (
-      length(var.ingest_sources) == 2
-      && length(toset(var.ingest_sources)) == 2
-      && signalfx_dashboard.metric_ingest.variable[1].property == "forgecicd_ingest_source"
-      && signalfx_dashboard.metric_ingest.variable[1].alias == "Ingest source"
-      && signalfx_dashboard.metric_ingest.variable[1].values_suggested == toset(var.ingest_sources)
-      && !signalfx_dashboard.metric_ingest.variable[1].value_required
-      && signalfx_dashboard.metric_ingest.variable[1].restricted_suggestions
-      && signalfx_dashboard.metric_ingest.variable[1].replace_only
-      && strcontains(signalfx_list_chart.retained_metrics_by_source.program_text, "filter('forgecicd_ingest_source', 'aws-billing', 'dependency-monitor')")
-      && strcontains(signalfx_list_chart.retained_metrics_by_source.program_text, "data('*'")
-      && strcontains(signalfx_list_chart.retained_metrics_by_source.program_text, "dimensions(aliases={'metric_name': 'sf_metric'})")
-      && strcontains(signalfx_list_chart.retained_metrics_by_source.program_text, "count(over=Args.get('ui.dashboard_window', '1h'))")
-      && strcontains(signalfx_list_chart.retained_metrics_by_source.program_text, "above(0, inclusive=False)")
-      && strcontains(signalfx_list_chart.retained_metrics_by_source.program_text, "count(by=['metric_name', 'forgecicd_ingest_source'])")
-      && !strcontains(signalfx_list_chart.retained_metrics_by_source.program_text, "tokenId")
-      && !strcontains(signalfx_list_chart.retained_metrics_by_source.program_text, "__forge_metric_ingest_source_scope_not_configured__")
-    )
-    error_message = "The source selector and retained-metric chart must use the configured source IDs, exact metric-name alias, and dashboard-window MTS count without implying token attribution."
   }
 
   assert {
@@ -198,13 +167,8 @@ run "creates_metric_ingest_dashboard" {
       ]))) == 54
       && length(regexall("rollup='max'", signalfx_list_chart.usage_objects.program_text)) == 18
       && signalfx_list_chart.usage_objects.max_precision == 0
-      && signalfx_list_chart.retained_metrics_by_source.sort_by == "+metric_name"
-      && signalfx_list_chart.retained_metrics_by_source.disable_sampling
-      && signalfx_list_chart.retained_metrics_by_source.hide_missing_values
-      && signalfx_list_chart.retained_metrics_by_source.max_precision == 0
-      && signalfx_list_chart.retained_metrics_by_source.time_range == 3600
     )
-    error_message = "Time-series counters must use unsampled one-hour sum charts from zero, usage gauges must use max rollups, and the source inventory must show reporting MTS counts."
+    error_message = "Time-series counters must use unsampled one-hour sum charts from zero, and token-usage gauges must use max rollups."
   }
 
   assert {
@@ -315,22 +279,6 @@ run "creates_metric_ingest_dashboard" {
   }
 }
 
-run "empty_ingest_source_scope_fails_closed" {
-  command = plan
-
-  variables {
-    ingest_sources = []
-  }
-
-  assert {
-    condition = (
-      length(signalfx_dashboard.metric_ingest.variable[1].values_suggested) == 0
-      && strcontains(signalfx_list_chart.retained_metrics_by_source.program_text, "filter('forgecicd_ingest_source', '__forge_metric_ingest_source_scope_not_configured__')")
-    )
-    error_message = "An empty ingest-source configuration must fail closed in the retained-metric selector and chart."
-  }
-}
-
 run "empty_token_scope_fails_closed" {
   command = plan
 
@@ -377,24 +325,4 @@ run "rejects_invalid_token_ids" {
   }
 
   expect_failures = [var.token_ids]
-}
-
-run "rejects_duplicate_ingest_sources" {
-  command = plan
-
-  variables {
-    ingest_sources = ["aws-billing", "aws-billing"]
-  }
-
-  expect_failures = [var.ingest_sources]
-}
-
-run "rejects_invalid_ingest_sources" {
-  command = plan
-
-  variables {
-    ingest_sources = ["not a source id"]
-  }
-
-  expect_failures = [var.ingest_sources]
 }

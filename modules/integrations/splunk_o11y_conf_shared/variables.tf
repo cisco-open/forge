@@ -247,8 +247,7 @@ variable "dashboard_variables" {
       ))
     })
     metric_ingest = optional(object({
-      token_ids      = optional(list(string), [])
-      ingest_sources = optional(list(string), [])
+      token_ids = optional(list(string), [])
     }), {})
     sqs_control_plane = object({
       dynamic_variables = list(object({
@@ -376,15 +375,5 @@ variable "dashboard_variables" {
       ])
     )
     error_message = "dashboard_variables.metric_ingest.token_ids must contain distinct Splunk token IDs made only of letters, numbers, underscores, or hyphens."
-  }
-
-  validation {
-    condition = (
-      length(distinct(var.dashboard_variables.metric_ingest.ingest_sources)) == length(var.dashboard_variables.metric_ingest.ingest_sources)
-      && alltrue([
-        for ingest_source in var.dashboard_variables.metric_ingest.ingest_sources : can(regex("^[A-Za-z0-9_-]+$", ingest_source))
-      ])
-    )
-    error_message = "dashboard_variables.metric_ingest.ingest_sources must contain distinct source IDs made only of letters, numbers, underscores, or hyphens."
   }
 }

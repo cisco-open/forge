@@ -126,7 +126,6 @@ module "dashboard_metric_ingest" {
   }
 
   token_ids       = var.dashboard_variables.metric_ingest.token_ids
-  ingest_sources  = var.dashboard_variables.metric_ingest.ingest_sources
   dashboard_group = signalfx_dashboard_group.forgecicd.id
 }
 

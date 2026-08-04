@@ -5,10 +5,9 @@ diagnosing metric API ingestion by Forge-owned Splunk Observability ingest
 token ID. Nine token-scoped panels use an explicit, realm-validated inventory
 of 61 unique `ByToken` organization metrics. Some of these internal or newer
 metrics are not present in the public organization-metrics catalog but compile
-in the target realm. A separate source-scoped inventory uses a restricted
-source allow-list with a wildcard metric query.
+in the target realm.
 
-The dashboard separates the evidence into ten panels:
+The dashboard separates the evidence into nine panels:
 
 1. a focused problem overview with archived datapoints, direct drops, MTS
    creation limit calls, and CloudWatch Metric Stream drops
@@ -20,7 +19,6 @@ The dashboard separates the evidence into ten panels:
 7. metadata and REST throttling
 8. CloudWatch Metric Stream ingestion
 9. current usage and object gauges
-10. retained metric names and reporting MTS by ingest source
 
 `token_ids` is a static allow-list and is also exposed as the restricted
 `Token ID` dashboard selector. Token IDs identify senders but are not token
@@ -28,20 +26,6 @@ secrets. When the list is empty, every token-scoped chart uses a sentinel
 filter so the dashboard does not show organization-wide token data.
 Select one `Token ID` when investigating a sender so multi-plot charts and the
 usage table remain readable.
-
-`ingest_sources` is a separate allow-list for stable
-`forgecicd_ingest_source` dimension values. Its restricted `Ingest source`
-selector applies only to the metric-name inventory. The chart counts distinct
-retained MTS that reported at least once in the dashboard window, grouped by
-exact metric name and source. An empty allow-list fails closed. List charts
-display up to 100 rows at a time, so select one `Ingest source` when the
-inventory is larger.
-
-The source inventory is not a token-to-metric lookup. It only includes senders
-that emit `forgecicd_ingest_source`, cannot include metrics rejected before
-retention, and remains subject to SignalFlow MTS limits. Adding the dimension
-creates new MTS identities, so validate MTS admission before rolling it out to
-an existing high-cardinality sender.
 
 ## Interpreting drop signals
 
@@ -69,10 +53,9 @@ Applying this module without state adoption creates another dashboard and
 charts. If the dashboard was first created manually, import the dashboard and
 every matching existing chart into the correct downstream Terraform state
 before the first apply. For the original eight-panel dashboard, import those
-eight charts and let Terraform create the problem overview and source-inventory
-chart. If either new chart was also created manually, import it as well. Keep
-live object IDs in the deployment/import procedure, not in this reusable
-module.
+eight charts and let Terraform create the problem overview. If that chart was
+also created manually, import it as well. Keep live object IDs in the
+deployment/import procedure, not in this reusable module.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -98,7 +81,6 @@ No modules.
 | Name | Type |
 | ---- | ---- |
 | [signalfx_dashboard.metric_ingest](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/dashboard) | resource |
-| [signalfx_list_chart.retained_metrics_by_source](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
 | [signalfx_list_chart.usage_objects](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/list_chart) | resource |
 | [signalfx_time_chart.cloudwatch_metric_stream](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.datapoint_drops](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
@@ -115,7 +97,6 @@ No modules.
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_dashboard_group"></a> [dashboard\_group](#input\_dashboard\_group) | Splunk Observability dashboard group ID. | `string` | n/a | yes |
-| <a name="input_ingest_sources"></a> [ingest\_sources](#input\_ingest\_sources) | Stable forgecicd\_ingest\_source dimension values emitted by Forge metric senders. An empty list makes the retained-metric inventory chart fail closed. | `list(string)` | `[]` | no |
 | <a name="input_token_ids"></a> [token\_ids](#input\_token\_ids) | Splunk Observability ingest token IDs owned by Forge. These are identifiers, not token secrets. An empty list makes every token-scoped chart fail closed. | `list(string)` | n/a | yes |
 
 ## Outputs

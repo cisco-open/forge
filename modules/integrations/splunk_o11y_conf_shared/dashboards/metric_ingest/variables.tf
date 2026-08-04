@@ -13,22 +13,6 @@ variable "token_ids" {
   }
 }
 
-variable "ingest_sources" {
-  description = "Stable forgecicd_ingest_source dimension values emitted by Forge metric senders. An empty list makes the retained-metric inventory chart fail closed."
-  type        = list(string)
-  default     = []
-
-  validation {
-    condition = (
-      length(distinct(var.ingest_sources)) == length(var.ingest_sources)
-      && alltrue([
-        for ingest_source in var.ingest_sources : can(regex("^[A-Za-z0-9_-]+$", ingest_source))
-      ])
-    )
-    error_message = "ingest_sources must contain distinct source IDs made only of letters, numbers, underscores, or hyphens."
-  }
-}
-
 variable "dashboard_group" {
   description = "Splunk Observability dashboard group ID."
   type        = string

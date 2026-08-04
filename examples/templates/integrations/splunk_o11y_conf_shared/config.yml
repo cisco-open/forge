@@ -127,8 +127,6 @@ dashboard_variables:
   metric_ingest:
     token_ids:
       - <SPLUNK_INGEST_TOKEN_ID>
-    ingest_sources:
-      - <FORGECICD_INGEST_SOURCE>  # e.g., dependency-monitor
   sqs_control_plane:
     dynamic_variables:
       - property: aws_account_id
