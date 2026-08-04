@@ -36,7 +36,7 @@ The module creates the configured dashboard group and the following dashboards:
 | `Forge Billing and Cost - OpenCost` | Kubernetes CPU and memory allocation cost by tenant | `dashboard_variables.runner_k8s` |
 | `Forge External Dependency Health` | Regional GitHub and AWS SSM availability, latency, API rate-limit budget, and probe execution | `dashboard_variables.dependency_probes` |
 | `Forge AWS Regional Platform Health` | Regional Lambda throttle rate/count and queued-build SQS backlog, age, and DLQ activity | `dashboard_variables.aws_regional_health` |
-| `[SREA][Forge] Token ingestion health` | Metric API volume, payload bytes, drop reasons, MTS admission, metadata, CloudWatch Metric Stream, and usage by ingest token | `dashboard_variables.metric_ingest.token_ids` |
+| `Forge Metric API Ingestion Health` | Metric API volume, payload bytes, drop reasons, MTS admission, metadata, CloudWatch Metric Stream, and usage by ingest token | `dashboard_variables.metric_ingest.token_ids` |
 
 It also creates:
 
@@ -157,7 +157,7 @@ drill-down.
 - Use `Forge AWS Regional Platform Health` for regional control-plane Lambda
   throttling and queued-build SQS saturation; use the tenant Lambda and SQS
   dashboards for resource-level drill-down.
-- Use `[SREA][Forge] Token ingestion health` when a sender reports successful
+- Use `Forge Metric API Ingestion Health` when a sender reports successful
   transport but a metric is absent. Check received volume, direct drop reasons,
   and MTS admission before querying the exact metric time series. `Invalid`
   requires sender or collector evidence; `Timeout` is an internal post-limit

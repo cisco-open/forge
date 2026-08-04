@@ -579,7 +579,7 @@ resource "terraform_data" "dashboard_parent" {
 }
 
 resource "signalfx_dashboard" "metric_ingest" {
-  name            = "[SREA][Forge] Token ingestion health"
+  name            = "Forge Metric API Ingestion Health"
   description     = "Start with Token ID. Compare received volume with direct drops, then MTS admission, metadata, CloudWatch, and usage. Invalid requires sender-response or collector-log evidence; timeout is an internal post-limit signal, not a network timeout."
   dashboard_group = var.dashboard_group
   time_range      = "-1h"

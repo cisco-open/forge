@@ -26,7 +26,7 @@ run "creates_metric_ingest_dashboard" {
 
   assert {
     condition = (
-      signalfx_dashboard.metric_ingest.name == "[SREA][Forge] Token ingestion health"
+      signalfx_dashboard.metric_ingest.name == "Forge Metric API Ingestion Health"
       && signalfx_dashboard.metric_ingest.dashboard_group == "forge-dashboard-group"
       && signalfx_dashboard.metric_ingest.time_range == "-1h"
       && length(signalfx_dashboard.metric_ingest.chart) == 8

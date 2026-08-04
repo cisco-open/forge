@@ -18,7 +18,7 @@ run "metric_ingest_dashboard_source_inventory" {
       "resource \"signalfx_time_chart\" \"cloudwatch_metric_stream\"",
       "resource \"signalfx_list_chart\" \"usage_objects\"",
       "resource \"terraform_data\" \"dashboard_parent\"",
-      "[SREA][Forge] Token ingestion health",
+      "Forge Metric API Ingestion Health",
       "filter('tokenId', '$${join(\"', '\", local.token_ids)}')",
       "__forge_metric_ingest_scope_not_configured__",
       "property               = \"tokenId\"",

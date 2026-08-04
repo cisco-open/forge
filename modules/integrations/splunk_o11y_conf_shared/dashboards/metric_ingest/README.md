@@ -1,6 +1,6 @@
-# Forge token ingestion health dashboard
+# Forge Metric API Ingestion Health dashboard
 
-This module creates the `[SREA][Forge] Token ingestion health` dashboard for
+This module creates the `Forge Metric API Ingestion Health` dashboard for
 diagnosing metric API ingestion by Forge-owned Splunk Observability ingest
 token ID. It uses an explicit, realm-validated inventory of 61 `ByToken`
 organization metrics; it does not use a wildcard metric search. Some of these
