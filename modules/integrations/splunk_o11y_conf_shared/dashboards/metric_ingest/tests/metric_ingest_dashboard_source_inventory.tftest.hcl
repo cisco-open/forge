@@ -9,6 +9,7 @@ run "metric_ingest_dashboard_source_inventory" {
     module_path = "."
     expected_literals = [
       "resource \"signalfx_dashboard\" \"metric_ingest\"",
+      "resource \"signalfx_time_chart\" \"problem_overview\"",
       "resource \"signalfx_time_chart\" \"ingest_volume\"",
       "resource \"signalfx_time_chart\" \"payload_bytes\"",
       "resource \"signalfx_time_chart\" \"datapoint_drops\"",
@@ -20,6 +21,12 @@ run "metric_ingest_dashboard_source_inventory" {
       "resource \"signalfx_list_chart\" \"retained_metrics_by_source\"",
       "resource \"terraform_data\" \"dashboard_parent\"",
       "Forge Metric API Ingestion Health",
+      "Metric ingest problems and archived volume by token",
+      "Archived datapoints (context)",
+      "Direct datapoint drops",
+      "MTS creation limit calls",
+      "CloudWatch Metric Stream drops",
+      "not a deduplicated loss total",
       "filter('tokenId', '$${join(\"', '\", local.token_ids)}')",
       "filter('forgecicd_ingest_source', '$${join(\"', '\", local.ingest_sources)}')",
       "__forge_metric_ingest_scope_not_configured__",
@@ -103,7 +110,7 @@ run "metric_ingest_dashboard_source_inventory" {
   }
 
   assert {
-    condition     = output.expected_literal_count == 86
+    condition     = output.expected_literal_count == 93
     error_message = "Metric-ingest dashboard source inventory count must remain pinned."
   }
 }

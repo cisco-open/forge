@@ -167,11 +167,16 @@ drill-down.
   throttling and queued-build SQS saturation; use the tenant Lambda and SQS
   dashboards for resource-level drill-down.
 - Use `Forge Metric API Ingestion Health` when a sender reports successful
-  transport but a metric is absent. Check received volume, direct drop reasons,
-  and MTS admission before querying the exact metric time series. `Invalid`
-  requires sender or collector evidence; `Timeout` is an internal post-limit
-  signal, not a client network timeout. Use the source inventory for retained
-  metric names only; it does not establish token attribution.
+  transport but a metric is absent. Select one token and start with the problem
+  overview, then use the detailed received-volume, direct-drop, and MTS-admission
+  panels before querying the exact metric time series. The overview shows the
+  general MTS creation-limit signal; its detailed reason signals remain in the
+  admission panel to avoid overlapping counts. Archived datapoints are routing
+  context, not rejected datapoints, and the overview categories are not a
+  deduplicated loss total. `Invalid` requires sender or collector evidence;
+  `Timeout` is an internal post-limit signal, not a client network timeout. Use
+  the source inventory for retained metric names only; it does not establish
+  token attribution.
 - A no-data alert can indicate a collection or ingestion failure rather than a
   Forge workload outage.
 - Tune detector durations and thresholds against production behavior to avoid

@@ -6,6 +6,81 @@ locals {
   source_filter = length(local.ingest_sources) > 0 ? "filter('forgecicd_ingest_source', '${join("', '", local.ingest_sources)}')" : "filter('forgecicd_ingest_source', '__forge_metric_ingest_source_scope_not_configured__')"
 }
 
+resource "signalfx_time_chart" "problem_overview" {
+  name        = "Metric ingest problems and archived volume by token"
+  description = "Focused token-scoped overview. Direct datapoint drops, MTS creation limit calls, and CloudWatch Metric Stream drops are diagnostic categories, not a deduplicated loss total. Archived datapoints are routing context on the right axis, not rejected datapoints. Select one Token ID, then use the detailed charts below for exact MTS admission and drop reasons."
+
+  program_text = <<-EOF
+archived = data('sf.org.numArchivedDatapointsReceivedByToken', filter=(${local.token_filter}), rollup='sum', extrapolation='zero').sum(by=['tokenId', 'tokenName']).publish(label='A')
+
+aggregated_throttle = data('sf.org.numAggregatedDatapointsDroppedThrottleByToken', filter=(${local.token_filter}), rollup='sum', extrapolation='zero').sum(by=['tokenId', 'tokenName'])
+batch_size = data('sf.org.numDatapointsDroppedBatchSizeByToken', filter=(${local.token_filter}), rollup='sum', extrapolation='zero').sum(by=['tokenId', 'tokenName'])
+exceeded_quota = data('sf.org.numDatapointsDroppedExceededQuotaByToken', filter=(${local.token_filter}), rollup='sum', extrapolation='zero').sum(by=['tokenId', 'tokenName'])
+invalid = data('sf.org.numDatapointsDroppedInvalidByToken', filter=(${local.token_filter}), rollup='sum', extrapolation='zero').sum(by=['tokenId', 'tokenName'])
+timeout = data('sf.org.numDatapointsDroppedInTimeoutByToken', filter=(${local.token_filter}), rollup='sum', extrapolation='zero').sum(by=['tokenId', 'tokenName'])
+throttle = data('sf.org.numDatapointsDroppedThrottleByToken', filter=(${local.token_filter}), rollup='sum', extrapolation='zero').sum(by=['tokenId', 'tokenName'])
+metric_ruleset = data('sf.org.numDatapointsDroppedMetricRulesetByToken', filter=(${local.token_filter}), rollup='sum', extrapolation='zero').sum(by=['tokenId', 'tokenName'])
+direct_drops = sum(aggregated_throttle, batch_size, exceeded_quota, invalid, timeout, throttle, metric_ruleset).publish(label='B')
+
+mts_limited = data('sf.org.numLimitedMetricTimeSeriesCreateCallsByToken', filter=(${local.token_filter}), rollup='sum', extrapolation='zero').sum(by=['tokenId', 'tokenName']).publish(label='C')
+
+cloud_throttle = data('sf.org.cloud.numDatapointsDroppedThrottleByToken', filter=(${local.token_filter}), rollup='sum', extrapolation='zero').sum(by=['tokenId', 'tokenName'])
+cloud_oversize = data('sf.org.cloud.numDatapointsDroppedOversizeByToken', filter=(${local.token_filter}), rollup='sum', extrapolation='zero').sum(by=['tokenId', 'tokenName'])
+cloud_drops = sum(cloud_throttle, cloud_oversize).publish(label='D')
+EOF
+
+  plot_type                 = "LineChart"
+  axes_include_zero         = true
+  axes_precision            = 0
+  disable_sampling          = true
+  on_chart_legend_dimension = "plot_label"
+  time_range                = 3600
+
+  axis_left {
+    label     = "Drop / admission problem signals"
+    min_value = 0
+  }
+
+  axis_right {
+    label     = "Archived datapoints"
+    min_value = 0
+  }
+
+  legend_options_fields {
+    enabled  = true
+    property = "tokenName"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "tokenId"
+  }
+
+  viz_options {
+    axis         = "right"
+    color        = "blue"
+    display_name = "Archived datapoints (context)"
+    label        = "A"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "red"
+    display_name = "Direct datapoint drops"
+    label        = "B"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "orange"
+    display_name = "MTS creation limit calls"
+    label        = "C"
+  }
+  viz_options {
+    axis         = "left"
+    color        = "purple"
+    display_name = "CloudWatch Metric Stream drops"
+    label        = "D"
+  }
+}
+
 resource "signalfx_time_chart" "ingest_volume" {
   name        = "Metric API ingest volume by token"
   description = "API calls and datapoint admission volume for Forge-owned ingest tokens. Gross received is an internal supporting signal; token-level values do not prove ownership of an organization-wide limit. Use Token ID to isolate one sender."
@@ -613,7 +688,7 @@ resource "terraform_data" "dashboard_parent" {
 
 resource "signalfx_dashboard" "metric_ingest" {
   name            = "Forge Metric API Ingestion Health"
-  description     = "Start with Token ID. Compare received volume with direct drops, then MTS admission, metadata, CloudWatch, and usage. Use Ingest source only for the retained metric inventory. Invalid requires sender-response or collector-log evidence; timeout is an internal post-limit signal, not a network timeout."
+  description     = "Start with Token ID and the problem overview. Compare archived routing context, direct drops, and MTS creation limits, then use the detailed charts for exact reasons. Use Ingest source only for the retained metric inventory. Invalid requires sender-response or collector-log evidence; timeout is an internal post-limit signal, not a network timeout."
   dashboard_group = var.dashboard_group
   time_range      = "-1h"
 
@@ -646,64 +721,71 @@ resource "signalfx_dashboard" "metric_ingest" {
   }
 
   chart {
-    chart_id = signalfx_time_chart.ingest_volume.id
+    chart_id = signalfx_time_chart.problem_overview.id
     row      = 0
+    column   = 0
+    width    = 12
+    height   = 2
+  }
+  chart {
+    chart_id = signalfx_time_chart.ingest_volume.id
+    row      = 2
     column   = 0
     width    = 6
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.datapoint_drops.id
-    row      = 0
+    row      = 2
     column   = 6
     width    = 6
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.mts_admission.id
-    row      = 1
+    row      = 3
     column   = 0
     width    = 6
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.metric_type_backfill.id
-    row      = 1
+    row      = 3
     column   = 6
     width    = 6
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.payload_bytes.id
-    row      = 2
+    row      = 4
     column   = 0
     width    = 6
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.metadata_rest.id
-    row      = 2
+    row      = 4
     column   = 6
     width    = 6
     height   = 1
   }
   chart {
     chart_id = signalfx_time_chart.cloudwatch_metric_stream.id
-    row      = 3
+    row      = 5
     column   = 0
     width    = 12
     height   = 1
   }
   chart {
     chart_id = signalfx_list_chart.usage_objects.id
-    row      = 4
+    row      = 6
     column   = 0
     width    = 12
     height   = 2
   }
   chart {
     chart_id = signalfx_list_chart.retained_metrics_by_source.id
-    row      = 6
+    row      = 8
     column   = 0
     width    = 12
     height   = 2

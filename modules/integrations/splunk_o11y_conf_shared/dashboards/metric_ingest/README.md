@@ -2,23 +2,25 @@
 
 This module creates the `Forge Metric API Ingestion Health` dashboard for
 diagnosing metric API ingestion by Forge-owned Splunk Observability ingest
-token ID. Eight token-scoped panels use an explicit, realm-validated inventory
-of 61 `ByToken` organization metrics. Some of these internal or newer metrics
-are not present in the public organization-metrics catalog but compile in the
-target realm. A separate source-scoped inventory uses a restricted source
-allow-list with a wildcard metric query.
+token ID. Nine token-scoped panels use an explicit, realm-validated inventory
+of 61 unique `ByToken` organization metrics. Some of these internal or newer
+metrics are not present in the public organization-metrics catalog but compile
+in the target realm. A separate source-scoped inventory uses a restricted
+source allow-list with a wildcard metric query.
 
-The dashboard separates the evidence into nine panels:
+The dashboard separates the evidence into ten panels:
 
-1. API calls and received datapoints
-2. payload bytes
-3. direct datapoint drops by reason
-4. metric time-series creation and admission limits
-5. metric type and backfill traffic
-6. metadata and REST throttling
-7. CloudWatch Metric Stream ingestion
-8. current usage and object gauges
-9. retained metric names and reporting MTS by ingest source
+1. a focused problem overview with archived datapoints, direct drops, MTS
+   creation limit calls, and CloudWatch Metric Stream drops
+2. API calls and received datapoints
+3. payload bytes
+4. direct datapoint drops by reason
+5. metric time-series creation and admission limits
+6. metric type and backfill traffic
+7. metadata and REST throttling
+8. CloudWatch Metric Stream ingestion
+9. current usage and object gauges
+10. retained metric names and reporting MTS by ingest source
 
 `token_ids` is a static allow-list and is also exposed as the restricted
 `Token ID` dashboard selector. Token IDs identify senders but are not token
@@ -43,6 +45,13 @@ an existing high-cardinality sender.
 
 ## Interpreting drop signals
 
+- Archived datapoints were routed to the archival tier. They are context on the
+  overview's right axis, not rejected datapoints. Do not add the overview
+  categories together as a deduplicated loss total; use the detailed panels to
+  identify the reporting reason.
+- `MTS creation limit calls` is the general token-scoped limit signal. Use the
+  detailed admission panel for bad-dimension, bad-metric, property-limit, and
+  MTS-throttle reason signals; do not add them to the general limited-call line.
 - `Invalid` is an admission result, not a complete root cause. Correlate its
   time window with the sender response, collector logs, and an exact metric
   time-series query.
@@ -60,9 +69,10 @@ Applying this module without state adoption creates another dashboard and
 charts. If the dashboard was first created manually, import the dashboard and
 every matching existing chart into the correct downstream Terraform state
 before the first apply. For the original eight-panel dashboard, import those
-eight charts and let Terraform create the new source-inventory chart. If that
-chart was also created manually, import it as well. Keep live object IDs in the
-deployment/import procedure, not in this reusable module.
+eight charts and let Terraform create the problem overview and source-inventory
+chart. If either new chart was also created manually, import it as well. Keep
+live object IDs in the deployment/import procedure, not in this reusable
+module.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -97,6 +107,7 @@ No modules.
 | [signalfx_time_chart.metric_type_backfill](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.mts_admission](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [signalfx_time_chart.payload_bytes](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
+| [signalfx_time_chart.problem_overview](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/time_chart) | resource |
 | [terraform_data.dashboard_parent](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data) | resource |
 
 ## Inputs
