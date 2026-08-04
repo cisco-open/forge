@@ -195,20 +195,7 @@
             ]
         },
         {
-            "description": "GitHub Actions - pin to commit SHA for security",
-            "matchManagers": [
-                "github-actions"
-            ],
-            "groupName": "GitHub Actions dependencies",
-            "groupSlug": "github-actions-dependencies",
-            "addLabels": [
-                "dependencies",
-                "github-actions",
-                "ci-cd"
-            ]
-        },
-        {
-            "description": "Pin executable GitHub Action and container references",
+            "description": "Group and SHA-pin executable GitHub workflow dependencies by update type",
             "matchManagers": [
                 "github-actions"
             ],
@@ -218,7 +205,16 @@
                 "docker",
                 "service"
             ],
-            "pinDigests": true
+            "pinDigests": true,
+            "groupName": "GitHub Actions {{{updateType}}} dependencies",
+            "groupSlug": "github-actions-{{{updateType}}}-dependencies",
+            "separateMajorMinor": false,
+            "separateMinorPatch": false,
+            "addLabels": [
+                "dependencies",
+                "github-actions",
+                "ci-cd"
+            ]
         },
         {
             "description": "Pre-commit hook dependencies",

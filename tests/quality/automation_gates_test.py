@@ -132,30 +132,39 @@ def test_renovate_pre_commit_hooks_have_single_update_owner() -> None:
     assert all(frozen_revision.match(line) for line in revision_lines)
 
 
-def test_renovate_only_pins_executable_github_action_dependencies() -> None:
+def test_renovate_groups_and_pins_executable_github_action_dependencies() -> None:
     config = json.loads(read('renovate.json'))
-    github_actions_rules = [
-        rule
-        for rule in config['packageRules']
-        if rule.get('matchManagers') == ['github-actions']
-    ]
-    group_rule = next(
-        rule
-        for rule in github_actions_rules
-        if rule.get('groupSlug') == 'github-actions-dependencies'
-    )
-    pin_rule = next(
-        rule for rule in github_actions_rules if rule.get('pinDigests') is True
-    )
-
-    assert 'pinDigests' not in group_rule
-    assert set(pin_rule['matchDepTypes']) == {
+    executable_dep_types = {
         'action',
         'container',
         'docker',
         'service',
     }
-    assert 'uses-with' not in pin_rule['matchDepTypes']
+    github_actions_rules = [
+        rule
+        for rule in config['packageRules']
+        if rule.get('matchManagers') == ['github-actions']
+    ]
+    executable_group_rules = [
+        rule
+        for rule in github_actions_rules
+        if rule.get('matchDepTypes')
+    ]
+    assert len(executable_group_rules) == 1
+    assert github_actions_rules == executable_group_rules
+    group_rule = executable_group_rules[0]
+
+    assert set(group_rule['matchDepTypes']) == executable_dep_types
+    assert group_rule['pinDigests'] is True
+    assert group_rule['groupName'] == (
+        'GitHub Actions {{{updateType}}} dependencies'
+    )
+    assert group_rule['groupSlug'] == (
+        'github-actions-{{{updateType}}}-dependencies'
+    )
+    assert group_rule['separateMajorMinor'] is False
+    assert group_rule['separateMinorPatch'] is False
+    assert 'uses-with' not in group_rule['matchDepTypes']
 
 
 def test_renovate_manages_supported_lambda_layer_arns() -> None:
