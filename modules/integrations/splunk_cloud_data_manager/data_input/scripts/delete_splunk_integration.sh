@@ -47,7 +47,7 @@ curl "${splunk_cloud}/en-GB/splunkd/__raw/servicesNS/nobody/data_manager/cloudin
 
 # Check delete readiness
 echo -e "\n\n\n-----------\n\Checking delete readiness...\n\n" >>/tmp/${splunk_input_uuid}_logs.txt
-DATA_RAW=$(cat /tmp/${splunk_input_uuid}_input.json | jq -c '.mode = "ReadyForDelete" | del(._key, ._user, .createTime, .id, .lastUpdateTime, .schemaVersion, .details.stackName, .details.version, .details.resources, .details.resourceTags)')
+DATA_RAW=$(cat /tmp/${splunk_input_uuid}_input.json | jq -c '.mode = "ReadyForDelete" | del(._key, ._user, .createTime, .dataSourcesStatus, .id, .lastUpdateTime, .schemaVersion, .details.stackName, .details.version, .details.resources, .details.resourceTags)')
 curl "${splunk_cloud}/en-GB/splunkd/__raw/servicesNS/nobody/data_manager/cloudinput/inputs/${splunk_input_uuid}/validate/checkdeletereadiness" \
     -X 'GET' \
     -H 'Accept: application/json, text/plain, */*' \
@@ -61,7 +61,7 @@ curl "${splunk_cloud}/en-GB/splunkd/__raw/servicesNS/nobody/data_manager/cloudin
 
 # Update the input to "MarkedForDelete"
 echo -e "\n\n\n-----------\n\nUpdating the input to 'MarkedForDelete'...\n\n" >>/tmp/${splunk_input_uuid}_logs.txt
-DATA_RAW=$(cat /tmp/${splunk_input_uuid}_input.json | jq -c '.mode = "MarkedForDelete" | del(._key, ._user, .createTime, .id, .lastUpdateTime, .schemaVersion, .details.stackName, .details.version, .details.resources, .details.resourceTags)')
+DATA_RAW=$(cat /tmp/${splunk_input_uuid}_input.json | jq -c '.mode = "MarkedForDelete" | del(._key, ._user, .createTime, .dataSourcesStatus, .id, .lastUpdateTime, .schemaVersion, .details.stackName, .details.version, .details.resources, .details.resourceTags)')
 curl "${splunk_cloud}/en-GB/splunkd/__raw/servicesNS/nobody/data_manager/cloudinput/inputs/${splunk_input_uuid}" \
     -X 'PUT' \
     -H 'Accept: application/json, text/plain, */*' \
@@ -76,7 +76,7 @@ curl "${splunk_cloud}/en-GB/splunkd/__raw/servicesNS/nobody/data_manager/cloudin
 
 # Check delete readiness
 echo -e "\n\n\n-----------\n\Checking delete readiness...\n\n" >>/tmp/${splunk_input_uuid}_logs.txt
-DATA_RAW=$(cat /tmp/${splunk_input_uuid}_input.json | jq -c '.mode = "ReadyForDelete" | del(._key, ._user, .createTime, .id, .lastUpdateTime, .schemaVersion, .details.stackName, .details.version, .details.resources, .details.resourceTags)')
+DATA_RAW=$(cat /tmp/${splunk_input_uuid}_input.json | jq -c '.mode = "ReadyForDelete" | del(._key, ._user, .createTime, .dataSourcesStatus, .id, .lastUpdateTime, .schemaVersion, .details.stackName, .details.version, .details.resources, .details.resourceTags)')
 curl "${splunk_cloud}/en-GB/splunkd/__raw/servicesNS/nobody/data_manager/cloudinput/inputs/${splunk_input_uuid}/validate/checkdeletereadiness" \
     -X 'GET' \
     -H 'Accept: application/json, text/plain, */*' \
@@ -88,8 +88,14 @@ curl "${splunk_cloud}/en-GB/splunkd/__raw/servicesNS/nobody/data_manager/cloudin
     -H 'X-Requested-With: XMLHttpRequest' \
     -H "X-Splunk-Form-Key: $SPLUNKWEB_CSRF_TOKEN_8443" >>/tmp/${splunk_input_uuid}_logs.txt 2>&1
 
-# Delete the input for each dataset key
-DATASETS=("aws-cwl" "cwl-custom-logs" "cwl-vpc-flow-logs" "cloudtrail" "securityhub" "guardduty" "iam-aa" "iam-cr" "metadata")
+# Preserve the established full HEC cleanup for push-based inputs. Pull-based
+# S3 inputs do not create HEC tokens, so they skip this step entirely.
+if jq -e '.details.datasetInfo | has("s3-custom-logs")' /tmp/${splunk_input_uuid}_input.json >/dev/null; then
+    DATASETS=()
+else
+    DATASETS=("aws-cwl" "cwl-custom-logs" "cwl-vpc-flow-logs" "cloudtrail" "securityhub" "guardduty" "iam-aa" "iam-cr" "metadata")
+fi
+
 for DATASET in "${DATASETS[@]}"; do
     echo -e "\n\n\n-----------\n\nDeleting the input for dataset $DATASET...\n\n" >>/tmp/${splunk_input_uuid}_logs.txt
     curl "${splunk_cloud}/en-US/splunkd/__raw/servicesNS/nobody/data_manager/cloudinput/inputs/${splunk_input_uuid}/hectoken?dataset=$DATASET" \
@@ -106,7 +112,7 @@ done
 
 # Check delete readiness
 echo -e "\n\n\n-----------\n\Checking delete readiness...\n\n" >>/tmp/${splunk_input_uuid}_logs.txt
-DATA_RAW=$(cat /tmp/${splunk_input_uuid}_input.json | jq -c '.mode = "ReadyForDelete" | del(._key, ._user, .createTime, .id, .lastUpdateTime, .schemaVersion, .details.stackName, .details.version, .details.resources, .details.resourceTags)')
+DATA_RAW=$(cat /tmp/${splunk_input_uuid}_input.json | jq -c '.mode = "ReadyForDelete" | del(._key, ._user, .createTime, .dataSourcesStatus, .id, .lastUpdateTime, .schemaVersion, .details.stackName, .details.version, .details.resources, .details.resourceTags)')
 curl "${splunk_cloud}/en-GB/splunkd/__raw/servicesNS/nobody/data_manager/cloudinput/inputs/${splunk_input_uuid}/validate/checkdeletereadiness" \
     -X 'GET' \
     -H 'Accept: application/json, text/plain, */*' \

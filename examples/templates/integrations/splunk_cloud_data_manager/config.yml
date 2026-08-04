@@ -22,6 +22,18 @@ cloudwatch_log_groups_config:
   regions:
     - <AWS_REGION>                          # e.g., eu-west-1
 
+s3_logs_config:
+  enabled: <S3_LOGS_ENABLED>                # true or false
+  name: <S3_LOGS_NAME>                      # e.g., forge-s3-logs-prod
+  iam_region: <S3_LOGS_IAM_REGION>          # e.g., us-east-1; region where the IAM role stack is created
+  index: <S3_LOGS_INDEX>                    # e.g., forge-prod-index
+  source_type: <S3_LOGS_SOURCE_TYPE>        # e.g., forgecicd:runner-logs:s3
+  sqs_urls:
+    - <SQS_QUEUE_URL>                       # e.g., https://sqs.eu-west-1.amazonaws.com/123456789012/forge-s3-logs-events
+  s3_bucket_patterns:
+    - <S3_BUCKET_PATTERN>                   # e.g., forge-runner-logs-*; use * when no narrower prefix exists
+  kms_key_arns: []                          # optional; add the KMS key ARNs used by the log buckets
+
 security_metadata_config:
   enabled: <SEC_META_ENABLED>               # true or false
   name: <SEC_META_NAME>                     # e.g., forge-secmeta-prod

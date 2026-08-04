@@ -12,3 +12,8 @@ output "splunk_cloud_input_custom_logs_json" {
   description = "The Splunk Cloud input map for custom logs."
   value       = var.custom_cloudwatch_log_groups_config.enabled ? local.splunk_cloud_input_custom_logs_json : ""
 }
+
+output "splunk_cloud_input_s3_logs_json" {
+  description = "The Splunk Cloud input map for S3 logs."
+  value       = var.s3_logs_config.enabled ? local.splunk_cloud_input_s3_logs_json : ""
+}

@@ -24,6 +24,8 @@ data "external" "splunk_dm_version" {
   program = [
     "bash", "-c",
     <<-EOF
+      export SPLUNK_CLOUD_INPUT_JSON='${var.splunk_cloud_input_json}'
+
       ${path.module}/scripts/get_splunk_integration.sh '${var.splunk_cloud}' '${random_uuid.splunk_input_uuid.result}' '${data.aws_secretsmanager_secret_version.secrets["splunk_cloud_username"].secret_string}' '${data.aws_secretsmanager_secret_version.secrets["splunk_cloud_password"].secret_string}'
     EOF
   ]

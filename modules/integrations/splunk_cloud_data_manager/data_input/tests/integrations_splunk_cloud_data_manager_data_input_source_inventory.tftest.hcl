@@ -13,6 +13,7 @@ run "integrations_splunk_cloud_data_manager_data_input_contract" {
       "resource \"null_resource\" \"delete_integration\"",
       "resource \"aws_s3_object\" \"cloudformation_template\"",
       "data \"external\" \"splunk_dm_version\"",
+      "data.external.splunk_dm_version.result.stack_name",
       "data \"aws_secretsmanager_secret\" \"secrets\"",
       "data \"aws_secretsmanager_secret_version\" \"secrets\"",
       "output \"splunk_integration_name\"",

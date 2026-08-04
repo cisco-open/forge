@@ -44,6 +44,53 @@ variable "custom_cloudwatch_log_groups_config" {
   }
 }
 
+variable "s3_logs_config" {
+  type = object({
+    enabled            = bool
+    name               = string
+    iam_region         = optional(string, "us-east-1")
+    index              = string
+    source_type        = string
+    sqs_urls           = list(string)
+    s3_bucket_patterns = list(string)
+    kms_key_arns       = list(string)
+  })
+  description = "Configuration for S3 logs ingested through SQS notifications."
+  default = {
+    enabled            = false
+    name               = ""
+    iam_region         = "us-east-1"
+    index              = ""
+    source_type        = ""
+    sqs_urls           = []
+    s3_bucket_patterns = []
+    kms_key_arns       = []
+  }
+
+  validation {
+    condition = !var.s3_logs_config.enabled || (
+      length(trimspace(var.s3_logs_config.name)) > 0
+      && can(regex("^[a-z]{2}(-gov)?-[a-z]+-[0-9]+$", trimspace(var.s3_logs_config.iam_region)))
+      && length(trimspace(var.s3_logs_config.index)) > 0
+      && length(trimspace(var.s3_logs_config.source_type)) > 0
+      && length(var.s3_logs_config.sqs_urls) > 0
+      && length(var.s3_logs_config.s3_bucket_patterns) > 0
+      && alltrue([
+        for sqs_url in var.s3_logs_config.sqs_urls :
+        can(regex("^https://sqs\\.[^.]+\\.amazonaws\\.com(\\.cn)?/[0-9]{12}/[^/?#]+$", trimspace(sqs_url)))
+      ])
+      && alltrue([
+        for value in concat(
+          var.s3_logs_config.sqs_urls,
+          var.s3_logs_config.s3_bucket_patterns,
+          var.s3_logs_config.kms_key_arns,
+        ) : length(trimspace(value)) > 0
+      ])
+    )
+    error_message = "When s3_logs_config is enabled, name, a valid IAM roles region, index, source_type, at least one regional AWS SQS queue URL, and at least one S3 bucket pattern must be provided; configured URLs, patterns, and KMS key ARNs must not be empty."
+  }
+}
+
 variable "cloudwatch_log_groups_config" {
   type = object({
     enabled = bool

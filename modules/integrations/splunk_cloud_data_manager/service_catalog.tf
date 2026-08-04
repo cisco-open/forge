@@ -2,6 +2,7 @@ locals {
   application_config_aliases = compact([
     var.custom_cloudwatch_log_groups_config.enabled ? "custom-cwl" : "",
     var.cloudwatch_log_groups_config.enabled ? "cwl" : "",
+    var.s3_logs_config.enabled ? "s3-logs" : "",
     var.security_metadata_config.enabled ? "secmeta" : "",
   ])
 }
