@@ -21,6 +21,8 @@ run "integrations_github_webhook_relay_destination_source_inventory" {
       "data \"aws_iam_policy_document\" \"allow_assume_external\"",
       "resource \"aws_iam_role_policy\" \"allow_assume_external_inline\"",
       "data \"external\" \"fetch_secret_value\"",
+      "\"python3\"",
+      "\"$${path.module}/scripts/fetch_secret_value.py\"",
     ]
   }
 
@@ -30,7 +32,7 @@ run "integrations_github_webhook_relay_destination_source_inventory" {
   }
 
   assert {
-    condition     = output.expected_literal_count == 13
-    error_message = "Source inventory must keep 13 module-specific Terraform blocks pinned."
+    condition     = output.expected_literal_count == 15
+    error_message = "Source inventory must keep 15 module-specific Terraform blocks and helper wiring pinned."
   }
 }

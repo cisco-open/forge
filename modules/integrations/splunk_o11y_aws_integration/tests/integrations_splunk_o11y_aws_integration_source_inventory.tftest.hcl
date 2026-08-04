@@ -15,9 +15,9 @@ run "integrations_splunk_o11y_aws_integration_contract" {
       "provider \"aws\"",
       "AWS_PROFILE",
       "working_dir = path.module",
-      "./scripts/manage_cloudwatch_metric_stream_tags.sh apply",
-      "./scripts/manage_cloudwatch_metric_stream_tags.sh remove",
-      "filesha256(\"$${path.module}/scripts/manage_cloudwatch_metric_stream_tags.sh\")",
+      "python3 ./scripts/manage_cloudwatch_metric_stream_tags.py apply",
+      "python3 ./scripts/manage_cloudwatch_metric_stream_tags.py remove",
+      "filesha256(\"$${path.module}/scripts/manage_cloudwatch_metric_stream_tags.py\")",
       "sha256(jsonencode(local.all_security_tags))",
     ]
   }

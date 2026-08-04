@@ -656,6 +656,7 @@ def test_test_suites_have_named_ci_jobs() -> None:
         'pytest -q iac',
         'tofu -chdir="${module}" test -no-color',
         'conftest verify --policy policy/opa',
+        'modules/**/*.py',
         'modules/**/*.sh',
         'tests/iac/**',
         'tests/tofu/**',
@@ -665,6 +666,7 @@ def test_test_suites_have_named_ci_jobs() -> None:
     for required in [
         'name: Automation gate tests',
         'pytest -q quality',
+        'modules/**/*.py',
         'scripts/ci_summary.py',
         'scripts/terragrunt-deps.py',
         'name: Mutation test critical Lambda boundaries',

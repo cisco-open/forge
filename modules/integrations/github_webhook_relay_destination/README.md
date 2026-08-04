@@ -41,6 +41,8 @@ This is the receiving side of the Forge webhook relay. It creates the destinatio
 
 Use narrow event patterns for each receiver so unrelated GitHub events do not trigger noisy or expensive automation. Cross-account secret reading is optional and should stay limited to the roles that need to validate or consume the forwarded webhook flow.
 
+When cross-account secret reading is enabled, the Terraform host requires Python 3.12 and the AWS CLI. Temporary role credentials remain in the helper process environment and are not written to disk or persisted as AWS CLI profiles.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 

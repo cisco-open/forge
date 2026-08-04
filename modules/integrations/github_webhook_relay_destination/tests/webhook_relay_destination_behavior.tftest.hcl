@@ -133,6 +133,15 @@ run "webhook_relay_destination_secret_fetch_contract" {
       length(aws_iam_role_policy.allow_assume_external_inline) == 1
       && aws_iam_role_policy.allow_assume_external_inline[0].name == "github-webhook-relay-secret-reader-assume-external"
       && strcontains(aws_iam_role_policy.allow_assume_external_inline[0].policy, "arn:aws:iam::210987654321:role/source-secret-reader")
+      && length(data.external.fetch_secret_value[0].program) == 8
+      && data.external.fetch_secret_value[0].program[0] == "python3"
+      && data.external.fetch_secret_value[0].program[1] == "${path.module}/scripts/fetch_secret_value.py"
+      && data.external.fetch_secret_value[0].program[2] == "arn:aws:iam::123456789012:role/github-webhook-relay-secret-reader"
+      && data.external.fetch_secret_value[0].program[3] == "arn:aws:iam::210987654321:role/source-secret-reader"
+      && data.external.fetch_secret_value[0].program[4] == "arn:aws:secretsmanager:us-east-1:210987654321:secret:forge/webhook"
+      && data.external.fetch_secret_value[0].program[5] == "us-east-1"
+      && data.external.fetch_secret_value[0].program[6] == "test"
+      && data.external.fetch_secret_value[0].program[7] == "us-east-1"
       && data.external.fetch_secret_value[0].result.secret_value == "webhook-secret-value"
     )
     error_message = "Webhook relay destination must attach external assume-role policy and expose fetched webhook secret when secret fetch is enabled."

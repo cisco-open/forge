@@ -15,7 +15,7 @@ resource "terraform_data" "cloudwatch_metric_stream_tags" {
   triggers_replace = [
     aws_cloudformation_stack.splunk_integration.id,
     var.template_url,
-    filesha256("${path.module}/scripts/manage_cloudwatch_metric_stream_tags.sh"),
+    filesha256("${path.module}/scripts/manage_cloudwatch_metric_stream_tags.py"),
     sha256(jsonencode(local.all_security_tags)),
   ]
 
@@ -39,7 +39,7 @@ resource "terraform_data" "cloudwatch_metric_stream_tags" {
       ])
     }
 
-    command = "./scripts/manage_cloudwatch_metric_stream_tags.sh apply"
+    command = "python3 ./scripts/manage_cloudwatch_metric_stream_tags.py apply"
   }
 
   # Remove all keys managed by the previous instance of this helper.
@@ -65,7 +65,7 @@ resource "terraform_data" "cloudwatch_metric_stream_tags" {
       )
     }
 
-    command = "./scripts/manage_cloudwatch_metric_stream_tags.sh remove"
+    command = "python3 ./scripts/manage_cloudwatch_metric_stream_tags.py remove"
   }
 
   depends_on = [

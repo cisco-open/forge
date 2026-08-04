@@ -43,8 +43,8 @@ data "external" "fetch_secret_value" {
   count = var.reader_config.enable_secret_fetch ? 1 : 0
 
   program = [
-    "bash",
-    "${path.module}/scripts/fetch_secret_value.sh",
+    "python3",
+    "${path.module}/scripts/fetch_secret_value.py",
     aws_iam_role.reader.arn,
     var.reader_config.source_secret_role_arn,
     var.reader_config.source_secret_arn,

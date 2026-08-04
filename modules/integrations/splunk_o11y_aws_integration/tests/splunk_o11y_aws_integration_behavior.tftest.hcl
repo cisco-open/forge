@@ -81,7 +81,7 @@ run "splunk_o11y_cloudformation_stack_contract" {
       length(terraform_data.cloudwatch_metric_stream_tags.triggers_replace) == 4
       && terraform_data.cloudwatch_metric_stream_tags.triggers_replace[0] == terraform_data.cloudwatch_metric_stream_tags.input.stack_id
       && terraform_data.cloudwatch_metric_stream_tags.triggers_replace[1] == "https://example.com/splunk-integration.yaml"
-      && terraform_data.cloudwatch_metric_stream_tags.triggers_replace[2] == filesha256("${path.module}/scripts/manage_cloudwatch_metric_stream_tags.sh")
+      && terraform_data.cloudwatch_metric_stream_tags.triggers_replace[2] == filesha256("${path.module}/scripts/manage_cloudwatch_metric_stream_tags.py")
       && terraform_data.cloudwatch_metric_stream_tags.triggers_replace[3] == sha256(jsonencode(terraform_data.cloudwatch_metric_stream_tags.input.tags))
     )
     error_message = "Metric Stream tag management must replace on stack, template, script, or desired-tag changes."

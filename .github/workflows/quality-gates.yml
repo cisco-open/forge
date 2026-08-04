@@ -10,6 +10,7 @@ on:
       - renovatebot
     paths:
       - modules/**/lambda/**
+      - modules/**/*.py
       - modules/**/*.tf
       - modules/**/*.tftest.hcl
       - examples/**
@@ -35,6 +36,7 @@ on:
       - main
     paths:
       - modules/**/lambda/**
+      - modules/**/*.py
       - modules/**/*.tf
       - modules/**/*.tftest.hcl
       - examples/**
