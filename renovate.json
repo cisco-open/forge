@@ -22,6 +22,7 @@
     "stabilityDays": 0,
     "separateMinorPatch": true,
     "separateMajorMinor": true,
+    "useBaseBranchConfig": "merge",
     "ignorePaths": [
         "**/.terraform/**"
     ],

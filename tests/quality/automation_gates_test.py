@@ -84,6 +84,12 @@ def test_renovate_groups_runner_updates_by_semver_level() -> None:
     assert runner_rule['separateMinorPatch'] is True
 
 
+def test_renovate_merges_config_from_selected_base_branch() -> None:
+    config = json.loads(read('renovate.json'))
+
+    assert config['useBaseBranchConfig'] == 'merge'
+
+
 def test_renovate_pre_commit_hooks_have_single_update_owner() -> None:
     config = json.loads(read('renovate.json'))
     pre_commit_path = '.pre-commit-config.yaml'
