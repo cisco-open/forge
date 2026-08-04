@@ -14,6 +14,6 @@ output "splunk_cloud_input_custom_logs_json" {
 }
 
 output "splunk_cloud_input_s3_logs_json" {
-  description = "The Splunk Cloud input map for S3 logs."
-  value       = var.s3_logs_config.enabled ? local.splunk_cloud_input_s3_logs_json : ""
+  description = "Map of enabled S3 log input names to their Splunk Cloud input JSON."
+  value       = tomap(local.splunk_cloud_input_s3_logs_json)
 }

@@ -120,7 +120,7 @@ modules/<category>/<module>/
 ├── outputs.tf
 ├── variables.tf
 └── tests/
-    ├── <module>_source_inventory.tftest.hcl
+    ├── <module>_inventory.tftest.hcl
     ├── <module>_interface_contract.tftest.hcl
     └── <module>_behavior.tftest.hcl
 ```
@@ -130,7 +130,7 @@ extension is a Forge convention that identifies the purpose of the test:
 
 | Test type                         | Required                                 | Purpose                                                                   |
 | --------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------- |
-| `*_source_inventory.tftest.hcl`   | Once per module                          | Protect important Terraform blocks and structural source contracts.       |
+| `*_inventory.tftest.hcl`          | Once per module                          | Protect important Terraform blocks and structural source contracts.       |
 | `*_interface_contract.tftest.hcl` | Once per module                          | Protect the complete public input and output interface.                   |
 | `*_behavior.tftest.hcl`           | When the module has behavior to exercise | Verify planned resources, wiring, policies, outputs, and input rejection. |
 

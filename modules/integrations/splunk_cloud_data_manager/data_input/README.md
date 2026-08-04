@@ -19,6 +19,16 @@ The parent Data Manager module needs repeatable, reviewable creation of individu
 - Do not hand-edit generated CloudFormation templates without reflecting the change in code.
 - Use parent-module outputs to confirm which inputs were created.
 
+## Python Lifecycle Layout
+
+Terraform invokes `scripts/splunk_integration.py`, which is intentionally a thin, stable entrypoint. Its implementation is split by responsibility under `scripts/splunk_data_manager/`:
+
+- `cli.py` parses Terraform input and dispatches lifecycle operations.
+- `client.py` handles Splunk authentication and HTTP requests.
+- `input_state.py` validates inputs and evaluates S3 provisioning readiness.
+- `lifecycle.py` coordinates create, get, and delete operations.
+- `runtime.py` owns shared types, logging, JSON, and artifact helpers.
+
 <!-- BEGIN_TF_DOCS -->
 
 ## Requirements

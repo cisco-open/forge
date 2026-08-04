@@ -95,9 +95,11 @@ run "splunk_data_input_template_contract" {
       && strcontains(file("${path.module}/main.tf"), "query = {")
       && strcontains(file("${path.module}/main.tf"), "SPLUNK_CLOUD_INPUT_JSON")
       && startswith(file("${path.module}/scripts/splunk_integration.py"), "#!/usr/bin/env python3")
-      && strcontains(file("${path.module}/scripts/splunk_integration.py"), "def create_integration(")
-      && strcontains(file("${path.module}/scripts/splunk_integration.py"), "def get_integration(")
-      && strcontains(file("${path.module}/scripts/splunk_integration.py"), "def delete_integration(")
+      && strcontains(file("${path.module}/scripts/splunk_integration.py"), "from splunk_data_manager.cli import main")
+      && strcontains(file("${path.module}/scripts/splunk_integration.py"), "raise SystemExit(main())")
+      && strcontains(file("${path.module}/scripts/splunk_data_manager/lifecycle.py"), "def create_integration(")
+      && strcontains(file("${path.module}/scripts/splunk_data_manager/lifecycle.py"), "def get_integration(")
+      && strcontains(file("${path.module}/scripts/splunk_data_manager/lifecycle.py"), "def delete_integration(")
     )
     error_message = "Splunk Data Manager must invoke the Python lifecycle command through environment or external-query values."
   }

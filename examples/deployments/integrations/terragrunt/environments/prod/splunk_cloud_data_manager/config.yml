@@ -23,14 +23,19 @@ cloudwatch_log_groups_config:
     - eu-west-1
 
 s3_logs_config:
-  enabled: false
-  name: forge-s3-logs-prod
-  iam_region: us-east-1
-  index: forge-prod-index
-  source_type: forgecicd:runner-logs:s3
-  sqs_urls: []
-  s3_bucket_patterns: []
-  kms_key_arns: []
+  s3-custom-logs:
+    - enabled: false
+      name: forge-s3-logs-prod
+      iam_region: us-east-1
+      index: forge-prod-index
+      source_type: forgecicd:runner-logs:s3
+      sqs_urls: []
+      s3_bucket_patterns: []
+      kms_key_arns: []
+  ct-logs: []
+  s3-access-logs: []
+  elb-access-logs: []
+  cf-access-logs: []
 
 security_metadata_config:
   enabled: true

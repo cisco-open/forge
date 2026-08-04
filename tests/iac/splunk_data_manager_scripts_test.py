@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import copy
 import hashlib
-import importlib.util
+import importlib
 import io
 import json
+import subprocess
 import sys
 from collections import deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -23,16 +24,17 @@ SCRIPT_PATH = REPO_ROOT / (
     'modules/integrations/splunk_cloud_data_manager/data_input/'
     'scripts/splunk_integration.py'
 )
-SCRIPT_SPEC = importlib.util.spec_from_file_location(
-    'splunk_integration',
-    SCRIPT_PATH,
-)
-assert SCRIPT_SPEC is not None and SCRIPT_SPEC.loader is not None
-splunk_integration = importlib.util.module_from_spec(SCRIPT_SPEC)
-sys.modules[SCRIPT_SPEC.name] = splunk_integration
-SCRIPT_SPEC.loader.exec_module(splunk_integration)
+sys.path.insert(0, str(SCRIPT_PATH.parent))
+splunk_integration = importlib.import_module('splunk_data_manager')
 
 AWS_ACCOUNT_ID = '166060576821'
+S3_DATASETS = (
+    's3-custom-logs',
+    'ct-logs',
+    's3-access-logs',
+    'elb-access-logs',
+    'cf-access-logs',
+)
 
 
 def sqs_url(queue_name: str, region: str = 'us-east-1') -> str:
@@ -51,6 +53,7 @@ def s3_status_key(queue_url: str) -> str:
 
 def s3_request(
     *,
+    dataset: str = 's3-custom-logs',
     queue_urls: list[str] | None = None,
     s3_bucket_patterns: list[str] | None = None,
     kms_key_arns: list[str] | None = None,
@@ -62,25 +65,28 @@ def s3_request(
     if kms_key_arns is None:
         kms_key_arns = []
 
+    dataset_info: dict[str, object] = {
+        'sqsUrls': [
+            {'sqsUrl': queue_url}
+            for queue_url in queue_urls
+        ],
+    }
+    if dataset == 's3-custom-logs':
+        dataset_info['sourceType'] = 'forgecicd:runner-logs:s3'
+
     return {
         'name': 'forge-s3-logs',
         'type': 'AWS',
         'destination': {
             'type': 'index',
-            'details': {'s3-custom-logs': 'forge-index'},
+            'details': {dataset: 'forge-index'},
         },
         'mode': 'Complete',
         'details': {
             'type': 'SingleAccount',
             'iamRegion': 'us-east-1',
             'datasetInfo': {
-                's3-custom-logs': {
-                    'sqsUrls': [
-                        {'sqsUrl': queue_url}
-                        for queue_url in queue_urls
-                    ],
-                    'sourceType': 'forgecicd:runner-logs:s3',
-                },
+                dataset: dataset_info,
             },
             'dataAccounts': [AWS_ACCOUNT_ID],
             's3BucketPatterns': s3_bucket_patterns,
@@ -108,9 +114,10 @@ def s3_response(
             ]
         )
 
+    dataset = next(iter(request['details']['datasetInfo']))
     configured_urls = [
         entry['sqsUrl']
-        for entry in request['details']['datasetInfo']['s3-custom-logs'][
+        for entry in request['details']['datasetInfo'][dataset][
             'sqsUrls'
         ]
     ]
@@ -256,6 +263,55 @@ def runtime_config(
         password='splunk-password',
         input_request=request,
     )
+
+
+def test_supported_s3_datasets_match_the_terraform_contract() -> None:
+    assert splunk_integration.S3_DATASETS == frozenset(S3_DATASETS)
+
+
+def test_entrypoint_loads_package_from_an_unrelated_directory(
+    tmp_path: Path,
+) -> None:
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT_PATH), '--help'],
+        cwd=tmp_path,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0
+    assert '{create,get,delete}' in result.stdout
+    assert result.stderr == ''
+
+
+@pytest.mark.parametrize('dataset', S3_DATASETS)
+def test_s3_datasets_use_queue_readiness(dataset: str) -> None:
+    request = s3_request(dataset=dataset)
+    response = s3_response(
+        'CreateDataSourceSuccess',
+        request=request,
+    )
+
+    assert splunk_integration.input_uses_s3(request)
+    assert splunk_integration.s3_input_state(response) == 'ready'
+    assert splunk_integration.wait_for_input(
+        fetch_sequence(response),
+        request=request,
+    ) == response
+
+
+def test_s3_input_rejects_multiple_supported_datasets() -> None:
+    request = s3_request()
+    request['details']['datasetInfo']['ct-logs'] = {
+        'sqsUrls': [{'sqsUrl': sqs_url('cloudtrail')}],
+    }
+
+    with pytest.raises(
+        splunk_integration.SplunkIntegrationError,
+        match='more than one supported S3 dataset',
+    ):
+        splunk_integration.input_uses_s3(request)
 
 
 def test_s3_wait_retries_an_in_progress_response() -> None:
@@ -517,12 +573,14 @@ def test_push_datasets_keep_their_hec_category(
     ]
 
 
-def test_s3_inputs_do_not_request_hec_tokens() -> None:
+@pytest.mark.parametrize('dataset', S3_DATASETS)
+def test_s3_inputs_do_not_request_hec_tokens(dataset: str) -> None:
     client = FakeClient()
+    request = s3_request(dataset=dataset)
 
     splunk_integration.ensure_hec_tokens(
         client,
-        s3_response('CreateDataSourceSuccess'),
+        s3_response('CreateDataSourceSuccess', request=request),
         initial_delay_seconds=300,
         sleep=lambda _seconds: pytest.fail('S3 input slept for HEC'),
     )
@@ -555,10 +613,12 @@ def test_delete_payload_removes_response_owned_fields() -> None:
     assert 'stackName' in document['details']
 
 
+@pytest.mark.parametrize('dataset', S3_DATASETS)
 def test_create_s3_input_writes_artifacts_without_hec_sleep(
     tmp_path: Path,
+    dataset: str,
 ) -> None:
-    request = s3_request()
+    request = s3_request(dataset=dataset)
     response = s3_response(
         'CreateDataSourceSuccess',
         request=request,
@@ -677,8 +737,13 @@ def test_get_returns_string_result_and_hashes_raw_template(
     assert paths.template_json.read_bytes() == template
 
 
-def test_delete_s3_input_skips_hec_cleanup(tmp_path: Path) -> None:
-    response = s3_response('CreateDataSourceSuccess')
+@pytest.mark.parametrize('dataset', S3_DATASETS)
+def test_delete_s3_input_skips_hec_cleanup(
+    tmp_path: Path,
+    dataset: str,
+) -> None:
+    request = s3_request(dataset=dataset)
+    response = s3_response('CreateDataSourceSuccess', request=request)
     client = FakeClient(
         input_responses=[response],
     )
@@ -950,7 +1015,7 @@ def test_get_main_writes_only_external_provider_json(
         template=template,
     )
     monkeypatch.setattr(
-        splunk_integration,
+        splunk_integration.cli,
         'SplunkWebClient',
         lambda _config, logger: client,
     )

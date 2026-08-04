@@ -19,9 +19,22 @@ Forge sends EC2, Lambda, EKS, CloudWatch, and security metadata through supporte
 - `python3.12` must be available on the host running OpenTofu because Data Manager lifecycle operations execute locally.
 - CloudFormation stack failures usually point to AWS-side permissions or region support.
 - Custom log group selection determines which Forge logs arrive in Splunk Cloud.
-- Configure the S3 IAM roles region independently from the regions containing its queues and buckets.
+- Configure each S3 input's IAM roles region independently from the regions containing its queues and buckets.
 - Use S3 bucket-name patterns such as `forge-runner-logs-*`, or `*` when no narrower prefix is available.
 - Give S3 log inputs dedicated SQS queues; competing consumers can remove notifications before Data Manager reads them.
+- Group S3 inputs under the five dataset keys in `s3_logs_config`. Each enabled list item creates an independent Data Manager input and CloudFormation stack, and input names must be unique across all five lists.
+- `source_type` belongs only to custom S3 log items. Predefined dataset requests omit Splunk's `sourceType` field.
+- S3 input names are also stable Terraform instance keys. Reordering list items is safe, while renaming an input replaces that input's managed UUID and stack.
+- To rename an input that will reuse the same queue, first disable and apply the old item, then rename, re-enable, and apply it. This prevents old and new consumers from overlapping.
+- Each item's `enabled`, `name`, and `iam_region` values must be known during planning because they determine instance membership, identity, and the stack region.
+
+| S3 log type | Configuration key | `source_type` |
+| --- | --- | --- |
+| Custom S3 logs | `s3-custom-logs` | Required |
+| AWS CloudTrail | `ct-logs` | Omit |
+| Amazon S3 access logs | `s3-access-logs` | Omit |
+| Elastic Load Balancing access logs | `elb-access-logs` | Omit |
+| Amazon CloudFront access logs | `cf-access-logs` | Omit |
 
 <!-- BEGIN_TF_DOCS -->
 

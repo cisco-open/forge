@@ -20,17 +20,6 @@ provider "aws" {
 }
 
 provider "aws" {
-  alias   = "s3_logs_iam_region"
-  region  = local.splunk_s3_logs_iam_region
-  profile = var.aws_profile
-
-  # Required, as per security guidelines.
-  default_tags {
-    tags = var.tags
-  }
-}
-
-provider "aws" {
   alias = "by_region"
   # supported by opentofu >= 1.9.0
   for_each = toset(

@@ -4,6 +4,7 @@ import tomllib
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+INVENTORY_CONTRACT_SUFFIX = '_inventory.tftest.hcl'
 
 
 def read(path: str) -> str:
@@ -36,10 +37,8 @@ def contains_source_inventory_contract(path: Path) -> bool:
 
 
 def is_source_inventory_contract(path: Path) -> bool:
-    has_source_inventory_suffix = path.name.endswith(
-        '_source_inventory.tftest.hcl',
-    )
-    return has_source_inventory_suffix and contains_source_inventory_contract(path)
+    has_inventory_suffix = path.name.endswith(INVENTORY_CONTRACT_SUFFIX)
+    return has_inventory_suffix and contains_source_inventory_contract(path)
 
 
 def is_behavior_contract(path: Path) -> bool:
@@ -189,7 +188,7 @@ def test_each_module_has_one_source_inventory_contract() -> None:
             test_file.relative_to(REPO_ROOT).as_posix()
             for test_file in tests
             if contains_source_inventory_contract(test_file)
-            if not test_file.name.endswith('_source_inventory.tftest.hcl')
+            if not test_file.name.endswith(INVENTORY_CONTRACT_SUFFIX)
         )
         inventory_tests = (
             sorted(
