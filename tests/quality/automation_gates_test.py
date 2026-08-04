@@ -1,4 +1,5 @@
 import ast
+import json
 import re
 import tomllib
 from pathlib import Path
@@ -67,6 +68,225 @@ def dependency_group_names(group_name: str) -> set[str]:
         )[0].lower()
         for dependency in dependencies
     }
+
+
+def test_renovate_groups_runner_updates_by_semver_level() -> None:
+    config = json.loads(read('renovate.json'))
+    runner_rule = next(
+        rule
+        for rule in config['packageRules']
+        if rule.get('groupSlug') == 'terraform-aws-github-runner'
+    )
+
+    assert config['separateMajorMinor'] is True
+    assert config['separateMinorPatch'] is True
+    assert runner_rule['separateMajorMinor'] is True
+    assert runner_rule['separateMinorPatch'] is True
+
+
+def test_renovate_manages_supported_lambda_layer_arns() -> None:
+    config = json.loads(read('renovate.json'))
+    managers = {
+        manager.get('datasourceTemplate'): manager
+        for manager in config['customManagers']
+        if manager.get('datasourceTemplate') in {
+            'custom.klayers',
+            'custom.aws-sdk-pandas-layers',
+        }
+    }
+
+    assert set(managers) == {
+        'custom.klayers',
+        'custom.aws-sdk-pandas-layers',
+    }
+    assert all(
+        manager['fileMatch'] == [r'^.*\.tf$']
+        for manager in managers.values()
+    )
+
+    compiled_patterns = {
+        datasource: [
+            re.compile(
+                re.sub(
+                    r'\(\?<([A-Za-z][A-Za-z0-9_]*)>',
+                    r'(?P<\1>',
+                    pattern,
+                ),
+            )
+            for pattern in manager['matchStrings']
+        ]
+        for datasource, manager in managers.items()
+    }
+
+    supported_arn_pattern = re.compile(
+        r'arn:aws(?:-[a-z]+)*:lambda:'
+        r'(?:\$\{[^}]+\}|[a-z0-9-]+):'
+        r'(?:'
+        r'770693421928:layer:Klayers-[A-Za-z0-9._-]+'
+        r'|\d{12}:layer:AWSSDKPandas-[A-Za-z0-9._-]+'
+        r'):\d+',
+    )
+    source_arns = []
+    source_texts = {}
+    for path in sorted((REPO_ROOT / 'modules').rglob('*.tf')):
+        if '.terraform' in path.parts:
+            continue
+        source_texts[path] = path.read_text(encoding='utf-8')
+        source_arns.extend(
+            (path, match)
+            for match in supported_arn_pattern.finditer(source_texts[path])
+        )
+
+    matched_datasources = []
+    matched_packages = []
+    manager_match_count = sum(
+        len(list(pattern.finditer(source_text)))
+        for source_text in source_texts.values()
+        for patterns in compiled_patterns.values()
+        for pattern in patterns
+    )
+    for path, arn_match in source_arns:
+        matches = [
+            (datasource, match)
+            for datasource, patterns in compiled_patterns.items()
+            for pattern in patterns
+            for match in pattern.finditer(source_texts[path])
+            if match.start() <= arn_match.start() <= arn_match.end()
+            if arn_match.end() <= match.end()
+        ]
+        assert len(matches) == 1, arn_match.group()
+        datasource, match = matches[0]
+        matched_datasources.append(datasource)
+        groups = match.groupdict()
+        package = groups.get('layerPackage') or groups.get('layerName')
+        matched_packages.append(package)
+
+    assert len(source_arns) == 21
+    assert manager_match_count == len(source_arns)
+    assert matched_datasources.count('custom.klayers') == 18
+    assert matched_datasources.count('custom.aws-sdk-pandas-layers') == 3
+    assert set(matched_packages) == {
+        'AWSSDKPandas-Python312',
+        'PyJWT',
+        'cryptography',
+        'requests',
+    }
+
+    klayers_literal = (
+        'arn:aws:lambda:eu-west-1:770693421928:'
+        'layer:Klayers-p312-arm64-requests:4'
+    )
+    klayers_match = compiled_patterns['custom.klayers'][0].fullmatch(
+        klayers_literal,
+    )
+    assert klayers_match is not None
+    assert klayers_match.groupdict() == {
+        'lookupRegion': 'eu-west-1',
+        'pythonMajor': '3',
+        'pythonMinor': '12',
+        'architecture': '-arm64',
+        'layerPackage': 'requests',
+        'currentValue': '4',
+    }
+
+    klayers_dynamic = (
+        '"arn:aws:lambda:${var.aws_region}:770693421928:'
+        'layer:Klayers-p312-requests:4"'
+    )
+    klayers_dynamic_match = compiled_patterns[
+        'custom.klayers'
+    ][1].search(klayers_dynamic)
+    assert klayers_dynamic_match is not None
+    assert klayers_dynamic_match.group('layerPackage') == 'requests'
+    assert 'lookupRegion' not in klayers_dynamic_match.groupdict()
+
+    assert all(
+        'lambdaLayerRegion' not in pattern
+        for manager in managers.values()
+        for pattern in manager['matchStrings']
+    )
+    assert all(
+        '{{else}}us-east-1{{/if}}' in manager['packageNameTemplate']
+        for manager in managers.values()
+    )
+    assert all(
+        'lambdaLayerRegion' not in source_text
+        for source_text in source_texts.values()
+    )
+
+    pandas_literal = (
+        'arn:aws-cn:lambda:cn-north-1:123456789012:'
+        'layer:AWSSDKPandas-Python312-Arm64:8'
+    )
+    pandas_match = compiled_patterns[
+        'custom.aws-sdk-pandas-layers'
+    ][0].fullmatch(pandas_literal)
+    assert pandas_match is not None
+    assert pandas_match.groupdict() == {
+        'partition': 'aws-cn',
+        'lookupRegion': 'cn-north-1',
+        'publisherAccount': '123456789012',
+        'layerName': 'AWSSDKPandas-Python312-Arm64',
+        'currentValue': '8',
+    }
+
+    unsupported_arn = (
+        'arn:aws:lambda:eu-west-1:123456789012:'
+        'layer:private-application-layer:7'
+    )
+    assert not any(
+        pattern.fullmatch(unsupported_arn)
+        for patterns in compiled_patterns.values()
+        for pattern in patterns
+    )
+
+    assert all(
+        manager['versioningTemplate'] == r'regex:^(?<patch>\d+)$'
+        for manager in managers.values()
+    )
+    pandas_datasource = config['customDatasources']['aws-sdk-pandas-layers']
+    assert pandas_datasource['format'] == 'plain'
+    assert '/stable/_sources/layers.rst.txt' in (
+        pandas_datasource['defaultRegistryUrlTemplate']
+    )
+
+    layer_rule = next(
+        rule
+        for rule in config['packageRules']
+        if rule.get('groupSlug') == 'aws-lambda-layers'
+    )
+    assert set(layer_rule['matchDatasources']) == set(managers)
+    assert layer_rule['automerge'] is False
+    assert layer_rule['minimumReleaseAge'] is None
+
+    inherited_patch_policy = {
+        'security',
+        'critical',
+        'simple-review',
+        'auto-merge',
+    }
+    for rule in config['packageRules']:
+        if 'patch' not in rule.get('matchUpdateTypes', []):
+            continue
+        if rule.get('matchDepTypes'):
+            continue
+        changes_layer_policy = any(
+            (
+                rule.get('automerge') is True,
+                bool(
+                    inherited_patch_policy.intersection(
+                        rule.get('addLabels', []),
+                    ),
+                ),
+                'prPriority' in rule,
+                'prCreation' in rule,
+            ),
+        )
+        if not changes_layer_policy:
+            continue
+        assert {
+            f'!{datasource}' for datasource in managers
+        }.issubset(rule.get('matchDatasources', []))
 
 
 def test_python_ssm_clients_use_explicit_retry_config() -> None:

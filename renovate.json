@@ -28,6 +28,21 @@
     "lockFileMaintenance": {
         "enabled": true
     },
+    "customDatasources": {
+        "klayers": {
+            "defaultRegistryUrlTemplate": "https://api.klayers.cloud/api/v2/{{{packageName}}}",
+            "transformTemplates": [
+                "{ \"releases\": $map($, function($layer) { { \"version\": $split($layer.arn, \":\")[-1], \"isDeprecated\": $layer.deployStatus = \"deprecated\" } }), \"homepage\": \"https://klayers.cloud\", \"sourceUrl\": \"https://github.com/keithrozario/Klayers\" }"
+            ]
+        },
+        "aws-sdk-pandas-layers": {
+            "defaultRegistryUrlTemplate": "https://aws-sdk-pandas.readthedocs.io/en/stable/_sources/layers.rst.txt",
+            "format": "plain",
+            "transformTemplates": [
+                "{ \"releases\": [releases[$contains(version, \"{{{packageName}}}:\")].{ \"version\": $trim($substringBefore($substringAfter(version, \"{{{packageName}}}:\"), \"|\")) }], \"homepage\": \"https://aws-sdk-pandas.readthedocs.io/en/stable/layers.html\", \"sourceUrl\": \"https://github.com/aws/aws-sdk-pandas\" }"
+            ]
+        }
+    },
     "customManagers": [
         {
             "customType": "regex",
@@ -71,6 +86,36 @@
             "datasourceTemplate": "github-tags",
             "versioningTemplate": "semver-coerced",
             "autoReplaceStringTemplate": "{{{lineStart}}}{{{indentation}}}- repo: {{{repoUrl}}}\n{{{indentation}}}  rev: {{{newDigest}}}  # frozen: {{{newValue}}}"
+        },
+        {
+            "customType": "regex",
+            "description": "Update KLayers Lambda layer revisions; use us-east-1 as the catalog for interpolated regions",
+            "fileMatch": [
+                "^.*\\.tf$"
+            ],
+            "matchStrings": [
+                "arn:aws:lambda:(?<lookupRegion>[a-z]{2}(?:-gov)?-[a-z]+-\\d):770693421928:layer:Klayers-p(?<pythonMajor>\\d)(?<pythonMinor>\\d{1,2})(?<architecture>-arm64)?-(?<layerPackage>[A-Za-z0-9._-]+):(?<currentValue>\\d+)",
+                "arn:aws:lambda:\\$\\{[^}]+\\}:770693421928:layer:Klayers-p(?<pythonMajor>\\d)(?<pythonMinor>\\d{1,2})(?<architecture>-arm64)?-(?<layerPackage>[A-Za-z0-9._-]+):(?<currentValue>\\d+)"
+            ],
+            "depNameTemplate": "KLayers {{{layerPackage}}} for Python {{{pythonMajor}}}.{{{pythonMinor}}}{{{architecture}}}",
+            "packageNameTemplate": "p{{{pythonMajor}}}.{{{pythonMinor}}}{{{architecture}}}/layers/{{#if lookupRegion}}{{{lookupRegion}}}{{else}}us-east-1{{/if}}/{{{layerPackage}}}",
+            "datasourceTemplate": "custom.klayers",
+            "versioningTemplate": "regex:^(?<patch>\\d+)$"
+        },
+        {
+            "customType": "regex",
+            "description": "Update AWS SDK for pandas Lambda layer revisions; use us-east-1 as the catalog for interpolated regions",
+            "fileMatch": [
+                "^.*\\.tf$"
+            ],
+            "matchStrings": [
+                "arn:(?<partition>aws(?:-[a-z]+)*):lambda:(?<lookupRegion>[a-z]{2}(?:-gov)?-[a-z]+-\\d):(?<publisherAccount>\\d{12}):layer:(?<layerName>AWSSDKPandas-Python\\d+(?:-Arm64)?):(?<currentValue>\\d+)",
+                "arn:aws:lambda:\\$\\{[^}]+\\}:(?<publisherAccount>\\d{12}):layer:(?<layerName>AWSSDKPandas-Python\\d+(?:-Arm64)?):(?<currentValue>\\d+)"
+            ],
+            "depNameTemplate": "AWS SDK for pandas {{{layerName}}}",
+            "packageNameTemplate": "arn:{{#if partition}}{{{partition}}}{{else}}aws{{/if}}:lambda:{{#if lookupRegion}}{{{lookupRegion}}}{{else}}us-east-1{{/if}}:{{{publisherAccount}}}:layer:{{{layerName}}}",
+            "datasourceTemplate": "custom.aws-sdk-pandas-layers",
+            "versioningTemplate": "regex:^(?<patch>\\d+)$"
         }
       ],
     "packageRules": [
@@ -82,6 +127,10 @@
             "matchUpdateTypes": [
                 "patch",
                 "minor"
+            ],
+            "matchDatasources": [
+                "!custom.klayers",
+                "!custom.aws-sdk-pandas-layers"
             ],
             "vulnerabilityAlerts": {
                 "enabled": true
@@ -99,6 +148,10 @@
                 "patch",
                 "pin",
                 "digest"
+            ],
+            "matchDatasources": [
+                "!custom.klayers",
+                "!custom.aws-sdk-pandas-layers"
             ],
             "addLabels": [
                 "simple-review"
@@ -300,6 +353,10 @@
             "matchUpdateTypes": [
                 "patch"
             ],
+            "matchDatasources": [
+                "!custom.klayers",
+                "!custom.aws-sdk-pandas-layers"
+            ],
             "vulnerabilityAlerts": {
                 "enabled": true
             },
@@ -318,8 +375,23 @@
             ],
             "groupName": "terraform-aws-github-runner version",
             "groupSlug": "terraform-aws-github-runner",
-            "separateMajorMinor": false,
-            "separateMinorPatch": false
+            "separateMajorMinor": true,
+            "separateMinorPatch": true
+        },
+        {
+            "description": "Group AWS Lambda layer revision updates without automerge",
+            "matchDatasources": [
+                "custom.klayers",
+                "custom.aws-sdk-pandas-layers"
+            ],
+            "groupName": "AWS Lambda layers",
+            "groupSlug": "aws-lambda-layers",
+            "minimumReleaseAge": null,
+            "automerge": false,
+            "addLabels": [
+                "dependencies",
+                "lambda-layers"
+            ]
         }
     ]
 }
