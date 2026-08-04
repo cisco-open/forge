@@ -84,6 +84,80 @@ def test_renovate_groups_runner_updates_by_semver_level() -> None:
     assert runner_rule['separateMinorPatch'] is True
 
 
+def test_renovate_pre_commit_hooks_have_single_update_owner() -> None:
+    config = json.loads(read('renovate.json'))
+    pre_commit_path = '.pre-commit-config.yaml'
+
+    assert config['pre-commit']['enabled'] is True
+
+    overlapping_custom_managers = [
+        manager.get('description', '<unnamed>')
+        for manager in config['customManagers']
+        if any(
+            re.search(file_pattern, pre_commit_path)
+            for file_pattern in manager.get('fileMatch', [])
+        )
+    ]
+    assert overlapping_custom_managers == []
+
+    group_rules = [
+        rule
+        for rule in config['packageRules']
+        if rule.get('groupSlug') == 'pre-commit-dependencies'
+    ]
+    assert len(group_rules) == 1
+    assert group_rules[0]['matchManagers'] == ['pre-commit']
+    assert 'pinDigests' not in group_rules[0]
+
+    digest_rule = next(
+        rule
+        for rule in config['packageRules']
+        if rule.get('description') == (
+            'Ignore digest-only refreshes for frozen pre-commit hooks'
+        )
+    )
+    assert digest_rule['matchManagers'] == ['pre-commit']
+    assert digest_rule['matchUpdateTypes'] == ['digest']
+    assert digest_rule['enabled'] is False
+
+    frozen_revision = re.compile(
+        r'^\s*rev: [a-f0-9]{40}\s+# frozen: \S+$',
+    )
+    revision_lines = [
+        line
+        for line in read(pre_commit_path).splitlines()
+        if line.lstrip().startswith('rev:')
+    ]
+    assert revision_lines
+    assert all(frozen_revision.match(line) for line in revision_lines)
+
+
+def test_renovate_only_pins_executable_github_action_dependencies() -> None:
+    config = json.loads(read('renovate.json'))
+    github_actions_rules = [
+        rule
+        for rule in config['packageRules']
+        if rule.get('matchManagers') == ['github-actions']
+    ]
+    group_rule = next(
+        rule
+        for rule in github_actions_rules
+        if rule.get('groupSlug') == 'github-actions-dependencies'
+    )
+    pin_rule = next(
+        rule for rule in github_actions_rules if rule.get('pinDigests') is True
+    )
+
+    assert 'pinDigests' not in group_rule
+    assert set(pin_rule['matchDepTypes']) == {
+        'action',
+        'container',
+        'docker',
+        'service',
+    }
+    assert 'uses-with' not in pin_rule['matchDepTypes']
+
+
 def test_renovate_manages_supported_lambda_layer_arns() -> None:
     config = json.loads(read('renovate.json'))
     managers = {

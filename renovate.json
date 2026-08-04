@@ -47,7 +47,7 @@
         {
             "customType": "regex",
             "fileMatch": [
-                "^*\\.tf$"
+                "^.*\\.tf$"
             ],
             "matchStrings": [
                 "required_version\\s=\\s\">= (?<currentValue>.*?)\""
@@ -73,19 +73,6 @@
           "fileMatch": ["Dockerfile$"],
           "matchStrings": ["# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+) registryUrl=(?<registryUrl>\\S+)( extractVersion=(?<extractVersion>.+?))?( versioning=(?<versioning>.*?))?\\n.*?VERSION=\"(?<currentValue>.*)?\"\\s"],
           "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
-        },
-        {
-            "customType": "regex",
-            "description": "Update SHA-pinned pre-commit hook refs from frozen tag comments",
-            "fileMatch": [
-                "(^|/)\\.pre-commit-config\\.ya?ml$"
-            ],
-            "matchStrings": [
-                "(?<lineStart>^|\\r\\n|\\r|\\n)(?<indentation>[ \\t]*)- repo: (?<repoUrl>https?://github\\.com/(?<packageName>[^\\s]+?)(?:\\.git)?)\\s+rev: (?<currentDigest>[a-f0-9]{40})\\s+# frozen: (?<currentValue>\\S+)"
-            ],
-            "datasourceTemplate": "github-tags",
-            "versioningTemplate": "semver-coerced",
-            "autoReplaceStringTemplate": "{{{lineStart}}}{{{indentation}}}- repo: {{{repoUrl}}}\n{{{indentation}}}  rev: {{{newDigest}}}  # frozen: {{{newValue}}}"
         },
         {
             "customType": "regex",
@@ -212,7 +199,6 @@
             "matchManagers": [
                 "github-actions"
             ],
-            "pinDigests": true,
             "groupName": "GitHub Actions dependencies",
             "groupSlug": "github-actions-dependencies",
             "addLabels": [
@@ -220,6 +206,19 @@
                 "github-actions",
                 "ci-cd"
             ]
+        },
+        {
+            "description": "Pin executable GitHub Action and container references",
+            "matchManagers": [
+                "github-actions"
+            ],
+            "matchDepTypes": [
+                "action",
+                "container",
+                "docker",
+                "service"
+            ],
+            "pinDigests": true
         },
         {
             "description": "Pre-commit hook dependencies",
@@ -234,19 +233,14 @@
             ]
         },
         {
-            "description": "SHA-pinned pre-commit hooks",
+            "description": "Ignore digest-only refreshes for frozen pre-commit hooks",
             "matchManagers": [
-                "custom.regex"
-            ],
-            "matchFileNames": [
-                ".pre-commit-config.yaml"
-            ],
-            "groupName": "Pre-commit dependencies",
-            "groupSlug": "pre-commit-dependencies",
-            "addLabels": [
-                "dependencies",
                 "pre-commit"
-            ]
+            ],
+            "matchUpdateTypes": [
+                "digest"
+            ],
+            "enabled": false
         },
         {
             "description": "Python dependencies",
