@@ -346,6 +346,7 @@ def test_test_suites_have_named_ci_jobs() -> None:
         'pytest -q iac',
         'tofu -chdir="${module}" test -no-color',
         'conftest verify --policy policy/opa',
+        'modules/**/*.py',
         'modules/**/*.sh',
         'tests/iac/**',
         'tests/tofu/**',

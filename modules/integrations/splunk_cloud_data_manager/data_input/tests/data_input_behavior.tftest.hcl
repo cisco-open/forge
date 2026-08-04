@@ -90,22 +90,15 @@ run "splunk_data_input_template_contract" {
 
   assert {
     condition = (
-      strcontains(file("${path.module}/scripts/create_splunk_integration.sh"), "grep -v '^s3-custom-logs$'")
-      && strcontains(file("${path.module}/scripts/get_splunk_integration.sh"), "grep -v '^s3-custom-logs$'")
-      && strcontains(file("${path.module}/scripts/create_splunk_integration.sh"), "splunk_wait_for_s3_input")
-      && strcontains(file("${path.module}/scripts/get_splunk_integration.sh"), "splunk_wait_for_s3_input")
-      && strcontains(file("${path.module}/scripts/splunk_integration_helpers.sh"), "splunk_s3_input_state")
-      && strcontains(file("${path.module}/scripts/splunk_integration_helpers.sh"), "splunk_s3_input_matches_request")
-      && strcontains(file("${path.module}/scripts/splunk_integration_helpers.sh"), "splunk_s3_input_matches_version")
-      && strcontains(file("${path.module}/scripts/splunk_integration_helpers.sh"), "splunk_s3_input_matches_update_time")
-      && strcontains(file("${path.module}/scripts/splunk_integration_helpers.sh"), "splunk_validate_cloudformation_template")
-      && strcontains(file("${path.module}/main.tf"), "export SPLUNK_CLOUD_INPUT_JSON=")
-      && strcontains(file("${path.module}/scripts/get_splunk_integration.sh"), "stack_name: .details.stackName")
-      && strcontains(file("${path.module}/scripts/get_splunk_integration.sh"), ".details.version | tostring")
-      && strcontains(file("${path.module}/scripts/delete_splunk_integration.sh"), ".dataSourcesStatus")
-      && strcontains(file("${path.module}/scripts/delete_splunk_integration.sh"), "if jq -e '.details.datasetInfo | has(\"s3-custom-logs\")'")
-      && strcontains(file("${path.module}/scripts/delete_splunk_integration.sh"), "DATASETS=(\"aws-cwl\" \"cwl-custom-logs\" \"cwl-vpc-flow-logs\" \"cloudtrail\" \"securityhub\" \"guardduty\" \"iam-aa\" \"iam-cr\" \"metadata\")")
+      strcontains(file("${path.module}/main.tf"), "scripts/splunk_integration.py")
+      && strcontains(file("${path.module}/main.tf"), "environment = {")
+      && strcontains(file("${path.module}/main.tf"), "query = {")
+      && strcontains(file("${path.module}/main.tf"), "SPLUNK_CLOUD_INPUT_JSON")
+      && startswith(file("${path.module}/scripts/splunk_integration.py"), "#!/usr/bin/env python3")
+      && strcontains(file("${path.module}/scripts/splunk_integration.py"), "def create_integration(")
+      && strcontains(file("${path.module}/scripts/splunk_integration.py"), "def get_integration(")
+      && strcontains(file("${path.module}/scripts/splunk_integration.py"), "def delete_integration(")
     )
-    error_message = "Splunk Data Manager scripts must match the requested S3 update and version, wait for every queue, validate the template, skip S3 HEC calls, preserve push-input HEC cleanup, and normalize response-only fields."
+    error_message = "Splunk Data Manager must invoke the Python lifecycle command through environment or external-query values."
   }
 }

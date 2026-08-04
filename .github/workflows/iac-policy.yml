@@ -10,6 +10,7 @@ on:
       - renovatebot
     paths:
       - modules/**/*.tf
+      - modules/**/*.py
       - modules/**/*.sh
       - modules/**/*.tftest.hcl
       - modules/**/*.tofutest.hcl
@@ -26,6 +27,7 @@ on:
       - main
     paths:
       - modules/**/*.tf
+      - modules/**/*.py
       - modules/**/*.sh
       - modules/**/*.tftest.hcl
       - modules/**/*.tofutest.hcl

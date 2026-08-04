@@ -16,6 +16,7 @@ Forge sends EC2, Lambda, EKS, CloudWatch, and security metadata through supporte
 ## Operational Notes
 
 - This module expects valid Splunk Cloud credentials and Data Manager configuration.
+- `python3.12` must be available on the host running OpenTofu because Data Manager lifecycle operations execute locally.
 - CloudFormation stack failures usually point to AWS-side permissions or region support.
 - Custom log group selection determines which Forge logs arrive in Splunk Cloud.
 - Configure the S3 IAM roles region independently from the regions containing its queues and buckets.
