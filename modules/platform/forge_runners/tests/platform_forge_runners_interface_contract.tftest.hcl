@@ -98,10 +98,11 @@ run "platform_forge_runners_interface_contract" {
       "repository_selection = string",
       "runner_group_name    = string",
       "tenant = object({",
-      "name                         = string",
-      "iam_roles_to_assume          = optional(list(string), [])",
-      "ecr_registries               = optional(list(string), [])",
-      "github_logs_reader_role_arns = optional(list(string), [])",
+      "name                                 = string",
+      "iam_roles_to_assume                  = optional(list(string), [])",
+      "ecr_registries                       = optional(list(string), [])",
+      "github_logs_reader_role_arns         = optional(list(string), [])",
+      "github_logs_s3_notifications_enabled = optional(bool, false)",
       "validation {",
       "condition     = contains([\"all\", \"selected\"], var.deployment_config.github.repository_selection)",
       "error_message = \"repository_selection must be 'all' or 'selected'.\"",
@@ -133,6 +134,8 @@ run "platform_forge_runners_interface_contract" {
       "runners may need to pull images from.",
       "- github_logs_reader_role_arns: Optional list of IAM roles that can read",
       "GitHub Actions logs for this tenant.",
+      "- github_logs_s3_notifications_enabled: Enables S3 log-object",
+      "notifications after legacy ownership is removed.",
       "variable \"ec2_deployment_specs\"",
       "lambda_subnet_ids = list(string)",
       "subnet_ids        = list(string)",
@@ -260,6 +263,9 @@ run "platform_forge_runners_interface_contract" {
       "output \"forge_github_actions_job_logs\"",
       "description = \"GitHub Actions job log archival resources.\"",
       "bucket_arn               = try(module.github_actions_job_logs[0].s3_bucket_arn, null)",
+      "bucket_kms_key_arn       = try(module.github_actions_job_logs[0].s3_bucket_kms_key_arn, null)",
+      "notification_queue_arn   = try(module.github_actions_job_logs[0].s3_notification_queue_arn, null)",
+      "notification_queue_url   = try(module.github_actions_job_logs[0].s3_notification_queue_url, null)",
       "internal_reader_role_arn = try(module.github_actions_job_logs[0].internal_s3_reader_role_arn, null)",
       "output \"forge_github_app\"",
       "description = \"GitHub App related outputs.\"",
@@ -316,7 +322,7 @@ run "platform_forge_runners_interface_contract" {
     condition = (
       output.expected_input_variable_count == 10
       && output.expected_output_value_count == 5
-      && output.expected_interface_literal_count == 257
+      && output.expected_interface_literal_count == 263
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

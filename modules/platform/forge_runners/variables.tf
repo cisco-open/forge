@@ -149,10 +149,11 @@ variable "deployment_config" {
       runner_group_name    = string
     })
     tenant = object({
-      name                         = string
-      iam_roles_to_assume          = optional(list(string), [])
-      ecr_registries               = optional(list(string), [])
-      github_logs_reader_role_arns = optional(list(string), [])
+      name                                 = string
+      iam_roles_to_assume                  = optional(list(string), [])
+      ecr_registries                       = optional(list(string), [])
+      github_logs_reader_role_arns         = optional(list(string), [])
+      github_logs_s3_notifications_enabled = optional(bool, false)
     })
   })
 
@@ -198,6 +199,8 @@ variable "deployment_config" {
       runners may need to pull images from.
     - github_logs_reader_role_arns: Optional list of IAM roles that can read
       GitHub Actions logs for this tenant.
+    - github_logs_s3_notifications_enabled: Enables S3 log-object
+      notifications after legacy ownership is removed.
   EOT
 }
 

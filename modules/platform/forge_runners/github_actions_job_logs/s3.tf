@@ -1,7 +1,6 @@
 resource "aws_s3_bucket" "gh_logs" {
   #checkov:skip=CKV_AWS_144:Cross-region replication is intentionally omitted because it is not needed for this bucket's use case.
   #checkov:skip=CKV_AWS_18:S3 server access logging is an accepted policy exception for this Forge storage bucket; audit needs are handled outside S3 access logs.
-  #checkov:skip=CKV2_AWS_62:Job log bucket is written and read by the logging workflow; no S3 event notification consumer is required.
   bucket = "${var.prefix}-forge-gh-logs-${data.aws_caller_identity.current.account_id}"
   tags   = var.tags
 }
@@ -120,4 +119,20 @@ resource "aws_s3_bucket_policy" "gh_logs_read" {
       }
     ]
   })
+}
+
+# S3 notification configuration is atomic. This resource must remain the only
+# Terraform owner of notifications for this bucket.
+resource "aws_s3_bucket_notification" "gh_logs" {
+  count  = var.enable_s3_notifications ? 1 : 0
+  bucket = aws_s3_bucket.gh_logs.id
+
+  queue {
+    id            = "job-logs"
+    queue_arn     = aws_sqs_queue.s3_notifications.arn
+    events        = ["s3:ObjectCreated:Put", "s3:ObjectCreated:CompleteMultipartUpload"]
+    filter_suffix = ".log"
+  }
+
+  depends_on = [aws_sqs_queue_policy.s3_notifications]
 }

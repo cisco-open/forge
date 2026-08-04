@@ -17,6 +17,7 @@ tenant:
     - 123456789012.dkr.ecr.eu-west-1.amazonaws.com
   github_logs_reader_role_arns:
     - arn:aws:iam::123456789012:role/github_logs_reader
+  github_logs_s3_notifications_enabled: false
 ec2_runner_specs:
   small:
     type: small

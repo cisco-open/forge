@@ -8,6 +8,7 @@ run "platform_forge_runners_github_actions_job_logs_interface_contract" {
   variables {
     module_path = "."
     expected_input_variables = [
+      "enable_s3_notifications",
       "event_bus_name",
       "ghes_url",
       "github_app",
@@ -20,8 +21,15 @@ run "platform_forge_runners_github_actions_job_logs_interface_contract" {
     expected_output_values = [
       "internal_s3_reader_role_arn",
       "s3_bucket_arn",
+      "s3_bucket_kms_key_arn",
+      "s3_notification_queue_arn",
+      "s3_notification_queue_url",
     ]
     expected_interface_literals = [
+      "variable \"enable_s3_notifications\"",
+      "description = \"Whether to send new S3 job-log object notifications to the dedicated SQS queue.\"",
+      "type        = bool",
+      "default     = false",
       "variable \"event_bus_name\"",
       "type        = string",
       "description = \"Name of the EventBridge event bus to listen for workflow job events.\"",
@@ -58,6 +66,15 @@ run "platform_forge_runners_github_actions_job_logs_interface_contract" {
       "output \"s3_bucket_arn\"",
       "description = \"The ARN of the S3 bucket where GitHub Actions job logs are stored.\"",
       "value       = aws_s3_bucket.gh_logs.arn",
+      "output \"s3_bucket_kms_key_arn\"",
+      "description = \"The ARN of the KMS key used to encrypt GitHub Actions job logs.\"",
+      "value       = aws_kms_key.gh_logs.arn",
+      "output \"s3_notification_queue_arn\"",
+      "description = \"The ARN of the SQS queue receiving GitHub Actions job log S3 notifications.\"",
+      "value       = aws_sqs_queue.s3_notifications.arn",
+      "output \"s3_notification_queue_url\"",
+      "description = \"The URL of the SQS queue receiving GitHub Actions job log S3 notifications.\"",
+      "value       = aws_sqs_queue.s3_notifications.url",
     ]
   }
 
@@ -88,9 +105,9 @@ run "platform_forge_runners_github_actions_job_logs_interface_contract" {
 
   assert {
     condition = (
-      output.expected_input_variable_count == 8
-      && output.expected_output_value_count == 2
-      && output.expected_interface_literal_count == 36
+      output.expected_input_variable_count == 9
+      && output.expected_output_value_count == 5
+      && output.expected_interface_literal_count == 49
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

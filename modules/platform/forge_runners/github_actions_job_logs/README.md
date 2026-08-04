@@ -11,6 +11,7 @@ Archives completed GitHub Actions workflow job logs into per-tenant S3 buckets f
 - EventBridge rule listening for `workflow_job.completed` events (via existing webhook relay -> EventBridge integration)
 - Optional KMS encryption
 - Shared read/list access for platform/observability roles
+- Dedicated encrypted SQS queue for new `.log` object notifications, enabled explicitly during ingestion cutover
 - Versioning & basic lifecycle management
 
 ## How It Works
@@ -20,6 +21,7 @@ Archives completed GitHub Actions workflow job logs into per-tenant S3 buckets f
 3. Dispatcher Lambda validates mapping & completion status, then enqueues a concise message to SQS.
 4. Downloader Lambda (SQS trigger) consumes batches, performs GitHub API log download, and writes to S3.
 5. Objects stored at: `s3://<bucket>/<repo_full_name>/<run_id>/<run_attempt>/<job_id>.fields` (flattened Splunk fields sidecar), `s3://<bucket>/<repo_full_name>/<run_id>/<run_attempt>/<job_id>.log` (raw log), and `s3://<bucket>/<repo_full_name>/<run_id>/<run_attempt>/<job_id>.json` (the workflow_job event detail), all SSE-KMS encrypted and tagged with runner/job metadata. The `.log` and `.json` objects also include a `metadata_key` S3 tag pointing to the `.fields` sidecar.
+6. When `enable_s3_notifications` is true, S3 sends each new `.log` object notification to a dedicated SQS queue for downstream ingestion.
 
 ### Direct Mode (fallback)
 Set `enable_queue_pipeline = false` to revert to the original single-Lambda flow (less durable, fewer moving parts for very low volume environments).
@@ -31,13 +33,21 @@ See `variables.tf` for full list. Key inputs:
 - `github_app_installation_id` : Optional fixed installation id (skip lookup per repo).
 - `kms_key_arn` : Optional SSE-KMS key for encryption.
 - `shared_role_arns` : Optional map of role ARNs granted read-list across all buckets.
+- `enable_s3_notifications`: Opt-in S3 notification delivery after the legacy notification owner is removed.
 - `enable_queue_pipeline` : Toggle queue pipeline (default true).
 - `sqs_visibility_timeout_seconds`, `sqs_max_receive_count` : Queue configuration.
 - `downloader_batch_size`, `downloader_max_concurrency` : SQS batch processing tuning.
 
 ## Outputs
-- `bucket_names` : tenant -> bucket mapping.
-- `lambda_function_name` / `lambda_function_arn`.
+- `s3_bucket_arn`: S3 bucket containing the archived job logs.
+- `s3_bucket_kms_key_arn`: KMS key used to encrypt the archived objects.
+- `s3_notification_queue_url`: SQS queue URL for downstream ingestion.
+- `s3_notification_queue_arn`: SQS queue ARN for policy and monitoring use.
+- `internal_s3_reader_role_arn`: Internal IAM role with read access to the bucket.
+
+## S3 Notification Ownership
+
+S3 notification configuration is atomic, so this module must be the only Terraform owner of notifications for its job-log bucket. The queue is created regardless of `enable_s3_notifications`, but delivery is disabled by default. During migration to Splunk Data Manager, remove the bucket from the legacy `splunk_cloud_s3_runner_logs` notification owner before enabling this module's notification resource. The two notification resources cannot safely coexist.
 
 ## Bucket Naming
 Uses `bucket_name_format` replacing `{{tenant}}` with tenant id. Provide pre-created buckets by setting `create_buckets = false` and ensuring the names exist.
@@ -163,6 +173,7 @@ The EventBridge -> dispatcher -> SQS -> archiver shape is intentional. It provid
 | [aws_lambda_permission.scale_runners_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission) | resource |
 | [aws_s3_bucket.gh_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
 | [aws_s3_bucket_lifecycle_configuration.gh_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_lifecycle_configuration) | resource |
+| [aws_s3_bucket_notification.gh_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_notification) | resource |
 | [aws_s3_bucket_ownership_controls.gh_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_ownership_controls) | resource |
 | [aws_s3_bucket_policy.gh_logs_read](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_policy) | resource |
 | [aws_s3_bucket_public_access_block.gh_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
@@ -170,17 +181,21 @@ The EventBridge -> dispatcher -> SQS -> archiver shape is intentional. It provid
 | [aws_s3_bucket_versioning.gh_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_versioning) | resource |
 | [aws_sqs_queue.jobs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sqs_queue) | resource |
 | [aws_sqs_queue.jobs_dlq](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sqs_queue) | resource |
+| [aws_sqs_queue.s3_notifications](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sqs_queue) | resource |
+| [aws_sqs_queue_policy.s3_notifications](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sqs_queue_policy) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_iam_policy_document.internal_s3_reader_assume_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.internal_s3_reader_policy_doc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.job_log_archiver](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.job_log_dispatcher](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.s3_notifications](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
+| <a name="input_enable_s3_notifications"></a> [enable\_s3\_notifications](#input\_enable\_s3\_notifications) | Whether to send new S3 job-log object notifications to the dedicated SQS queue. | `bool` | `false` | no |
 | <a name="input_event_bus_name"></a> [event\_bus\_name](#input\_event\_bus\_name) | Name of the EventBridge event bus to listen for workflow job events. | `string` | n/a | yes |
 | <a name="input_ghes_url"></a> [ghes\_url](#input\_ghes\_url) | GitHub Enterprise Server URL. | `string` | `""` | no |
 | <a name="input_github_app"></a> [github\_app](#input\_github\_app) | GitHub App configuration | <pre>object({<br/>    key_base64_ssm = object({<br/>      arn = string<br/>    })<br/>    id_ssm = object({<br/>      arn = string<br/>    })<br/>    installation_id_ssm = object({<br/>      arn = string<br/>    })<br/>  })</pre> | n/a | yes |
@@ -196,4 +211,7 @@ The EventBridge -> dispatcher -> SQS -> archiver shape is intentional. It provid
 | ---- | ----------- |
 | <a name="output_internal_s3_reader_role_arn"></a> [internal\_s3\_reader\_role\_arn](#output\_internal\_s3\_reader\_role\_arn) | The ARN of the IAM role used for reading from the S3 bucket. |
 | <a name="output_s3_bucket_arn"></a> [s3\_bucket\_arn](#output\_s3\_bucket\_arn) | The ARN of the S3 bucket where GitHub Actions job logs are stored. |
+| <a name="output_s3_bucket_kms_key_arn"></a> [s3\_bucket\_kms\_key\_arn](#output\_s3\_bucket\_kms\_key\_arn) | The ARN of the KMS key used to encrypt GitHub Actions job logs. |
+| <a name="output_s3_notification_queue_arn"></a> [s3\_notification\_queue\_arn](#output\_s3\_notification\_queue\_arn) | The ARN of the SQS queue receiving GitHub Actions job log S3 notifications. |
+| <a name="output_s3_notification_queue_url"></a> [s3\_notification\_queue\_url](#output\_s3\_notification\_queue\_url) | The URL of the SQS queue receiving GitHub Actions job log S3 notifications. |
 <!-- END_TF_DOCS -->

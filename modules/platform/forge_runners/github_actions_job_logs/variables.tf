@@ -4,6 +4,12 @@ variable "shared_role_arns" {
   default     = []
 }
 
+variable "enable_s3_notifications" {
+  description = "Whether to send new S3 job-log object notifications to the dedicated SQS queue."
+  type        = bool
+  default     = false
+}
+
 variable "logging_retention_in_days" {
   description = "Retention in days for CloudWatch Log Group for the Lambdas."
   type        = number

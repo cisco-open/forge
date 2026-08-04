@@ -277,6 +277,87 @@ def test_job_log_bucket_security_controls_are_preserved() -> None:
     assert 'Principal = "*"' not in read_policy
 
 
+def test_job_log_bucket_sends_log_object_notifications_to_dedicated_queue() -> None:
+    s3_tf = read_repo_file(
+        'modules/platform/forge_runners/github_actions_job_logs/s3.tf'
+    )
+    sqs_tf = read_repo_file(
+        'modules/platform/forge_runners/github_actions_job_logs/sqs.tf'
+    )
+    notification = hcl_block(
+        s3_tf,
+        'resource',
+        'aws_s3_bucket_notification',
+        'gh_logs',
+    )
+    queue = hcl_block(
+        sqs_tf,
+        'resource',
+        'aws_sqs_queue',
+        's3_notifications',
+    )
+    queue_policy = hcl_block(
+        sqs_tf,
+        'resource',
+        'aws_sqs_queue_policy',
+        's3_notifications',
+    )
+    policy_document = hcl_block(
+        sqs_tf,
+        'data',
+        'aws_iam_policy_document',
+        's3_notifications',
+    )
+
+    assert_contains_all(
+        queue,
+        [
+            'name                      = "${var.prefix}-forge-gh-logs-events"',
+            'message_retention_seconds = 1209600',
+            'sqs_managed_sse_enabled   = true',
+        ],
+    )
+    assert_contains_all(
+        queue_policy,
+        [
+            'queue_url = aws_sqs_queue.s3_notifications.url',
+            'policy    = data.aws_iam_policy_document.s3_notifications.json',
+        ],
+    )
+    assert_contains_all(
+        policy_document,
+        [
+            'type        = "Service"',
+            'identifiers = ["s3.amazonaws.com"]',
+            'actions   = ["sqs:SendMessage"]',
+            'resources = [aws_sqs_queue.s3_notifications.arn]',
+            'test     = "ArnEquals"',
+            'variable = "aws:SourceArn"',
+            'values   = [aws_s3_bucket.gh_logs.arn]',
+            'test     = "StringEquals"',
+            'variable = "aws:SourceAccount"',
+            'values   = [data.aws_caller_identity.current.account_id]',
+        ],
+    )
+    assert notification.count('queue {') == 1
+    assert notification.count('"s3:ObjectCreated:Put"') == 1
+    assert notification.count(
+        '"s3:ObjectCreated:CompleteMultipartUpload"'
+    ) == 1
+    assert_contains_all(
+        notification,
+        [
+            'count  = var.enable_s3_notifications ? 1 : 0',
+            'bucket = aws_s3_bucket.gh_logs.id',
+            'queue_arn     = aws_sqs_queue.s3_notifications.arn',
+            'filter_suffix = ".log"',
+            'depends_on = [aws_sqs_queue_policy.s3_notifications]',
+        ],
+    )
+    assert 'filter_suffix = ".json"' not in notification
+    assert 'filter_suffix = ".fields"' not in notification
+
+
 def test_webhook_relay_api_gateway_access_logs_are_short_lived() -> None:
     relay_tf = read_repo_file(
         'modules/platform/forge_runners/github_webhook_relay/source/main.tf'

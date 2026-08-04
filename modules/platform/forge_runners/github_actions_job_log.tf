@@ -19,6 +19,7 @@ module "github_actions_job_logs" {
     }
   }
   shared_role_arns          = var.deployment_config.tenant.github_logs_reader_role_arns
+  enable_s3_notifications   = var.deployment_config.tenant.github_logs_s3_notifications_enabled
   logging_retention_in_days = var.logging_retention_in_days
   log_level                 = var.log_level
   tags                      = local.all_security_tags
