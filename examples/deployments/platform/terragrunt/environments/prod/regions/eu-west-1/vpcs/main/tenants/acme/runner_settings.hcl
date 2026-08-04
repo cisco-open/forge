@@ -47,11 +47,10 @@ locals {
     env               = local.env_name
     github_app        = local.config.gh_config.github_app
     tenant = {
-      name                                 = local.tenant_name
-      iam_roles_to_assume                  = local.config.tenant.iam_roles_to_assume
-      ecr_registries                       = local.config.tenant.ecr_registries
-      github_logs_reader_role_arns         = local.config.tenant.github_logs_reader_role_arns
-      github_logs_s3_notifications_enabled = try(local.config.tenant.github_logs_s3_notifications_enabled, false)
+      name                         = local.tenant_name
+      iam_roles_to_assume          = local.config.tenant.iam_roles_to_assume
+      ecr_registries               = local.config.tenant.ecr_registries
+      github_logs_reader_role_arns = local.config.tenant.github_logs_reader_role_arns
     }
     github = {
       ghes_org             = local.config.gh_config.ghes_org

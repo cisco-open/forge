@@ -8,7 +8,6 @@ run "platform_forge_runners_github_actions_job_logs_interface_contract" {
   variables {
     module_path = "."
     expected_input_variables = [
-      "enable_s3_notifications",
       "event_bus_name",
       "ghes_url",
       "github_app",
@@ -26,10 +25,6 @@ run "platform_forge_runners_github_actions_job_logs_interface_contract" {
       "s3_notification_queue_url",
     ]
     expected_interface_literals = [
-      "variable \"enable_s3_notifications\"",
-      "description = \"Whether to send new S3 job-log object notifications to the dedicated SQS queue.\"",
-      "type        = bool",
-      "default     = false",
       "variable \"event_bus_name\"",
       "type        = string",
       "description = \"Name of the EventBridge event bus to listen for workflow job events.\"",
@@ -105,9 +100,9 @@ run "platform_forge_runners_github_actions_job_logs_interface_contract" {
 
   assert {
     condition = (
-      output.expected_input_variable_count == 9
+      output.expected_input_variable_count == 8
       && output.expected_output_value_count == 5
-      && output.expected_interface_literal_count == 49
+      && output.expected_interface_literal_count == 45
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

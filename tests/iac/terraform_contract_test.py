@@ -347,7 +347,6 @@ def test_job_log_bucket_sends_log_object_notifications_to_dedicated_queue() -> N
     assert_contains_all(
         notification,
         [
-            'count  = var.enable_s3_notifications ? 1 : 0',
             'bucket = aws_s3_bucket.gh_logs.id',
             'queue_arn     = aws_sqs_queue.s3_notifications.arn',
             'filter_suffix = ".log"',

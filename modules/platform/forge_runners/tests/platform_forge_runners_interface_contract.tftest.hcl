@@ -98,11 +98,10 @@ run "platform_forge_runners_interface_contract" {
       "repository_selection = string",
       "runner_group_name    = string",
       "tenant = object({",
-      "name                                 = string",
-      "iam_roles_to_assume                  = optional(list(string), [])",
-      "ecr_registries                       = optional(list(string), [])",
-      "github_logs_reader_role_arns         = optional(list(string), [])",
-      "github_logs_s3_notifications_enabled = optional(bool, false)",
+      "name                         = string",
+      "iam_roles_to_assume          = optional(list(string), [])",
+      "ecr_registries               = optional(list(string), [])",
+      "github_logs_reader_role_arns = optional(list(string), [])",
       "validation {",
       "condition     = contains([\"all\", \"selected\"], var.deployment_config.github.repository_selection)",
       "error_message = \"repository_selection must be 'all' or 'selected'.\"",
@@ -134,8 +133,6 @@ run "platform_forge_runners_interface_contract" {
       "runners may need to pull images from.",
       "- github_logs_reader_role_arns: Optional list of IAM roles that can read",
       "GitHub Actions logs for this tenant.",
-      "- github_logs_s3_notifications_enabled: Enables S3 log-object",
-      "notifications after legacy ownership is removed.",
       "variable \"ec2_deployment_specs\"",
       "lambda_subnet_ids = list(string)",
       "subnet_ids        = list(string)",
@@ -322,7 +319,7 @@ run "platform_forge_runners_interface_contract" {
     condition = (
       output.expected_input_variable_count == 10
       && output.expected_output_value_count == 5
-      && output.expected_interface_literal_count == 263
+      && output.expected_interface_literal_count == 260
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

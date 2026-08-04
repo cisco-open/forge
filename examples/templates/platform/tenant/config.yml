@@ -21,7 +21,6 @@ tenant:
     - <ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com
   github_logs_reader_role_arns:
     - arn:aws:iam::<ACCOUNT_ID>:role/<ROLE_NAME>
-  github_logs_s3_notifications_enabled: <GITHUB_LOGS_S3_NOTIFICATIONS_ENABLED>
 ec2_runner_specs:
   <runner_type-alias>:
     type: <runner_type>

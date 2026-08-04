@@ -12,7 +12,6 @@ run "platform_forge_runners_contract" {
       "module \"ec2_runners\"",
       "module \"forge_trust_validator\"",
       "module \"github_actions_job_logs\"",
-      "enable_s3_notifications   = var.deployment_config.tenant.github_logs_s3_notifications_enabled",
       "module \"github_app_runner_group\"",
       "module \"github_global_lock\"",
       "module \"github_webhook_relay\"",

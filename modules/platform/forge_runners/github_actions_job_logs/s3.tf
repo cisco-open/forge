@@ -124,7 +124,6 @@ resource "aws_s3_bucket_policy" "gh_logs_read" {
 # S3 notification configuration is atomic. This resource must remain the only
 # Terraform owner of notifications for this bucket.
 resource "aws_s3_bucket_notification" "gh_logs" {
-  count  = var.enable_s3_notifications ? 1 : 0
   bucket = aws_s3_bucket.gh_logs.id
 
   queue {

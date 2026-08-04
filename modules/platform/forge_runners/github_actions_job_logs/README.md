@@ -11,7 +11,7 @@ Archives completed GitHub Actions workflow job logs into per-tenant S3 buckets f
 - EventBridge rule listening for `workflow_job.completed` events (via existing webhook relay -> EventBridge integration)
 - Optional KMS encryption
 - Shared read/list access for platform/observability roles
-- Dedicated encrypted SQS queue for new `.log` object notifications, enabled explicitly during ingestion cutover
+- Dedicated encrypted SQS queue for new `.log` object notifications
 - Versioning & basic lifecycle management
 
 ## How It Works
@@ -21,7 +21,7 @@ Archives completed GitHub Actions workflow job logs into per-tenant S3 buckets f
 3. Dispatcher Lambda validates mapping & completion status, then enqueues a concise message to SQS.
 4. Downloader Lambda (SQS trigger) consumes batches, performs GitHub API log download, and writes to S3.
 5. Objects stored at: `s3://<bucket>/<repo_full_name>/<run_id>/<run_attempt>/<job_id>.fields` (flattened Splunk fields sidecar), `s3://<bucket>/<repo_full_name>/<run_id>/<run_attempt>/<job_id>.log` (raw log), and `s3://<bucket>/<repo_full_name>/<run_id>/<run_attempt>/<job_id>.json` (the workflow_job event detail), all SSE-KMS encrypted and tagged with runner/job metadata. The `.log` and `.json` objects also include a `metadata_key` S3 tag pointing to the `.fields` sidecar.
-6. When `enable_s3_notifications` is true, S3 sends each new `.log` object notification to a dedicated SQS queue for downstream ingestion.
+6. S3 sends each new `.log` object notification to a dedicated SQS queue for downstream ingestion.
 
 ### Direct Mode (fallback)
 Set `enable_queue_pipeline = false` to revert to the original single-Lambda flow (less durable, fewer moving parts for very low volume environments).
@@ -33,7 +33,6 @@ See `variables.tf` for full list. Key inputs:
 - `github_app_installation_id` : Optional fixed installation id (skip lookup per repo).
 - `kms_key_arn` : Optional SSE-KMS key for encryption.
 - `shared_role_arns` : Optional map of role ARNs granted read-list across all buckets.
-- `enable_s3_notifications`: Opt-in S3 notification delivery after the legacy notification owner is removed.
 - `enable_queue_pipeline` : Toggle queue pipeline (default true).
 - `sqs_visibility_timeout_seconds`, `sqs_max_receive_count` : Queue configuration.
 - `downloader_batch_size`, `downloader_max_concurrency` : SQS batch processing tuning.
@@ -47,7 +46,7 @@ See `variables.tf` for full list. Key inputs:
 
 ## S3 Notification Ownership
 
-S3 notification configuration is atomic, so this module must be the only Terraform owner of notifications for its job-log bucket. The queue is created regardless of `enable_s3_notifications`, but delivery is disabled by default. During migration to Splunk Data Manager, remove the bucket from the legacy `splunk_cloud_s3_runner_logs` notification owner before enabling this module's notification resource. The two notification resources cannot safely coexist.
+S3 notification configuration is atomic, so this module must be the only Terraform owner of notifications for its job-log bucket. During migration to Splunk Data Manager, remove the bucket from the legacy `splunk_cloud_s3_runner_logs` notification owner before applying this module. The two notification resources cannot safely coexist.
 
 ## Bucket Naming
 Uses `bucket_name_format` replacing `{{tenant}}` with tenant id. Provide pre-created buckets by setting `create_buckets = false` and ensuring the names exist.
@@ -195,7 +194,6 @@ The EventBridge -> dispatcher -> SQS -> archiver shape is intentional. It provid
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
-| <a name="input_enable_s3_notifications"></a> [enable\_s3\_notifications](#input\_enable\_s3\_notifications) | Whether to send new S3 job-log object notifications to the dedicated SQS queue. | `bool` | `false` | no |
 | <a name="input_event_bus_name"></a> [event\_bus\_name](#input\_event\_bus\_name) | Name of the EventBridge event bus to listen for workflow job events. | `string` | n/a | yes |
 | <a name="input_ghes_url"></a> [ghes\_url](#input\_ghes\_url) | GitHub Enterprise Server URL. | `string` | `""` | no |
 | <a name="input_github_app"></a> [github\_app](#input\_github\_app) | GitHub App configuration | <pre>object({<br/>    key_base64_ssm = object({<br/>      arn = string<br/>    })<br/>    id_ssm = object({<br/>      arn = string<br/>    })<br/>    installation_id_ssm = object({<br/>      arn = string<br/>    })<br/>  })</pre> | n/a | yes |
