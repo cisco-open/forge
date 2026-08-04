@@ -84,10 +84,10 @@ def test_renovate_groups_runner_updates_by_semver_level() -> None:
     assert runner_rule['separateMinorPatch'] is True
 
 
-def test_renovate_merges_config_from_selected_base_branch() -> None:
+def test_renovate_does_not_merge_config_from_selected_base_branch() -> None:
     config = json.loads(read('renovate.json'))
 
-    assert config['useBaseBranchConfig'] == 'merge'
+    assert config['useBaseBranchConfig'] == 'none'
 
 
 def test_renovate_pre_commit_hooks_have_single_update_owner() -> None:
@@ -332,6 +332,22 @@ def test_renovate_manages_supported_lambda_layer_arns() -> None:
     assert all(
         manager['versioningTemplate'] == r'regex:^(?<patch>\d+)$'
         for manager in managers.values()
+    )
+    suffix_only_replacement = r"{{{replace '\d+$' newValue replaceString}}}"
+    assert all(
+        manager['autoReplaceStringTemplate'] == suffix_only_replacement
+        for manager in managers.values()
+    )
+    suffix_pattern = suffix_only_replacement.removeprefix(
+        "{{{replace '",
+    ).removesuffix("' newValue replaceString}}}")
+    pyjwt_arn = (
+        'arn:aws:lambda:${data.aws_region.current.region}:'
+        '770693421928:layer:Klayers-p312-PyJWT:1'
+    )
+    assert re.sub(suffix_pattern, '4', pyjwt_arn) == (
+        'arn:aws:lambda:${data.aws_region.current.region}:'
+        '770693421928:layer:Klayers-p312-PyJWT:4'
     )
     pandas_datasource = config['customDatasources']['aws-sdk-pandas-layers']
     assert pandas_datasource['format'] == 'plain'

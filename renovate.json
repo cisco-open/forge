@@ -22,7 +22,7 @@
     "stabilityDays": 0,
     "separateMinorPatch": true,
     "separateMajorMinor": true,
-    "useBaseBranchConfig": "merge",
+    "useBaseBranchConfig": "none",
     "ignorePaths": [
         "**/.terraform/**"
     ],
@@ -88,7 +88,8 @@
             "depNameTemplate": "KLayers {{{layerPackage}}} for Python {{{pythonMajor}}}.{{{pythonMinor}}}{{{architecture}}}",
             "packageNameTemplate": "p{{{pythonMajor}}}.{{{pythonMinor}}}{{{architecture}}}/layers/{{#if lookupRegion}}{{{lookupRegion}}}{{else}}us-east-1{{/if}}/{{{layerPackage}}}",
             "datasourceTemplate": "custom.klayers",
-            "versioningTemplate": "regex:^(?<patch>\\d+)$"
+            "versioningTemplate": "regex:^(?<patch>\\d+)$",
+            "autoReplaceStringTemplate": "{{{replace '\\d+$' newValue replaceString}}}"
         },
         {
             "customType": "regex",
@@ -103,7 +104,8 @@
             "depNameTemplate": "AWS SDK for pandas {{{layerName}}}",
             "packageNameTemplate": "arn:{{#if partition}}{{{partition}}}{{else}}aws{{/if}}:lambda:{{#if lookupRegion}}{{{lookupRegion}}}{{else}}us-east-1{{/if}}:{{{publisherAccount}}}:layer:{{{layerName}}}",
             "datasourceTemplate": "custom.aws-sdk-pandas-layers",
-            "versioningTemplate": "regex:^(?<patch>\\d+)$"
+            "versioningTemplate": "regex:^(?<patch>\\d+)$",
+            "autoReplaceStringTemplate": "{{{replace '\\d+$' newValue replaceString}}}"
         }
       ],
     "packageRules": [
