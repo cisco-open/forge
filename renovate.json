@@ -377,6 +377,7 @@
             ],
             "groupName": "AWS Lambda layers",
             "groupSlug": "aws-lambda-layers",
+            "prPriority": 20,
             "minimumReleaseAge": null,
             "automerge": false,
             "addLabels": [

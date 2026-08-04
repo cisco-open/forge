@@ -347,6 +347,7 @@ def test_renovate_manages_supported_lambda_layer_arns() -> None:
     assert set(layer_rule['matchDatasources']) == set(managers)
     assert layer_rule['automerge'] is False
     assert layer_rule['minimumReleaseAge'] is None
+    assert layer_rule['prPriority'] == 20
 
     inherited_patch_policy = {
         'security',
