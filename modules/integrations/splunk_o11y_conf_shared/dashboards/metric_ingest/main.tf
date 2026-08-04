@@ -1,7 +1,9 @@
 locals {
-  token_ids = sort(var.token_ids)
+  token_ids      = sort(var.token_ids)
+  ingest_sources = sort(var.ingest_sources)
 
-  token_filter = length(local.token_ids) > 0 ? "filter('tokenId', '${join("', '", local.token_ids)}')" : "filter('tokenId', '__forge_metric_ingest_scope_not_configured__')"
+  token_filter  = length(local.token_ids) > 0 ? "filter('tokenId', '${join("', '", local.token_ids)}')" : "filter('tokenId', '__forge_metric_ingest_scope_not_configured__')"
+  source_filter = length(local.ingest_sources) > 0 ? "filter('forgecicd_ingest_source', '${join("', '", local.ingest_sources)}')" : "filter('forgecicd_ingest_source', '__forge_metric_ingest_source_scope_not_configured__')"
 }
 
 resource "signalfx_time_chart" "ingest_volume" {
@@ -574,13 +576,44 @@ EOF
   }
 }
 
+resource "signalfx_list_chart" "retained_metrics_by_source" {
+  name        = "Metric names by ingest source"
+  description = "Distinct retained MTS that reported at least once in the dashboard window, grouped by exact metric name and forgecicd_ingest_source. This is source attribution, not token attribution; rejected-before-retention metrics cannot appear. Narrow Ingest source when the list exceeds the chart display limit."
+
+  program_text = <<-EOF
+A = data('*', filter=(${local.source_filter}), rollup='latest').dimensions(aliases={'metric_name': 'sf_metric'}).count(over=Args.get('ui.dashboard_window', '1h')).above(0, inclusive=False).count(by=['metric_name', 'forgecicd_ingest_source']).publish(label='A')
+EOF
+
+  sort_by                 = "+metric_name"
+  disable_sampling        = true
+  hide_missing_values     = true
+  max_precision           = 0
+  secondary_visualization = "Sparkline"
+  time_range              = 3600
+  unit_prefix             = "Metric"
+
+  legend_options_fields {
+    enabled  = true
+    property = "metric_name"
+  }
+  legend_options_fields {
+    enabled  = true
+    property = "forgecicd_ingest_source"
+  }
+
+  viz_options {
+    display_name = "Reporting MTS"
+    label        = "A"
+  }
+}
+
 resource "terraform_data" "dashboard_parent" {
   triggers_replace = var.dashboard_group
 }
 
 resource "signalfx_dashboard" "metric_ingest" {
   name            = "Forge Metric API Ingestion Health"
-  description     = "Start with Token ID. Compare received volume with direct drops, then MTS admission, metadata, CloudWatch, and usage. Invalid requires sender-response or collector-log evidence; timeout is an internal post-limit signal, not a network timeout."
+  description     = "Start with Token ID. Compare received volume with direct drops, then MTS admission, metadata, CloudWatch, and usage. Use Ingest source only for the retained metric inventory. Invalid requires sender-response or collector-log evidence; timeout is an internal post-limit signal, not a network timeout."
   dashboard_group = var.dashboard_group
   time_range      = "-1h"
 
@@ -598,6 +631,18 @@ resource "signalfx_dashboard" "metric_ingest" {
     value_required         = false
     values_suggested       = local.token_ids
     restricted_suggestions = true
+    replace_only           = true
+  }
+
+  variable {
+    property               = "forgecicd_ingest_source"
+    alias                  = "Ingest source"
+    description            = "Limit the retained Forge metric inventory to a configured stable sender-source dimension."
+    values                 = []
+    value_required         = false
+    values_suggested       = local.ingest_sources
+    restricted_suggestions = true
+    replace_only           = true
   }
 
   chart {
@@ -652,6 +697,13 @@ resource "signalfx_dashboard" "metric_ingest" {
   chart {
     chart_id = signalfx_list_chart.usage_objects.id
     row      = 4
+    column   = 0
+    width    = 12
+    height   = 2
+  }
+  chart {
+    chart_id = signalfx_list_chart.retained_metrics_by_source.id
+    row      = 6
     column   = 0
     width    = 12
     height   = 2

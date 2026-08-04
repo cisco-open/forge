@@ -17,13 +17,22 @@ run "metric_ingest_dashboard_source_inventory" {
       "resource \"signalfx_time_chart\" \"metadata_rest\"",
       "resource \"signalfx_time_chart\" \"cloudwatch_metric_stream\"",
       "resource \"signalfx_list_chart\" \"usage_objects\"",
+      "resource \"signalfx_list_chart\" \"retained_metrics_by_source\"",
       "resource \"terraform_data\" \"dashboard_parent\"",
       "Forge Metric API Ingestion Health",
       "filter('tokenId', '$${join(\"', '\", local.token_ids)}')",
+      "filter('forgecicd_ingest_source', '$${join(\"', '\", local.ingest_sources)}')",
       "__forge_metric_ingest_scope_not_configured__",
+      "__forge_metric_ingest_source_scope_not_configured__",
       "property               = \"tokenId\"",
+      "property               = \"forgecicd_ingest_source\"",
       "restricted_suggestions = true",
+      "replace_only           = true",
       "property = \"sf_originatingMetric\"",
+      "data('*'",
+      "dimensions(aliases={'metric_name': 'sf_metric'})",
+      "count(over=Args.get('ui.dashboard_window', '1h'))",
+      "count(by=['metric_name', 'forgecicd_ingest_source'])",
       "sf.org.cloud.datapointsTotalCountByToken",
       "sf.org.cloud.numCwMetricStreamCallsByToken",
       "sf.org.cloud.numDatapointsDroppedOversizeByToken",
@@ -94,7 +103,7 @@ run "metric_ingest_dashboard_source_inventory" {
   }
 
   assert {
-    condition     = output.expected_literal_count == 77
+    condition     = output.expected_literal_count == 86
     error_message = "Metric-ingest dashboard source inventory count must remain pinned."
   }
 }

@@ -108,6 +108,7 @@ dashboard_variables:
         restricted_suggestions: true
   metric_ingest:
     token_ids: [example-ingest-token-id]
+    ingest_sources: [example-ingest-source]
   sqs_control_plane:
     dynamic_variables:
       - property: aws_account_id
