@@ -15,17 +15,14 @@ The parent Data Manager module needs repeatable, reviewable creation of individu
 
 ## Operational Notes
 
-- The external create/delete scripts are part of the Terraform lifecycle, so failed API calls can affect plan/apply behavior.
+- The external lifecycle command is part of the Terraform lifecycle, so failed API calls can affect plan/apply behavior.
+- The command keeps request, response, polling, and diagnostic state in memory. The generated CloudFormation template is its only local artifact.
 - Do not hand-edit generated CloudFormation templates without reflecting the change in code.
 - Use parent-module outputs to confirm which inputs were created.
 
-## Python Lifecycle Layout
+## Python Lifecycle Command
 
-Terraform invokes `scripts/splunk_integration.py`. The implementation uses three flat files:
-
-- `splunk_integration.py` parses input and has explicit create, get, and delete handlers.
-- `splunk_api.py` handles Splunk authentication and HTTP requests.
-- `splunk_lifecycle.py` handles input readiness, artifacts, and lifecycle rules.
+Terraform invokes the self-contained `scripts/splunk_integration.py` command. It handles authentication, input readiness, and explicit create, get, and delete operations without companion Python modules.
 
 <!-- BEGIN_TF_DOCS -->
 

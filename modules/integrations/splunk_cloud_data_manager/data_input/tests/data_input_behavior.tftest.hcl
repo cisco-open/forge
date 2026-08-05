@@ -94,16 +94,20 @@ run "splunk_data_input_template_contract" {
       && strcontains(file("${path.module}/main.tf"), "environment = {")
       && strcontains(file("${path.module}/main.tf"), "query = {")
       && strcontains(file("${path.module}/main.tf"), "SPLUNK_CLOUD_INPUT_JSON")
+      && fileset("${path.module}/scripts", "*.py") == toset(["splunk_integration.py"])
       && startswith(file("${path.module}/scripts/splunk_integration.py"), "#!/usr/bin/env python3")
-      && strcontains(file("${path.module}/scripts/splunk_integration.py"), "def handle_create(")
-      && strcontains(file("${path.module}/scripts/splunk_integration.py"), "def handle_get(")
-      && strcontains(file("${path.module}/scripts/splunk_integration.py"), "def handle_delete(")
+      && strcontains(file("${path.module}/scripts/splunk_integration.py"), "class SplunkWebClient:")
+      && strcontains(file("${path.module}/scripts/splunk_integration.py"), "def create_integration(")
+      && strcontains(file("${path.module}/scripts/splunk_integration.py"), "def get_integration(")
+      && strcontains(file("${path.module}/scripts/splunk_integration.py"), "def delete_integration(")
       && strcontains(file("${path.module}/scripts/splunk_integration.py"), "raise SystemExit(main())")
-      && strcontains(file("${path.module}/scripts/splunk_api.py"), "class SplunkWebClient:")
-      && strcontains(file("${path.module}/scripts/splunk_lifecycle.py"), "def create_integration(")
-      && strcontains(file("${path.module}/scripts/splunk_lifecycle.py"), "def get_integration(")
-      && strcontains(file("${path.module}/scripts/splunk_lifecycle.py"), "def delete_integration(")
+      && strcontains(file("${path.module}/scripts/splunk_integration.py"), "_template.json")
+      && !strcontains(file("${path.module}/scripts/splunk_integration.py"), "_input.json")
+      && !strcontains(file("${path.module}/scripts/splunk_integration.py"), "_request.json")
+      && !strcontains(file("${path.module}/scripts/splunk_integration.py"), "_put_response.json")
+      && !strcontains(file("${path.module}/scripts/splunk_integration.py"), "_hectoken.json")
+      && !strcontains(file("${path.module}/scripts/splunk_integration.py"), "_logs.txt")
     )
-    error_message = "Splunk Data Manager must invoke the Python lifecycle command through environment or external-query values."
+    error_message = "Splunk Data Manager must use one self-contained Python lifecycle command, keep runtime state in memory, and write only the template artifact."
   }
 }
