@@ -1,16 +1,78 @@
-"""Authenticated Splunk Web transport and Data Manager API client."""
+"""Small authenticated client for the Splunk Data Manager API."""
 
 from __future__ import annotations
 
 import http.cookiejar
-from collections.abc import Mapping
+import json
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass, field
+from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import HTTPCookieProcessor, Request, build_opener
 
-from .runtime import (HttpResponse, JsonObject, Logger, RuntimeConfig,
-                      SplunkHttpError, SplunkIntegrationError, decode_json,
-                      encode_json)
+JsonObject = dict[str, Any]
+Logger = Callable[[str], None]
+
+
+class SplunkIntegrationError(RuntimeError):
+    """Raised when a Splunk lifecycle operation cannot continue."""
+
+
+class SplunkHttpError(SplunkIntegrationError):
+    """Raised for an unsuccessful Splunk HTTP request."""
+
+    def __init__(self, status: int, message: str):
+        super().__init__(message)
+        self.status = status
+
+    @property
+    def retryable(self) -> bool:
+        """Return whether an input fetch may be retried."""
+        return self.status == 0 or self.status in {
+            404,
+            409,
+            429,
+        } or self.status >= 500
+
+
+@dataclass(frozen=True, slots=True)
+class HttpResponse:
+    """Minimal HTTP response used by the Splunk client."""
+
+    status: int
+    body: bytes
+
+
+@dataclass(frozen=True, slots=True)
+class RuntimeConfig:
+    """Runtime values supplied by Terraform."""
+
+    cloud_url: str
+    input_id: str
+    username: str = field(repr=False)
+    password: str = field(repr=False)
+    input_request: JsonObject | None = field(default=None, repr=False)
+
+
+def encode_json(payload: JsonObject) -> bytes:
+    """Encode a compact JSON object."""
+    return json.dumps(payload, separators=(',', ':')).encode('utf-8')
+
+
+def decode_json(raw: bytes, description: str) -> JsonObject:
+    """Decode a Splunk response and require a JSON object."""
+    try:
+        document = json.loads(raw)
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise SplunkIntegrationError(
+            f'Splunk returned an invalid {description}'
+        ) from error
+    if not isinstance(document, dict):
+        raise SplunkIntegrationError(
+            f'Splunk returned a non-object {description}'
+        )
+    return document
 
 
 class UrllibTransport:
@@ -28,7 +90,7 @@ class UrllibTransport:
         headers: Mapping[str, str] | None = None,
         body: bytes | None = None,
     ) -> HttpResponse:
-        """Send one request and retain HTTP error responses for classification."""
+        """Send one request and retain HTTP errors for classification."""
         request = Request(
             url,
             data=body,
@@ -50,7 +112,7 @@ class UrllibTransport:
             ) from error
 
     def cookie_value(self, name: str) -> str:
-        """Return the most recently stored cookie value with the given name."""
+        """Return the most recently stored cookie with the given name."""
         values = [
             cookie.value
             for cookie in self.cookies
@@ -167,7 +229,7 @@ class SplunkWebClient:
         return decode_json(response.body, 'input response')
 
     def get_hec_token(self, category: str) -> JsonObject:
-        """Fetch the HEC token status for a push-based dataset."""
+        """Fetch HEC token status for a push-based dataset."""
         query = urlencode({'dataset': category})
         try:
             response = self._api_request(
@@ -184,8 +246,6 @@ class SplunkWebClient:
         try:
             return decode_json(response.body, 'HEC token response')
         except SplunkIntegrationError:
-            # Existing push inputs treat unavailable or unexpected token
-            # responses as best-effort and continue to template retrieval.
             return {}
 
     def delete_hec_token(self, category: str) -> None:
@@ -215,7 +275,7 @@ class SplunkWebClient:
         return response.body
 
     def check_delete_readiness(self) -> None:
-        """Ask Splunk to validate whether the input may be deleted."""
+        """Ask Splunk whether the input may be deleted."""
         self._api_request(
             'GET',
             f'{self.input_path}/validate/checkdeletereadiness',

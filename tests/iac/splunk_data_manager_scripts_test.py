@@ -25,7 +25,9 @@ SCRIPT_PATH = REPO_ROOT / (
     'scripts/splunk_integration.py'
 )
 sys.path.insert(0, str(SCRIPT_PATH.parent))
-splunk_integration = importlib.import_module('splunk_data_manager')
+splunk_api = importlib.import_module('splunk_api')
+splunk_lifecycle = importlib.import_module('splunk_lifecycle')
+splunk_integration = importlib.import_module('splunk_integration')
 
 AWS_ACCOUNT_ID = '166060576821'
 S3_DATASETS = (
@@ -256,7 +258,7 @@ class FakeClient:
 def runtime_config(
     request: dict[str, object] | None,
 ) -> object:
-    return splunk_integration.RuntimeConfig(
+    return splunk_api.RuntimeConfig(
         cloud_url='https://splunk.example.com',
         input_id='input-id',
         username='splunk-user',
@@ -266,10 +268,10 @@ def runtime_config(
 
 
 def test_supported_s3_datasets_match_the_terraform_contract() -> None:
-    assert splunk_integration.S3_DATASETS == frozenset(S3_DATASETS)
+    assert splunk_lifecycle.S3_DATASETS == frozenset(S3_DATASETS)
 
 
-def test_entrypoint_loads_package_from_an_unrelated_directory(
+def test_entrypoint_loads_sibling_modules_from_unrelated_directory(
     tmp_path: Path,
 ) -> None:
     result = subprocess.run(
@@ -285,6 +287,38 @@ def test_entrypoint_loads_package_from_an_unrelated_directory(
     assert result.stderr == ''
 
 
+@pytest.mark.parametrize(
+    ('operation', 'handler_name'),
+    (
+        ('create', 'handle_create'),
+        ('delete', 'handle_delete'),
+    ),
+)
+def test_main_dispatches_environment_commands(
+    operation: str,
+    handler_name: str,
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    calls = []
+    environment = {'COMMAND': operation}
+
+    def handler(values, artifact_dir) -> None:
+        calls.append((values, artifact_dir))
+
+    monkeypatch.setattr(splunk_integration, handler_name, handler)
+
+    result = splunk_integration.main(
+        [operation],
+        environ=environment,
+        error_stream=io.StringIO(),
+        artifact_dir=tmp_path,
+    )
+
+    assert result == 0
+    assert calls == [(environment, tmp_path)]
+
+
 @pytest.mark.parametrize('dataset', S3_DATASETS)
 def test_s3_datasets_use_queue_readiness(dataset: str) -> None:
     request = s3_request(dataset=dataset)
@@ -293,9 +327,9 @@ def test_s3_datasets_use_queue_readiness(dataset: str) -> None:
         request=request,
     )
 
-    assert splunk_integration.input_uses_s3(request)
-    assert splunk_integration.s3_input_state(response) == 'ready'
-    assert splunk_integration.wait_for_input(
+    assert splunk_lifecycle.input_uses_s3(request)
+    assert splunk_lifecycle.s3_input_state(response) == 'ready'
+    assert splunk_lifecycle.wait_for_input(
         fetch_sequence(response),
         request=request,
     ) == response
@@ -308,15 +342,15 @@ def test_s3_input_rejects_multiple_supported_datasets() -> None:
     }
 
     with pytest.raises(
-        splunk_integration.SplunkIntegrationError,
+        splunk_api.SplunkIntegrationError,
         match='more than one supported S3 dataset',
     ):
-        splunk_integration.input_uses_s3(request)
+        splunk_lifecycle.input_uses_s3(request)
 
 
 def test_s3_wait_retries_an_in_progress_response() -> None:
     sleeps = []
-    result = splunk_integration.wait_for_input(
+    result = splunk_lifecycle.wait_for_input(
         fetch_sequence(
             s3_response(
                 'CreateDataSourceInProgress',
@@ -338,17 +372,17 @@ def test_s3_wait_fails_immediately_on_provisioning_error() -> None:
     )
 
     with pytest.raises(
-        splunk_integration.SplunkIntegrationError,
+        splunk_api.SplunkIntegrationError,
         match='provisioning failed',
     ):
-        splunk_integration.wait_for_input(
+        splunk_lifecycle.wait_for_input(
             fetch_sequence(response),
             sleep=lambda _seconds: None,
         )
 
 
 def test_s3_wait_requires_success_for_every_configured_queue() -> None:
-    result = splunk_integration.wait_for_input(
+    result = splunk_lifecycle.wait_for_input(
         fetch_sequence(
             s3_response(
                 'CreateDataSourceSuccess',
@@ -373,7 +407,7 @@ def test_s3_wait_rejects_stale_success_for_a_changed_request() -> None:
         s3_bucket_patterns=['new-bucket-*'],
     )
 
-    result = splunk_integration.wait_for_input(
+    result = splunk_lifecycle.wait_for_input(
         fetch_sequence(
             s3_response(
                 'CreateDataSourceSuccess',
@@ -396,7 +430,7 @@ def test_s3_wait_rejects_a_replaced_queues_stale_success() -> None:
     new_url = sqs_url('logs', region='eu-west-1')
     request = s3_request(queue_urls=[new_url])
 
-    result = splunk_integration.wait_for_input(
+    result = splunk_lifecycle.wait_for_input(
         fetch_sequence(
             s3_response(
                 'CreateDataSourceSuccess',
@@ -416,7 +450,7 @@ def test_s3_wait_rejects_a_replaced_queues_stale_success() -> None:
 
 
 def test_s3_wait_rejects_success_from_an_older_version() -> None:
-    result = splunk_integration.wait_for_input(
+    result = splunk_lifecycle.wait_for_input(
         fetch_sequence(
             s3_response('CreateDataSourceSuccess', version=1),
             s3_response('CreateDataSourceSuccess', version=2),
@@ -429,7 +463,7 @@ def test_s3_wait_rejects_success_from_an_older_version() -> None:
 
 
 def test_s3_wait_rejects_success_from_an_older_update() -> None:
-    result = splunk_integration.wait_for_input(
+    result = splunk_lifecycle.wait_for_input(
         fetch_sequence(
             s3_response(
                 'CreateDataSourceSuccess',
@@ -449,9 +483,9 @@ def test_s3_wait_rejects_success_from_an_older_update() -> None:
 
 @pytest.mark.parametrize('status', [0, 404, 409, 429, 500, 503])
 def test_s3_wait_retries_transient_fetch_errors(status: int) -> None:
-    result = splunk_integration.wait_for_input(
+    result = splunk_lifecycle.wait_for_input(
         fetch_sequence(
-            splunk_integration.SplunkHttpError(status, 'transient'),
+            splunk_api.SplunkHttpError(status, 'transient'),
             s3_response('CreateDataSourceSuccess'),
         ),
         sleep=lambda _seconds: None,
@@ -469,13 +503,13 @@ def test_s3_wait_does_not_retry_non_retryable_fetches(
     def fetch():
         nonlocal calls
         calls += 1
-        raise splunk_integration.SplunkHttpError(status, 'permanent')
+        raise splunk_api.SplunkHttpError(status, 'permanent')
 
     with pytest.raises(
-        splunk_integration.SplunkIntegrationError,
+        splunk_api.SplunkIntegrationError,
         match='non-retryable',
     ):
-        splunk_integration.wait_for_input(
+        splunk_lifecycle.wait_for_input(
             fetch,
             sleep=lambda _seconds: None,
         )
@@ -495,10 +529,10 @@ def test_s3_wait_stops_after_the_bounded_attempts() -> None:
         )
 
     with pytest.raises(
-        splunk_integration.SplunkIntegrationError,
+        splunk_api.SplunkIntegrationError,
         match='after 3 attempts',
     ):
-        splunk_integration.wait_for_input(
+        splunk_lifecycle.wait_for_input(
             fetch,
             max_attempts=3,
             poll_interval_seconds=0,
@@ -511,17 +545,17 @@ def test_s3_wait_stops_after_the_bounded_attempts() -> None:
 def test_wait_returns_push_inputs_without_s3_polling() -> None:
     document = push_input()
 
-    assert splunk_integration.wait_for_input(
+    assert splunk_lifecycle.wait_for_input(
         fetch_sequence(document)
     ) == document
 
 
 def test_wait_rejects_an_invalid_input_response() -> None:
     with pytest.raises(
-        splunk_integration.SplunkIntegrationError,
+        splunk_api.SplunkIntegrationError,
         match='invalid data input response',
     ):
-        splunk_integration.wait_for_input(fetch_sequence({'name': 'bad'}))
+        splunk_lifecycle.wait_for_input(fetch_sequence({'name': 'bad'}))
 
 
 @pytest.mark.parametrize(
@@ -538,7 +572,7 @@ def test_cloudformation_template_validation(
     valid: bool,
 ) -> None:
     assert (
-        splunk_integration.validate_cloudformation_template(raw_template)
+        splunk_lifecycle.validate_cloudformation_template(raw_template)
         is valid
     )
 
@@ -568,7 +602,7 @@ def test_push_datasets_keep_their_hec_category(
 ) -> None:
     document = push_input((dataset, 'unknown-dataset'))
 
-    assert splunk_integration.dataset_hec_categories(document) == [
+    assert splunk_lifecycle.dataset_hec_categories(document) == [
         (dataset, expected),
     ]
 
@@ -578,7 +612,7 @@ def test_s3_inputs_do_not_request_hec_tokens(dataset: str) -> None:
     client = FakeClient()
     request = s3_request(dataset=dataset)
 
-    splunk_integration.ensure_hec_tokens(
+    splunk_lifecycle.ensure_hec_tokens(
         client,
         s3_response('CreateDataSourceSuccess', request=request),
         initial_delay_seconds=300,
@@ -598,16 +632,16 @@ def test_delete_payload_removes_response_owned_fields() -> None:
         }
     )
 
-    payload = splunk_integration.build_delete_payload(document)
+    payload = splunk_lifecycle.build_delete_payload(document)
 
     assert payload['mode'] == 'MarkedForDelete'
     assert all(
         field not in payload
-        for field in splunk_integration.TOP_LEVEL_RESPONSE_FIELDS
+        for field in splunk_lifecycle.TOP_LEVEL_RESPONSE_FIELDS
     )
     assert all(
         field not in payload['details']
-        for field in splunk_integration.DETAIL_RESPONSE_FIELDS
+        for field in splunk_lifecycle.DETAIL_RESPONSE_FIELDS
     )
     assert 'dataSourcesStatus' in document
     assert 'stackName' in document['details']
@@ -629,12 +663,12 @@ def test_create_s3_input_writes_artifacts_without_hec_sleep(
         put_response=response,
         template=template,
     )
-    paths = splunk_integration.ArtifactPaths.for_input(
+    paths = splunk_lifecycle.ArtifactPaths.for_input(
         'input-id',
         artifact_dir=tmp_path,
     )
 
-    splunk_integration.create_integration(
+    splunk_lifecycle.create_integration(
         client,
         runtime_config(request),
         paths,
@@ -648,18 +682,18 @@ def test_create_s3_input_writes_artifacts_without_hec_sleep(
 
 def test_create_stops_on_a_failed_put(tmp_path: Path) -> None:
     client = FakeClient(
-        put_response=splunk_integration.SplunkHttpError(
+        put_response=splunk_api.SplunkHttpError(
             500,
             'PUT failed',
         )
     )
-    paths = splunk_integration.ArtifactPaths.for_input(
+    paths = splunk_lifecycle.ArtifactPaths.for_input(
         'input-id',
         artifact_dir=tmp_path,
     )
 
-    with pytest.raises(splunk_integration.SplunkHttpError):
-        splunk_integration.create_integration(
+    with pytest.raises(splunk_api.SplunkHttpError):
+        splunk_lifecycle.create_integration(
             client,
             runtime_config(s3_request()),
             paths,
@@ -678,19 +712,19 @@ def test_create_push_input_preserves_hec_waiting(
         put_response=None,
         hec_responses={
             'aws-cwl': [
-                {'details': splunk_integration.NOAH_TOKEN_PENDING},
+                {'details': splunk_lifecycle.NOAH_TOKEN_PENDING},
                 {'token': 'aws-token'},
             ],
             'cloudtrail': [{'token': 'trail-token'}],
         },
     )
-    paths = splunk_integration.ArtifactPaths.for_input(
+    paths = splunk_lifecycle.ArtifactPaths.for_input(
         'input-id',
         artifact_dir=tmp_path,
     )
     sleeps = []
 
-    splunk_integration.create_integration(
+    splunk_lifecycle.create_integration(
         client,
         runtime_config(request),
         paths,
@@ -718,12 +752,12 @@ def test_get_returns_string_result_and_hashes_raw_template(
         input_responses=[response],
         template=template,
     )
-    paths = splunk_integration.ArtifactPaths.for_input(
+    paths = splunk_lifecycle.ArtifactPaths.for_input(
         'input-id',
         artifact_dir=tmp_path,
     )
 
-    result = splunk_integration.get_integration(
+    result = splunk_lifecycle.get_integration(
         client,
         runtime_config(request),
         paths,
@@ -747,12 +781,12 @@ def test_delete_s3_input_skips_hec_cleanup(
     client = FakeClient(
         input_responses=[response],
     )
-    paths = splunk_integration.ArtifactPaths.for_input(
+    paths = splunk_lifecycle.ArtifactPaths.for_input(
         'input-id',
         artifact_dir=tmp_path,
     )
 
-    splunk_integration.delete_integration(client, paths)
+    splunk_lifecycle.delete_integration(client, paths)
 
     operations = [operation for operation, _value in client.calls]
     assert operations == [
@@ -770,12 +804,12 @@ def test_delete_push_input_preserves_full_hec_cleanup(
     tmp_path: Path,
 ) -> None:
     client = FakeClient(input_responses=[push_input()])
-    paths = splunk_integration.ArtifactPaths.for_input(
+    paths = splunk_lifecycle.ArtifactPaths.for_input(
         'input-id',
         artifact_dir=tmp_path,
     )
 
-    splunk_integration.delete_integration(client, paths)
+    splunk_lifecycle.delete_integration(client, paths)
 
     deleted_categories = [
         category
@@ -783,22 +817,22 @@ def test_delete_push_input_preserves_full_hec_cleanup(
         if operation == 'delete_hec_token'
     ]
     assert deleted_categories == list(
-        splunk_integration.PUSH_HEC_CLEANUP_CATEGORIES
+        splunk_lifecycle.PUSH_HEC_CLEANUP_CATEGORIES
     )
 
 
 def test_delete_accepts_an_already_missing_input(tmp_path: Path) -> None:
     client = FakeClient(
         input_responses=[
-            splunk_integration.SplunkHttpError(404, 'missing')
+            splunk_api.SplunkHttpError(404, 'missing')
         ]
     )
-    paths = splunk_integration.ArtifactPaths.for_input(
+    paths = splunk_lifecycle.ArtifactPaths.for_input(
         'input-id',
         artifact_dir=tmp_path,
     )
 
-    splunk_integration.delete_integration(client, paths)
+    splunk_lifecycle.delete_integration(client, paths)
 
     assert client.calls == [('get_input', None)]
 
@@ -863,18 +897,18 @@ def test_urllib_transport_handles_redirect_cookies_and_http_errors() -> None:
     server_thread.start()
     try:
         base_url = f'http://127.0.0.1:{server.server_port}'
-        transport = splunk_integration.UrllibTransport()
+        transport = splunk_api.UrllibTransport()
 
         redirected = transport.request('GET', f'{base_url}/redirect')
         failed = transport.request('GET', f'{base_url}/error')
 
-        assert redirected == splunk_integration.HttpResponse(
+        assert redirected == splunk_api.HttpResponse(
             200,
             b'logged in',
         )
         assert transport.cookie_value('cval') == 'cval-value'
         assert transport.cookie_value('splunkweb_uid') == 'uid-value'
-        assert failed == splunk_integration.HttpResponse(
+        assert failed == splunk_api.HttpResponse(
             503,
             b'unavailable',
         )
@@ -888,9 +922,9 @@ def test_client_preserves_login_cookies_and_csrf_headers() -> None:
     input_document = push_input()
     transport = FakeTransport(
         [
-            splunk_integration.HttpResponse(200, b'login'),
-            splunk_integration.HttpResponse(200, b'authenticated'),
-            splunk_integration.HttpResponse(
+            splunk_api.HttpResponse(200, b'login'),
+            splunk_api.HttpResponse(200, b'authenticated'),
+            splunk_api.HttpResponse(
                 200,
                 json.dumps(input_document).encode(),
             ),
@@ -898,7 +932,7 @@ def test_client_preserves_login_cookies_and_csrf_headers() -> None:
     )
     log_messages = []
     config = runtime_config(input_document)
-    client = splunk_integration.SplunkWebClient(
+    client = splunk_api.SplunkWebClient(
         config,
         transport=transport,
         logger=log_messages.append,
@@ -951,13 +985,13 @@ def test_client_preserves_login_cookies_and_csrf_headers() -> None:
 def test_client_tolerates_already_deleted_resources() -> None:
     transport = FakeTransport(
         [
-            splunk_integration.HttpResponse(200, b'login'),
-            splunk_integration.HttpResponse(200, b'authenticated'),
-            splunk_integration.HttpResponse(404, b'missing token'),
-            splunk_integration.HttpResponse(404, b'missing input'),
+            splunk_api.HttpResponse(200, b'login'),
+            splunk_api.HttpResponse(200, b'authenticated'),
+            splunk_api.HttpResponse(404, b'missing token'),
+            splunk_api.HttpResponse(404, b'missing input'),
         ]
     )
-    client = splunk_integration.SplunkWebClient(
+    client = splunk_api.SplunkWebClient(
         runtime_config(push_input()),
         transport=transport,
     )
@@ -986,12 +1020,12 @@ def test_client_preserves_best_effort_hec_token_checks(
 ) -> None:
     transport = FakeTransport(
         [
-            splunk_integration.HttpResponse(200, b'login'),
-            splunk_integration.HttpResponse(200, b'authenticated'),
-            splunk_integration.HttpResponse(status, body),
+            splunk_api.HttpResponse(200, b'login'),
+            splunk_api.HttpResponse(200, b'authenticated'),
+            splunk_api.HttpResponse(status, body),
         ]
     )
-    client = splunk_integration.SplunkWebClient(
+    client = splunk_api.SplunkWebClient(
         runtime_config(push_input()),
         transport=transport,
     )
@@ -1015,7 +1049,7 @@ def test_get_main_writes_only_external_provider_json(
         template=template,
     )
     monkeypatch.setattr(
-        splunk_integration.cli,
+        splunk_integration,
         'SplunkWebClient',
         lambda _config, logger: client,
     )
