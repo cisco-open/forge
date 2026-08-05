@@ -55,6 +55,11 @@ run "integrations_splunk_o11y_conf_shared_interface_contract" {
       "lambda_control_plane = object({",
       "kinesis_control_plane = object({",
       "runner_logs_ingestion = object({",
+      "metric_ingest = optional(object({",
+      "token_ids = optional(list(string), [])",
+      "length(distinct(var.dashboard_variables.metric_ingest.token_ids)) == length(var.dashboard_variables.metric_ingest.token_ids)",
+      "for token_id in var.dashboard_variables.metric_ingest.token_ids : can(regex(\"^[A-Za-z0-9_-]+$\", token_id))",
+      "dashboard_variables.metric_ingest.token_ids must contain distinct Splunk token IDs made only of letters, numbers, underscores, or hyphens.",
       "sqs_control_plane = object({",
       "s3_control_plane = object({",
       "aws_service_limits = object({",
@@ -155,7 +160,7 @@ run "integrations_splunk_o11y_conf_shared_interface_contract" {
     condition = (
       output.expected_input_variable_count == 13
       && output.expected_output_value_count == 0
-      && output.expected_interface_literal_count == 99
+      && output.expected_interface_literal_count == 104
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

@@ -106,6 +106,8 @@ dashboard_variables:
         value_required: false
         values_suggested: [Forge MT]
         restricted_suggestions: true
+  metric_ingest:
+    token_ids: [example-ingest-token-id]
   sqs_control_plane:
     dynamic_variables:
       - property: aws_account_id

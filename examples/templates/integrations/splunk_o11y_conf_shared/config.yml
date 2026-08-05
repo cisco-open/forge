@@ -124,6 +124,9 @@ dashboard_variables:
         values_suggested:
           - Forge MT
         restricted_suggestions: true
+  metric_ingest:
+    token_ids:
+      - <SPLUNK_INGEST_TOKEN_ID>
   sqs_control_plane:
     dynamic_variables:
       - property: aws_account_id

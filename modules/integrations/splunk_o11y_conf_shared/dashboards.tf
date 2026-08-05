@@ -118,6 +118,17 @@ module "dashboard_runner_logs_ingestion" {
   lambda_dimension_filter = local.lambda_dimension_filter
 }
 
+module "dashboard_metric_ingest" {
+  source = "./dashboards/metric_ingest"
+
+  providers = {
+    signalfx = signalfx
+  }
+
+  token_ids       = var.dashboard_variables.metric_ingest.token_ids
+  dashboard_group = signalfx_dashboard_group.forgecicd.id
+}
+
 module "dashboard_dependency_probes" {
   source = "./dashboards/dependency_probes"
 
