@@ -16,6 +16,7 @@ Forge sends EC2, Lambda, EKS, CloudWatch, and security metadata through supporte
 ## Operational Notes
 
 - This module expects valid Splunk Cloud credentials and Data Manager configuration.
+- Terraform runners must provide Python 3.12 for the Data Manager lifecycle command.
 - CloudFormation stack failures usually point to AWS-side permissions or region support.
 - Custom log group selection determines which Forge logs arrive in Splunk Cloud.
 

@@ -9,11 +9,15 @@ resource "null_resource" "create_integration" {
     splunk_cloud_password   = data.aws_secretsmanager_secret_version.secrets["splunk_cloud_password"].secret_string
   }
   provisioner "local-exec" {
-    command = <<-EOC
-      export SPLUNK_CLOUD_INPUT_JSON='${var.splunk_cloud_input_json}'
+    command = "python3.12 \"${path.module}/scripts/splunk_integration.py\" create"
 
-      ${path.module}/scripts/create_splunk_integration.sh '${var.splunk_cloud}' '${random_uuid.splunk_input_uuid.result}' '${data.aws_secretsmanager_secret_version.secrets["splunk_cloud_username"].secret_string}' '${data.aws_secretsmanager_secret_version.secrets["splunk_cloud_password"].secret_string}'
-    EOC
+    environment = {
+      SPLUNK_CLOUD            = var.splunk_cloud
+      SPLUNK_INPUT_UUID       = random_uuid.splunk_input_uuid.result
+      SPLUNK_CLOUD_USERNAME   = data.aws_secretsmanager_secret_version.secrets["splunk_cloud_username"].secret_string
+      SPLUNK_CLOUD_PASSWORD   = data.aws_secretsmanager_secret_version.secrets["splunk_cloud_password"].secret_string
+      SPLUNK_CLOUD_INPUT_JSON = var.splunk_cloud_input_json
+    }
   }
   depends_on = [
     null_resource.delete_integration,
@@ -22,11 +26,18 @@ resource "null_resource" "create_integration" {
 
 data "external" "splunk_dm_version" {
   program = [
-    "bash", "-c",
-    <<-EOF
-      ${path.module}/scripts/get_splunk_integration.sh '${var.splunk_cloud}' '${random_uuid.splunk_input_uuid.result}' '${data.aws_secretsmanager_secret_version.secrets["splunk_cloud_username"].secret_string}' '${data.aws_secretsmanager_secret_version.secrets["splunk_cloud_password"].secret_string}'
-    EOF
+    "python3.12",
+    "${path.module}/scripts/splunk_integration.py",
+    "get",
   ]
+
+  query = {
+    SPLUNK_CLOUD          = var.splunk_cloud
+    SPLUNK_INPUT_UUID     = random_uuid.splunk_input_uuid.result
+    SPLUNK_CLOUD_USERNAME = data.aws_secretsmanager_secret_version.secrets["splunk_cloud_username"].secret_string
+    SPLUNK_CLOUD_PASSWORD = data.aws_secretsmanager_secret_version.secrets["splunk_cloud_password"].secret_string
+  }
+
   depends_on = [
     null_resource.create_integration
   ]
@@ -44,8 +55,13 @@ resource "null_resource" "delete_integration" {
     when        = destroy
     working_dir = path.module
 
-    command = <<-EOC
-      ./scripts/delete_splunk_integration.sh '${self.triggers.splunk_cloud}' '${self.triggers.splunk_input_uuid}' '${self.triggers.splunk_cloud_username}' '${self.triggers.splunk_cloud_password}'
-    EOC
+    command = "python3.12 ./scripts/splunk_integration.py delete"
+
+    environment = {
+      SPLUNK_CLOUD          = self.triggers.splunk_cloud
+      SPLUNK_INPUT_UUID     = self.triggers.splunk_input_uuid
+      SPLUNK_CLOUD_USERNAME = self.triggers.splunk_cloud_username
+      SPLUNK_CLOUD_PASSWORD = self.triggers.splunk_cloud_password
+    }
   }
 }
