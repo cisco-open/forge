@@ -11,6 +11,7 @@ run "integrations_splunk_cloud_data_manager_data_input_interface_contract" {
       "cloudformation_s3_config",
       "splunk_cloud",
       "splunk_cloud_input_json",
+      "stack_name_prefix",
       "tags_all",
     ]
     expected_output_values = [
@@ -30,6 +31,8 @@ run "integrations_splunk_cloud_data_manager_data_input_interface_contract" {
       "description = \"Splunk Cloud endpoint.\"",
       "variable \"splunk_cloud_input_json\"",
       "description = \"Splunk Cloud input JSON.\"",
+      "variable \"stack_name_prefix\"",
+      "description = \"CloudFormation stack name prefix for the Splunk data input.\"",
       "variable \"tags_all\"",
       "type        = map(string)",
       "description = \"All Tags to apply to resources.\"",
@@ -75,9 +78,9 @@ run "integrations_splunk_cloud_data_manager_data_input_interface_contract" {
 
   assert {
     condition = (
-      output.expected_input_variable_count == 4
+      output.expected_input_variable_count == 5
       && output.expected_output_value_count == 4
-      && output.expected_interface_literal_count == 25
+      && output.expected_interface_literal_count == 27
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

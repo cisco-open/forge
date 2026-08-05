@@ -14,6 +14,7 @@ run "integrations_splunk_cloud_data_manager_interface_contract" {
       "cloudwatch_log_groups_config",
       "custom_cloudwatch_log_groups_config",
       "default_tags",
+      "s3_logs_config",
       "security_metadata_config",
       "splunk_cloud",
       "tags",
@@ -21,6 +22,7 @@ run "integrations_splunk_cloud_data_manager_interface_contract" {
     expected_output_values = [
       "splunk_cloud_input_cloudwatch_logs_json",
       "splunk_cloud_input_custom_logs_json",
+      "splunk_cloud_input_s3_logs_json",
       "splunk_cloud_input_security_metadata_json",
     ]
     expected_interface_literals = [
@@ -70,6 +72,27 @@ run "integrations_splunk_cloud_data_manager_interface_contract" {
       "index                   = \"\"",
       "source_type             = \"\"",
       "log_group_name_prefixes = []",
+      "variable \"s3_logs_config\"",
+      "s3-custom-logs = optional(list(object({",
+      "ct-logs = optional(list(object({",
+      "s3-access-logs = optional(list(object({",
+      "elb-access-logs = optional(list(object({",
+      "cf-access-logs = optional(list(object({",
+      "enabled            = bool",
+      "name               = string",
+      "iam_region         = string",
+      "index              = string",
+      "source_type        = string",
+      "sqs_urls           = list(string)",
+      "s3_bucket_patterns = list(string)",
+      "kms_key_arns       = list(string)",
+      "description = \"Configuration for Splunk S3 log inputs grouped by dataset. Each enabled list item creates one Data Manager input.\"",
+      "default     = {}",
+      "nullable    = false",
+      "validation {",
+      "Every enabled s3-custom-logs input must provide source_type.",
+      "Enabled S3 log input names must be unique across all datasets.",
+      "Enabled S3 log inputs must use unique SQS queues.",
       "variable \"default_tags\"",
       "type        = map(string)",
       "description = \"A map of tags to apply to resources.\"",
@@ -89,6 +112,9 @@ run "integrations_splunk_cloud_data_manager_interface_contract" {
       "output \"splunk_cloud_input_custom_logs_json\"",
       "description = \"The Splunk Cloud input map for custom logs.\"",
       "value       = var.custom_cloudwatch_log_groups_config.enabled ? local.splunk_cloud_input_custom_logs_json : \"\"",
+      "output \"splunk_cloud_input_s3_logs_json\"",
+      "description = \"Map of enabled S3 log input names to their Splunk Cloud input JSON.\"",
+      "value       = tomap(local.splunk_cloud_input_s3_logs_json)",
       "output \"splunk_cloud_input_security_metadata_json\"",
       "description = \"The Splunk Cloud input map for security metadata.\"",
       "value       = var.security_metadata_config.enabled ? local.splunk_cloud_input_security_metadata_json : \"\"",
@@ -122,9 +148,9 @@ run "integrations_splunk_cloud_data_manager_interface_contract" {
 
   assert {
     condition = (
-      output.expected_input_variable_count == 9
-      && output.expected_output_value_count == 3
-      && output.expected_interface_literal_count == 68
+      output.expected_input_variable_count == 10
+      && output.expected_output_value_count == 4
+      && output.expected_interface_literal_count == 92
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

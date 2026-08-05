@@ -22,6 +22,23 @@ cloudwatch_log_groups_config:
   regions:
     - <AWS_REGION>                          # e.g., eu-west-1
 
+s3_logs_config:
+  s3-custom-logs:
+    - enabled: <S3_CUSTOM_LOGS_ENABLED>      # true or false; add more list items for additional inputs
+      name: <S3_LOGS_NAME>                  # e.g., forge-s3-logs-prod
+      iam_region: <S3_LOGS_IAM_REGION>      # e.g., us-east-1; region where this input's IAM role stack is created
+      index: <S3_LOGS_INDEX>                # e.g., forge-prod-index
+      source_type: <S3_LOGS_SOURCE_TYPE>    # required for custom S3 logs
+      sqs_urls:
+        - <SQS_QUEUE_URL>                   # e.g., https://sqs.eu-west-1.amazonaws.com/123456789012/forge-s3-logs-events
+      s3_bucket_patterns:
+        - <S3_BUCKET_PATTERN>               # e.g., forge-runner-logs-*; use * when no narrower prefix exists
+      kms_key_arns: []                      # required; use [] when no KMS keys apply
+  ct-logs: []                               # AWS CloudTrail inputs
+  s3-access-logs: []                        # Amazon S3 access-log inputs
+  elb-access-logs: []                       # Elastic Load Balancing access-log inputs
+  cf-access-logs: []                        # Amazon CloudFront access-log inputs
+
 security_metadata_config:
   enabled: <SEC_META_ENABLED>               # true or false
   name: <SEC_META_NAME>                     # e.g., forge-secmeta-prod

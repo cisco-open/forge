@@ -8,6 +8,11 @@ variable "splunk_cloud_input_json" {
   description = "Splunk Cloud input JSON."
 }
 
+variable "stack_name_prefix" {
+  type        = string
+  description = "CloudFormation stack name prefix for the Splunk data input."
+}
+
 variable "tags_all" {
   type        = map(string)
   description = "All Tags to apply to resources."

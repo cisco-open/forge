@@ -52,6 +52,7 @@ module "splunk_cloudwatch" {
   splunk_cloud             = var.splunk_cloud
   cloudformation_s3_config = var.cloudformation_s3_config
   splunk_cloud_input_json  = local.splunk_cloud_input_cloudwatch_json
+  stack_name_prefix        = "SplunkDMDataIngest"
 
   tags_all = local.all_security_tags
 }

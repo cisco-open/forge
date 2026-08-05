@@ -352,11 +352,19 @@ def test_extract_arn_parts_for_module_application(monkeypatch, aws):
     [
         'custom-cwl',
         'cwl',
+        's3-logs',
         'secmeta',
         'custom-cwl_cwl',
+        'custom-cwl_s3-logs',
         'custom-cwl_secmeta',
+        'cwl_s3-logs',
         'cwl_secmeta',
+        's3-logs_secmeta',
+        'custom-cwl_cwl_s3-logs',
         'custom-cwl_cwl_secmeta',
+        'custom-cwl_s3-logs_secmeta',
+        'cwl_s3-logs_secmeta',
+        'custom-cwl_cwl_s3-logs_secmeta',
     ],
 )
 def test_extract_arn_parts_for_cloud_data_manager_config_aliases(

@@ -22,6 +22,16 @@ from urllib.request import HTTPCookieProcessor, Request, build_opener
 JsonObject = dict[str, Any]
 Logger = Callable[[str], None]
 
+S3_DATASETS = frozenset(
+    {
+        's3-custom-logs',
+        'ct-logs',
+        's3-access-logs',
+        'elb-access-logs',
+        'cf-access-logs',
+    }
+)
+
 NOAH_TOKEN_PENDING = 'Noah stack token creation in progress'
 
 DATASET_HEC_CATEGORIES = {
@@ -57,6 +67,7 @@ TOP_LEVEL_RESPONSE_FIELDS = (
     '_key',
     '_user',
     'createTime',
+    'dataSourcesStatus',
     'id',
     'lastUpdateTime',
     'schemaVersion',
@@ -239,11 +250,16 @@ class SplunkWebClient:
             if error.status != 404:
                 raise
 
-    def get_template(self) -> bytes:
+    def get_template(self, input_document: JsonObject) -> bytes:
         """Download the input CloudFormation template."""
+        template_path = (
+            's3/sqs'
+            if input_uses_s3(input_document)
+            else 'dataaccount/ingest'
+        )
         return self.request(
             'GET',
-            f'{self.input_path}/templates/dataaccount/ingest',
+            f'{self.input_path}/templates/{template_path}',
             content_type='text/plain',
         )
 
@@ -369,6 +385,13 @@ def fetch_input(fetch: Callable[[], JsonObject]) -> JsonObject:
     return document
 
 
+def input_uses_s3(document: JsonObject) -> bool:
+    """Return whether the input contains a supported S3 dataset."""
+    return bool(
+        S3_DATASETS.intersection(document['details']['datasetInfo'])
+    )
+
+
 def validate_cloudformation_template(raw_template: bytes) -> bool:
     """Require a JSON template with non-empty Resources."""
     try:
@@ -459,6 +482,10 @@ def create_integration(
     """Create or update an input and write its template."""
     _require_valid_request(request)
     client.put_input(request)
+    if input_uses_s3(request):
+        _write_template(client, request, template_path)
+        return
+
     input_document = fetch_input(client.get_input)
     ensure_hec_tokens(
         client,
@@ -467,7 +494,7 @@ def create_integration(
         sleep=sleep,
         logger=logger,
     )
-    _write_template(client, template_path)
+    _write_template(client, input_document, template_path)
 
 
 def get_integration(
@@ -486,7 +513,7 @@ def get_integration(
         sleep=sleep,
         logger=logger,
     )
-    raw_template = _write_template(client, template_path)
+    raw_template = _write_template(client, input_document, template_path)
 
     details = input_document['details']
     version = details.get('version')
@@ -519,15 +546,20 @@ def delete_integration(
     client.put_input(build_delete_payload(input_document))
     client.check_delete_readiness()
 
-    for category in PUSH_HEC_CLEANUP_CATEGORIES:
-        client.delete_hec_token(category)
+    if not input_uses_s3(input_document):
+        for category in PUSH_HEC_CLEANUP_CATEGORIES:
+            client.delete_hec_token(category)
 
     client.check_delete_readiness()
     client.delete_input()
 
 
-def _write_template(client, template_path: Path) -> bytes:
-    raw_template = client.get_template()
+def _write_template(
+    client,
+    input_document: JsonObject,
+    template_path: Path,
+) -> bytes:
+    raw_template = client.get_template(input_document)
     if not validate_cloudformation_template(raw_template):
         raise SplunkIntegrationError(
             'Splunk returned an invalid CloudFormation template'

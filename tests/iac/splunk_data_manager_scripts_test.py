@@ -28,6 +28,14 @@ SCRIPT_PATH = REPO_ROOT / (
 sys.path.insert(0, str(SCRIPT_PATH.parent))
 splunk_integration = importlib.import_module('splunk_integration')
 
+S3_DATASETS = (
+    's3-custom-logs',
+    'ct-logs',
+    's3-access-logs',
+    'elb-access-logs',
+    'cf-access-logs',
+)
+
 PUSH_DATASET_CATEGORIES = (
     ('cwl-api-gateway', 'aws-cwl'),
     ('cwl-cloudhsm', 'aws-cwl'),
@@ -112,6 +120,51 @@ def push_response(
     return document
 
 
+def s3_request(
+    dataset: str = 's3-custom-logs',
+) -> dict[str, object]:
+    request = push_request((dataset,))
+    request['details'].update(
+        {
+            'iamRegion': 'us-east-1',
+            'datasetInfo': {
+                dataset: {
+                    'sqsUrls': [
+                        {
+                            'sqsUrl': (
+                                'https://sqs.us-east-1.amazonaws.com/'
+                                '123456789012/forge-s3-logs'
+                            )
+                        }
+                    ],
+                    'sourceType': 'forge:s3',
+                }
+            },
+            's3BucketPatterns': ['forge-logs-*'],
+            'kmsKeyArns': [],
+        }
+    )
+    return request
+
+
+def s3_response(
+    dataset: str = 's3-custom-logs',
+) -> dict[str, object]:
+    document = push_response((dataset,), version=1)
+    document['details'].update(s3_request(dataset)['details'])
+    document['details'].update(
+        {
+            'stackName': 'SplunkDMSqsS3-input-id',
+        }
+    )
+    document['dataSourcesStatus'] = {
+        'scc_eu-west-1_queue_input-id': {
+            'status': {'state': 'CreateDataSourceSuccess', 'message': ''}
+        }
+    }
+    return document
+
+
 class FakeClient:
     def __init__(
         self,
@@ -167,8 +220,16 @@ class FakeClient:
     def delete_hec_token(self, category: str) -> None:
         self.calls.append(('delete_hec_token', category))
 
-    def get_template(self) -> bytes:
-        self.calls.append(('get_template', None))
+    def get_template(
+        self,
+        input_document: dict[str, object],
+    ) -> bytes:
+        template_path = (
+            '/templates/s3/sqs'
+            if splunk_integration.input_uses_s3(input_document)
+            else '/templates/dataaccount/ingest'
+        )
+        self.calls.append(('get_template', template_path))
         return self.template
 
     def check_delete_readiness(self) -> None:
@@ -250,6 +311,17 @@ def test_fetch_input_rejects_an_invalid_response() -> None:
         splunk_integration.fetch_input(lambda: {'name': 'incomplete'})
 
 
+def test_supported_s3_datasets_match_the_contract() -> None:
+    assert splunk_integration.S3_DATASETS == frozenset(S3_DATASETS)
+
+
+@pytest.mark.parametrize('dataset', S3_DATASETS)
+def test_supported_s3_datasets_select_the_sqs_template(
+    dataset: str,
+) -> None:
+    assert splunk_integration.input_uses_s3(s3_request(dataset))
+
+
 @pytest.mark.parametrize(
     ('raw_template', 'valid'),
     [
@@ -323,7 +395,31 @@ def test_create_preserves_the_initial_hec_delay_and_polling(
         ('get_hec_token', 'cloudtrail'),
         ('get_hec_token', 'aws-cwl'),
         ('get_hec_token', 'aws-cwl'),
-        ('get_template', None),
+        ('get_template', '/templates/dataaccount/ingest'),
+    ]
+    assert template_path.read_bytes() == VALID_TEMPLATE
+    assert set(tmp_path.iterdir()) == {template_path}
+
+
+@pytest.mark.parametrize('dataset', S3_DATASETS)
+def test_create_s3_input_puts_then_downloads_the_sqs_template(
+    tmp_path: Path,
+    dataset: str,
+) -> None:
+    request = s3_request(dataset)
+    client = FakeClient()
+    template_path = tmp_path / 'input-id_template.json'
+
+    splunk_integration.create_integration(
+        client,
+        request,
+        template_path,
+        sleep=lambda _seconds: pytest.fail('S3 input must not sleep'),
+    )
+
+    assert client.calls == [
+        ('put_input', request),
+        ('get_template', '/templates/s3/sqs'),
     ]
     assert template_path.read_bytes() == VALID_TEMPLATE
     assert set(tmp_path.iterdir()) == {template_path}
@@ -439,6 +535,26 @@ def test_delete_preserves_the_fixed_hec_cleanup_sequence() -> None:
         ('check_delete_readiness', None),
         ('delete_input', None),
     ]
+
+
+def test_delete_s3_input_skips_hec_cleanup_and_response_fields() -> None:
+    document = s3_response()
+    client = FakeClient(input_responses=[document])
+
+    splunk_integration.delete_integration(client)
+
+    put_payloads = [
+        payload
+        for operation, payload in client.calls
+        if operation == 'put_input'
+    ]
+    assert len(put_payloads) == 1
+    assert 'dataSourcesStatus' not in put_payloads[0]
+    assert all(
+        operation != 'delete_hec_token'
+        for operation, _value in client.calls
+    )
+    assert client.calls[-1] == ('delete_input', None)
 
 
 def test_delete_accepts_an_already_missing_input() -> None:
@@ -681,6 +797,43 @@ def test_client_encodes_login_and_authenticated_json_requests() -> None:
             )
         )
         for message in messages
+    )
+
+
+@pytest.mark.parametrize(
+    ('input_document', 'template_path'),
+    (
+        (push_response(), 'dataaccount/ingest'),
+        (s3_response(), 's3/sqs'),
+    ),
+    ids=('push', 's3'),
+)
+def test_client_routes_template_download_by_dataset(
+    input_document: dict[str, object],
+    template_path: str,
+) -> None:
+    opener = FakeOpener(
+        [
+            FakeResponse(200, b'login'),
+            FakeResponse(200, b'authenticated'),
+            FakeResponse(200, VALID_TEMPLATE),
+        ]
+    )
+    client = splunk_integration.SplunkWebClient(
+        runtime_config(None),
+        cookies=authenticated_cookie_jar(),
+        opener=opener,
+    )
+
+    client.login()
+    assert client.get_template(input_document) == VALID_TEMPLATE
+
+    template_request = opener.requests[2]
+    assert template_request.get_method() == 'GET'
+    assert template_request.full_url.endswith(
+        '/en-GB/splunkd/__raw/servicesNS/nobody/'
+        'data_manager/cloudinput/inputs/input-id/'
+        f'templates/{template_path}'
     )
 
 
