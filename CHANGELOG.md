@@ -1,5 +1,21 @@
 # Changelog
 
+## [4.11.0](https://github.com/cisco-open/forge/compare/v4.10.0...v4.11.0) (2026-08-05)
+
+
+### Features
+
+* **deps:** manage Lambda layer revisions with Renovate ([#615](https://github.com/cisco-open/forge/issues/615)) ([a199d92](https://github.com/cisco-open/forge/commit/a199d92de53d8f30d149ceb923d67297513df9e9))
+* **observability:** add metric API ingestion health dashboard ([#616](https://github.com/cisco-open/forge/issues/616)) ([7920cff](https://github.com/cisco-open/forge/commit/7920cff7a85374bc0172ca6f3979f7377b147777))
+* **renovate:** show Lambda layer package versions ([#625](https://github.com/cisco-open/forge/issues/625)) ([6bb90da](https://github.com/cisco-open/forge/commit/6bb90dac647dbf45368c7b4a02978ccc4fcc14e7))
+* **runners:** add job log S3 notifications ([#619](https://github.com/cisco-open/forge/issues/619)) ([cf8c5cd](https://github.com/cisco-open/forge/commit/cf8c5cd8bd53439f8e60738a48a5a36a0e22e045))
+* **splunk:** add S3 log inputs ([#624](https://github.com/cisco-open/forge/issues/624)) ([52e4f69](https://github.com/cisco-open/forge/commit/52e4f698e7e8c68be9f556f56b60b4acaa76fdfe))
+
+
+### Bug Fixes
+
+* **renovate:** update Lambda layers safely ([#620](https://github.com/cisco-open/forge/issues/620)) ([4113126](https://github.com/cisco-open/forge/commit/411312652c4c349339e4cb2cf25d825da96ae0d7))
+
 ## [4.10.0](https://github.com/cisco-open/forge/compare/v4.9.4...v4.10.0) (2026-08-03)
 
 
