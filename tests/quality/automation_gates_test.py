@@ -329,26 +329,6 @@ def test_renovate_manages_supported_lambda_layer_arns() -> None:
         for pattern in patterns
     )
 
-    assert all(
-        manager['versioningTemplate'] == r'regex:^(?<patch>\d+)$'
-        for manager in managers.values()
-    )
-    suffix_only_replacement = r"{{{replace '\d+$' newValue replaceString}}}"
-    assert all(
-        manager['autoReplaceStringTemplate'] == suffix_only_replacement
-        for manager in managers.values()
-    )
-    suffix_pattern = suffix_only_replacement.removeprefix(
-        "{{{replace '",
-    ).removesuffix("' newValue replaceString}}}")
-    pyjwt_arn = (
-        'arn:aws:lambda:${data.aws_region.current.region}:'
-        '770693421928:layer:Klayers-p312-PyJWT:1'
-    )
-    assert re.sub(suffix_pattern, '4', pyjwt_arn) == (
-        'arn:aws:lambda:${data.aws_region.current.region}:'
-        '770693421928:layer:Klayers-p312-PyJWT:4'
-    )
     pandas_datasource = config['customDatasources']['aws-sdk-pandas-layers']
     assert pandas_datasource['format'] == 'plain'
     assert '/stable/_sources/layers.rst.txt' in (

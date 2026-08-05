@@ -33,14 +33,14 @@
         "klayers": {
             "defaultRegistryUrlTemplate": "https://api.klayers.cloud/api/v2/{{{packageName}}}",
             "transformTemplates": [
-                "{ \"releases\": $map($, function($layer) { { \"version\": $split($layer.arn, \":\")[-1], \"isDeprecated\": $layer.deployStatus = \"deprecated\" } }), \"homepage\": \"https://klayers.cloud\", \"sourceUrl\": \"https://github.com/keithrozario/Klayers\" }"
+                "{ \"releases\": $map($, function($layer) { { \"version\": $layer.packageVersion ? $split($layer.arn, \":\")[-1] & \" (package \" & $layer.packageVersion & \")\" : $split($layer.arn, \":\")[-1], \"isDeprecated\": $layer.deployStatus = \"deprecated\" } }), \"homepage\": \"https://github.com/keithrozario/Klayers#readme\", \"sourceUrl\": \"https://github.com/keithrozario/Klayers\" }"
             ]
         },
         "aws-sdk-pandas-layers": {
             "defaultRegistryUrlTemplate": "https://aws-sdk-pandas.readthedocs.io/en/stable/_sources/layers.rst.txt",
             "format": "plain",
             "transformTemplates": [
-                "{ \"releases\": [releases[$contains(version, \"{{{packageName}}}:\")].{ \"version\": $trim($substringBefore($substringAfter(version, \"{{{packageName}}}:\"), \"|\")) }], \"homepage\": \"https://aws-sdk-pandas.readthedocs.io/en/stable/layers.html\", \"sourceUrl\": \"https://github.com/aws/aws-sdk-pandas\" }"
+                "( $versionHeading := releases[$contains(version, \"Version \")][0].version; $packageVersion := $versionHeading ? $trim($substringAfter($versionHeading, \"Version \")) : \"\"; $decorate := function($revision) { $packageVersion ? $revision & \" (package \" & $packageVersion & \")\" : $revision }; { \"releases\": [releases[$contains(version, \"{{{packageName}}}:\")].{ \"version\": $decorate($trim($substringBefore($substringAfter(version, \"{{{packageName}}}:\"), \"|\"))) }], \"homepage\": \"https://aws-sdk-pandas.readthedocs.io/en/stable/layers.html\", \"sourceUrl\": \"https://github.com/aws/aws-sdk-pandas\" } )"
             ]
         }
     },
@@ -88,8 +88,8 @@
             "depNameTemplate": "KLayers {{{layerPackage}}} for Python {{{pythonMajor}}}.{{{pythonMinor}}}{{{architecture}}}",
             "packageNameTemplate": "p{{{pythonMajor}}}.{{{pythonMinor}}}{{{architecture}}}/layers/{{#if lookupRegion}}{{{lookupRegion}}}{{else}}us-east-1{{/if}}/{{{layerPackage}}}",
             "datasourceTemplate": "custom.klayers",
-            "versioningTemplate": "regex:^(?<patch>\\d+)$",
-            "autoReplaceStringTemplate": "{{{replace '\\d+$' newValue replaceString}}}"
+            "versioningTemplate": "regex:^(?<patch>\\d+)(?: \\(package [^)]+\\))?$",
+            "autoReplaceStringTemplate": "{{{replace '\\d+$' (replace ' \\(package [^)]+\\)$' '' newValue) replaceString}}}"
         },
         {
             "customType": "regex",
@@ -104,8 +104,8 @@
             "depNameTemplate": "AWS SDK for pandas {{{layerName}}}",
             "packageNameTemplate": "arn:{{#if partition}}{{{partition}}}{{else}}aws{{/if}}:lambda:{{#if lookupRegion}}{{{lookupRegion}}}{{else}}us-east-1{{/if}}:{{{publisherAccount}}}:layer:{{{layerName}}}",
             "datasourceTemplate": "custom.aws-sdk-pandas-layers",
-            "versioningTemplate": "regex:^(?<patch>\\d+)$",
-            "autoReplaceStringTemplate": "{{{replace '\\d+$' newValue replaceString}}}"
+            "versioningTemplate": "regex:^(?<patch>\\d+)(?: \\(package [^)]+\\))?$",
+            "autoReplaceStringTemplate": "{{{replace '\\d+$' (replace ' \\(package [^)]+\\)$' '' newValue) replaceString}}}"
         }
       ],
     "packageRules": [
@@ -372,7 +372,7 @@
             "separateMinorPatch": true
         },
         {
-            "description": "Group AWS Lambda layer revision updates without automerge",
+            "description": "Group AWS Lambda layer revision updates, show bundled package versions, and disable automerge",
             "matchDatasources": [
                 "custom.klayers",
                 "custom.aws-sdk-pandas-layers"
@@ -382,6 +382,18 @@
             "prPriority": 20,
             "minimumReleaseAge": null,
             "automerge": false,
+            "prBodyColumns": [
+                "Package",
+                "Type",
+                "Update",
+                "Change",
+                "New package version",
+                "Pending"
+            ],
+            "prBodyDefinitions": {
+                "Change": "`{{{currentValue}}}` → `{{{replace ' \\(package [^)]+\\)$' '' newValue}}}`",
+                "New package version": "{{#if (containsString newVersion ' (package ')}}`{{{replace '^\\d+ \\(package ([^)]+)\\)$' '$1' newVersion}}}`{{/if}}"
+            },
             "addLabels": [
                 "dependencies",
                 "lambda-layers"
