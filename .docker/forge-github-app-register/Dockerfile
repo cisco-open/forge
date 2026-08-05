@@ -1,4 +1,4 @@
-FROM python:3.14-slim@sha256:7bec7ddcddeff7975d6ba9b4be7dd6f6b2f55e7491539145e2978f7f97ce9144
+FROM python:3.14-slim@sha256:e11c17f46f87983eb946b121694dedba6290ee2b0dd5294d137d82943502d179
 
 RUN useradd --create-home appuser
 WORKDIR /home/appuser
