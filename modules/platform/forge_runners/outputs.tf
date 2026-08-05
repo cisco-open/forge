@@ -37,6 +37,8 @@ output "forge_github_actions_job_logs" {
   description = "GitHub Actions job log archival resources."
   value = {
     bucket_arn               = try(module.github_actions_job_logs[0].s3_bucket_arn, null)
+    bucket_kms_key_arn       = try(module.github_actions_job_logs[0].s3_bucket_kms_key_arn, null)
+    sqs                      = try(module.github_actions_job_logs[0].sqs, null)
     internal_reader_role_arn = try(module.github_actions_job_logs[0].internal_s3_reader_role_arn, null)
   }
 }
