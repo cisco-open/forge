@@ -9,17 +9,14 @@ import hashlib
 import http.cookiejar
 import json
 import os
-import re
 import sys
 import time
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
-from datetime import datetime
-from html import unescape
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
-from urllib.parse import quote, quote_plus, unquote, urlencode, urlsplit
+from urllib.parse import urlencode
 from urllib.request import HTTPCookieProcessor, Request, build_opener
 
 JsonObject = dict[str, Any]
@@ -33,39 +30,6 @@ S3_DATASETS = frozenset(
         'elb-access-logs',
         'cf-access-logs',
     }
-)
-S3_STATUS_HOST = re.compile(
-    r'^sqs\.(?P<region>[^.]+)\.amazonaws\.com(?:\.cn)?$'
-)
-
-REDACTED = '[REDACTED]'
-HTTP_ERROR_BODY_LIMIT = 16384
-REQUEST_PAYLOAD_LIMIT = 16384
-SENSITIVE_FIELD_FRAGMENTS = (
-    'accesskey',
-    'apikey',
-    'authorization',
-    'cookie',
-    'credential',
-    'csrf',
-    'externalid',
-    'passwd',
-    'password',
-    'privatekey',
-    'secret',
-    'sessionkey',
-    'splunkd8443',
-    'splunkwebuid',
-    'token',
-    'xsplunkformkey',
-)
-SENSITIVE_ASSIGNMENT = re.compile(
-    r'(?i)((?:"|\')?(?:access[_-]?key|api[_-]?(?:key|token)|'
-    r'authorization|cookie|credential|csrf|external[_-]?id|'
-    r'passw(?:or)?d|private[_-]?key|secret|session[_-]?(?:key|token)|'
-    r'token|username|x-splunk-form-key)(?:"|\')?\s*[:=]\s*)'
-    r'(?:(?:"(?:\\.|[^"\r\n])*"?)|'
-    r'(?:\'(?:\\.|[^\'\r\n])*\'?)|[^\r\n&;<>{},]+)'
 )
 
 NOAH_TOKEN_PENDING = 'Noah stack token creation in progress'
@@ -124,24 +88,9 @@ class SplunkIntegrationError(RuntimeError):
 class SplunkHttpError(SplunkIntegrationError):
     """Raised for an unsuccessful Splunk HTTP request."""
 
-    def __init__(
-        self,
-        status: int,
-        message: str,
-        response_body: str | None = None,
-    ):
+    def __init__(self, status: int, message: str):
         super().__init__(message)
         self.status = status
-        self.response_body = response_body
-
-    @property
-    def retryable(self) -> bool:
-        """Return whether an input fetch may be retried."""
-        return self.status == 0 or self.status in {
-            404,
-            409,
-            429,
-        } or self.status >= 500
 
 
 @dataclass(frozen=True, slots=True)
@@ -173,145 +122,6 @@ def decode_json(raw: bytes, description: str) -> JsonObject:
             f'Splunk returned a non-object {description}'
         )
     return document
-
-
-def _normalized_field_name(value: object) -> str:
-    return ''.join(
-        character
-        for character in str(value).casefold()
-        if character.isalnum()
-    )
-
-
-def _is_sensitive_field_name(value: object) -> bool:
-    normalized = _normalized_field_name(value)
-    return any(
-        fragment in normalized
-        for fragment in SENSITIVE_FIELD_FRAGMENTS
-    )
-
-
-def redact_sensitive_fields(value: Any) -> Any:
-    """Return a copy with credential-like fields redacted."""
-    if isinstance(value, Mapping):
-        tag_name = next(
-            (
-                item
-                for key, item in value.items()
-                if _normalized_field_name(key) == 'key'
-            ),
-            None,
-        )
-        sensitive_tag = isinstance(
-            tag_name,
-            str,
-        ) and _is_sensitive_field_name(tag_name)
-        redacted = {}
-        for key, item in value.items():
-            normalized_key = _normalized_field_name(key)
-            if _is_sensitive_field_name(key) or (
-                sensitive_tag and normalized_key == 'value'
-            ):
-                redacted[key] = REDACTED
-            else:
-                redacted[key] = redact_sensitive_fields(item)
-        return redacted
-    if isinstance(value, list):
-        return [redact_sensitive_fields(item) for item in value]
-    if isinstance(value, tuple):
-        return tuple(redact_sensitive_fields(item) for item in value)
-    if isinstance(value, str):
-        return SENSITIVE_ASSIGNMENT.sub(
-            lambda match: f'{match.group(1)}{REDACTED}',
-            value,
-        )
-    return value
-
-
-def redact_known_secrets(
-    value: Any,
-    secret_values: Sequence[str],
-) -> Any:
-    """Return a copy with known credential values redacted."""
-    if isinstance(value, Mapping):
-        return {
-            key: redact_known_secrets(item, secret_values)
-            for key, item in value.items()
-        }
-    if isinstance(value, list):
-        return [
-            redact_known_secrets(item, secret_values)
-            for item in value
-        ]
-    if isinstance(value, tuple):
-        return tuple(
-            redact_known_secrets(item, secret_values)
-            for item in value
-        )
-    if isinstance(value, str):
-        value = unescape(unquote(value))
-        for secret in secret_values:
-            value = value.replace(secret, REDACTED)
-    return value
-
-
-def known_secret_variants(secret_values: Sequence[str]) -> tuple[str, ...]:
-    """Return common transport encodings for known credentials."""
-    variants = set()
-    for secret in secret_values:
-        if not secret:
-            continue
-        variants.update(
-            {
-                secret,
-                quote(secret, safe=''),
-                quote_plus(secret, safe=''),
-                json.dumps(secret)[1:-1],
-            }
-        )
-    return tuple(sorted(variants, key=len, reverse=True))
-
-
-def render_diagnostic(
-    value: Any,
-    *,
-    secret_values: Sequence[str] = (),
-    limit: int,
-) -> str:
-    """Render one bounded JSON diagnostic without known secrets."""
-    known_secrets = known_secret_variants(secret_values)
-    redacted = redact_known_secrets(value, known_secrets)
-    redacted = redact_sensitive_fields(redacted)
-    rendered = json.dumps(
-        redacted,
-        separators=(',', ':'),
-        sort_keys=True,
-    )
-    if len(rendered) > limit:
-        return (
-            f'{rendered[:limit]}...'
-            f'[truncated; total_chars={len(rendered)}]'
-        )
-    return rendered
-
-
-def render_http_error_body(
-    raw: bytes,
-    *,
-    secret_values: Sequence[str] = (),
-) -> str:
-    """Render a bounded HTTP response body for failure diagnostics."""
-    if not raw:
-        return '<empty>'
-    try:
-        value = json.loads(raw)
-    except (UnicodeDecodeError, json.JSONDecodeError):
-        value = unescape(unquote(raw.decode('utf-8', errors='replace')))
-    return render_diagnostic(
-        value,
-        secret_values=secret_values,
-        limit=HTTP_ERROR_BODY_LIMIT,
-    )
 
 
 class SplunkWebClient:
@@ -388,23 +198,14 @@ class SplunkWebClient:
             cookie_values.append(f'AWSELB={awselb}')
         self._cookie_header = '; '.join(cookie_values)
 
-    def put_input(self, payload: JsonObject) -> JsonObject | None:
+    def put_input(self, payload: JsonObject) -> None:
         """Create or update the configured input."""
-        raw = self.request(
+        self.request(
             'PUT',
             self.input_path,
             content_type='application/json',
             body=encode_json(payload),
         )
-        if not raw:
-            return None
-        try:
-            return decode_json(raw, 'input update response')
-        except SplunkIntegrationError:
-            # Push-input PUT responses were historically ignored. Preserve
-            # that behavior while requiring S3 callers to validate the
-            # decoded response before polling for readiness.
-            return None
 
     def get_input(self) -> JsonObject:
         """Fetch the current input document."""
@@ -451,10 +252,14 @@ class SplunkWebClient:
 
     def get_template(self, input_document: JsonObject) -> bytes:
         """Download the input CloudFormation template."""
-        template_suffix = template_suffix_for_input(input_document)
+        template_path = (
+            's3/sqs'
+            if input_uses_s3(input_document)
+            else 'dataaccount/ingest'
+        )
         return self.request(
             'GET',
-            f'{self.input_path}{template_suffix}',
+            f'{self.input_path}/templates/{template_path}',
             content_type='text/plain',
         )
 
@@ -536,22 +341,9 @@ class SplunkWebClient:
 
         self.logger(f'{method} {path} returned HTTP {status}.')
         if not 200 <= status < 300:
-            secret_values = (
-                self.config.username,
-                self.config.password,
-                self._csrf_token or '',
-                *(cookie.value for cookie in self.cookies),
-            )
-            response_body = None
-            if '/data_manager/' in path:
-                response_body = render_http_error_body(
-                    raw,
-                    secret_values=secret_values,
-                )
             raise SplunkHttpError(
                 status,
                 f'{method} {path} returned HTTP {status}',
-                response_body,
             )
         return raw
 
@@ -593,235 +385,10 @@ def fetch_input(fetch: Callable[[], JsonObject]) -> JsonObject:
     return document
 
 
-def _s3_dataset_name(document: JsonObject) -> str | None:
-    if not validate_input_document(document):
-        return None
-    datasets = [
-        dataset
-        for dataset in document['details']['datasetInfo']
-        if dataset in S3_DATASETS
-    ]
-    if len(datasets) > 1:
-        raise SplunkIntegrationError(
-            'Splunk input contains more than one supported S3 dataset'
-        )
-    return datasets[0] if datasets else None
-
-
 def input_uses_s3(document: JsonObject) -> bool:
-    """Return whether the input contains one supported S3 dataset."""
-    return _s3_dataset_name(document) is not None
-
-
-def template_suffix_for_input(document: JsonObject) -> str:
-    """Select the template API route from a validated input document."""
-    if not validate_input_document(document):
-        raise SplunkIntegrationError(
-            'Cannot download a template for an invalid data input response'
-        )
-    if input_uses_s3(document):
-        return '/templates/s3/sqs'
-    return '/templates/dataaccount/ingest'
-
-
-def s3_input_matches_request(
-    actual: JsonObject,
-    requested: JsonObject,
-) -> bool:
-    """Compare only request-owned fields in an S3 response."""
-    if not validate_input_document(actual):
-        return False
-    if not validate_input_document(requested):
-        return False
-
-    for key in ('name', 'type', 'destination', 'mode'):
-        if actual.get(key) != requested.get(key):
-            return False
-
-    detail_keys = (
-        'type',
-        'iamRegion',
-        'datasetInfo',
-        'dataAccounts',
-        's3BucketPatterns',
-        'kmsKeyArns',
-    )
-    actual_details = actual['details']
-    requested_details = requested['details']
-    return {
-        key: actual_details.get(key)
-        for key in detail_keys
-    } == {
-        key: requested_details.get(key)
-        for key in detail_keys
-    }
-
-
-def _s3_status_key(queue_url: str, input_id: str) -> str:
-    parsed = urlsplit(queue_url)
-    host_match = S3_STATUS_HOST.fullmatch(parsed.hostname or '')
-    path_parts = parsed.path.strip('/').split('/')
-    valid_host = parsed.scheme == 'https' and host_match is not None
-    valid_path = len(path_parts) == 2
-    if valid_path:
-        valid_path = path_parts[0].isdigit() and bool(path_parts[1])
-    if not valid_host or not valid_path:
-        raise SplunkIntegrationError(
-            f'Invalid SQS queue URL in Splunk input: {queue_url}'
-        )
-    return f'scc_{host_match.group("region")}_{path_parts[1]}_{input_id}'
-
-
-def s3_input_state(document: JsonObject) -> str:
-    """Classify S3 provisioning as pending, ready, or failed."""
-    dataset_name = _s3_dataset_name(document)
-    if dataset_name is None:
-        raise SplunkIntegrationError(
-            'Cannot classify a non-S3 Data Manager input'
-        )
-
-    input_id = document.get('id') or document.get('_key') or ''
-    details = document['details']
-    s3_dataset = details['datasetInfo'][dataset_name]
-    if not isinstance(s3_dataset, dict):
-        raise SplunkIntegrationError(
-            'Splunk returned invalid S3 dataset metadata'
-        )
-    queue_entries = s3_dataset.get('sqsUrls', [])
-    if not isinstance(queue_entries, list) or any(
-        not isinstance(entry, dict) or not isinstance(entry.get('sqsUrl'), str)
-        for entry in queue_entries
-    ):
-        raise SplunkIntegrationError(
-            'Splunk returned invalid S3 queue status metadata'
-        )
-
-    expected_keys = [
-        _s3_status_key(entry['sqsUrl'], str(input_id))
-        for entry in queue_entries
-    ]
-    status_map = document.get('dataSourcesStatus', {})
-    if not isinstance(status_map, dict):
-        raise SplunkIntegrationError(
-            'Splunk returned invalid dataSourcesStatus metadata'
-        )
-
-    states = []
-    for key in expected_keys:
-        status_entry = status_map.get(key)
-        status = status_entry.get('status') if isinstance(
-            status_entry,
-            dict,
-        ) else None
-        state = status.get('state') if isinstance(status, dict) else None
-        states.append(state if isinstance(state, str) else '')
-
-    if any(
-        'fail' in state.lower() or 'error' in state.lower()
-        for state in states
-    ):
-        return 'failed'
-    if any(
-        (
-            not details.get('stackName'),
-            details.get('version') is None,
-            not input_id,
-            not expected_keys,
-            any(not state for state in states),
-        )
-    ):
-        return 'pending'
-    if all(state.endswith('Success') for state in states):
-        return 'ready'
-    return 'pending'
-
-
-def _s3_update_is_current(actual: object, expected: str) -> bool:
-    if actual == expected:
-        return True
-    if not isinstance(actual, str):
-        return False
-    try:
-        return datetime.fromisoformat(actual) >= datetime.fromisoformat(
-            expected
-        )
-    except (TypeError, ValueError):
-        return False
-
-
-def wait_for_input(
-    fetch: Callable[[], JsonObject],
-    *,
-    request: JsonObject | None = None,
-    expected_version: str | None = None,
-    expected_update_time: str | None = None,
-    max_attempts: int = 60,
-    poll_interval_seconds: int = 5,
-    sleep: Callable[[float], None] = time.sleep,
-) -> JsonObject:
-    """Fetch until the input is current and every S3 queue is ready."""
-    expects_s3 = request is not None and input_uses_s3(request)
-    for attempt in range(1, max_attempts + 1):
-        try:
-            document = fetch()
-        except SplunkHttpError as error:
-            if not error.retryable:
-                raise
-            if attempt == max_attempts:
-                raise
-            sleep(poll_interval_seconds)
-            continue
-
-        if not validate_input_document(document):
-            raise SplunkIntegrationError(
-                'Splunk returned an invalid data input response'
-            )
-        if not input_uses_s3(document):
-            if not expects_s3:
-                return document
-            if attempt < max_attempts:
-                sleep(poll_interval_seconds)
-            continue
-
-        matches_update = request is None or s3_input_matches_request(
-            document,
-            request,
-        )
-        if expected_version is not None:
-            matches_update = all(
-                (
-                    matches_update,
-                    document['details'].get('version') is not None,
-                    str(document['details']['version']) == expected_version,
-                )
-            )
-        if expected_update_time is not None:
-            matches_update = all(
-                (
-                    matches_update,
-                    _s3_update_is_current(
-                        document.get('lastUpdateTime'),
-                        expected_update_time,
-                    ),
-                )
-            )
-
-        state = s3_input_state(document) if matches_update else 'pending'
-        if state == 'ready':
-            return document
-        if state == 'failed':
-            status = render_diagnostic(
-                document.get('dataSourcesStatus', {}),
-                limit=HTTP_ERROR_BODY_LIMIT,
-            )
-            raise SplunkIntegrationError(
-                f'Splunk S3 data source provisioning failed: {status}'
-            )
-        if attempt < max_attempts:
-            sleep(poll_interval_seconds)
-
-    raise SplunkIntegrationError(
-        f'Splunk S3 data source was not ready after {max_attempts} attempts'
+    """Return whether the input contains a supported S3 dataset."""
+    return bool(
+        S3_DATASETS.intersection(document['details']['datasetInfo'])
     )
 
 
@@ -863,7 +430,7 @@ def ensure_hec_tokens(
     """Wait for each push-input HEC token."""
     log = logger or (lambda _message: None)
     categories = dataset_hec_categories(document)
-    if categories and initial_delay_seconds:
+    if initial_delay_seconds:
         log(
             'Waiting '
             f'{initial_delay_seconds} seconds for HEC token provisioning.'
@@ -914,39 +481,12 @@ def create_integration(
 ) -> None:
     """Create or update an input and write its template."""
     _require_valid_request(request)
-    put_response = client.put_input(request)
+    client.put_input(request)
+    if input_uses_s3(request):
+        _write_template(client, request, template_path)
+        return
 
-    uses_s3 = input_uses_s3(request)
-    expected_version = None
-    expected_update_time = None
-    if uses_s3:
-        if put_response is None or not s3_input_matches_request(
-            put_response,
-            request,
-        ):
-            raise SplunkIntegrationError(
-                'Splunk returned an invalid S3 data input update response'
-            )
-        version = put_response['details'].get('version')
-        update_time = put_response.get('lastUpdateTime')
-        if version is None or not update_time:
-            raise SplunkIntegrationError(
-                'Splunk did not return a version and update time for '
-                'the S3 data input update'
-            )
-        expected_version = str(version)
-        expected_update_time = str(update_time)
-
-    if uses_s3:
-        input_document = wait_for_input(
-            client.get_input,
-            request=request,
-            expected_version=expected_version,
-            expected_update_time=expected_update_time,
-            sleep=sleep,
-        )
-    else:
-        input_document = fetch_input(client.get_input)
+    input_document = fetch_input(client.get_input)
     ensure_hec_tokens(
         client,
         input_document,
@@ -966,11 +506,6 @@ def get_integration(
 ) -> dict[str, str]:
     """Refresh an input and return the Terraform external result."""
     input_document = fetch_input(client.get_input)
-    if input_uses_s3(input_document):
-        input_document = wait_for_input(
-            client.get_input,
-            sleep=sleep,
-        )
     ensure_hec_tokens(
         client,
         input_document,
@@ -1011,7 +546,7 @@ def delete_integration(
     client.put_input(build_delete_payload(input_document))
     client.check_delete_readiness()
 
-    if dataset_hec_categories(input_document):
+    if not input_uses_s3(input_document):
         for category in PUSH_HEC_CLEANUP_CATEGORIES:
             client.delete_hec_token(category)
 
@@ -1102,7 +637,6 @@ def main(
     standard_error = sys.stderr if error_stream is None else error_stream
     messages: list[str] = []
     credential_values: tuple[str, ...] = ()
-    config: RuntimeConfig | None = None
 
     def sanitize(message: str) -> str:
         for value in credential_values:
@@ -1169,26 +703,6 @@ def main(
             f'{operation} failed: {sanitize(str(error))}',
             file=standard_error,
         )
-        if isinstance(
-            error,
-            SplunkHttpError,
-        ) and error.response_body is not None:
-            print(
-                'Splunk HTTP response body: '
-                f'{sanitize(error.response_body)}',
-                file=standard_error,
-            )
-        if config is not None and config.input_request is not None:
-            request_payload = render_diagnostic(
-                config.input_request,
-                secret_values=credential_values,
-                limit=REQUEST_PAYLOAD_LIMIT,
-            )
-            print(
-                'Splunk Data Manager request payload (redacted): '
-                f'{request_payload}',
-                file=standard_error,
-            )
         return 1
 
 

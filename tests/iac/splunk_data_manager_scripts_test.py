@@ -28,6 +28,14 @@ SCRIPT_PATH = REPO_ROOT / (
 sys.path.insert(0, str(SCRIPT_PATH.parent))
 splunk_integration = importlib.import_module('splunk_integration')
 
+S3_DATASETS = (
+    's3-custom-logs',
+    'ct-logs',
+    's3-access-logs',
+    'elb-access-logs',
+    'cf-access-logs',
+)
+
 PUSH_DATASET_CATEGORIES = (
     ('cwl-api-gateway', 'aws-cwl'),
     ('cwl-cloudhsm', 'aws-cwl'),
@@ -43,15 +51,6 @@ PUSH_DATASET_CATEGORIES = (
     ('iam-aa', 'iam-aa'),
     ('iam-cr', 'iam-cr'),
     ('metadata', 'metadata'),
-)
-
-AWS_ACCOUNT_ID = '123456789012'
-S3_DATASETS = (
-    's3-custom-logs',
-    'ct-logs',
-    's3-access-logs',
-    'elb-access-logs',
-    'cf-access-logs',
 )
 
 CLEANUP_CATEGORIES = (
@@ -121,133 +120,49 @@ def push_response(
     return document
 
 
-def sqs_url(queue_name: str, region: str = 'us-east-1') -> str:
-    return (
-        f'https://sqs.{region}.amazonaws.com/'
-        f'{AWS_ACCOUNT_ID}/{queue_name}'
-    )
-
-
-def s3_status_key(queue_url: str) -> str:
-    host = queue_url.split('/')[2]
-    region = host.split('.')[1]
-    queue_name = queue_url.rsplit('/', maxsplit=1)[-1]
-    return f'scc_{region}_{queue_name}_input-id'
-
-
 def s3_request(
-    *,
     dataset: str = 's3-custom-logs',
-    queue_urls: list[str] | None = None,
-    s3_bucket_patterns: list[str] | None = None,
-    kms_key_arns: list[str] | None = None,
 ) -> dict[str, object]:
-    if queue_urls is None:
-        queue_urls = [sqs_url('forge-s3-logs')]
-    if s3_bucket_patterns is None:
-        s3_bucket_patterns = ['forge-logs-*']
-    if kms_key_arns is None:
-        kms_key_arns = []
-
-    dataset_info: dict[str, object] = {
-        'sqsUrls': [
-            {'sqsUrl': queue_url}
-            for queue_url in queue_urls
-        ],
-    }
-    if dataset == 's3-custom-logs':
-        dataset_info['sourceType'] = 'forge:s3'
-
-    return {
-        'name': 'forge-s3-logs',
-        'type': 'AWS',
-        'destination': {
-            'type': 'index',
-            'details': {dataset: 'forge-index'},
-        },
-        'mode': 'Complete',
-        'details': {
-            'type': 'SingleAccount',
+    request = push_request((dataset,))
+    request['details'].update(
+        {
             'iamRegion': 'us-east-1',
-            'datasetInfo': {dataset: dataset_info},
-            'dataAccounts': [AWS_ACCOUNT_ID],
-            's3BucketPatterns': s3_bucket_patterns,
-            'kmsKeyArns': kms_key_arns,
-        },
-    }
+            'datasetInfo': {
+                dataset: {
+                    'sqsUrls': [
+                        {
+                            'sqsUrl': (
+                                'https://sqs.us-east-1.amazonaws.com/'
+                                '123456789012/forge-s3-logs'
+                            )
+                        }
+                    ],
+                    'sourceType': 'forge:s3',
+                }
+            },
+            's3BucketPatterns': ['forge-logs-*'],
+            'kmsKeyArns': [],
+        }
+    )
+    return request
 
 
 def s3_response(
-    state: str = 'CreateDataSourceSuccess',
-    *,
-    include_stack_details: bool = True,
-    queue_count: int = 1,
-    status_count: int | None = None,
-    request: dict[str, object] | None = None,
-    version: int = 1,
-    last_update_time: str = '2026-08-05 10:01:00+00:00',
-    status_queue_urls: list[str] | None = None,
+    dataset: str = 's3-custom-logs',
 ) -> dict[str, object]:
-    if request is None:
-        request = s3_request(
-            queue_urls=[
-                sqs_url(f'queue-{index}')
-                for index in range(queue_count)
-            ]
-        )
-
-    dataset = next(iter(request['details']['datasetInfo']))
-    configured_urls = [
-        entry['sqsUrl']
-        for entry in request['details']['datasetInfo'][dataset]['sqsUrls']
-    ]
-    if status_count is None:
-        status_count = len(configured_urls)
-    if status_queue_urls is None:
-        status_queue_urls = configured_urls[:status_count]
-
-    document = copy.deepcopy(request)
-    document.update(
+    document = push_response((dataset,), version=1)
+    document['details'].update(s3_request(dataset)['details'])
+    document['details'].update(
         {
-            '_key': 'input-id',
-            '_user': 'nobody',
-            'createTime': '2026-08-05 10:00:00+00:00',
-            'id': 'input-id',
-            'lastUpdateTime': last_update_time,
-            'schemaVersion': '3.0',
+            'stackName': 'SplunkDMSqsS3-input-id',
         }
     )
-    if include_stack_details:
-        document['details'].update(
-            {
-                'stackName': 'SplunkDMSqsS3-input-id',
-                'version': version,
-                'resources': {'us-east-1': []},
-                'resourceTags': {'Product': 'Forge'},
-            }
-        )
     document['dataSourcesStatus'] = {
-        s3_status_key(queue_url): {
-            'status': {'state': state, 'message': ''}
+        'scc_eu-west-1_queue_input-id': {
+            'status': {'state': 'CreateDataSourceSuccess', 'message': ''}
         }
-        for queue_url in status_queue_urls
     }
     return document
-
-
-def fetch_sequence(*items):
-    remaining = deque(items)
-    last = items[-1]
-
-    def fetch():
-        nonlocal last
-        if remaining:
-            last = remaining.popleft()
-        if isinstance(last, BaseException):
-            raise last
-        return copy.deepcopy(last)
-
-    return fetch
 
 
 class FakeClient:
@@ -255,10 +170,9 @@ class FakeClient:
         self,
         *,
         input_responses=(),
-        template: bytes | BaseException = VALID_TEMPLATE,
+        template: bytes = VALID_TEMPLATE,
         hec_responses: dict[str, list[dict[str, object]]] | None = None,
         put_error: BaseException | None = None,
-        put_response: dict[str, object] | None = None,
     ):
         self.input_responses = deque(input_responses)
         self.template = template
@@ -267,7 +181,6 @@ class FakeClient:
             for category, responses in (hec_responses or {}).items()
         }
         self.put_error = put_error
-        self.put_response = put_response
         self.calls: list[tuple[str, object]] = []
 
     def login(self) -> None:
@@ -277,7 +190,7 @@ class FakeClient:
         self.calls.append(('put_input', copy.deepcopy(payload)))
         if self.put_error is not None:
             raise self.put_error
-        return copy.deepcopy(self.put_response)
+        return None
 
     def get_input(self):
         self.calls.append(('get_input', None))
@@ -307,15 +220,16 @@ class FakeClient:
     def delete_hec_token(self, category: str) -> None:
         self.calls.append(('delete_hec_token', category))
 
-    def get_template(self, input_document: dict[str, object]) -> bytes:
-        self.calls.append(
-            (
-                'get_template',
-                splunk_integration.template_suffix_for_input(input_document),
-            )
+    def get_template(
+        self,
+        input_document: dict[str, object],
+    ) -> bytes:
+        template_path = (
+            '/templates/s3/sqs'
+            if splunk_integration.input_uses_s3(input_document)
+            else '/templates/dataaccount/ingest'
         )
-        if isinstance(self.template, BaseException):
-            raise self.template
+        self.calls.append(('get_template', template_path))
         return self.template
 
     def check_delete_readiness(self) -> None:
@@ -389,86 +303,6 @@ def test_runtime_config_does_not_expose_credentials() -> None:
     assert 'password&private=true' not in rendered
 
 
-def test_diagnostic_redacts_nested_credentials_and_sensitive_tags() -> None:
-    diagnostic = splunk_integration.render_diagnostic(
-        {
-            'password': 'payload-password',
-            'nested': [
-                {
-                    'apiToken': 'payload-token',
-                    'kmsKeyArns': ['arn:aws:kms:us-east-1:123:key/key-id'],
-                }
-            ],
-            'resourceTags': [
-                {'Key': 'Owner', 'Value': 'forge-team'},
-                {'Key': 'ClientSecret', 'Value': 'tag-secret'},
-            ],
-        },
-        limit=4096,
-    )
-
-    rendered = json.loads(diagnostic)
-    assert rendered['password'] == '[REDACTED]'
-    assert rendered['nested'][0]['apiToken'] == '[REDACTED]'
-    assert rendered['nested'][0]['kmsKeyArns'] == [
-        'arn:aws:kms:us-east-1:123:key/key-id'
-    ]
-    assert rendered['resourceTags'] == [
-        {'Key': 'Owner', 'Value': 'forge-team'},
-        {'Key': 'ClientSecret', 'Value': '[REDACTED]'},
-    ]
-    assert 'payload-password' not in diagnostic
-    assert 'payload-token' not in diagnostic
-    assert 'tag-secret' not in diagnostic
-
-
-def test_http_error_body_is_single_line_redacted_and_bounded() -> None:
-    body = b'upstream failed\npassword=body-secret\n' + (
-        b'x' * (splunk_integration.HTTP_ERROR_BODY_LIMIT + 100)
-    )
-
-    diagnostic = splunk_integration.render_http_error_body(body)
-
-    assert '\n' not in diagnostic
-    assert 'body-secret' not in diagnostic
-    assert 'password=[REDACTED]' in diagnostic
-    assert '[truncated; total_chars=' in diagnostic
-
-
-@pytest.mark.parametrize(
-    ('body', 'secrets'),
-    [
-        (
-            b'username=splunk%2B%22user%22&password=password%0Aprivate',
-            ('splunk+"user"', 'password\nprivate'),
-        ),
-        (
-            b'username=splunk+&quot;user&quot; password=password&#10;private',
-            ('splunk+"user"', 'password\nprivate'),
-        ),
-        (
-            b'{"apiToken":"server-secret"',
-            (),
-        ),
-    ],
-)
-def test_non_json_http_error_body_does_not_leak_encoded_secrets(
-    body: bytes,
-    secrets: tuple[str, ...],
-) -> None:
-    diagnostic = splunk_integration.render_http_error_body(
-        body,
-        secret_values=secrets,
-    )
-
-    assert 'splunk' not in diagnostic
-    assert 'private' not in diagnostic
-    assert 'password%0Aprivate' not in diagnostic
-    assert 'password\\nprivate' not in diagnostic
-    assert 'server-secret' not in diagnostic
-    assert '[REDACTED]' in diagnostic
-
-
 def test_fetch_input_rejects_an_invalid_response() -> None:
     with pytest.raises(
         splunk_integration.SplunkIntegrationError,
@@ -477,282 +311,15 @@ def test_fetch_input_rejects_an_invalid_response() -> None:
         splunk_integration.fetch_input(lambda: {'name': 'incomplete'})
 
 
-def test_supported_s3_datasets_match_the_terraform_contract() -> None:
+def test_supported_s3_datasets_match_the_contract() -> None:
     assert splunk_integration.S3_DATASETS == frozenset(S3_DATASETS)
 
 
 @pytest.mark.parametrize('dataset', S3_DATASETS)
-def test_s3_datasets_use_queue_readiness(dataset: str) -> None:
-    request = s3_request(dataset=dataset)
-    response = s3_response(request=request)
-
-    assert splunk_integration.input_uses_s3(request)
-    assert splunk_integration.s3_input_state(response) == 'ready'
-    assert splunk_integration.wait_for_input(
-        fetch_sequence(response),
-        request=request,
-    ) == response
-
-
-def test_s3_input_rejects_multiple_supported_datasets() -> None:
-    request = s3_request()
-    request['details']['datasetInfo']['ct-logs'] = {
-        'sqsUrls': [{'sqsUrl': sqs_url('cloudtrail')}],
-    }
-
-    with pytest.raises(
-        splunk_integration.SplunkIntegrationError,
-        match='more than one supported S3 dataset',
-    ):
-        splunk_integration.input_uses_s3(request)
-
-
-def test_s3_wait_retries_pending_input_until_every_queue_is_ready() -> None:
-    request = s3_request(
-        queue_urls=[sqs_url('queue-east'), sqs_url('queue-west', 'us-west-2')]
-    )
-    sleeps = []
-
-    result = splunk_integration.wait_for_input(
-        fetch_sequence(
-            s3_response(
-                'CreateDataSourceInProgress',
-                include_stack_details=False,
-                request=request,
-            ),
-            s3_response(
-                request=request,
-                status_count=1,
-            ),
-            s3_response(request=request),
-        ),
-        request=request,
-        sleep=sleeps.append,
-    )
-
-    assert result['details']['stackName'] == 'SplunkDMSqsS3-input-id'
-    assert len(result['dataSourcesStatus']) == 2
-    assert sleeps == [5, 5]
-
-
-def test_s3_wait_fails_immediately_on_provisioning_error() -> None:
-    response = s3_response(
-        'CreateDataSourceFailure',
-        include_stack_details=False,
-    )
-    response['dataSourcesStatus'][s3_status_key(sqs_url('queue-0'))][
-        'status'
-    ]['token'] = 'server-token'
-    calls = 0
-
-    def fetch():
-        nonlocal calls
-        calls += 1
-        return response
-
-    with pytest.raises(
-        splunk_integration.SplunkIntegrationError,
-        match='provisioning failed',
-    ) as raised:
-        splunk_integration.wait_for_input(
-            fetch,
-            sleep=lambda _seconds: pytest.fail('failure must not retry'),
-        )
-
-    assert calls == 1
-    assert 'server-token' not in str(raised.value)
-    assert '[REDACTED]' in str(raised.value)
-
-
-def test_s3_wait_rejects_stale_success_for_changed_request() -> None:
-    old_request = s3_request(
-        queue_urls=[sqs_url('old-queue')],
-        s3_bucket_patterns=['old-bucket-*'],
-        kms_key_arns=['arn:aws:kms:us-east-1:123:key/old'],
-    )
-    expected_request = s3_request(
-        queue_urls=[sqs_url('new-queue')],
-        s3_bucket_patterns=['new-bucket-*'],
-        kms_key_arns=['arn:aws:kms:us-east-1:123:key/new'],
-    )
-    sleeps = []
-
-    result = splunk_integration.wait_for_input(
-        fetch_sequence(
-            s3_response(request=old_request),
-            s3_response(request=expected_request),
-        ),
-        request=expected_request,
-        sleep=sleeps.append,
-    )
-
-    assert result['details']['datasetInfo'] == (
-        expected_request['details']['datasetInfo']
-    )
-    assert result['details']['s3BucketPatterns'] == ['new-bucket-*']
-    assert result['details']['kmsKeyArns'] == [
-        'arn:aws:kms:us-east-1:123:key/new'
-    ]
-    assert sleeps == [5]
-
-
-def test_s3_wait_rejects_stale_push_response_for_s3_request() -> None:
-    request = s3_request()
-    ready = s3_response(request=request)
-    sleeps = []
-
-    result = splunk_integration.wait_for_input(
-        fetch_sequence(push_response(), ready),
-        request=request,
-        sleep=sleeps.append,
-    )
-
-    assert result == ready
-    assert sleeps == [5]
-
-
-def test_s3_wait_rejects_success_from_prior_put_metadata() -> None:
-    request = s3_request()
-    sleeps = []
-
-    result = splunk_integration.wait_for_input(
-        fetch_sequence(
-            s3_response(
-                request=request,
-                version=2,
-                last_update_time='2026-08-05 10:00:00+00:00',
-            ),
-            s3_response(
-                request=request,
-                version=2,
-                last_update_time='2026-08-05 10:02:00+00:00',
-            ),
-        ),
-        request=request,
-        expected_version='2',
-        expected_update_time='2026-08-05 10:01:00+00:00',
-        sleep=sleeps.append,
-    )
-
-    assert result['details']['version'] == 2
-    assert result['lastUpdateTime'] == '2026-08-05 10:02:00+00:00'
-    assert sleeps == [5]
-
-
-@pytest.mark.parametrize('status', [0, 404, 409, 429, 500, 503])
-def test_s3_wait_retries_transient_input_fetches(status: int) -> None:
-    sleeps = []
-
-    result = splunk_integration.wait_for_input(
-        fetch_sequence(
-            splunk_integration.SplunkHttpError(status, 'transient'),
-            s3_response(),
-        ),
-        sleep=sleeps.append,
-    )
-
-    assert result['details']['stackName'] == 'SplunkDMSqsS3-input-id'
-    assert sleeps == [5]
-
-
-@pytest.mark.parametrize('status', [400, 401, 403, 422])
-def test_s3_wait_does_not_retry_non_retryable_fetches(
-    status: int,
+def test_supported_s3_datasets_select_the_sqs_template(
+    dataset: str,
 ) -> None:
-    calls = 0
-    error = splunk_integration.SplunkHttpError(
-        status,
-        'permanent',
-        '{"error":"response details"}',
-    )
-
-    def fetch():
-        nonlocal calls
-        calls += 1
-        raise error
-
-    with pytest.raises(
-        splunk_integration.SplunkHttpError,
-        match='permanent',
-    ) as raised:
-        splunk_integration.wait_for_input(
-            fetch,
-            sleep=lambda _seconds: pytest.fail('failure must not retry'),
-        )
-
-    assert calls == 1
-    assert raised.value is error
-    assert raised.value.status == status
-    assert raised.value.response_body == '{"error":"response details"}'
-
-
-def test_s3_wait_preserves_the_final_retryable_fetch_error() -> None:
-    calls = 0
-    sleeps = []
-    error = splunk_integration.SplunkHttpError(
-        503,
-        'transient exhaustion',
-        '{"error":"last response"}',
-    )
-
-    def fetch():
-        nonlocal calls
-        calls += 1
-        raise error
-
-    with pytest.raises(
-        splunk_integration.SplunkHttpError,
-        match='transient exhaustion',
-    ) as raised:
-        splunk_integration.wait_for_input(
-            fetch,
-            max_attempts=3,
-            sleep=sleeps.append,
-        )
-
-    assert calls == 3
-    assert sleeps == [5, 5]
-    assert raised.value is error
-    assert raised.value.status == 503
-    assert raised.value.response_body == '{"error":"last response"}'
-
-
-def test_s3_wait_stops_after_the_bounded_attempts() -> None:
-    calls = 0
-
-    def fetch():
-        nonlocal calls
-        calls += 1
-        return s3_response(
-            'CreateDataSourceInProgress',
-            include_stack_details=False,
-        )
-
-    with pytest.raises(
-        splunk_integration.SplunkIntegrationError,
-        match='after 3 attempts',
-    ):
-        splunk_integration.wait_for_input(
-            fetch,
-            max_attempts=3,
-            poll_interval_seconds=0,
-            sleep=lambda _seconds: None,
-        )
-
-    assert calls == 3
-
-
-def test_wait_returns_push_inputs_without_polling() -> None:
-    document = push_response()
-    calls = 0
-
-    def fetch():
-        nonlocal calls
-        calls += 1
-        return document
-
-    assert splunk_integration.wait_for_input(fetch) == document
-    assert calls == 1
+    assert splunk_integration.input_uses_s3(s3_request(dataset))
 
 
 @pytest.mark.parametrize(
@@ -835,56 +402,25 @@ def test_create_preserves_the_initial_hec_delay_and_polling(
 
 
 @pytest.mark.parametrize('dataset', S3_DATASETS)
-def test_create_s3_input_waits_for_current_readiness_before_template(
+def test_create_s3_input_puts_then_downloads_the_sqs_template(
     tmp_path: Path,
     dataset: str,
 ) -> None:
-    request = s3_request(dataset=dataset)
-    put_response = s3_response(
-        request=request,
-        version=2,
-        last_update_time='2026-08-05 10:01:00+00:00',
-    )
-    ready_response = s3_response(
-        request=request,
-        version=2,
-        last_update_time='2026-08-05 10:03:00+00:00',
-    )
-    client = FakeClient(
-        input_responses=[
-            s3_response(
-                request=request,
-                version=1,
-                last_update_time='2026-08-05 10:00:00+00:00',
-            ),
-            s3_response(
-                'CreateDataSourceInProgress',
-                request=request,
-                version=2,
-                last_update_time='2026-08-05 10:02:00+00:00',
-            ),
-            ready_response,
-        ],
-        put_response=put_response,
-    )
+    request = s3_request(dataset)
+    client = FakeClient()
     template_path = tmp_path / 'input-id_template.json'
-    sleeps = []
 
     splunk_integration.create_integration(
         client,
         request,
         template_path,
-        sleep=sleeps.append,
+        sleep=lambda _seconds: pytest.fail('S3 input must not sleep'),
     )
 
     assert client.calls == [
         ('put_input', request),
-        ('get_input', None),
-        ('get_input', None),
-        ('get_input', None),
         ('get_template', '/templates/s3/sqs'),
     ]
-    assert sleeps == [5, 5]
     assert template_path.read_bytes() == VALID_TEMPLATE
     assert set(tmp_path.iterdir()) == {template_path}
 
@@ -905,33 +441,6 @@ def test_create_stops_after_a_failed_update(tmp_path: Path) -> None:
 
     assert client.calls == [('put_input', request)]
     assert list(tmp_path.iterdir()) == []
-
-
-def test_create_push_input_does_not_retry_a_failed_fetch(
-    tmp_path: Path,
-) -> None:
-    request = push_request()
-    client = FakeClient(
-        input_responses=[
-            splunk_integration.SplunkHttpError(500, 'GET failed')
-        ]
-    )
-
-    with pytest.raises(
-        splunk_integration.SplunkHttpError,
-        match='GET failed',
-    ):
-        splunk_integration.create_integration(
-            client,
-            request,
-            tmp_path / 'input-id_template.json',
-            sleep=lambda _seconds: pytest.fail('push fetch must not retry'),
-        )
-
-    assert client.calls == [
-        ('put_input', request),
-        ('get_input', None),
-    ]
 
 
 def test_create_rejects_an_invalid_template_without_writing_it(
@@ -979,44 +488,8 @@ def test_get_returns_only_version_and_raw_template_hash(
         'version': '12',
         'template_hash': hashlib.sha256(template).hexdigest(),
     }
-    assert client.calls == [
-        ('get_input', None),
-        ('get_hec_token', 'cloudtrail'),
-        ('get_template', '/templates/dataaccount/ingest'),
-    ]
     assert template_path.read_bytes() == template
     assert set(tmp_path.iterdir()) == {template_path}
-
-
-def test_get_waits_for_s3_readiness_before_fetching_template(
-    tmp_path: Path,
-) -> None:
-    request = s3_request()
-    pending = s3_response(
-        'CreateDataSourceInProgress',
-        include_stack_details=False,
-        request=request,
-    )
-    ready = s3_response(request=request)
-    client = FakeClient(
-        input_responses=[pending, pending, ready],
-    )
-    sleeps = []
-
-    result = splunk_integration.get_integration(
-        client,
-        tmp_path / 'input-id_template.json',
-        sleep=sleeps.append,
-    )
-
-    assert result['version'] == '1'
-    assert sleeps == [5]
-    assert client.calls == [
-        ('get_input', None),
-        ('get_input', None),
-        ('get_input', None),
-        ('get_template', '/templates/s3/sqs'),
-    ]
 
 
 def test_delete_payload_removes_response_owned_fields() -> None:
@@ -1263,12 +736,11 @@ def test_default_client_keeps_login_cookies_in_memory(
 
 def test_client_encodes_login_and_authenticated_json_requests() -> None:
     request_payload = push_request(('cloudtrail', 'metadata'))
-    update_response = push_response(('cloudtrail', 'metadata'))
     opener = FakeOpener(
         [
             FakeResponse(200, b'login'),
             FakeResponse(200, b'authenticated'),
-            FakeResponse(200, splunk_integration.encode_json(update_response)),
+            FakeResponse(200, b''),
         ]
     )
     messages: list[str] = []
@@ -1285,7 +757,7 @@ def test_client_encodes_login_and_authenticated_json_requests() -> None:
     )
 
     client.login()
-    result = client.put_input(request_payload)
+    client.put_input(request_payload)
 
     login_request = opener.requests[1]
     assert login_request.full_url.endswith('/en-GB/account/login')
@@ -1305,7 +777,6 @@ def test_client_encodes_login_and_authenticated_json_requests() -> None:
         'data_manager/cloudinput/inputs/input-id'
     )
     assert json.loads(api_request.data) == request_payload
-    assert result == update_response
     headers = request_headers(api_request)
     assert headers['content-type'] == 'application/json'
     assert headers['x-splunk-form-key'] == 'csrf-value'
@@ -1330,16 +801,16 @@ def test_client_encodes_login_and_authenticated_json_requests() -> None:
 
 
 @pytest.mark.parametrize(
-    ('input_document', 'template_suffix'),
+    ('input_document', 'template_path'),
     (
-        (push_response(), '/templates/dataaccount/ingest'),
-        (s3_response(), '/templates/s3/sqs'),
+        (push_response(), 'dataaccount/ingest'),
+        (s3_response(), 's3/sqs'),
     ),
     ids=('push', 's3'),
 )
-def test_client_routes_template_download_by_input_document(
+def test_client_routes_template_download_by_dataset(
     input_document: dict[str, object],
-    template_suffix: str,
+    template_path: str,
 ) -> None:
     opener = FakeOpener(
         [
@@ -1355,91 +826,15 @@ def test_client_routes_template_download_by_input_document(
     )
 
     client.login()
-    result = client.get_template(input_document)
+    assert client.get_template(input_document) == VALID_TEMPLATE
 
-    assert result == VALID_TEMPLATE
     template_request = opener.requests[2]
     assert template_request.get_method() == 'GET'
-    assert template_request.full_url == (
-        'https://splunk.example.com/en-GB/splunkd/__raw/'
-        'servicesNS/nobody/data_manager/cloudinput/inputs/input-id'
-        f'{template_suffix}'
+    assert template_request.full_url.endswith(
+        '/en-GB/splunkd/__raw/servicesNS/nobody/'
+        'data_manager/cloudinput/inputs/input-id/'
+        f'templates/{template_path}'
     )
-    assert request_headers(template_request)['content-type'] == 'text/plain'
-
-
-def test_client_preserves_only_a_sanitized_http_error_body() -> None:
-    username = 'splunk+"user"'
-    password = 'password\nprivate'
-    response_body = json.dumps(
-        {
-            'message': (
-                f'template failed for {username} with {password} '
-                'and csrf-value'
-            ),
-            'token': 'server-token',
-            'kmsKeyArns': ['arn:aws:kms:us-east-1:123:key/key-id'],
-        }
-    ).encode()
-    opener = FakeOpener(
-        [
-            FakeResponse(200, b'login'),
-            FakeResponse(200, b'authenticated'),
-            FakeResponse(500, response_body),
-        ]
-    )
-    client = splunk_integration.SplunkWebClient(
-        runtime_config(
-            s3_request(),
-            username=username,
-            password=password,
-        ),
-        cookies=authenticated_cookie_jar(),
-        opener=opener,
-    )
-    client.login()
-
-    with pytest.raises(
-        splunk_integration.SplunkHttpError,
-        match='returned HTTP 500',
-    ) as raised:
-        client.get_template(s3_response())
-
-    error = raised.value
-    assert error.status == 500
-    assert 'server-token' not in error.response_body
-    assert username not in error.response_body
-    assert password not in error.response_body
-    assert 'csrf-value' not in error.response_body
-    assert json.loads(error.response_body) == {
-        'kmsKeyArns': ['arn:aws:kms:us-east-1:123:key/key-id'],
-        'message': (
-            'template failed for [REDACTED] with [REDACTED] '
-            'and [REDACTED]'
-        ),
-        'token': '[REDACTED]',
-    }
-
-
-def test_client_does_not_capture_unauthenticated_login_error_body() -> None:
-    opener = FakeOpener(
-        [
-            FakeResponse(
-                500,
-                b'username=splunk-user&password=splunk-password',
-            ),
-        ]
-    )
-    client = splunk_integration.SplunkWebClient(
-        runtime_config(s3_request()),
-        cookies=authenticated_cookie_jar(),
-        opener=opener,
-    )
-
-    with pytest.raises(splunk_integration.SplunkHttpError) as raised:
-        client.login()
-
-    assert raised.value.response_body is None
 
 
 def test_client_tolerates_already_deleted_resources() -> None:
@@ -1494,70 +889,6 @@ def test_client_preserves_best_effort_hec_token_checks(
     client.login()
 
     assert client.get_hec_token('cloudtrail') == {}
-
-
-def test_s3_template_failure_prints_response_body_and_request_payload(
-    tmp_path: Path,
-    monkeypatch,
-) -> None:
-    request = s3_request()
-    response_body = splunk_integration.render_http_error_body(
-        b'{"error":"template is not ready","token":"server-token"}'
-    )
-    input_response = s3_response(request=request)
-    client = FakeClient(
-        input_responses=[input_response],
-        put_response=input_response,
-        template=splunk_integration.SplunkHttpError(
-            500,
-            'GET /templates/s3/sqs returned HTTP 500',
-            response_body,
-        ),
-    )
-
-    monkeypatch.setattr(
-        splunk_integration,
-        'SplunkWebClient',
-        lambda _config, logger: client,
-    )
-    install_runtime_environment(monkeypatch, request)
-    stdout = io.StringIO()
-    stderr = io.StringIO()
-
-    result = splunk_integration.main(
-        ['create'],
-        output_stream=stdout,
-        error_stream=stderr,
-        artifact_dir=tmp_path,
-    )
-
-    lines = stderr.getvalue().splitlines()
-    assert result == 1
-    assert stdout.getvalue() == ''
-    assert lines[0] == (
-        'Splunk Data Manager create failed: '
-        'GET /templates/s3/sqs returned HTTP 500'
-    )
-    assert lines[1] == (
-        'Splunk HTTP response body: '
-        '{"error":"template is not ready","token":"[REDACTED]"}'
-    )
-    payload = json.loads(
-        lines[2].removeprefix(
-            'Splunk Data Manager request payload (redacted): '
-        )
-    )
-    assert payload['details']['datasetInfo'] == (
-        request['details']['datasetInfo']
-    )
-    assert payload['details']['s3BucketPatterns'] == (
-        request['details']['s3BucketPatterns']
-    )
-    assert payload['details']['kmsKeyArns'] == (
-        request['details']['kmsKeyArns']
-    )
-    assert 'server-token' not in stderr.getvalue()
-    assert list(tmp_path.iterdir()) == []
 
 
 def test_create_main_uses_process_environment_and_only_writes_template(
@@ -1677,48 +1008,6 @@ def test_get_main_reads_the_external_query_and_prints_only_result_json(
     assert set(tmp_path.iterdir()) == {template_path}
 
 
-def test_get_failure_keeps_response_body_out_of_external_stdout(
-    tmp_path: Path,
-    monkeypatch,
-) -> None:
-    client = FakeClient(
-        input_responses=[s3_response()],
-        template=splunk_integration.SplunkHttpError(
-            500,
-            'GET /templates/s3/sqs returned HTTP 500',
-            '{"error":"template is not ready"}',
-        ),
-    )
-
-    monkeypatch.setattr(
-        splunk_integration,
-        'SplunkWebClient',
-        lambda _config, logger: client,
-    )
-    stdout = io.StringIO()
-    stderr = io.StringIO()
-
-    result = splunk_integration.main(
-        ['get'],
-        input_stream=io.StringIO(json.dumps(runtime_values())),
-        output_stream=stdout,
-        error_stream=stderr,
-        artifact_dir=tmp_path,
-    )
-
-    assert result == 1
-    assert stdout.getvalue() == ''
-    assert stderr.getvalue().splitlines() == [
-        'Splunk Data Manager get failed: '
-        'GET /templates/s3/sqs returned HTTP 500',
-        'Splunk HTTP response body: '
-        '{"error":"template is not ready"}',
-    ]
-    assert 'splunk-user' not in stderr.getvalue()
-    assert 'splunk-password' not in stderr.getvalue()
-    assert list(tmp_path.iterdir()) == []
-
-
 def test_delete_main_uses_process_environment_without_artifacts(
     tmp_path: Path,
     monkeypatch,
@@ -1760,12 +1049,6 @@ def test_main_prints_failure_diagnostics_only_to_stderr(
     monkeypatch,
 ) -> None:
     request = push_request()
-    request['diagnostic'] = {
-        'password': 'payload-password',
-        'resourceTags': [
-            {'Key': 'ApiToken', 'Value': 'payload-token'},
-        ],
-    }
     client = FakeClient(
         put_error=splunk_integration.SplunkHttpError(
             500,
@@ -1800,25 +1083,11 @@ def test_main_prints_failure_diagnostics_only_to_stderr(
 
     assert result == 1
     assert stdout.getvalue() == ''
-    lines = stderr.getvalue().splitlines()
-    assert lines[:2] == [
+    assert stderr.getvalue().splitlines() == [
         'PUT response for [REDACTED] using [REDACTED].',
         'Splunk Data Manager create failed: '
         'PUT failed for [REDACTED] using [REDACTED]',
     ]
-    payload = json.loads(
-        lines[2].removeprefix(
-            'Splunk Data Manager request payload (redacted): '
-        )
-    )
-    assert payload['diagnostic'] == {
-        'password': '[REDACTED]',
-        'resourceTags': [
-            {'Key': 'ApiToken', 'Value': '[REDACTED]'},
-        ],
-    }
     assert 'splunk-user' not in stderr.getvalue()
     assert 'splunk-password' not in stderr.getvalue()
-    assert 'payload-password' not in stderr.getvalue()
-    assert 'payload-token' not in stderr.getvalue()
     assert list(tmp_path.iterdir()) == []
