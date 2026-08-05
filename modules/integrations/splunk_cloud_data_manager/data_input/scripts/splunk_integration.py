@@ -9,18 +9,50 @@ import hashlib
 import http.cookiejar
 import json
 import os
+import re
 import sys
 import time
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
+from html import unescape
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode
+from urllib.parse import quote, quote_plus, unquote, urlencode
 from urllib.request import HTTPCookieProcessor, Request, build_opener
 
 JsonObject = dict[str, Any]
 Logger = Callable[[str], None]
+
+REDACTED = '[REDACTED]'
+HTTP_ERROR_BODY_LIMIT = 16384
+REQUEST_PAYLOAD_LIMIT = 16384
+SENSITIVE_FIELD_FRAGMENTS = (
+    'accesskey',
+    'apikey',
+    'authorization',
+    'cookie',
+    'credential',
+    'csrf',
+    'externalid',
+    'passwd',
+    'password',
+    'privatekey',
+    'secret',
+    'sessionkey',
+    'splunkd8443',
+    'splunkwebuid',
+    'token',
+    'xsplunkformkey',
+)
+SENSITIVE_ASSIGNMENT = re.compile(
+    r'(?i)((?:"|\')?(?:access[_-]?key|api[_-]?(?:key|token)|'
+    r'authorization|cookie|credential|csrf|external[_-]?id|'
+    r'passw(?:or)?d|private[_-]?key|secret|session[_-]?(?:key|token)|'
+    r'token|username|x-splunk-form-key)(?:"|\')?\s*[:=]\s*)'
+    r'(?:(?:"(?:\\.|[^"\r\n])*"?)|'
+    r'(?:\'(?:\\.|[^\'\r\n])*\'?)|[^\r\n&;<>{},]+)'
+)
 
 NOAH_TOKEN_PENDING = 'Noah stack token creation in progress'
 
@@ -78,9 +110,15 @@ class SplunkIntegrationError(RuntimeError):
 class SplunkHttpError(SplunkIntegrationError):
     """Raised for an unsuccessful Splunk HTTP request."""
 
-    def __init__(self, status: int, message: str):
+    def __init__(
+        self,
+        status: int,
+        message: str,
+        response_body: str | None = None,
+    ):
         super().__init__(message)
         self.status = status
+        self.response_body = response_body
 
 
 @dataclass(frozen=True, slots=True)
@@ -112,6 +150,145 @@ def decode_json(raw: bytes, description: str) -> JsonObject:
             f'Splunk returned a non-object {description}'
         )
     return document
+
+
+def _normalized_field_name(value: object) -> str:
+    return ''.join(
+        character
+        for character in str(value).casefold()
+        if character.isalnum()
+    )
+
+
+def _is_sensitive_field_name(value: object) -> bool:
+    normalized = _normalized_field_name(value)
+    return any(
+        fragment in normalized
+        for fragment in SENSITIVE_FIELD_FRAGMENTS
+    )
+
+
+def redact_sensitive_fields(value: Any) -> Any:
+    """Return a copy with credential-like fields redacted."""
+    if isinstance(value, Mapping):
+        tag_name = next(
+            (
+                item
+                for key, item in value.items()
+                if _normalized_field_name(key) == 'key'
+            ),
+            None,
+        )
+        sensitive_tag = isinstance(
+            tag_name,
+            str,
+        ) and _is_sensitive_field_name(tag_name)
+        redacted = {}
+        for key, item in value.items():
+            normalized_key = _normalized_field_name(key)
+            if _is_sensitive_field_name(key) or (
+                sensitive_tag and normalized_key == 'value'
+            ):
+                redacted[key] = REDACTED
+            else:
+                redacted[key] = redact_sensitive_fields(item)
+        return redacted
+    if isinstance(value, list):
+        return [redact_sensitive_fields(item) for item in value]
+    if isinstance(value, tuple):
+        return tuple(redact_sensitive_fields(item) for item in value)
+    if isinstance(value, str):
+        return SENSITIVE_ASSIGNMENT.sub(
+            lambda match: f'{match.group(1)}{REDACTED}',
+            value,
+        )
+    return value
+
+
+def redact_known_secrets(
+    value: Any,
+    secret_values: Sequence[str],
+) -> Any:
+    """Return a copy with known credential values redacted."""
+    if isinstance(value, Mapping):
+        return {
+            key: redact_known_secrets(item, secret_values)
+            for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [
+            redact_known_secrets(item, secret_values)
+            for item in value
+        ]
+    if isinstance(value, tuple):
+        return tuple(
+            redact_known_secrets(item, secret_values)
+            for item in value
+        )
+    if isinstance(value, str):
+        value = unescape(unquote(value))
+        for secret in secret_values:
+            value = value.replace(secret, REDACTED)
+    return value
+
+
+def known_secret_variants(secret_values: Sequence[str]) -> tuple[str, ...]:
+    """Return common transport encodings for known credentials."""
+    variants = set()
+    for secret in secret_values:
+        if not secret:
+            continue
+        variants.update(
+            {
+                secret,
+                quote(secret, safe=''),
+                quote_plus(secret, safe=''),
+                json.dumps(secret)[1:-1],
+            }
+        )
+    return tuple(sorted(variants, key=len, reverse=True))
+
+
+def render_diagnostic(
+    value: Any,
+    *,
+    secret_values: Sequence[str] = (),
+    limit: int,
+) -> str:
+    """Render one bounded JSON diagnostic without known secrets."""
+    known_secrets = known_secret_variants(secret_values)
+    redacted = redact_known_secrets(value, known_secrets)
+    redacted = redact_sensitive_fields(redacted)
+    rendered = json.dumps(
+        redacted,
+        separators=(',', ':'),
+        sort_keys=True,
+    )
+    if len(rendered) > limit:
+        return (
+            f'{rendered[:limit]}...'
+            f'[truncated; total_chars={len(rendered)}]'
+        )
+    return rendered
+
+
+def render_http_error_body(
+    raw: bytes,
+    *,
+    secret_values: Sequence[str] = (),
+) -> str:
+    """Render a bounded HTTP response body for failure diagnostics."""
+    if not raw:
+        return '<empty>'
+    try:
+        value = json.loads(raw)
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        value = unescape(unquote(raw.decode('utf-8', errors='replace')))
+    return render_diagnostic(
+        value,
+        secret_values=secret_values,
+        limit=HTTP_ERROR_BODY_LIMIT,
+    )
 
 
 class SplunkWebClient:
@@ -326,9 +503,22 @@ class SplunkWebClient:
 
         self.logger(f'{method} {path} returned HTTP {status}.')
         if not 200 <= status < 300:
+            secret_values = (
+                self.config.username,
+                self.config.password,
+                self._csrf_token or '',
+                *(cookie.value for cookie in self.cookies),
+            )
+            response_body = None
+            if '/data_manager/' in path:
+                response_body = render_http_error_body(
+                    raw,
+                    secret_values=secret_values,
+                )
             raise SplunkHttpError(
                 status,
                 f'{method} {path} returned HTTP {status}',
+                response_body,
             )
         return raw
 
@@ -607,6 +797,7 @@ def main(
     standard_error = sys.stderr if error_stream is None else error_stream
     messages: list[str] = []
     credential_values: tuple[str, ...] = ()
+    config: RuntimeConfig | None = None
 
     def sanitize(message: str) -> str:
         for value in credential_values:
@@ -673,6 +864,26 @@ def main(
             f'{operation} failed: {sanitize(str(error))}',
             file=standard_error,
         )
+        if isinstance(
+            error,
+            SplunkHttpError,
+        ) and error.response_body is not None:
+            print(
+                'Splunk HTTP response body: '
+                f'{sanitize(error.response_body)}',
+                file=standard_error,
+            )
+        if config is not None and config.input_request is not None:
+            request_payload = render_diagnostic(
+                config.input_request,
+                secret_values=credential_values,
+                limit=REQUEST_PAYLOAD_LIMIT,
+            )
+            print(
+                'Splunk Data Manager request payload (redacted): '
+                f'{request_payload}',
+                file=standard_error,
+            )
         return 1
 
 

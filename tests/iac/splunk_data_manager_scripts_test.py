@@ -158,7 +158,7 @@ class FakeClient:
         self,
         *,
         input_responses=(),
-        template: bytes = VALID_TEMPLATE,
+        template: bytes | BaseException = VALID_TEMPLATE,
         hec_responses: dict[str, list[dict[str, object]]] | None = None,
         put_error: BaseException | None = None,
     ):
@@ -210,6 +210,8 @@ class FakeClient:
 
     def get_template(self) -> bytes:
         self.calls.append(('get_template', None))
+        if isinstance(self.template, BaseException):
+            raise self.template
         return self.template
 
     def check_delete_readiness(self) -> None:
@@ -281,6 +283,86 @@ def test_runtime_config_does_not_expose_credentials() -> None:
 
     assert 'user+private@example.com' not in rendered
     assert 'password&private=true' not in rendered
+
+
+def test_diagnostic_redacts_nested_credentials_and_sensitive_tags() -> None:
+    diagnostic = splunk_integration.render_diagnostic(
+        {
+            'password': 'payload-password',
+            'nested': [
+                {
+                    'apiToken': 'payload-token',
+                    'kmsKeyArns': ['arn:aws:kms:us-east-1:123:key/key-id'],
+                }
+            ],
+            'resourceTags': [
+                {'Key': 'Owner', 'Value': 'forge-team'},
+                {'Key': 'ClientSecret', 'Value': 'tag-secret'},
+            ],
+        },
+        limit=4096,
+    )
+
+    rendered = json.loads(diagnostic)
+    assert rendered['password'] == '[REDACTED]'
+    assert rendered['nested'][0]['apiToken'] == '[REDACTED]'
+    assert rendered['nested'][0]['kmsKeyArns'] == [
+        'arn:aws:kms:us-east-1:123:key/key-id'
+    ]
+    assert rendered['resourceTags'] == [
+        {'Key': 'Owner', 'Value': 'forge-team'},
+        {'Key': 'ClientSecret', 'Value': '[REDACTED]'},
+    ]
+    assert 'payload-password' not in diagnostic
+    assert 'payload-token' not in diagnostic
+    assert 'tag-secret' not in diagnostic
+
+
+def test_http_error_body_is_single_line_redacted_and_bounded() -> None:
+    body = b'upstream failed\npassword=body-secret\n' + (
+        b'x' * (splunk_integration.HTTP_ERROR_BODY_LIMIT + 100)
+    )
+
+    diagnostic = splunk_integration.render_http_error_body(body)
+
+    assert '\n' not in diagnostic
+    assert 'body-secret' not in diagnostic
+    assert 'password=[REDACTED]' in diagnostic
+    assert '[truncated; total_chars=' in diagnostic
+
+
+@pytest.mark.parametrize(
+    ('body', 'secrets'),
+    [
+        (
+            b'username=splunk%2B%22user%22&password=password%0Aprivate',
+            ('splunk+"user"', 'password\nprivate'),
+        ),
+        (
+            b'username=splunk+&quot;user&quot; password=password&#10;private',
+            ('splunk+"user"', 'password\nprivate'),
+        ),
+        (
+            b'{"apiToken":"server-secret"',
+            (),
+        ),
+    ],
+)
+def test_non_json_http_error_body_does_not_leak_encoded_secrets(
+    body: bytes,
+    secrets: tuple[str, ...],
+) -> None:
+    diagnostic = splunk_integration.render_http_error_body(
+        body,
+        secret_values=secrets,
+    )
+
+    assert 'splunk' not in diagnostic
+    assert 'private' not in diagnostic
+    assert 'password%0Aprivate' not in diagnostic
+    assert 'password\\nprivate' not in diagnostic
+    assert 'server-secret' not in diagnostic
+    assert '[REDACTED]' in diagnostic
 
 
 def test_fetch_input_rejects_an_invalid_response() -> None:
@@ -768,6 +850,80 @@ def test_client_encodes_login_and_authenticated_json_requests() -> None:
     )
 
 
+def test_client_preserves_only_a_sanitized_http_error_body() -> None:
+    username = 'splunk+"user"'
+    password = 'password\nprivate'
+    response_body = json.dumps(
+        {
+            'message': (
+                f'template failed for {username} with {password} '
+                'and csrf-value'
+            ),
+            'token': 'server-token',
+            'kmsKeyArns': ['arn:aws:kms:us-east-1:123:key/key-id'],
+        }
+    ).encode()
+    opener = FakeOpener(
+        [
+            FakeResponse(200, b'login'),
+            FakeResponse(200, b'authenticated'),
+            FakeResponse(500, response_body),
+        ]
+    )
+    client = splunk_integration.SplunkWebClient(
+        runtime_config(
+            s3_request(),
+            username=username,
+            password=password,
+        ),
+        cookies=authenticated_cookie_jar(),
+        opener=opener,
+    )
+    client.login()
+
+    with pytest.raises(
+        splunk_integration.SplunkHttpError,
+        match='returned HTTP 500',
+    ) as raised:
+        client.get_template()
+
+    error = raised.value
+    assert error.status == 500
+    assert 'server-token' not in error.response_body
+    assert username not in error.response_body
+    assert password not in error.response_body
+    assert 'csrf-value' not in error.response_body
+    assert json.loads(error.response_body) == {
+        'kmsKeyArns': ['arn:aws:kms:us-east-1:123:key/key-id'],
+        'message': (
+            'template failed for [REDACTED] with [REDACTED] '
+            'and [REDACTED]'
+        ),
+        'token': '[REDACTED]',
+    }
+
+
+def test_client_does_not_capture_unauthenticated_login_error_body() -> None:
+    opener = FakeOpener(
+        [
+            FakeResponse(
+                500,
+                b'username=splunk-user&password=splunk-password',
+            ),
+        ]
+    )
+    client = splunk_integration.SplunkWebClient(
+        runtime_config(s3_request()),
+        cookies=authenticated_cookie_jar(),
+        opener=opener,
+    )
+
+    with pytest.raises(splunk_integration.SplunkHttpError) as raised:
+        client.login()
+
+    assert raised.value.response_body is None
+
+
 def test_client_tolerates_already_deleted_resources() -> None:
     opener = FakeOpener(
         [
@@ -820,6 +976,68 @@ def test_client_preserves_best_effort_hec_token_checks(
     client.login()
 
     assert client.get_hec_token('cloudtrail') == {}
+
+
+def test_s3_template_failure_prints_response_body_and_request_payload(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    request = s3_request()
+    response_body = splunk_integration.render_http_error_body(
+        b'{"error":"template is not ready","token":"server-token"}'
+    )
+    client = FakeClient(
+        input_responses=[s3_response()],
+        template=splunk_integration.SplunkHttpError(
+            500,
+            'GET /templates/dataaccount/ingest returned HTTP 500',
+            response_body,
+        ),
+    )
+
+    monkeypatch.setattr(
+        splunk_integration,
+        'SplunkWebClient',
+        lambda _config, logger: client,
+    )
+    install_runtime_environment(monkeypatch, request)
+    stdout = io.StringIO()
+    stderr = io.StringIO()
+
+    result = splunk_integration.main(
+        ['create'],
+        output_stream=stdout,
+        error_stream=stderr,
+        artifact_dir=tmp_path,
+    )
+
+    lines = stderr.getvalue().splitlines()
+    assert result == 1
+    assert stdout.getvalue() == ''
+    assert lines[0] == (
+        'Splunk Data Manager create failed: '
+        'GET /templates/dataaccount/ingest returned HTTP 500'
+    )
+    assert lines[1] == (
+        'Splunk HTTP response body: '
+        '{"error":"template is not ready","token":"[REDACTED]"}'
+    )
+    payload = json.loads(
+        lines[2].removeprefix(
+            'Splunk Data Manager request payload (redacted): '
+        )
+    )
+    assert payload['details']['datasetInfo'] == (
+        request['details']['datasetInfo']
+    )
+    assert payload['details']['s3BucketPatterns'] == (
+        request['details']['s3BucketPatterns']
+    )
+    assert payload['details']['kmsKeyArns'] == (
+        request['details']['kmsKeyArns']
+    )
+    assert 'server-token' not in stderr.getvalue()
+    assert list(tmp_path.iterdir()) == []
 
 
 def test_create_main_uses_process_environment_and_only_writes_template(
@@ -939,6 +1157,48 @@ def test_get_main_reads_the_external_query_and_prints_only_result_json(
     assert set(tmp_path.iterdir()) == {template_path}
 
 
+def test_get_failure_keeps_response_body_out_of_external_stdout(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    client = FakeClient(
+        input_responses=[s3_response()],
+        template=splunk_integration.SplunkHttpError(
+            500,
+            'GET /templates/dataaccount/ingest returned HTTP 500',
+            '{"error":"template is not ready"}',
+        ),
+    )
+
+    monkeypatch.setattr(
+        splunk_integration,
+        'SplunkWebClient',
+        lambda _config, logger: client,
+    )
+    stdout = io.StringIO()
+    stderr = io.StringIO()
+
+    result = splunk_integration.main(
+        ['get'],
+        input_stream=io.StringIO(json.dumps(runtime_values())),
+        output_stream=stdout,
+        error_stream=stderr,
+        artifact_dir=tmp_path,
+    )
+
+    assert result == 1
+    assert stdout.getvalue() == ''
+    assert stderr.getvalue().splitlines() == [
+        'Splunk Data Manager get failed: '
+        'GET /templates/dataaccount/ingest returned HTTP 500',
+        'Splunk HTTP response body: '
+        '{"error":"template is not ready"}',
+    ]
+    assert 'splunk-user' not in stderr.getvalue()
+    assert 'splunk-password' not in stderr.getvalue()
+    assert list(tmp_path.iterdir()) == []
+
+
 def test_delete_main_uses_process_environment_without_artifacts(
     tmp_path: Path,
     monkeypatch,
@@ -980,6 +1240,12 @@ def test_main_prints_failure_diagnostics_only_to_stderr(
     monkeypatch,
 ) -> None:
     request = push_request()
+    request['diagnostic'] = {
+        'password': 'payload-password',
+        'resourceTags': [
+            {'Key': 'ApiToken', 'Value': 'payload-token'},
+        ],
+    }
     client = FakeClient(
         put_error=splunk_integration.SplunkHttpError(
             500,
@@ -1014,11 +1280,25 @@ def test_main_prints_failure_diagnostics_only_to_stderr(
 
     assert result == 1
     assert stdout.getvalue() == ''
-    assert stderr.getvalue().splitlines() == [
+    lines = stderr.getvalue().splitlines()
+    assert lines[:2] == [
         'PUT response for [REDACTED] using [REDACTED].',
         'Splunk Data Manager create failed: '
         'PUT failed for [REDACTED] using [REDACTED]',
     ]
+    payload = json.loads(
+        lines[2].removeprefix(
+            'Splunk Data Manager request payload (redacted): '
+        )
+    )
+    assert payload['diagnostic'] == {
+        'password': '[REDACTED]',
+        'resourceTags': [
+            {'Key': 'ApiToken', 'Value': '[REDACTED]'},
+        ],
+    }
     assert 'splunk-user' not in stderr.getvalue()
     assert 'splunk-password' not in stderr.getvalue()
+    assert 'payload-password' not in stderr.getvalue()
+    assert 'payload-token' not in stderr.getvalue()
     assert list(tmp_path.iterdir()) == []
