@@ -1,6 +1,6 @@
 # Module Interface Contract Helper
 
-This helper is used by module-local `*_interface_contract.tftest.hcl` tests.
+This helper is used by module-local `interface_contract.tftest.hcl` tests.
 It reads the Terraform source for the module under test and verifies:
 
 - the exact public input variable names

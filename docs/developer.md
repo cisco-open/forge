@@ -120,19 +120,19 @@ modules/<category>/<module>/
 ├── outputs.tf
 ├── variables.tf
 └── tests/
-    ├── <module>_source_inventory.tftest.hcl
-    ├── <module>_interface_contract.tftest.hcl
-    └── <module>_behavior.tftest.hcl
+    ├── source_inventory.tftest.hcl
+    ├── interface_contract.tftest.hcl
+    └── behavior.tftest.hcl
 ```
 
-OpenTofu recognizes every file ending in `.tftest.hcl`. The suffix before that
-extension is a Forge convention that identifies the purpose of the test:
+OpenTofu recognizes every file ending in `.tftest.hcl`. Forge uses the
+following standard filenames to identify the purpose of each test:
 
-| Test type                         | Required                                 | Purpose                                                                   |
-| --------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------- |
-| `*_source_inventory.tftest.hcl`   | Once per module                          | Protect important Terraform blocks and structural source contracts.       |
-| `*_interface_contract.tftest.hcl` | Once per module                          | Protect the complete public input and output interface.                   |
-| `*_behavior.tftest.hcl`           | When the module has behavior to exercise | Verify planned resources, wiring, policies, outputs, and input rejection. |
+| Test type                       | Required                                 | Purpose                                                                   |
+| ------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------- |
+| `source_inventory.tftest.hcl`   | Once per module                          | Protect important Terraform blocks and structural source contracts.       |
+| `interface_contract.tftest.hcl` | Once per module                          | Protect the complete public input and output interface.                   |
+| `behavior.tftest.hcl`           | When the module has behavior to exercise | Verify planned resources, wiring, policies, outputs, and input rejection. |
 
 Keep these responsibilities separate. A source-inventory test should not become
 a substitute for a behavior assertion, and a behavior test should not duplicate
@@ -345,7 +345,7 @@ Run one test file:
 
 ```bash
 tofu -chdir=modules/helpers/ecr test \
-  -filter=tests/ecr_behavior.tftest.hcl \
+  -filter=tests/behavior.tftest.hcl \
   -no-color
 ```
 

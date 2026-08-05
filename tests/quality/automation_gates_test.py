@@ -24,10 +24,8 @@ def contains_module_interface_contract(path: Path) -> bool:
 
 
 def is_module_interface_contract(path: Path) -> bool:
-    has_interface_suffix = path.name.endswith(
-        '_interface_contract.tftest.hcl',
-    )
-    return has_interface_suffix and contains_module_interface_contract(path)
+    has_standard_name = path.name == 'interface_contract.tftest.hcl'
+    return has_standard_name and contains_module_interface_contract(path)
 
 
 def contains_source_inventory_contract(path: Path) -> bool:
@@ -36,10 +34,8 @@ def contains_source_inventory_contract(path: Path) -> bool:
 
 
 def is_source_inventory_contract(path: Path) -> bool:
-    has_source_inventory_suffix = path.name.endswith(
-        '_source_inventory.tftest.hcl',
-    )
-    return has_source_inventory_suffix and contains_source_inventory_contract(path)
+    has_standard_name = path.name == 'source_inventory.tftest.hcl'
+    return has_standard_name and contains_source_inventory_contract(path)
 
 
 def is_behavior_contract(path: Path) -> bool:
@@ -98,7 +94,7 @@ def test_python_ssm_clients_use_explicit_retry_config() -> None:
     assert missing_config == []
 
 
-def test_each_module_has_specific_native_test_file() -> None:
+def test_each_module_uses_standard_native_test_filenames() -> None:
     modules = sorted(
         path
         for path in (REPO_ROOT / 'modules').rglob('*')
@@ -106,7 +102,12 @@ def test_each_module_has_specific_native_test_file() -> None:
     )
 
     missing_tests = []
-    generic_tests = []
+    unexpected_tests = []
+    allowed_filenames = {
+        'behavior.tftest.hcl',
+        'interface_contract.tftest.hcl',
+        'source_inventory.tftest.hcl',
+    }
     for module in modules:
         tests_dir = module / 'tests'
         if tests_dir.exists():
@@ -115,16 +116,14 @@ def test_each_module_has_specific_native_test_file() -> None:
             tests = []
         if not tests:
             missing_tests.append(module.relative_to(REPO_ROOT).as_posix())
-        for test_file in tests:
-            if test_file.name in {
-                'module_contract.tftest.hcl',
-                'module_static_contract.tftest.hcl',
-            }:
-                generic_tests.append(
-                    test_file.relative_to(REPO_ROOT).as_posix())
+        unexpected_tests.extend(
+            test_file.relative_to(REPO_ROOT).as_posix()
+            for test_file in tests
+            if test_file.name not in allowed_filenames
+        )
 
     assert missing_tests == []
-    assert generic_tests == []
+    assert unexpected_tests == []
 
 
 def test_each_module_has_one_interface_contract() -> None:
@@ -145,7 +144,7 @@ def test_each_module_has_one_interface_contract() -> None:
             test_file.relative_to(REPO_ROOT).as_posix()
             for test_file in tests
             if contains_module_interface_contract(test_file)
-            if not test_file.name.endswith('_interface_contract.tftest.hcl')
+            if test_file.name != 'interface_contract.tftest.hcl'
         )
         interface_tests = (
             sorted(
@@ -189,7 +188,7 @@ def test_each_module_has_one_source_inventory_contract() -> None:
             test_file.relative_to(REPO_ROOT).as_posix()
             for test_file in tests
             if contains_source_inventory_contract(test_file)
-            if not test_file.name.endswith('_source_inventory.tftest.hcl')
+            if test_file.name != 'source_inventory.tftest.hcl'
         )
         inventory_tests = (
             sorted(
@@ -215,14 +214,15 @@ def test_each_module_has_one_source_inventory_contract() -> None:
     assert duplicate_inventory_tests == []
 
 
-def test_behavior_contracts_use_behavior_suffix() -> None:
+def test_behavior_contracts_use_standard_filename() -> None:
     misnamed_behavior_tests = [
         test_file.relative_to(REPO_ROOT).as_posix()
         for test_file in sorted(
             (REPO_ROOT / 'modules').glob('**/tests/*.tftest.hcl'),
         )
+        if '.terraform' not in test_file.parts
         if is_behavior_contract(test_file)
-        if not test_file.name.endswith('_behavior.tftest.hcl')
+        if test_file.name != 'behavior.tftest.hcl'
     ]
 
     assert misnamed_behavior_tests == []
