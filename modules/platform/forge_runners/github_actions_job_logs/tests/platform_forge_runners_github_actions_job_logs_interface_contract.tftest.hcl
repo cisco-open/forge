@@ -21,8 +21,7 @@ run "platform_forge_runners_github_actions_job_logs_interface_contract" {
       "internal_s3_reader_role_arn",
       "s3_bucket_arn",
       "s3_bucket_kms_key_arn",
-      "s3_notification_queue_arn",
-      "s3_notification_queue_url",
+      "sqs",
     ]
     expected_interface_literals = [
       "variable \"event_bus_name\"",
@@ -64,12 +63,10 @@ run "platform_forge_runners_github_actions_job_logs_interface_contract" {
       "output \"s3_bucket_kms_key_arn\"",
       "description = \"The ARN of the KMS key used to encrypt GitHub Actions job logs.\"",
       "value       = aws_kms_key.gh_logs.arn",
-      "output \"s3_notification_queue_arn\"",
-      "description = \"The ARN of the SQS queue receiving GitHub Actions job log S3 notifications.\"",
-      "value       = aws_sqs_queue.s3_notifications.arn",
-      "output \"s3_notification_queue_url\"",
-      "description = \"The URL of the SQS queue receiving GitHub Actions job log S3 notifications.\"",
-      "value       = aws_sqs_queue.s3_notifications.url",
+      "output \"sqs\"",
+      "description = \"The SQS queue receiving GitHub Actions job log S3 notifications.\"",
+      "arn = aws_sqs_queue.s3_notifications.arn",
+      "url = aws_sqs_queue.s3_notifications.url",
     ]
   }
 
@@ -101,8 +98,8 @@ run "platform_forge_runners_github_actions_job_logs_interface_contract" {
   assert {
     condition = (
       output.expected_input_variable_count == 8
-      && output.expected_output_value_count == 5
-      && output.expected_interface_literal_count == 45
+      && output.expected_output_value_count == 4
+      && output.expected_interface_literal_count == 43
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

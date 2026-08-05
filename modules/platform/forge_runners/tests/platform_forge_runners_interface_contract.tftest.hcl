@@ -261,8 +261,7 @@ run "platform_forge_runners_interface_contract" {
       "description = \"GitHub Actions job log archival resources.\"",
       "bucket_arn               = try(module.github_actions_job_logs[0].s3_bucket_arn, null)",
       "bucket_kms_key_arn       = try(module.github_actions_job_logs[0].s3_bucket_kms_key_arn, null)",
-      "notification_queue_arn   = try(module.github_actions_job_logs[0].s3_notification_queue_arn, null)",
-      "notification_queue_url   = try(module.github_actions_job_logs[0].s3_notification_queue_url, null)",
+      "sqs                      = try(module.github_actions_job_logs[0].sqs, null)",
       "internal_reader_role_arn = try(module.github_actions_job_logs[0].internal_s3_reader_role_arn, null)",
       "output \"forge_github_app\"",
       "description = \"GitHub App related outputs.\"",
@@ -319,7 +318,7 @@ run "platform_forge_runners_interface_contract" {
     condition = (
       output.expected_input_variable_count == 10
       && output.expected_output_value_count == 5
-      && output.expected_interface_literal_count == 260
+      && output.expected_interface_literal_count == 259
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

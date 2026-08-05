@@ -40,8 +40,7 @@ See `variables.tf` for full list. Key inputs:
 ## Outputs
 - `s3_bucket_arn`: S3 bucket containing the archived job logs.
 - `s3_bucket_kms_key_arn`: KMS key used to encrypt the archived objects.
-- `s3_notification_queue_url`: SQS queue URL for downstream ingestion.
-- `s3_notification_queue_arn`: SQS queue ARN for policy and monitoring use.
+- `sqs`: SQS queue details, including the ARN and URL for downstream ingestion.
 - `internal_s3_reader_role_arn`: Internal IAM role with read access to the bucket.
 
 ## S3 Notification Ownership
@@ -210,6 +209,5 @@ The EventBridge -> dispatcher -> SQS -> archiver shape is intentional. It provid
 | <a name="output_internal_s3_reader_role_arn"></a> [internal\_s3\_reader\_role\_arn](#output\_internal\_s3\_reader\_role\_arn) | The ARN of the IAM role used for reading from the S3 bucket. |
 | <a name="output_s3_bucket_arn"></a> [s3\_bucket\_arn](#output\_s3\_bucket\_arn) | The ARN of the S3 bucket where GitHub Actions job logs are stored. |
 | <a name="output_s3_bucket_kms_key_arn"></a> [s3\_bucket\_kms\_key\_arn](#output\_s3\_bucket\_kms\_key\_arn) | The ARN of the KMS key used to encrypt GitHub Actions job logs. |
-| <a name="output_s3_notification_queue_arn"></a> [s3\_notification\_queue\_arn](#output\_s3\_notification\_queue\_arn) | The ARN of the SQS queue receiving GitHub Actions job log S3 notifications. |
-| <a name="output_s3_notification_queue_url"></a> [s3\_notification\_queue\_url](#output\_s3\_notification\_queue\_url) | The URL of the SQS queue receiving GitHub Actions job log S3 notifications. |
+| <a name="output_sqs"></a> [sqs](#output\_sqs) | The SQS queue receiving GitHub Actions job log S3 notifications. |
 <!-- END_TF_DOCS -->

@@ -43,8 +43,7 @@ run "platform_forge_runners_github_actions_job_logs_contract" {
       "data \"aws_iam_policy_document\" \"internal_s3_reader_policy_doc\"",
       "output \"s3_bucket_arn\"",
       "output \"s3_bucket_kms_key_arn\"",
-      "output \"s3_notification_queue_arn\"",
-      "output \"s3_notification_queue_url\"",
+      "output \"sqs\"",
       "output \"internal_s3_reader_role_arn\"",
     ]
   }
