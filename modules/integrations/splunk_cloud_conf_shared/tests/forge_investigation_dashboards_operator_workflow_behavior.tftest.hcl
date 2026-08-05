@@ -49,8 +49,11 @@ run "makes_investigation_dashboards_explicitly_diagnostic" {
       strcontains(splunk_data_ui_views.forge_tenant_logs.eai_data, "Which tenant log events match the investigation?")
       && strcontains(splunk_data_ui_views.forge_tenant_logs.eai_data, "an empty result can mean no matching retained events")
       && strcontains(splunk_data_ui_views.forge_tenant_logs.eai_data, "Raw logs provide evidence but do not assign")
+      && strcontains(splunk_data_ui_views.forge_tenant_logs.eai_data, "sourcetype=\\\"forgecicd:runner-logs:s3\\\"")
+      && strcontains(splunk_data_ui_views.forge_tenant_logs.eai_data, "eventstats latest(runner_job_json)")
+      && strcontains(splunk_data_ui_views.forge_tenant_logs.eai_data, "spath input=runner_job_json path=workflow_job.runner_name")
     )
-    error_message = "Tenant logs must not present an empty raw-event result as proof of health or assign ownership by itself."
+    error_message = "Tenant logs must correlate native S3 log objects with sibling JSON metadata without overstating empty results or ownership."
   }
 
   assert {
@@ -58,7 +61,11 @@ run "makes_investigation_dashboards_explicitly_diagnostic" {
       strcontains(splunk_data_ui_views.forge_ci_job_details.eai_data, "\"description\": \"Answers")
       && strcontains(splunk_data_ui_views.forge_troubleshooting.eai_data, "\"description\": \"Answers")
       && can(regex("\"item\": \"queued_windows_table\"[\\s\\S]*\"item\": \"ci_job_details_table\"", splunk_data_ui_views.forge_ci_job_details.eai_data))
+      && strcontains(splunk_data_ui_views.forge_ci_job_details.eai_data, "sourcetype=\\\"forgecicd:runner-logs:s3\\\" source=\\\"*.json\\\"")
+      && strcontains(splunk_data_ui_views.forge_ci_job_details.eai_data, "spath input=_raw path=workflow_job.runner_name")
+      && strcontains(splunk_data_ui_views.forge_ci_job_details.eai_data, "eval forgecicd_type=case")
+      && strcontains(splunk_data_ui_views.forge_troubleshooting.eai_data, "sourcetype=\\\"forgecicd:runner-logs:s3\\\" source=\\\"*.json\\\"")
     )
-    error_message = "CI and troubleshooting panels must have question-oriented descriptions and leave high-cardinality job detail after queue diagnostics."
+    error_message = "CI and troubleshooting panels must query native S3 JSON explicitly, extract metadata with spath, and leave high-cardinality job detail after queue diagnostics."
   }
 }

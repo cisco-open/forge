@@ -19,12 +19,6 @@ level because their baselines vary materially by tenant and region. The
 control-plane detector only evaluates shared functions without a TenantName
 tag and requires sustained throttling before alerting.
 
-The runner-log delivery detector also monitors the Firehose Kinesis source
-reader. It warns when the reader remains more than five minutes behind for 10
-minutes, becomes critical above 15 minutes or when input continues while reads
-stop, and reports sustained source-reader throttling. It clears lag alerts only
-after lag remains below one minute for 10 minutes.
-
 ## Ownership and configuration
 
 This detector is an internal submodule of `splunk_o11y_conf_shared`; deploy the
@@ -84,7 +78,6 @@ No modules.
 | [signalfx_detector.aws_control_plane_health](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/detector) | resource |
 | [signalfx_detector.aws_regional_platform_health](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/detector) | resource |
 | [signalfx_detector.aws_sqs_control_plane_health](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/detector) | resource |
-| [signalfx_detector.runner_log_delivery_health](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/detector) | resource |
 
 ## Inputs
 
@@ -102,6 +95,5 @@ No modules.
 | ---- | ----------- |
 | <a name="output_detector_id"></a> [detector\_id](#output\_detector\_id) | AWS regional platform detector ID for linking queue-health charts. |
 | <a name="output_lambda_control_plane_detector_id"></a> [lambda\_control\_plane\_detector\_id](#output\_lambda\_control\_plane\_detector\_id) | AWS Lambda control-plane detector ID for linking Lambda health charts. |
-| <a name="output_runner_log_delivery_detector_id"></a> [runner\_log\_delivery\_detector\_id](#output\_runner\_log\_delivery\_detector\_id) | Runner-log delivery integrity detector ID. |
 | <a name="output_sqs_control_plane_detector_id"></a> [sqs\_control\_plane\_detector\_id](#output\_sqs\_control\_plane\_detector\_id) | AWS SQS control-plane detector ID for linking SQS health charts. |
 <!-- END_TF_DOCS -->

@@ -73,11 +73,6 @@ spec:
         repo: git@github.com:cisco-open/forge.git
         module_path: modules/integrations/splunk_secrets
         ref: main
-      splunk_cloud_s3_runner_logs:
-        local_path: ../forge
-        repo: git@github.com:cisco-open/forge.git
-        module_path: modules/integrations/splunk_cloud_s3_runner_logs
-        ref: main
       splunk_stuck_workflow_job_dispatcher:
         local_path: ../forge
         repo: git@github.com:cisco-open/forge.git

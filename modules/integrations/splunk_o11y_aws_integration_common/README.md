@@ -17,7 +17,6 @@ Forge separates logs and metrics. This module wires CloudWatch metrics into Splu
 
 - The integration regions should match where Forge infrastructure actually runs.
 - If metrics are missing, validate both AWS role trust and SignalFx integration state.
-- The metric stream must include `AWS/Firehose` metrics for the runner-log delivery streams. Source-reader triage depends on `KinesisMillisBehindLatest`, `DataReadFromKinesisStream.Records`, `DataReadFromKinesisStream.Bytes`, `ThrottledGetRecords`, and `ThrottledGetShardIterator`.
 - This is metrics plumbing; log field extraction lives in the Splunk Cloud configuration module.
 
 <!-- BEGIN_TF_DOCS -->

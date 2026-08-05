@@ -12,10 +12,16 @@ and
 [Splunk Observability Dashboard Panel Reference](../operations/splunk-o11y-dashboard-panel-reference.md).
 
 ForgeMT baseline platform logs go to CloudWatch. Splunk adds optional
-dashboards, saved searches, redelivery logic, billing ingestion, S3 log
-ingestion, and metrics views. AWS billing and S3 log ingestion are
-integration-specific paths: they may send data to Splunk directly or through
-Kinesis when those modules are deployed.
+dashboards, saved searches, redelivery logic, billing ingestion, Data Manager
+S3 inputs, and metrics views. GitHub Actions `.log` and `.json` objects are
+delivered through the native Splunk Data Manager S3/SQS integration.
+
+When migrating an existing deployment, destroy or otherwise remove any previous
+Terraform owner of the job-log bucket notification through its owning
+deployment before applying the platform notification; Amazon S3 notification
+configuration is atomic. Before destroying the retired custom delivery path,
+inspect its versioned failed-delivery bucket because retained objects can block
+deletion. Its KMS key uses a 30-day deletion window.
 
 ## Module Families
 
@@ -31,10 +37,10 @@ Kinesis when those modules are deployed.
 
 ## Dashboard Surfaces
 
-| Surface                         | Use it for                                                                                                                                                                                                                                      |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Splunk Cloud dashboards         | Logs, field extraction, workflow jobs, runner lifecycle, dependency probes, trust failures, and stuck-job redelivery.                                                                                                                           |
-| Splunk Observability dashboards | Metrics, dependency availability, rate-limit budget, regional AWS platform health, tenant and control-plane Lambda/SQS/S3 health, control-plane Kinesis and AWS service limits, resource pressure, runner capacity, AWS services, and OpenCost. |
+| Surface                         | Use it for                                                                                                                                                                                                            |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Splunk Cloud dashboards         | Logs, field extraction, workflow jobs, runner lifecycle, dependency probes, trust failures, and stuck-job redelivery.                                                                                                 |
+| Splunk Observability dashboards | Metrics, dependency availability, rate-limit budget, regional AWS platform health, tenant and control-plane Lambda/SQS/S3 health, AWS service limits, resource pressure, runner capacity, AWS services, and OpenCost. |
 
 Use Splunk Cloud logs to explain what happened. Use Splunk Observability
 metrics to explain whether resource pressure contributed to it.
@@ -88,8 +94,7 @@ examples/deployments/integrations/terragrunt
 | 9    | `environments/prod/splunk_o11y_conf_shared`                       | Shared Splunk Observability dashboards and detectors. |
 | 10   | `environments/prod/regions/eu-west-1/splunk_dependency_monitor`   | Regional GitHub and AWS dependency probes.            |
 | 11   | `environments/prod/splunk_aws_billing`                            | Billing telemetry, only if you publish billing data.  |
-| 12   | `environments/prod/splunk_cloud_s3_runner_logs`                   | Runner log ingestion from S3, only if enabled.        |
-| 13   | `environments/prod/splunk_stuck_workflow_job_dispatcher`          | Alert and redelivery workflow for stuck GitHub jobs.  |
+| 12   | `environments/prod/splunk_stuck_workflow_job_dispatcher`          | Alert and redelivery workflow for stuck GitHub jobs.  |
 
 You do not have to deploy every Splunk module. Pick the rows that match your
 Splunk contract.

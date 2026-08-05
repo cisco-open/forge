@@ -10,9 +10,9 @@ ForgeMT sends baseline platform logs to CloudWatch. That includes Lambda logs,
 runner lifecycle logs, webhook handling, and most support signals. Splunk is
 not required to inspect those signals.
 
-The exceptions are integration-specific data paths, such as AWS billing and S3
-log ingestion modules, where data may go to Splunk directly or through Kinesis
-when those Splunk modules are deployed.
+The exceptions are integration-specific data paths, such as AWS billing and
+Splunk Data Manager S3 inputs, where data goes directly to Splunk when those
+integrations are configured.
 
 ## Triage Order
 

@@ -26,7 +26,6 @@ modules/integrations/splunk_o11y_conf_shared/detectors/aws_regional_health
 | Forge Control Plane - Kubernetes         | Are shared cluster, node, platform pod, and telemetry components healthy?                         | `dashboard_variables.runner_k8s`, `k8s_platform_namespaces` |
 | Forge Tenant - Lambdas                   | Are Forge Lambdas failing, throttled, slow, or concentrated on a function version?                | `dashboard_variables.lambda`                                |
 | Forge Control Plane - Lambdas            | Are shared Forge Lambdas failing, throttled, or slow?                                             | `dashboard_variables.lambda_control_plane`                  |
-| Forge Control Plane - Kinesis            | Are shared Forge streams throttled, lagging, or slow?                                             | `dashboard_variables.kinesis_control_plane`                 |
 | Forge Tenant - SQS                       | Are Forge queues accumulating work or dead-letter messages?                                       | `dashboard_variables.sqs`                                   |
 | Forge Control Plane - SQS                | Are shared Forge queues accumulating work or dead-letter messages?                                | `dashboard_variables.sqs_control_plane`                     |
 | Forge Tenant - S3                        | How much storage and how many objects are in each tenant-tagged Forge bucket?                     | `dashboard_variables.s3`                                    |
@@ -221,24 +220,6 @@ independent from the tenant Lambda dashboard.
 | Invocations by control-plane function          | Which shared functions receive traffic?           |
 | Errors and throttles by control-plane function | Which shared function is failing or throttling?   |
 | Average duration by control-plane function     | Which shared functions are becoming slow?         |
-
-## Forge Control Plane - Kinesis
-
-This dashboard adapts the operational signals from Splunk's built-in
-`AWS Kinesis Streams` dashboard and includes only metric time series without
-`aws_tag_TenantName`. Its AWS account, region, and product-family scope is
-independent from other control-plane dashboards.
-
-| Chart                                    | Operational question                                         |
-| ---------------------------------------- | ------------------------------------------------------------ |
-| # Control-plane streams                  | How many shared Forge streams report metrics?                |
-| Incoming records by control-plane stream | Which streams receive records, and has input volume changed? |
-| Incoming bytes by control-plane stream   | Which streams receive the highest byte volume?               |
-| Read and write throughput exceeded       | Are consumers or producers being throttled?                  |
-| GetRecords iterator age                  | Are consumers falling behind the stream?                     |
-| Successful read and write operations     | Do successful GetRecords and PutRecords operations continue? |
-| Average GetRecords latency               | Is consumer API latency increasing?                          |
-| Average PutRecord and PutRecords latency | Is producer API latency increasing?                          |
 
 ## Forge Tenant - SQS
 
