@@ -36,6 +36,7 @@ mock_provider "null" {}
 variables {
   splunk_cloud            = "https://splunk.example.com"
   splunk_cloud_input_json = "{\"name\":\"cloudwatch\"}"
+  stack_name_prefix       = "SplunkDMDataIngest"
   tags_all = {
     Product = "Forge"
     Env     = "test"
@@ -65,7 +66,7 @@ run "splunk_data_input_template_contract" {
       && output.splunk_integration_tags.Product == "Forge"
       && output.splunk_integration_tags.Env == "test"
     )
-    error_message = "Splunk Data Manager data input outputs must derive stack name from the integration UUID and preserve inherited tags."
+    error_message = "Splunk Data Manager data input outputs must derive the configured stack name from the integration UUID and preserve inherited tags."
   }
 
   assert {

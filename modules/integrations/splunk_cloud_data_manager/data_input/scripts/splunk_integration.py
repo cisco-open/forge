@@ -57,6 +57,7 @@ TOP_LEVEL_RESPONSE_FIELDS = (
     '_key',
     '_user',
     'createTime',
+    'dataSourcesStatus',
     'id',
     'lastUpdateTime',
     'schemaVersion',
@@ -407,7 +408,7 @@ def ensure_hec_tokens(
     """Wait for each push-input HEC token."""
     log = logger or (lambda _message: None)
     categories = dataset_hec_categories(document)
-    if initial_delay_seconds:
+    if categories and initial_delay_seconds:
         log(
             'Waiting '
             f'{initial_delay_seconds} seconds for HEC token provisioning.'
@@ -519,8 +520,9 @@ def delete_integration(
     client.put_input(build_delete_payload(input_document))
     client.check_delete_readiness()
 
-    for category in PUSH_HEC_CLEANUP_CATEGORIES:
-        client.delete_hec_token(category)
+    if dataset_hec_categories(input_document):
+        for category in PUSH_HEC_CLEANUP_CATEGORIES:
+            client.delete_hec_token(category)
 
     client.check_delete_readiness()
     client.delete_input()

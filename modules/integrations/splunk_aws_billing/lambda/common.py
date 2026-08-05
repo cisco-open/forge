@@ -209,6 +209,7 @@ SPLUNK_CLOUD_DATA_MANAGER_APPLICATION_ARN = re.compile(
     r'(?P<forgecicd_module>splunk_cloud_data_manager)'
     r'(?:_custom-cwl)?'
     r'(?:_cwl)?'
+    r'(?:_s3-logs)?'
     r'(?:_secmeta)?_'
     r'(?P=aws_region)'
     rf'/{APPREGISTRY_APPLICATION_ID_PATTERN}'

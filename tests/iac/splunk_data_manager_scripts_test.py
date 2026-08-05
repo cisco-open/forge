@@ -112,6 +112,47 @@ def push_response(
     return document
 
 
+def s3_request() -> dict[str, object]:
+    request = push_request(('s3-custom-logs',))
+    request['details'].update(
+        {
+            'iamRegion': 'us-east-1',
+            'datasetInfo': {
+                's3-custom-logs': {
+                    'sqsUrls': [
+                        {
+                            'sqsUrl': (
+                                'https://sqs.us-east-1.amazonaws.com/'
+                                '123456789012/forge-s3-logs'
+                            )
+                        }
+                    ],
+                    'sourceType': 'forge:s3',
+                }
+            },
+            's3BucketPatterns': ['forge-logs-*'],
+            'kmsKeyArns': [],
+        }
+    )
+    return request
+
+
+def s3_response() -> dict[str, object]:
+    document = push_response(('s3-custom-logs',), version=1)
+    document['details'].update(s3_request()['details'])
+    document['details'].update(
+        {
+            'stackName': 'SplunkDMSqsS3-input-id',
+        }
+    )
+    document['dataSourcesStatus'] = {
+        'scc_eu-west-1_queue_input-id': {
+            'status': {'state': 'CreateDataSourceSuccess', 'message': ''}
+        }
+    }
+    return document
+
+
 class FakeClient:
     def __init__(
         self,
@@ -329,6 +370,29 @@ def test_create_preserves_the_initial_hec_delay_and_polling(
     assert set(tmp_path.iterdir()) == {template_path}
 
 
+def test_create_s3_input_skips_hec_and_writes_template(
+    tmp_path: Path,
+) -> None:
+    request = s3_request()
+    client = FakeClient(input_responses=[s3_response()])
+    template_path = tmp_path / 'input-id_template.json'
+
+    splunk_integration.create_integration(
+        client,
+        request,
+        template_path,
+        sleep=lambda _seconds: pytest.fail('S3 input must not sleep'),
+    )
+
+    assert client.calls == [
+        ('put_input', request),
+        ('get_input', None),
+        ('get_template', None),
+    ]
+    assert template_path.read_bytes() == VALID_TEMPLATE
+    assert set(tmp_path.iterdir()) == {template_path}
+
+
 def test_create_stops_after_a_failed_update(tmp_path: Path) -> None:
     request = push_request()
     client = FakeClient(
@@ -439,6 +503,26 @@ def test_delete_preserves_the_fixed_hec_cleanup_sequence() -> None:
         ('check_delete_readiness', None),
         ('delete_input', None),
     ]
+
+
+def test_delete_s3_input_skips_hec_cleanup_and_response_fields() -> None:
+    document = s3_response()
+    client = FakeClient(input_responses=[document])
+
+    splunk_integration.delete_integration(client)
+
+    put_payloads = [
+        payload
+        for operation, payload in client.calls
+        if operation == 'put_input'
+    ]
+    assert len(put_payloads) == 1
+    assert 'dataSourcesStatus' not in put_payloads[0]
+    assert all(
+        operation != 'delete_hec_token'
+        for operation, _value in client.calls
+    )
+    assert client.calls[-1] == ('delete_input', None)
 
 
 def test_delete_accepts_an_already_missing_input() -> None:

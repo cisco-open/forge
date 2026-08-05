@@ -55,6 +55,7 @@ inputs = {
 
   # Splunk Cloud Data Manager Configuration
   cloudwatch_log_groups_config = local.splunk_cloud.locals.cloudwatch_log_groups_config
+  s3_logs_config               = local.splunk_cloud.locals.s3_logs_config
   security_metadata_config     = local.splunk_cloud.locals.security_metadata_config
 
   # Misc

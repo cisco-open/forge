@@ -58,6 +58,7 @@ module "splunk_security_metadata" {
   splunk_cloud             = var.splunk_cloud
   cloudformation_s3_config = var.cloudformation_s3_config
   splunk_cloud_input_json  = local.splunk_cloud_input_security_metadata_json
+  stack_name_prefix        = "SplunkDMDataIngest"
 
   tags_all = local.all_security_tags
 }

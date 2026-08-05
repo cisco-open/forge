@@ -18,6 +18,7 @@ run "integrations_splunk_cloud_data_manager_data_input_contract" {
       "environment = {",
       "query = {",
       "SPLUNK_CLOUD_INPUT_JSON",
+      "stack_name_prefix",
       "data \"aws_secretsmanager_secret\" \"secrets\"",
       "data \"aws_secretsmanager_secret_version\" \"secrets\"",
       "output \"splunk_integration_name\"",
