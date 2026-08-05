@@ -312,10 +312,7 @@ def test_job_log_bucket_sends_log_object_notifications_to_dedicated_queue() -> N
     assert_contains_all(
         queue,
         [
-            (
-                'name                      = "${var.prefix}-forge-gh-logs-events-'
-                '${data.aws_caller_identity.current.account_id}"'
-            ),
+            'name                      = "${var.prefix}-forge-gh-logs-events"',
             'message_retention_seconds = 1209600',
             'sqs_managed_sse_enabled   = true',
         ],

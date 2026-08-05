@@ -21,7 +21,7 @@ resource "aws_sqs_queue" "jobs" {
 }
 
 resource "aws_sqs_queue" "s3_notifications" {
-  name                      = "${var.prefix}-forge-gh-logs-events-${data.aws_caller_identity.current.account_id}"
+  name                      = "${var.prefix}-forge-gh-logs-events"
   message_retention_seconds = 1209600 # 14 days
   sqs_managed_sse_enabled   = true
   tags                      = var.tags
