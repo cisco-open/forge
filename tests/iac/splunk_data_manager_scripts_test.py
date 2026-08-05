@@ -513,7 +513,14 @@ def request_headers(request) -> dict[str, str]:
     }
 
 
-def test_default_client_keeps_login_cookies_in_memory() -> None:
+@pytest.mark.parametrize(
+    'include_awselb',
+    (True, False),
+    ids=('with-awselb', 'without-awselb'),
+)
+def test_default_client_keeps_login_cookies_in_memory(
+    include_awselb: bool,
+) -> None:
     received: list[tuple[str, str, dict[str, str], bytes]] = []
     input_document = push_response()
 
@@ -549,11 +556,15 @@ def test_default_client_keeps_login_cookies_in_memory() -> None:
 
         def do_POST(self) -> None:
             self.record()
-            self.reply(
-                b'authenticated',
+            cookies = [
                 'splunkweb_csrf_token_8443=csrf-value; Path=/',
                 'splunkd_8443=session-value; Path=/',
-                'AWSELB=affinity-value; Path=/',
+            ]
+            if include_awselb:
+                cookies.append('AWSELB=affinity-value; Path=/')
+            self.reply(
+                b'authenticated',
+                *cookies,
             )
 
     server = ThreadingHTTPServer(('127.0.0.1', 0), LoginHandler)
@@ -582,16 +593,21 @@ def test_default_client_keeps_login_cookies_in_memory() -> None:
     assert received[2][0] == 'GET'
     assert received[2][2]['X-Splunk-Form-Key'] == 'csrf-value'
     assert 'splunkd_8443=session-value' in received[2][2]['Cookie']
-    assert {
-        cookie.name
-        for cookie in client.cookies
-    } == {
+    expected_cookie_names = {
         'cval',
         'splunkweb_uid',
         'splunkweb_csrf_token_8443',
         'splunkd_8443',
-        'AWSELB',
     }
+    if include_awselb:
+        expected_cookie_names.add('AWSELB')
+    assert (
+        'AWSELB=affinity-value' in received[2][2]['Cookie']
+    ) is include_awselb
+    assert {
+        cookie.name
+        for cookie in client.cookies
+    } == expected_cookie_names
 
 
 def test_client_encodes_login_and_authenticated_json_requests() -> None:

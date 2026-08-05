@@ -177,14 +177,15 @@ class SplunkWebClient:
 
         csrf_token = self._cookie('splunkweb_csrf_token_8443')
         self._csrf_token = csrf_token
-        self._cookie_header = '; '.join(
-            (
-                f'splunkweb_csrf_token_8443={csrf_token}',
-                f'splunk_csrf_token={csrf_token}',
-                f'splunkd_8443={self._cookie("splunkd_8443")}',
-                f'AWSELB={self._cookie("AWSELB")}',
-            )
-        )
+        cookie_values = [
+            f'splunkweb_csrf_token_8443={csrf_token}',
+            f'splunk_csrf_token={csrf_token}',
+            f'splunkd_8443={self._cookie("splunkd_8443")}',
+        ]
+        awselb = self._optional_cookie('AWSELB')
+        if awselb is not None:
+            cookie_values.append(f'AWSELB={awselb}')
+        self._cookie_header = '; '.join(cookie_values)
 
     def put_input(self, payload: JsonObject) -> None:
         """Create or update the configured input."""
@@ -331,16 +332,20 @@ class SplunkWebClient:
         return raw
 
     def _cookie(self, name: str) -> str:
+        value = self._optional_cookie(name)
+        if value is None:
+            raise SplunkIntegrationError(
+                f'Splunk login did not return the required {name} cookie'
+            )
+        return value
+
+    def _optional_cookie(self, name: str) -> str | None:
         values = [
             cookie.value
             for cookie in self.cookies
             if cookie.name == name
         ]
-        if not values:
-            raise SplunkIntegrationError(
-                f'Splunk login did not return the required {name} cookie'
-            )
-        return values[-1]
+        return values[-1] if values else None
 
 
 def validate_input_document(document: object) -> bool:
