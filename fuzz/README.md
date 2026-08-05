@@ -7,13 +7,12 @@ boundaries. These are executable fuzz harnesses, not pytest tests.
 
 Current targets cover:
 
-| Fuzzer                                | Boundary                                                              |
-| ------------------------------------- | --------------------------------------------------------------------- |
-| `job_log_archiver_metadata_fuzzer.py` | GitHub job-log metadata flattening and event parsing.                 |
-| `redrive_deadletter_fuzzer.py`        | SQS redrive mapping parser.                                           |
-| `splunk_s3_runner_logs_fuzzer.py`     | Splunk S3 runner log metadata, timestamp, and event wrapping helpers. |
-| `splunk_stuck_dispatcher_fuzzer.py`   | Splunk stuck-workflow webhook body parsing and result normalization.  |
-| `trust_common_env_fuzzer.py`          | Forge trust-validator environment parsing helpers.                    |
+| Fuzzer                                | Boundary                                                             |
+| ------------------------------------- | -------------------------------------------------------------------- |
+| `job_log_archiver_metadata_fuzzer.py` | GitHub job-log metadata flattening and event parsing.                |
+| `redrive_deadletter_fuzzer.py`        | SQS redrive mapping parser.                                          |
+| `splunk_stuck_dispatcher_fuzzer.py`   | Splunk stuck-workflow webhook body parsing and result normalization. |
+| `trust_common_env_fuzzer.py`          | Forge trust-validator environment parsing helpers.                   |
 
 ## Why It Is Used
 

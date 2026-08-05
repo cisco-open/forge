@@ -120,68 +120,6 @@ variables {
         },
       ]
     }
-    kinesis_control_plane = {
-      dynamic_variables = [
-        {
-          property               = "aws_account_id"
-          alias                  = "AWS account"
-          description            = "Forge AWS accounts."
-          values                 = []
-          value_required         = false
-          values_suggested       = ["111111111111"]
-          restricted_suggestions = true
-        },
-        {
-          property               = "aws_region"
-          alias                  = "AWS region"
-          description            = "Forge AWS regions."
-          values                 = []
-          value_required         = false
-          values_suggested       = ["us-east-1"]
-          restricted_suggestions = true
-        },
-        {
-          property               = "aws_tag_ProductFamilyName"
-          alias                  = "Product family"
-          description            = "Forge AWS product family."
-          values                 = []
-          value_required         = false
-          values_suggested       = ["Forge MT"]
-          restricted_suggestions = true
-        },
-      ]
-    }
-    runner_logs_ingestion = {
-      dynamic_variables = [
-        {
-          property               = "aws_account_id"
-          alias                  = "AWS account"
-          description            = "Forge AWS accounts."
-          values                 = []
-          value_required         = false
-          values_suggested       = ["111111111111"]
-          restricted_suggestions = true
-        },
-        {
-          property               = "aws_region"
-          alias                  = "AWS region"
-          description            = "Forge AWS regions."
-          values                 = []
-          value_required         = false
-          values_suggested       = ["us-east-1"]
-          restricted_suggestions = true
-        },
-        {
-          property               = "aws_tag_ProductFamilyName"
-          alias                  = "Product family"
-          description            = "Forge AWS product family."
-          values                 = []
-          value_required         = false
-          values_suggested       = ["Forge MT"]
-          restricted_suggestions = true
-        },
-      ]
-    }
     sqs_control_plane = {
       dynamic_variables = [
         {

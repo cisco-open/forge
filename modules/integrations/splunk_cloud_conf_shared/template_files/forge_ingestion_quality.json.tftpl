@@ -6,23 +6,11 @@
         "hideOpenInSearch": false
     },
     "dataSources": {
-        "ingestion_quality_search": {
-            "name": "Runner log ingestion quality",
-            "options": {
-                "enableSmartSources": true,
-                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs\" source=\"*:/aws/lambda/splunk-s3-runner-logs-lambda-*\"\n(invalid_json_body_skip OR json_object_failed OR unsupported_object_skip OR tag_fetch_failed OR kinesis_put_retry OR kinesis_put_failed_after_retries OR line_too_large_skip OR object_complete)\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| eval category=case(\n    searchmatch(\"kinesis_put_failed_after_retries\"), \"kinesis_put_failed_after_retries\",\n    searchmatch(\"kinesis_put_retry\"), \"kinesis_put_retry\",\n    searchmatch(\"invalid_json_body_skip\"), \"invalid_json_body_skip\",\n    searchmatch(\"json_object_failed\"), \"json_object_failed\",\n    searchmatch(\"unsupported_object_skip\"), \"unsupported_object_skip\",\n    searchmatch(\"tag_fetch_failed\"), \"tag_fetch_failed\",\n    searchmatch(\"line_too_large_skip\"), \"line_too_large_skip\",\n    searchmatch(\"object_complete\"), \"object_complete\",\n    true(), \"other\")\n| stats count as events dc(source) as streams latest(_time) as last_time by lambda_name category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n",
-                "queryParameters": {
-                    "earliest": "$global_time.earliest$",
-                    "latest": "$global_time.latest$"
-                }
-            },
-            "type": "ds.search"
-        },
         "missing_fields_search": {
             "name": "Missing structured fields",
             "options": {
                 "enableSmartSources": true,
-                "query": "index=\"${splunk_index}\" sourcetype IN (\"forgecicd:runner-logs:json\",\"forgecicd:runner-logs:logs\",\"kube:container:runner\",\"kube:container:runner-logs\",\"aws:cloudwatchlogs\",\"aws:cloudwatchlogs:forgecicd\")\n| eval missing_tenant=if(isnull(forgecicd_tenant),1,0)\n| eval missing_type=if(sourcetype IN (\"forgecicd:runner-logs:json\",\"forgecicd:runner-logs:logs\",\"kube:container:runner\",\"kube:container:runner-logs\") AND isnull(forgecicd_type),1,0)\n| eval missing_log_type=if(isnull(forgecicd_log_type),1,0)\n| stats count as events\n        sum(missing_tenant) as missing_tenant\n        sum(missing_type) as missing_type\n        sum(missing_log_type) as missing_log_type\n        dc(source) as sources\n        by sourcetype\n| eval missing_tenant_pct=round(100*missing_tenant/events,2),\n       missing_type_pct=round(100*missing_type/events,2),\n       missing_log_type_pct=round(100*missing_log_type/events,2)\n| sort - missing_tenant_pct - events\n",
+                "query": "index=\"${splunk_index}\" sourcetype IN (\"forgecicd:runner-logs:s3\",\"kube:container:runner\",\"kube:container:runner-logs\",\"aws:cloudwatchlogs\",\"aws:cloudwatchlogs:forgecicd\")\n| eval missing_tenant=if(isnull(forgecicd_tenant),1,0)\n| eval missing_type=if(sourcetype IN (\"kube:container:runner\",\"kube:container:runner-logs\") AND isnull(forgecicd_type),1,0)\n| eval missing_log_type=if(isnull(forgecicd_log_type),1,0)\n| stats count as events\n        sum(missing_tenant) as missing_tenant\n        sum(missing_type) as missing_type\n        sum(missing_log_type) as missing_log_type\n        dc(source) as sources\n        by sourcetype\n| eval missing_tenant_pct=round(100*missing_tenant/events,2),\n       missing_type_pct=round(100*missing_type/events,2),\n       missing_log_type_pct=round(100*missing_log_type/events,2)\n| sort - missing_tenant_pct - events\n",
                 "queryParameters": {
                     "earliest": "$global_time.earliest$",
                     "latest": "$global_time.latest$"
@@ -79,7 +67,7 @@
             }
         }
     },
-    "description": "Splunk ingestion volume, malformed events, missing fields, and runner log ingestion quality.",
+    "description": "Splunk ingestion volume, missing structured fields, and source inventory.",
     "inputs": {
         "input_global_time": {
             "options": {
@@ -136,16 +124,6 @@
                         "type": "block"
                     },
                     {
-                        "item": "ingestion_quality_table",
-                        "position": {
-                            "h": 420,
-                            "w": 600,
-                            "x": 0,
-                            "y": 740
-                        },
-                        "type": "block"
-                    },
-                    {
                         "item": "sourcetype_inventory_table",
                         "position": {
                             "h": 360,
@@ -181,19 +159,6 @@
     },
     "title": "Forge Ingestion Quality",
     "visualizations": {
-        "ingestion_quality_table": {
-            "dataSources": {
-                "primary": "ingestion_quality_search"
-            },
-            "options": {
-                "count": 50
-            },
-            "showLastUpdated": true,
-            "showProgressBar": false,
-            "description": "Answers \"Are runner logs arriving with required fields?\" with a time series over the selected global range. Healthy: error, retry, delay, or backlog series remain at the established baseline; activity volume alone is not a failure. Failure: a sustained adverse series aligns with affected jobs or resources. Action: use the actionable table above for tenant and resource identifiers before opening raw events.",
-            "title": "Are runner logs arriving with required fields?",
-            "type": "splunk.table"
-        },
         "missing_fields_table": {
             "dataSources": {
                 "primary": "missing_fields_search"

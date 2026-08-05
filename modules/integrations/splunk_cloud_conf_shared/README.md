@@ -84,10 +84,7 @@ No modules.
 | [splunk_configs_conf.forgecicd_pool_target_size](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_pool_top_up](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_pool_top_up_cap](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
-| [splunk_configs_conf.forgecicd_runner_arc](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
-| [splunk_configs_conf.forgecicd_runner_ec2](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
-| [splunk_configs_conf.forgecicd_runner_logs_json](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
-| [splunk_configs_conf.forgecicd_runner_logs_logs](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
+| [splunk_configs_conf.forgecicd_runner_logs_s3](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_runner_logs_tenant_fields_event](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_runner_logs_tenant_fields_logs](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
 | [splunk_configs_conf.forgecicd_scale_down_aws_runner_instance_id](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/configs_conf) | resource |
@@ -117,7 +114,6 @@ No modules.
 | [splunk_data_ui_views.forge_tenant_logs](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
 | [splunk_data_ui_views.forge_troubleshooting](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
 | [splunk_data_ui_views.forge_trust_failures](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
-| [splunk_data_ui_views.forge_webhook_job_log_pipeline](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
 | [splunk_data_ui_views.stuck_workflow_job_dispatcher_debug](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
 | [splunk_data_ui_views.stuck_workflow_job_dispatcher_health](https://registry.terraform.io/providers/splunk/splunk/latest/docs/resources/data_ui_views) | resource |
 | [aws_secretsmanager_secret.secrets](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/secretsmanager_secret) | data source |

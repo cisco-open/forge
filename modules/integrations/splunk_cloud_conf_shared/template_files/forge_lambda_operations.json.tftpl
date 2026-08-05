@@ -6,23 +6,11 @@
         "hideOpenInSearch": false
     },
     "dataSources": {
-        "ingestion_retries_search": {
-            "name": "Splunk S3 runner log ingestion retries",
-            "options": {
-                "enableSmartSources": true,
-                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs\" source=\"*:/aws/lambda/splunk-s3-runner-logs-lambda-*\"\n(invalid_json_body_skip OR json_object_failed OR unsupported_object_skip OR tag_fetch_failed OR kinesis_put_retry OR kinesis_put_failed_after_retries OR line_too_large_skip)\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| eval category=case(\n    searchmatch(\"kinesis_put_failed_after_retries\"), \"kinesis_put_failed_after_retries\",\n    searchmatch(\"kinesis_put_retry\"), \"kinesis_put_retry\",\n    searchmatch(\"invalid_json_body_skip\"), \"invalid_json_body_skip\",\n    searchmatch(\"json_object_failed\"), \"json_object_failed\",\n    searchmatch(\"unsupported_object_skip\"), \"unsupported_object_skip\",\n    searchmatch(\"tag_fetch_failed\"), \"tag_fetch_failed\",\n    searchmatch(\"line_too_large_skip\"), \"line_too_large_skip\",\n    true(), \"other\")\n| stats count as events latest(_time) as last_time by lambda_name category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n",
-                "queryParameters": {
-                    "earliest": "$global_time.earliest$",
-                    "latest": "$global_time.latest$"
-                }
-            },
-            "type": "ds.search"
-        },
         "lambda_error_trend_search": {
             "name": "Lambda error trend",
             "options": {
                 "enableSmartSources": true,
-                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs\" source=\"*:/aws/lambda/*\"\n(\"[ERROR]\" OR Traceback OR \"Task timed out\" OR \"Runtime.ExitError\" OR AccessDenied OR \"InvalidInstanceID.NotFound\" OR \"runner_name missing\" OR \"Basic AssumeRole failed\" OR \"Job logs not found\" OR invalid_json OR kinesis_put_retry OR kinesis_put_failed_after_retries OR \"Signature mismatch\")\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$lambda_name$\"=\"*\" OR like(lambda_name, \"%$lambda_name$%\")\n| eval category=case(\n    searchmatch(\"runner_name missing\"), \"runner_name_missing\",\n    searchmatch(\"InvalidInstanceID.NotFound\"), \"invalid_instance_id\",\n    searchmatch(\"Basic AssumeRole failed\"), \"trust_assume_role_failed\",\n    searchmatch(\"AccessDenied\"), \"access_denied\",\n    searchmatch(\"Task timed out\"), \"lambda_timeout\",\n    searchmatch(\"Runtime.ExitError\"), \"runtime_exit_error\",\n    searchmatch(\"kinesis_put_failed_after_retries\"), \"kinesis_put_failed_after_retries\",\n    searchmatch(\"kinesis_put_retry\"), \"kinesis_put_retry\",\n    searchmatch(\"Traceback\"), \"traceback\",\n    true(), \"lambda_error\")\n| timechart span=15m count by category limit=12\n",
+                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs\" source=\"*:/aws/lambda/*\"\n(\"[ERROR]\" OR Traceback OR \"Task timed out\" OR \"Runtime.ExitError\" OR AccessDenied OR \"InvalidInstanceID.NotFound\" OR \"runner_name missing\" OR \"Basic AssumeRole failed\" OR \"Job logs not found\" OR invalid_json OR \"Signature mismatch\")\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$lambda_name$\"=\"*\" OR like(lambda_name, \"%$lambda_name$%\")\n| eval category=case(\n    searchmatch(\"runner_name missing\"), \"runner_name_missing\",\n    searchmatch(\"InvalidInstanceID.NotFound\"), \"invalid_instance_id\",\n    searchmatch(\"Basic AssumeRole failed\"), \"trust_assume_role_failed\",\n    searchmatch(\"AccessDenied\"), \"access_denied\",\n    searchmatch(\"Task timed out\"), \"lambda_timeout\",\n    searchmatch(\"Runtime.ExitError\"), \"runtime_exit_error\",\n    searchmatch(\"Traceback\"), \"traceback\",\n    true(), \"lambda_error\")\n| timechart span=15m count by category limit=12\n",
                 "queryParameters": {
                     "earliest": "$global_time.earliest$",
                     "latest": "$global_time.latest$"
@@ -34,7 +22,7 @@
             "name": "Lambda errors by category",
             "options": {
                 "enableSmartSources": true,
-                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs\" source=\"*:/aws/lambda/*\"\n(\"[ERROR]\" OR Traceback OR \"Task timed out\" OR \"Runtime.ExitError\" OR AccessDenied OR \"InvalidInstanceID.NotFound\" OR \"runner_name missing\" OR \"Basic AssumeRole failed\" OR \"Job logs not found\" OR invalid_json OR kinesis_put_retry OR kinesis_put_failed_after_retries OR \"Signature mismatch\")\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$lambda_name$\"=\"*\" OR like(lambda_name, \"%$lambda_name$%\")\n| eval category=case(\n    searchmatch(\"runner_name missing\"), \"runner_name_missing\",\n    searchmatch(\"InvalidInstanceID.NotFound\"), \"invalid_instance_id\",\n    searchmatch(\"Basic AssumeRole failed\"), \"trust_assume_role_failed\",\n    searchmatch(\"AccessDenied\"), \"access_denied\",\n    searchmatch(\"Task timed out\"), \"lambda_timeout\",\n    searchmatch(\"Runtime.ExitError\"), \"runtime_exit_error\",\n    searchmatch(\"Job logs not found\"), \"job_logs_not_found\",\n    searchmatch(\"invalid_json\"), \"invalid_json\",\n    searchmatch(\"kinesis_put_failed_after_retries\"), \"kinesis_put_failed_after_retries\",\n    searchmatch(\"kinesis_put_retry\"), \"kinesis_put_retry\",\n    searchmatch(\"Signature mismatch\"), \"signature_mismatch\",\n    searchmatch(\"Traceback\"), \"traceback\",\n    searchmatch(\"[ERROR]\"), \"lambda_error\",\n    true(), \"other\")\n| stats count as events dc(source) as streams latest(_time) as last_time by tenant lambda_name category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n",
+                "query": "index=\"${splunk_index}\" sourcetype=\"aws:cloudwatchlogs\" source=\"*:/aws/lambda/*\"\n(\"[ERROR]\" OR Traceback OR \"Task timed out\" OR \"Runtime.ExitError\" OR AccessDenied OR \"InvalidInstanceID.NotFound\" OR \"runner_name missing\" OR \"Basic AssumeRole failed\" OR \"Job logs not found\" OR invalid_json OR \"Signature mismatch\")\n| rex field=source \"^[^:]+:/aws/lambda/(?<lambda_name>[^:]+):\"\n| rex field=source \"^[^:]+:/aws/lambda/(?<source_tenant>[a-z0-9]+)-(?<source_region_alias>[a-z0-9]+)-(?<source_vpc_alias>[a-z0-9]+)-\"\n| eval tenant=coalesce(forgecicd_tenant, source_tenant)\n| where \"$tenant$\"=\"*\" OR tenant=\"$tenant$\"\n| where \"$lambda_name$\"=\"*\" OR like(lambda_name, \"%$lambda_name$%\")\n| eval category=case(\n    searchmatch(\"runner_name missing\"), \"runner_name_missing\",\n    searchmatch(\"InvalidInstanceID.NotFound\"), \"invalid_instance_id\",\n    searchmatch(\"Basic AssumeRole failed\"), \"trust_assume_role_failed\",\n    searchmatch(\"AccessDenied\"), \"access_denied\",\n    searchmatch(\"Task timed out\"), \"lambda_timeout\",\n    searchmatch(\"Runtime.ExitError\"), \"runtime_exit_error\",\n    searchmatch(\"Job logs not found\"), \"job_logs_not_found\",\n    searchmatch(\"invalid_json\"), \"invalid_json\",\n    searchmatch(\"Signature mismatch\"), \"signature_mismatch\",\n    searchmatch(\"Traceback\"), \"traceback\",\n    searchmatch(\"[ERROR]\"), \"lambda_error\",\n    true(), \"other\")\n| stats count as events dc(source) as streams latest(_time) as last_time by tenant lambda_name category\n| eval last_seen=strftime(last_time,\"%Y-%m-%d %H:%M:%S\")\n| sort - events\n",
                 "queryParameters": {
                     "earliest": "$global_time.earliest$",
                     "latest": "$global_time.latest$"
@@ -79,7 +67,7 @@
             }
         }
     },
-    "description": "Forge support Lambda errors, runner-tagging failures, trust validator errors, and Splunk ingestion retries.",
+    "description": "Forge support Lambda errors, runner-tagging failures, and trust validator errors.",
     "inputs": {
         "input_global_time": {
             "options": {
@@ -145,16 +133,6 @@
                         "type": "block"
                     },
                     {
-                        "item": "ingestion_retries_table",
-                        "position": {
-                            "h": 360,
-                            "w": 600,
-                            "x": 600,
-                            "y": 360
-                        },
-                        "type": "block"
-                    },
-                    {
                         "item": "lambda_error_trend_chart",
                         "position": {
                             "h": 360,
@@ -190,19 +168,6 @@
     },
     "title": "Forge Lambda Operations",
     "visualizations": {
-        "ingestion_retries_table": {
-            "dataSources": {
-                "primary": "ingestion_retries_search"
-            },
-            "options": {
-                "count": 50
-            },
-            "showLastUpdated": true,
-            "showProgressBar": false,
-            "description": "Answers \"Which runner-log ingestion retries need attention?\" using records that matched an explicit failure or actionable condition. Healthy: no rows, unless the panel documents an expected baseline. Failure: one or more rows persist or affect workflow jobs. Action: start with tenant, repository, region, job or run ID, and the named AWS or Kubernetes resource, then inspect the adjacent workflow stage.",
-            "title": "Which runner-log ingestion retries need attention?",
-            "type": "splunk.table"
-        },
         "lambda_error_trend_chart": {
             "dataSources": {
                 "primary": "lambda_error_trend_search"

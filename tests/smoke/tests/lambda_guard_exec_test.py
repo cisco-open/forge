@@ -7,7 +7,6 @@ without making CI depend on live GitHub, Webex, Splunk, or cross-account AWS.
 
 from __future__ import annotations
 
-import base64
 import io
 import json
 import time
@@ -100,45 +99,6 @@ def _unique_name(prefix: str) -> str:
     return f'{prefix}-{int(time.time() * 1000)}'
 
 
-def _wait_for_stream_active(kinesis, stream_name: str):
-    for _ in range(30):
-        status = kinesis.describe_stream(StreamName=stream_name)[
-            'StreamDescription'
-        ]['StreamStatus']
-        if status == 'ACTIVE':
-            return
-        time.sleep(1)
-    raise AssertionError(f'Kinesis stream {stream_name} did not become active')
-
-
-def _kinesis_records(kinesis, stream_name: str) -> list[dict]:
-    stream = kinesis.describe_stream(StreamName=stream_name)[
-        'StreamDescription']
-    shard_id = stream['Shards'][0]['ShardId']
-    iterator = kinesis.get_shard_iterator(
-        StreamName=stream_name,
-        ShardId=shard_id,
-        ShardIteratorType='TRIM_HORIZON',
-    )['ShardIterator']
-
-    for _ in range(10):
-        response = kinesis.get_records(ShardIterator=iterator, Limit=10)
-        records = response.get('Records', [])
-        if records:
-            return records
-        iterator = response.get('NextShardIterator', iterator)
-        time.sleep(1)
-
-    return []
-
-
-def _record_data(record: dict) -> bytes:
-    data = record['Data']
-    if isinstance(data, bytes):
-        return data
-    return base64.b64decode(data)
-
-
 CASES = [
     {
         'id': 'webex-webhook-relay-no-workflow-run',
@@ -183,20 +143,6 @@ CASES = [
             'message': 'SQS_MAP is empty',
             'results': [],
         },
-    },
-    {
-        'id': 'runner-logs-redrive-healthcheck',
-        'function_name': 'forge-smoke-runner-logs-redrive',
-        'source': Path(
-            'modules/integrations/splunk_cloud_s3_runner_logs/lambda/'
-            'redrive_runner_logs/redrive_runner_logs.py'
-        ),
-        'env': {
-            'LOG_LEVEL': 'INFO',
-            'DLQ_ARN': 'arn:aws:sqs:us-east-1:000000000000:unused',
-        },
-        'event': {'healthcheck': True},
-        'expected': {'status': 'healthy'},
     },
     {
         'id': 'ec2-update-runner-tags-ignores-non-workflow-job',
@@ -409,85 +355,3 @@ def test_job_log_dispatcher_enqueues_workflow_job_event(client):
     ).get('Messages', [])
     assert len(messages) == 1
     assert json.loads(messages[0]['Body']) == event
-
-
-def test_splunk_s3_runner_logs_ships_log_lines_to_kinesis(client):
-    s3 = client('s3')
-    kinesis = client('kinesis')
-    bucket = _unique_name('forge-smoke-runner-logs')
-    stream_name = _unique_name('forge-smoke-runner-logs')
-    log_key = 'runs/123/job.log'
-    sidecar_key = 'runs/123/job.fields'
-
-    s3.create_bucket(Bucket=bucket)
-    s3.put_object(
-        Bucket=bucket,
-        Key=log_key,
-        Body=(
-            b'2026-07-04T00:00:00.000Z first line\n'
-            b'second line without timestamp\n'
-        ),
-        Tagging='runner_name=i-1234567890abcdef0',
-    )
-    s3.put_object(
-        Bucket=bucket,
-        Key=sidecar_key,
-        Body=json.dumps({
-            'fields': {
-                'repository': 'cisco-open/forge',
-                'run_id': 67890,
-                'workflow': 'MiniStack Smoke',
-            }
-        }).encode(),
-    )
-    kinesis.create_stream(StreamName=stream_name, ShardCount=1)
-    _wait_for_stream_active(kinesis, stream_name)
-
-    lam = _deploy_handler(
-        client,
-        function_name='forge-smoke-splunk-s3-runner-logs',
-        source=_REPO_ROOT / (
-            'modules/integrations/splunk_cloud_s3_runner_logs/lambda/'
-            'splunk_s3_runner_logs/'
-            'splunk_s3_runner_logs.py'
-        ),
-        env={
-            'LOG_LEVEL': 'INFO',
-            'KINESIS_STREAM_NAME': stream_name,
-            'INDEX': 'forge',
-            'SOURCETYPE': 'forgecicd:runner-logs:logs',
-        },
-    )
-    event = {
-        'Records': [
-            {
-                'body': json.dumps({
-                    'Records': [
-                        {
-                            's3': {
-                                'bucket': {'name': bucket},
-                                'object': {'key': log_key},
-                            }
-                        }
-                    ]
-                })
-            }
-        ]
-    }
-
-    resp, payload = _invoke(lam, 'forge-smoke-splunk-s3-runner-logs', event)
-    assert 'FunctionError' not in resp
-    assert payload['statusCode'] == 200
-    assert json.loads(payload['body']) == {'lines': 2}
-
-    records = _kinesis_records(kinesis, stream_name)
-    assert len(records) == 2
-    wrapped = [json.loads(_record_data(record).decode()) for record in records]
-    assert [record['event'] for record in wrapped] == [
-        '2026-07-04T00:00:00.000Z first line',
-        'second line without timestamp',
-    ]
-    assert wrapped[0]['source'] == f'{bucket}:{log_key}'
-    assert wrapped[0]['fields']['repository'] == 'cisco-open/forge'
-    assert wrapped[0]['fields']['run_id'] == 67890
-    assert wrapped[0]['fields']['runner_name'] == 'i-1234567890abcdef0'

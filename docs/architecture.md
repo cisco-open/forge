@@ -134,8 +134,8 @@ copy and what to delete from your operating repo.
 
 Integrations should be deployed after the platform runner path is proven.
 
-Splunk modules can add dashboards, billing ingestion, OpenTelemetry,
-OpenCost, S3 runner logs, and stuck-workflow redelivery. Teleport can support
+Splunk modules can add dashboards, billing ingestion, OpenTelemetry, OpenCost,
+Data Manager S3 inputs, and stuck-workflow redelivery. Teleport can support
 operator access. Webhook relay destination modules can centralize forwarding to
 external receivers.
 

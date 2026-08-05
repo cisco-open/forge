@@ -63,12 +63,60 @@ run "splunk_cloud_shared_dashboard_and_props_contract" {
 
   assert {
     condition = (
-      splunk_configs_conf.forgecicd_runner_logs_json.name == "props/forgecicd:runner-logs:json"
-      && splunk_configs_conf.forgecicd_runner_logs_json.variables["REPORT-forgecicd_runner_logs_tenant_fields_event"] == "forgecicd_runner_logs_tenant_fields_event"
-      && splunk_configs_conf.forgecicd_runner_logs_json.variables["REPORT-forgecicd_runner_ec2"] == "forgecicd_runner_ec2"
-      && splunk_configs_conf.forgecicd_runner_logs_json.variables["REPORT-forgecicd_runner_arc"] == "forgecicd_runner_arc"
+      splunk_configs_conf.forgecicd_runner_logs_s3.name == "props/forgecicd:runner-logs:s3"
+      && splunk_configs_conf.forgecicd_runner_logs_s3.variables["REPORT-forgecicd_runner_logs_tenant_fields_logs"] == "forgecicd_runner_logs_tenant_fields_logs"
+      && splunk_configs_conf.forgecicd_runner_logs_s3.variables["TRUNCATE"] == "1000000"
+      && splunk_configs_conf.forgecicd_runner_logs_tenant_fields_logs.variables["REGEX"] == "^s3:\\/\\/(?<forgecicd_tenant>[a-z0-9]+)-(?<forgecicd_region_alias>[a-z0-9]+)-(?<forgecicd_vpc_alias>[a-z0-9]+)-forge-gh-logs-(?<account_id>\\d+)\\/(?<github_org>[a-zA-Z0-9._-]+)\\/(?<github_repo>[a-zA-Z0-9._-]+)\\/(?<workflow_run>\\d+)\\/(?<attempt>\\d+)\\/(?<job_id>\\d+)\\.log$"
+      && splunk_configs_conf.forgecicd_runner_logs_tenant_fields_logs.variables["FORMAT"] == "forgecicd_tenant::$1 forgecicd_region_alias::$2 forgecicd_vpc_alias::$3 github_org::$5 github_repo::$6 workflow_run::$7 attempt::$8 job_id::$9 forgecicd_log_type::runner-job-logs"
+      && splunk_configs_conf.forgecicd_runner_logs_tenant_fields_logs.variables["SOURCE_KEY"] == "source"
+      && splunk_configs_conf.forgecicd_runner_logs_tenant_fields_logs.variables["CLEAN_KEYS"] == "0"
+      && try(
+        regex(
+          splunk_configs_conf.forgecicd_runner_logs_tenant_fields_logs.variables["REGEX"],
+          "s3://srea-euw1-sl-forge-gh-logs-152772858171/cisco-sbg-emu/cloudsec_srea_forge-installation-test/31038335761/1/92416147467.log",
+        ),
+        {},
+        ) == {
+        account_id             = "152772858171"
+        attempt                = "1"
+        forgecicd_region_alias = "euw1"
+        forgecicd_tenant       = "srea"
+        forgecicd_vpc_alias    = "sl"
+        github_org             = "cisco-sbg-emu"
+        github_repo            = "cloudsec_srea_forge-installation-test"
+        job_id                 = "92416147467"
+        workflow_run           = "31038335761"
+      }
     )
-    error_message = "Splunk shared props must keep JSON runner log sourcetype transforms for tenant, EC2, and ARC metadata."
+    error_message = "Splunk shared props must extract tenant and GitHub run identifiers from S3 runner-log source URIs."
+  }
+
+  assert {
+    condition = (
+      splunk_configs_conf.forgecicd_runner_logs_s3.variables["REPORT-forgecicd_runner_logs_tenant_fields_event"] == "forgecicd_runner_logs_tenant_fields_event"
+      && splunk_configs_conf.forgecicd_runner_logs_tenant_fields_event.variables["REGEX"] == "^s3:\\/\\/(?<forgecicd_tenant>[a-z0-9]+)-(?<forgecicd_region_alias>[a-z0-9]+)-(?<forgecicd_vpc_alias>[a-z0-9]+)-forge-gh-logs-(?<account_id>\\d+)\\/(?<github_org>[a-zA-Z0-9._-]+)\\/(?<github_repo>[a-zA-Z0-9._-]+)\\/(?<workflow_run>\\d+)\\/(?<attempt>\\d+)\\/(?<job_id>\\d+)\\.json$"
+      && splunk_configs_conf.forgecicd_runner_logs_tenant_fields_event.variables["FORMAT"] == "forgecicd_tenant::$1 forgecicd_region_alias::$2 forgecicd_vpc_alias::$3 github_org::$5 github_repo::$6 workflow_run::$7 attempt::$8 job_id::$9 forgecicd_log_type::runner-job-event"
+      && splunk_configs_conf.forgecicd_runner_logs_tenant_fields_event.variables["SOURCE_KEY"] == "source"
+      && splunk_configs_conf.forgecicd_runner_logs_tenant_fields_event.variables["CLEAN_KEYS"] == "0"
+      && try(
+        regex(
+          splunk_configs_conf.forgecicd_runner_logs_tenant_fields_event.variables["REGEX"],
+          "s3://srea-euw1-sl-forge-gh-logs-152772858171/cisco-sbg-emu/cloudsec_srea_forge-installation-test/31038335761/1/92416147467.json",
+        ),
+        {},
+        ) == {
+        account_id             = "152772858171"
+        attempt                = "1"
+        forgecicd_region_alias = "euw1"
+        forgecicd_tenant       = "srea"
+        forgecicd_vpc_alias    = "sl"
+        github_org             = "cisco-sbg-emu"
+        github_repo            = "cloudsec_srea_forge-installation-test"
+        job_id                 = "92416147467"
+        workflow_run           = "31038335761"
+      }
+    )
+    error_message = "Splunk shared props must extract tenant and GitHub run identifiers from S3 runner-event source URIs."
   }
 
   assert {
@@ -76,8 +124,6 @@ run "splunk_cloud_shared_dashboard_and_props_contract" {
       splunk_configs_conf.forgecicd_cloudwatchlogs.variables["REPORT-forgecicd_shared_lambda_fields"] == "forgecicd_shared_lambda_fields"
       && splunk_configs_conf.forgecicd_shared_lambda_fields.name == "transforms/forgecicd_shared_lambda_fields"
       && strcontains(splunk_configs_conf.forgecicd_shared_lambda_fields.variables["REGEX"], "splunk-dependency-monitor")
-      && strcontains(splunk_configs_conf.forgecicd_shared_lambda_fields.variables["REGEX"], "splunk-s3-runner-logs-lambda")
-      && strcontains(splunk_configs_conf.forgecicd_shared_lambda_fields.variables["REGEX"], "splunk-s3-runner-logs-redrive")
       && strcontains(splunk_configs_conf.forgecicd_shared_lambda_fields.variables["REGEX"], "forge-aws-billing-per-service")
       && strcontains(splunk_configs_conf.forgecicd_shared_lambda_fields.variables["REGEX"], "forge-aws-billing-per-resource-process")
       && strcontains(splunk_configs_conf.forgecicd_shared_lambda_fields.variables["REGEX"], "forge-aws-billing-per-resource")

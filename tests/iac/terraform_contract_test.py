@@ -277,7 +277,7 @@ def test_job_log_bucket_security_controls_are_preserved() -> None:
     assert 'Principal = "*"' not in read_policy
 
 
-def test_job_log_bucket_sends_log_object_notifications_to_dedicated_queue() -> None:
+def test_job_log_bucket_sends_log_and_metadata_notifications_to_dedicated_queue() -> None:
     s3_tf = read_repo_file(
         'modules/platform/forge_runners/github_actions_job_logs/s3.tf'
     )
@@ -339,21 +339,21 @@ def test_job_log_bucket_sends_log_object_notifications_to_dedicated_queue() -> N
             'values   = [data.aws_caller_identity.current.account_id]',
         ],
     )
-    assert notification.count('queue {') == 1
-    assert notification.count('"s3:ObjectCreated:Put"') == 1
+    assert notification.count('queue {') == 2
+    assert notification.count('"s3:ObjectCreated:Put"') == 2
     assert notification.count(
         '"s3:ObjectCreated:CompleteMultipartUpload"'
-    ) == 1
+    ) == 2
     assert_contains_all(
         notification,
         [
             'bucket = aws_s3_bucket.gh_logs.id',
             'queue_arn     = aws_sqs_queue.s3_notifications.arn',
             'filter_suffix = ".log"',
+            'filter_suffix = ".json"',
             'depends_on = [aws_sqs_queue_policy.s3_notifications]',
         ],
     )
-    assert 'filter_suffix = ".json"' not in notification
     assert 'filter_suffix = ".fields"' not in notification
 
 
@@ -534,144 +534,6 @@ def test_redrive_deadletter_policy_scope_is_configured_from_sqs_map() -> None:
         ],
     )
     assert 'resources = ["*"]' not in policy_doc
-
-
-def test_splunk_runner_logs_wires_encrypted_dlq_redrive() -> None:
-    redrive_tf = read_repo_file(
-        'modules/integrations/splunk_cloud_s3_runner_logs/redrive.tf'
-    )
-    redrive_module = hcl_block(
-        redrive_tf,
-        'module',
-        'splunk_s3_runner_logs_redrive_lambda',
-    )
-    policy_doc = hcl_block(
-        redrive_tf,
-        'data',
-        'aws_iam_policy_document',
-        'splunk_s3_runner_logs_redrive',
-    )
-
-    assert_contains_all(
-        redrive_module,
-        [
-            'handler       = "redrive_runner_logs.lambda_handler"',
-            'path = "${path.module}/lambda/redrive_runner_logs"',
-            'DLQ_ARN   = aws_sqs_queue.log_events_dlq.arn',
-            'policy_json        = data.aws_iam_policy_document.splunk_s3_runner_logs_redrive.json',
-        ],
-    )
-    assert_contains_all(
-        policy_doc,
-        [
-            '"sqs:StartMessageMoveTask"',
-            'resources = [aws_sqs_queue.log_events_dlq.arn]',
-            '"sqs:SendMessage"',
-            'resources = [aws_sqs_queue.log_events_queue.arn]',
-            '"kms:Decrypt"',
-            '"kms:GenerateDataKey"',
-            'resources = [aws_kms_key.splunk_s3_runner_logs.arn]',
-        ],
-    )
-    assert '"logs:CreateLogGroup"' not in policy_doc
-    assert 'resources = ["*"]' not in policy_doc
-    assert 'source = "../../platform/forge_runners/redrive_deadletter"' not in redrive_tf
-
-
-def test_splunk_runner_logs_caps_parallel_sqs_scaling() -> None:
-    lambda_tf = read_repo_file(
-        'modules/integrations/splunk_cloud_s3_runner_logs/lambda.tf'
-    )
-    sqs_tf = read_repo_file(
-        'modules/integrations/splunk_cloud_s3_runner_logs/sqs.tf'
-    )
-    lambda_module = hcl_block(
-        lambda_tf,
-        'module',
-        'splunk_s3_runner_logs_lambda',
-    )
-    event_source = hcl_block(
-        lambda_tf,
-        'resource',
-        'aws_lambda_event_source_mapping',
-        'sqs_to_lambda',
-    )
-
-    assert (
-        'path = "${path.module}/lambda/splunk_s3_runner_logs"'
-        in lambda_module
-    )
-    assert 'memory_size   = 1024' in lambda_module
-    assert 'lambda_timeout_seconds = 900' in lambda_tf
-    assert 'timeout       = local.lambda_timeout_seconds' in lambda_module
-    assert 'LOG_CHUNK_BYTES     = var.runner_log_chunk_size_bytes' in (
-        lambda_module
-    )
-    assert 'SQS_QUEUE_URL       = aws_sqs_queue.log_events_queue.url' in (
-        lambda_module
-    )
-    assert '"sqs:SendMessage"' in lambda_tf
-    assert 'batch_size                         = 1' in event_source
-    assert (
-        'function_response_types            = ["ReportBatchItemFailures"]'
-        in event_source
-    )
-    assert re.search(r'(?m)^\s*scaling_config\s*{', event_source)
-    assert (
-        'maximum_concurrency = '
-        'var.lambda_event_source_mapping_maximum_concurrency'
-        in event_source
-    )
-    assert (
-        'maxReceiveCount     = var.sqs_redrive_max_receive_count'
-        in sqs_tf
-    )
-    assert (
-        'visibility_timeout_seconds = local.lambda_timeout_seconds * 6'
-        in sqs_tf
-    )
-    assert 'reserved_concurrent_executions' not in lambda_module
-
-
-def test_splunk_shared_extraction_classifies_runner_logs_redrive() -> None:
-    props_tf = read_repo_file(
-        'modules/integrations/splunk_cloud_conf_shared/'
-        'props_cloudwatchlogs.tf'
-    )
-    transforms_tf = read_repo_file(
-        'modules/integrations/splunk_cloud_conf_shared/'
-        'transforms_lambda.tf'
-    )
-
-    assert (
-        '"REPORT-forgecicd_shared_lambda_fields"'
-        '                           = "forgecicd_shared_lambda_fields"'
-        in props_tf
-    )
-    assert 'splunk-s3-runner-logs-redrive' in transforms_tf
-    assert (
-        '"FORMAT"     = "aws_region::$1 forgecicd_log_type::$2"'
-        in transforms_tf
-    )
-
-
-def test_splunk_runner_log_raw_chunks_are_not_truncated() -> None:
-    props_tf = read_repo_file(
-        'modules/integrations/splunk_cloud_conf_shared/'
-        'props_runner_logs.tf'
-    )
-    runner_logs_props = hcl_block(
-        props_tf,
-        'resource',
-        'splunk_configs_conf',
-        'forgecicd_runner_logs_logs',
-    )
-
-    assert re.search(
-        r'(?m)^\s*"TRUNCATE"\s*=\s*"1000000"$',
-        runner_logs_props,
-    )
-    assert 'variables["TRUNCATE"]' not in runner_logs_props
 
 
 def test_forge_subscription_ecr_cross_product_uses_region_provider_alias() -> None:

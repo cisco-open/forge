@@ -47,10 +47,12 @@ run "orders_control_plane_dashboards_for_operator_triage" {
   assert {
     condition = (
       strcontains(splunk_data_ui_views.forge_runner_capacity.eai_data, "One elevated percentile is not enough to infer failure")
+      && strcontains(splunk_data_ui_views.forge_runner_capacity.eai_data, "sourcetype=\\\"forgecicd:runner-logs:s3\\\" source=\\\"*.json\\\"")
+      && strcontains(splunk_data_ui_views.forge_runner_capacity.eai_data, "spath input=_raw path=workflow_job.created_at")
       && strcontains(splunk_data_ui_views.forge_runner_control_plane_health.eai_data, "Global-lock cleanup is diagnostic and is not causal evidence for a stuck job")
       && strcontains(splunk_data_ui_views.forge_trust_failures.eai_data, "TagSession")
     )
-    error_message = "Control-plane guidance must prevent single-chart failure inference, false global-lock causality, and incomplete STS trust triage."
+    error_message = "Capacity must use native S3 JSON metadata, while control-plane guidance prevents single-chart failure inference, false global-lock causality, and incomplete STS trust triage."
   }
 
   assert {

@@ -133,35 +133,4 @@ run "creates_regional_platform_detector" {
     error_message = "Every SQS control-plane detector rule must use the configured notification routing."
   }
 
-  assert {
-    condition = (
-      signalfx_detector.runner_log_delivery_health.name == "Forge Prod runner-log delivery integrity"
-      && signalfx_detector.runner_log_delivery_health.max_delay == 120
-      && length(signalfx_detector.runner_log_delivery_health.rule) == 6
-      && strcontains(signalfx_detector.runner_log_delivery_health.program_text, "filter('DeliveryStreamName', 'splunk-s3-runner-logs-firehose-*')")
-      && strcontains(signalfx_detector.runner_log_delivery_health.program_text, "filter('QueueName', 'splunk-s3-runner-logs-events-dlq')")
-      && strcontains(signalfx_detector.runner_log_delivery_health.program_text, "filter('stat', 'mean')")
-      && strcontains(signalfx_detector.runner_log_delivery_health.program_text, "failure_pct = (1 - success_ratio) * 100")
-      && strcontains(signalfx_detector.runner_log_delivery_health.program_text, "(failure_pct > 0) and (records > 0), '5m'")
-      && strcontains(signalfx_detector.runner_log_delivery_health.program_text, "(failure_pct <= 0) or (records == 0), '10m'")
-      && !strcontains(signalfx_detector.runner_log_delivery_health.program_text, "success_pct < 100")
-      && strcontains(signalfx_detector.runner_log_delivery_health.program_text, "(records > 0) and (freshness > 300), '10m'")
-      && strcontains(signalfx_detector.runner_log_delivery_health.program_text, "data('KinesisMillisBehindLatest'")
-      && strcontains(signalfx_detector.runner_log_delivery_health.program_text, "data('DataReadFromKinesisStream.Records'")
-      && strcontains(signalfx_detector.runner_log_delivery_health.program_text, "data('IncomingRecords'")
-      && strcontains(signalfx_detector.runner_log_delivery_health.program_text, "source_lag > 300000, '10m'")
-      && strcontains(signalfx_detector.runner_log_delivery_health.program_text, "source_lag > 900000")
-      && strcontains(signalfx_detector.runner_log_delivery_health.program_text, "source_throttles > 0, '5m'")
-      && strcontains(signalfx_detector.runner_log_delivery_health.program_text, "dlq > 0, '5m'")
-    )
-    error_message = "The runner-log detector must cover the Firehose source reader, percentage delivery semantics, stale delivery, and DLQ occupancy."
-  }
-
-  assert {
-    condition = alltrue([
-      for rule in signalfx_detector.runner_log_delivery_health.rule :
-      toset(rule.notifications) == toset(["Email,forge@example.com"])
-    ])
-    error_message = "Every runner-log delivery detector rule must use the configured notification routing."
-  }
 }

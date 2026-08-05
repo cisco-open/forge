@@ -44,8 +44,8 @@ Initial thresholds:
 | EC2 runner never comes online.                        | Forge EC2 Runner Lifecycle                 | Forge Runner Control Plane Health, EC2 scale-up failure dashboards, Forge Lambda Operations                  |
 | ARC `dind` job fails or Docker daemon is unavailable. | Forge ARC DIND Runner Lifecycle            | Forge Kubernetes Storage and Network, Runner K8S Observability                                               |
 | ARC `k8s` job pod is stuck, pending, or missing PVCs. | Forge ARC K8S Runner Lifecycle             | Forge Kubernetes Storage and Network, Runner K8S Observability                                               |
-| Workflow job exists but logs are missing.             | Forge Webhook Job Log Pipeline             | Forge Ingestion Quality, Forge CI Job Details, Forge Tenant Logs                                             |
-| Tenant asks for raw logs.                             | Forge Tenant Logs                          | Forge Ingestion Quality, Forge Webhook Job Log Pipeline                                                      |
+| Workflow job exists but logs are missing.             | Forge Tenant Logs                          | Forge Ingestion Quality, Forge CI Job Details, GitHub workflow run                                           |
+| Tenant asks for raw logs.                             | Forge Tenant Logs                          | Forge Ingestion Quality, Forge CI Job Details                                                                |
 | AWS role assumption fails from a runner.              | Forge Trust Failures                       | Forge Tenant Logs, Forge Lambda Operations, Forge Troubleshooting                                            |
 | A dashboard looks empty or wrong.                     | Forge Ingestion Quality                    | Splunk deployment docs, source field extraction config                                                       |
 | Stuck workflow redelivery is suspected.               | Forge Stuck Workflow Job Dispatcher Health | Forge Stuck Workflow Job Dispatcher Debug, Forge GitHub Webhook Workflow Job Events                          |
@@ -127,23 +127,6 @@ Action: for long-queued EC2 jobs, check dispatch logs and scale-up. For
 non-EC2 queued jobs, check ARC listener, ARC manager, and Kubernetes scheduling.
 For missing webhook events, check GitHub App installation and webhook delivery.
 
-### Forge Webhook Job Log Pipeline
-
-Purpose: verify the path from GitHub `workflow_job` event to archived job logs
-and Splunk ingestion.
-
-Normal: dispatcher enqueue counts, archived JSON counts, pipeline trend, and
-ingestion data move together. DLQ redrive is quiet.
-
-Problem: dispatcher enqueues but archiver errors grow, DLQ redrive appears
-repeatedly, or structured JSON is much lower than raw logs for active jobs.
-
-Apocalypse: dispatcher, archiver, S3, or Splunk ingestion stops broadly.
-
-Action: identify the broken stage. If GitHub webhook is missing, use Forge
-GitHub Webhook Workflow Job Events. If data is archived but not searchable, use
-Forge Ingestion Quality.
-
 ### Forge CI Job Details
 
 Purpose: inspect job execution from structured GitHub job log JSON.
@@ -157,7 +140,8 @@ queue time concentrated in a workflow needs tenant or workflow triage.
 Apocalypse: structured job JSON disappears broadly.
 
 Action: filter by tenant, repository, workflow, and time window. For missing
-data, go to Webhook Job Log Pipeline and Ingestion Quality.
+data, compare the GitHub workflow run with native S3 ingestion in Forge
+Ingestion Quality.
 
 ### Forge Tenant Logs
 
@@ -172,8 +156,8 @@ expected fields.
 Apocalypse: many tenants lose log visibility.
 
 Action: use this dashboard for raw evidence, then move to a specific dashboard
-for interpretation. If logs are missing, use Ingestion Quality and Webhook Job
-Log Pipeline.
+for interpretation. If logs are missing, compare the GitHub workflow run, the
+S3 objects, and Forge Ingestion Quality.
 
 ### Forge EC2 Runner Lifecycle
 
@@ -284,16 +268,15 @@ before changing ARC.
 
 ### Forge Lambda Operations
 
-Purpose: inspect Forge support Lambda errors, runner-tagging failures,
-trust-validator errors, and Splunk ingestion retries.
+Purpose: inspect Forge support Lambda errors, runner-tagging failures, and
+trust-validator errors.
 
-Normal: error trend is low or empty, there are no repeated ingestion retries,
-and runner tagging failures are quiet.
+Normal: error trend is low or empty and runner tagging failures are quiet.
 
 Problem: repeated Lambda errors by function/category, new runner tagging
-failures, trust validator errors, or S3 runner-log ingestion retries.
+failures, or trust validator errors.
 
-Apocalypse: multiple self-healing or ingestion Lambdas fail together.
+Apocalypse: multiple support or self-healing Lambdas fail together.
 
 Action: identify function and category, then inspect CloudWatch or Lambda logs
 and recent deployment changes.
@@ -396,12 +379,11 @@ index="forge-prod-index"
 ```
 
 ```spl
-index="forge-prod-index" sourcetype="forgecicd:runner-logs:json"
-| spath path=workflow_job.created_at output=created_at
-| spath path=workflow_job.started_at output=started_at
-| spath path=workflow_job.runner_group_name output=runner_group
-| rex field=source "^(?<source_tenant>[a-z0-9]+)-"
-| eval tenant=coalesce(forgecicd_tenant, source_tenant)
+index="forge-prod-index" sourcetype="forgecicd:runner-logs:s3" source="*.json"
+| spath input=_raw path=workflow_job.created_at output=created_at
+| spath input=_raw path=workflow_job.started_at output=started_at
+| spath input=_raw path=workflow_job.runner_group_name output=runner_group
+| eval tenant=forgecicd_tenant
 | eval queue_sec=strptime(started_at,"%Y-%m-%dT%H:%M:%SZ")-strptime(created_at,"%Y-%m-%dT%H:%M:%SZ")
 | eval queue_ge_10m=if(queue_sec>=600,1,0)
 | stats count as jobs sum(queue_ge_10m) as queue_ge_10m p95(eval(if(queue_sec>=0, queue_sec, null()))) as p95_queue_sec by tenant runner_group

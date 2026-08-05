@@ -35,7 +35,6 @@ run "orders_ingestion_dashboards_for_operator_triage" {
       for body in [
         splunk_data_ui_views.forge_ingestion_quality.eai_data,
         splunk_data_ui_views.forge_lambda_operations.eai_data,
-        splunk_data_ui_views.forge_webhook_job_log_pipeline.eai_data,
       ] :
       !strcontains(body, "\"operator_guide\"")
       && !strcontains(body, "\"type\": \"splunk.markdown\"")
@@ -50,15 +49,10 @@ run "orders_ingestion_dashboards_for_operator_triage" {
     condition = (
       can(regex("\"item\": \"missing_fields_table\"[\\s\\S]*\"item\": \"volume_anomaly_chart\"[\\s\\S]*\"item\": \"source_inventory_table\"", splunk_data_ui_views.forge_ingestion_quality.eai_data))
       && can(regex("\"item\": \"lambda_errors_table\"[\\s\\S]*\"item\": \"lambda_error_trend_chart\"[\\s\\S]*\"item\": \"lambda_samples_table\"", splunk_data_ui_views.forge_lambda_operations.eai_data))
+      && strcontains(splunk_data_ui_views.forge_ingestion_quality.eai_data, "forgecicd:runner-logs:s3")
+      && !strcontains(splunk_data_ui_views.forge_ingestion_quality.eai_data, "splunk-s3-runner-logs")
+      && !strcontains(splunk_data_ui_views.forge_lambda_operations.eai_data, "splunk-s3-runner-logs")
     )
-    error_message = "Actionable ingestion and Lambda failures must appear before trends, source inventory, and raw samples."
-  }
-
-  assert {
-    condition = (
-      strcontains(splunk_data_ui_views.forge_webhook_job_log_pipeline.eai_data, "Unequal broad totals alone are not proof of loss")
-      && strcontains(splunk_data_ui_views.forge_webhook_job_log_pipeline.eai_data, "Which job-log archive operations failed?")
-    )
-    error_message = "The job-log pipeline dashboard must distinguish confirmed failures from non-causal count differences."
+    error_message = "Ingestion and Lambda dashboards must retain useful diagnostics without references to the retired runner-log streaming pipeline."
   }
 }

@@ -11,7 +11,7 @@ Archives completed GitHub Actions workflow job logs into per-tenant S3 buckets f
 - EventBridge rule listening for `workflow_job.completed` events (via existing webhook relay -> EventBridge integration)
 - Optional KMS encryption
 - Shared read/list access for platform/observability roles
-- Dedicated encrypted SQS queue for new `.log` object notifications
+- Dedicated encrypted SQS queue for new `.log` and `.json` object notifications
 - Versioning & basic lifecycle management
 
 ## How It Works
@@ -21,7 +21,7 @@ Archives completed GitHub Actions workflow job logs into per-tenant S3 buckets f
 3. Dispatcher Lambda validates mapping & completion status, then enqueues a concise message to SQS.
 4. Downloader Lambda (SQS trigger) consumes batches, performs GitHub API log download, and writes to S3.
 5. Objects stored at: `s3://<bucket>/<repo_full_name>/<run_id>/<run_attempt>/<job_id>.fields` (flattened Splunk fields sidecar), `s3://<bucket>/<repo_full_name>/<run_id>/<run_attempt>/<job_id>.log` (raw log), and `s3://<bucket>/<repo_full_name>/<run_id>/<run_attempt>/<job_id>.json` (the workflow_job event detail), all SSE-KMS encrypted and tagged with runner/job metadata. The `.log` and `.json` objects also include a `metadata_key` S3 tag pointing to the `.fields` sidecar.
-6. S3 sends each new `.log` object notification to a dedicated SQS queue for downstream ingestion.
+6. S3 sends each new `.log` and `.json` object notification to a dedicated SQS queue for downstream ingestion.
 
 ### Direct Mode (fallback)
 Set `enable_queue_pipeline = false` to revert to the original single-Lambda flow (less durable, fewer moving parts for very low volume environments).
@@ -45,7 +45,7 @@ See `variables.tf` for full list. Key inputs:
 
 ## S3 Notification Ownership
 
-S3 notification configuration is atomic, so this module must be the only Terraform owner of notifications for its job-log bucket. During migration to Splunk Data Manager, remove the bucket from the legacy `splunk_cloud_s3_runner_logs` notification owner before applying this module. The two notification resources cannot safely coexist.
+S3 notification configuration is atomic, so this module must be the only Terraform owner of notifications for its job-log bucket. During migration, destroy or otherwise remove any previous notification resource through its owning deployment before applying this module. Its single notification resource sends both `.log` and `.json` objects to the queue consumed by Splunk Data Manager.
 
 ## Bucket Naming
 Uses `bucket_name_format` replacing `{{tenant}}` with tenant id. Provide pre-created buckets by setting `create_buckets = false` and ensuring the names exist.
