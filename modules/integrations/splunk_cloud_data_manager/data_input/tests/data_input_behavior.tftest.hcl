@@ -107,4 +107,13 @@ run "splunk_data_input_template_contract" {
     )
     error_message = "Splunk Data Manager must use one self-contained Python lifecycle command, keep runtime state in memory, and write only the template artifact."
   }
+
+  assert {
+    condition = (
+      length(regexall("SPLUNK_CLOUD_USERNAME\\s*=\\s*nonsensitive\\(", file("${path.module}/main.tf"))) == 2
+      && length(regexall("SPLUNK_CLOUD_PASSWORD\\s*=\\s*nonsensitive\\(", file("${path.module}/main.tf"))) == 2
+      && length(regexall("nonsensitive\\(", file("${path.module}/main.tf"))) == 4
+    )
+    error_message = "Splunk Data Manager must declassify only the four local-exec credential environment values so sanitized Python diagnostics remain visible."
+  }
 }

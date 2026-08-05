@@ -408,6 +408,10 @@ def ensure_hec_tokens(
     log = logger or (lambda _message: None)
     categories = dataset_hec_categories(document)
     if initial_delay_seconds:
+        log(
+            'Waiting '
+            f'{initial_delay_seconds} seconds for HEC token provisioning.'
+        )
         sleep(initial_delay_seconds)
 
     for dataset, category in categories:
@@ -600,6 +604,19 @@ def main(
     standard_output = sys.stdout if output_stream is None else output_stream
     standard_error = sys.stderr if error_stream is None else error_stream
     messages: list[str] = []
+    credential_values: tuple[str, ...] = ()
+
+    def sanitize(message: str) -> str:
+        for value in credential_values:
+            message = message.replace(value, '[REDACTED]')
+        return message
+
+    def log(message: str) -> None:
+        message = sanitize(message)
+        if operation == 'get':
+            messages.append(message)
+            return
+        print(message, file=standard_error, flush=True)
 
     try:
         values = environment
@@ -613,7 +630,14 @@ def main(
             values,
             require_request=operation == 'create',
         )
-        client = SplunkWebClient(config, logger=messages.append)
+        credential_values = tuple(
+            sorted(
+                {config.username, config.password},
+                key=len,
+                reverse=True,
+            )
+        )
+        client = SplunkWebClient(config, logger=log)
         client.login()
         template_path = artifact_dir / f'{config.input_id}_template.json'
 
@@ -622,13 +646,13 @@ def main(
                 client,
                 config.input_request,
                 template_path,
-                logger=messages.append,
+                logger=log,
             )
         elif operation == 'get':
             result = get_integration(
                 client,
                 template_path,
-                logger=messages.append,
+                logger=log,
             )
             print(
                 json.dumps(result, separators=(',', ':')),
@@ -636,13 +660,15 @@ def main(
                 flush=True,
             )
         else:
-            delete_integration(client, logger=messages.append)
+            delete_integration(client, logger=log)
         return 0
     except Exception as error:
-        for message in messages:
-            print(message, file=standard_error)
+        if operation == 'get':
+            for message in messages:
+                print(message, file=standard_error)
         print(
-            f'Splunk Data Manager {operation} failed: {error}',
+            'Splunk Data Manager '
+            f'{operation} failed: {sanitize(str(error))}',
             file=standard_error,
         )
         return 1

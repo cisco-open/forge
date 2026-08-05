@@ -11,11 +11,13 @@ resource "null_resource" "create_integration" {
   provisioner "local-exec" {
     command = "python3.12 \"${path.module}/scripts/splunk_integration.py\" create"
 
+    # The Python helper emits only sanitized diagnostics. Declassify these
+    # process values so OpenTofu does not suppress that diagnostic stream.
     environment = {
       SPLUNK_CLOUD            = var.splunk_cloud
       SPLUNK_INPUT_UUID       = random_uuid.splunk_input_uuid.result
-      SPLUNK_CLOUD_USERNAME   = data.aws_secretsmanager_secret_version.secrets["splunk_cloud_username"].secret_string
-      SPLUNK_CLOUD_PASSWORD   = data.aws_secretsmanager_secret_version.secrets["splunk_cloud_password"].secret_string
+      SPLUNK_CLOUD_USERNAME   = nonsensitive(data.aws_secretsmanager_secret_version.secrets["splunk_cloud_username"].secret_string)
+      SPLUNK_CLOUD_PASSWORD   = nonsensitive(data.aws_secretsmanager_secret_version.secrets["splunk_cloud_password"].secret_string)
       SPLUNK_CLOUD_INPUT_JSON = var.splunk_cloud_input_json
     }
   }
@@ -57,11 +59,12 @@ resource "null_resource" "delete_integration" {
 
     command = "python3.12 ./scripts/splunk_integration.py delete"
 
+    # Keep destroy diagnostics visible under the same sanitized boundary.
     environment = {
       SPLUNK_CLOUD          = self.triggers.splunk_cloud
       SPLUNK_INPUT_UUID     = self.triggers.splunk_input_uuid
-      SPLUNK_CLOUD_USERNAME = self.triggers.splunk_cloud_username
-      SPLUNK_CLOUD_PASSWORD = self.triggers.splunk_cloud_password
+      SPLUNK_CLOUD_USERNAME = nonsensitive(self.triggers.splunk_cloud_username)
+      SPLUNK_CLOUD_PASSWORD = nonsensitive(self.triggers.splunk_cloud_password)
     }
   }
 }

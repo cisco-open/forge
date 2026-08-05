@@ -299,6 +299,7 @@ def test_create_preserves_the_initial_hec_delay_and_polling(
         },
     )
     sleeps: list[float] = []
+    messages: list[str] = []
     template_path = tmp_path / 'input-id_template.json'
 
     splunk_integration.create_integration(
@@ -306,9 +307,16 @@ def test_create_preserves_the_initial_hec_delay_and_polling(
         request,
         template_path,
         sleep=sleeps.append,
+        logger=messages.append,
     )
 
     assert sleeps == [300, 60]
+    assert messages == [
+        'Waiting 300 seconds for HEC token provisioning.',
+        'HEC token exists for cloudtrail.',
+        'HEC token creation is still in progress for aws-cwl.',
+        'HEC token exists for aws-cwl.',
+    ]
     assert client.calls == [
         ('put_input', request),
         ('get_input', None),
@@ -740,6 +748,10 @@ def test_create_main_uses_process_environment_and_only_writes_template(
 
     def client_factory(config, logger):
         captured['config'] = config
+        logger(
+            'GET /sanitized-create-diagnostic returned HTTP 200 for '
+            f'{config.username} using {config.password}.'
+        )
         return client
 
     real_create = splunk_integration.create_integration
@@ -783,7 +795,14 @@ def test_create_main_uses_process_environment_and_only_writes_template(
 
     assert result == 0
     assert stdout.getvalue() == ''
-    assert stderr.getvalue() == ''
+    assert stderr.getvalue().splitlines() == [
+        'GET /sanitized-create-diagnostic returned HTTP 200 for '
+        '[REDACTED] using [REDACTED].',
+        'Waiting 300 seconds for HEC token provisioning.',
+        'HEC token exists for cloudtrail.',
+    ]
+    assert 'splunk-user' not in stderr.getvalue()
+    assert 'splunk-password' not in stderr.getvalue()
     assert captured['config'].input_request == request
     assert sleeps == [300]
     template_path = tmp_path / 'input-id_template.json'
@@ -804,6 +823,7 @@ def test_get_main_reads_the_external_query_and_prints_only_result_json(
 
     def client_factory(config, logger):
         captured['config'] = config
+        logger('GET /buffered-external-diagnostic returned HTTP 200.')
         return client
 
     monkeypatch.setattr(
@@ -877,11 +897,17 @@ def test_main_prints_failure_diagnostics_only_to_stderr(
 ) -> None:
     request = push_request()
     client = FakeClient(
-        put_error=splunk_integration.SplunkHttpError(500, 'PUT failed'),
+        put_error=splunk_integration.SplunkHttpError(
+            500,
+            'PUT failed for splunk-user using splunk-user-password',
+        ),
     )
 
-    def client_factory(_config, logger):
-        logger('PUT response retained in memory.')
+    def client_factory(config, logger):
+        logger(
+            f'PUT response for {config.username} '
+            f'using {config.password}.'
+        )
         return client
 
     monkeypatch.setattr(
@@ -890,6 +916,8 @@ def test_main_prints_failure_diagnostics_only_to_stderr(
         client_factory,
     )
     install_runtime_environment(monkeypatch, request)
+    monkeypatch.setenv('SPLUNK_CLOUD_USERNAME', 'splunk-user')
+    monkeypatch.setenv('SPLUNK_CLOUD_PASSWORD', 'splunk-user-password')
     stdout = io.StringIO()
     stderr = io.StringIO()
 
@@ -903,8 +931,9 @@ def test_main_prints_failure_diagnostics_only_to_stderr(
     assert result == 1
     assert stdout.getvalue() == ''
     assert stderr.getvalue().splitlines() == [
-        'PUT response retained in memory.',
-        'Splunk Data Manager create failed: PUT failed',
+        'PUT response for [REDACTED] using [REDACTED].',
+        'Splunk Data Manager create failed: '
+        'PUT failed for [REDACTED] using [REDACTED]',
     ]
     assert 'splunk-user' not in stderr.getvalue()
     assert 'splunk-password' not in stderr.getvalue()
