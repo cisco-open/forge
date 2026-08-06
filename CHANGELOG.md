@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.11.2](https://github.com/cisco-open/forge/compare/v4.11.1...v4.11.2) (2026-08-06)
+
+
+### Bug Fixes
+
+* **splunk:** harden Data Manager discovery ([#632](https://github.com/cisco-open/forge/issues/632)) ([9555e52](https://github.com/cisco-open/forge/commit/9555e52ea7977e00d58833b610c9da664c295245))
+* **splunk:** preserve configuration ACLs ([#633](https://github.com/cisco-open/forge/issues/633)) ([014c66b](https://github.com/cisco-open/forge/commit/014c66b993eeb866a62ba8d0da8f0ed7d3858ed3))
+
 ## [4.11.1](https://github.com/cisco-open/forge/compare/v4.11.0...v4.11.1) (2026-08-06)
 
 
