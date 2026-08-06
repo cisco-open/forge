@@ -48,8 +48,8 @@ resource "splunk_configs_conf" "forgecicd_cloudwatchlogs" {
   }
 
   acl {
-    read  = var.splunk_conf.acl.read
-    write = var.splunk_conf.acl.write
+    read    = var.splunk_conf.acl.read
+    write   = var.splunk_conf.acl.write
   }
 
   lifecycle {

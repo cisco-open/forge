@@ -8,8 +8,11 @@ resource "splunk_configs_conf" "forgecicd_runner_logs_s3" {
   }
 
   acl {
-    read  = var.splunk_conf.acl.read
-    write = var.splunk_conf.acl.write
+    app     = var.splunk_conf.acl.app
+    owner   = var.splunk_conf.acl.owner
+    sharing = var.splunk_conf.acl.sharing
+    read    = var.splunk_conf.acl.read
+    write   = var.splunk_conf.acl.write
   }
 
   lifecycle {
