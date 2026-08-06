@@ -2,8 +2,6 @@
 
 FUZZER_DIR="$SRC/forge/fuzz"
 LAMBDA_PATHS=(
-    "$SRC/forge/modules/integrations/splunk_cloud_s3_runner_logs/lambda/splunk_s3_runner_logs"
-    "$SRC/forge/modules/integrations/splunk_cloud_s3_runner_logs/lambda/redrive_runner_logs"
     "$SRC/forge/modules/integrations/splunk_stuck_workflow_job_dispatcher/lambda"
     "$SRC/forge/modules/platform/forge_runners/forge_trust_validator/lambda"
     "$SRC/forge/modules/platform/forge_runners/github_actions_job_logs/lambda/job_log_archiver"

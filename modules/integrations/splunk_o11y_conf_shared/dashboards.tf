@@ -94,30 +94,6 @@ module "dashboard_lambda_control_plane" {
   lambda_dimension_filter = local.lambda_dimension_filter
 }
 
-module "dashboard_kinesis_control_plane" {
-  source = "./dashboards/kinesis_control_plane"
-
-  providers = {
-    signalfx = signalfx
-  }
-
-  dynamic_variables = var.dashboard_variables.kinesis_control_plane.dynamic_variables
-  dashboard_group   = signalfx_dashboard_group.forgecicd.id
-}
-
-module "dashboard_runner_logs_ingestion" {
-  source = "./dashboards/runner_logs_ingestion"
-
-  providers = {
-    signalfx = signalfx
-  }
-
-  dynamic_variables       = var.dashboard_variables.runner_logs_ingestion.dynamic_variables
-  dashboard_group         = signalfx_dashboard_group.forgecicd.id
-  detector_id             = module.detector_aws_regional_health.runner_log_delivery_detector_id
-  lambda_dimension_filter = local.lambda_dimension_filter
-}
-
 module "dashboard_metric_ingest" {
   source = "./dashboards/metric_ingest"
 

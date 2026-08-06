@@ -133,5 +133,12 @@ resource "aws_s3_bucket_notification" "gh_logs" {
     filter_suffix = ".log"
   }
 
+  queue {
+    id            = "job-metadata"
+    queue_arn     = aws_sqs_queue.s3_notifications.arn
+    events        = ["s3:ObjectCreated:Put", "s3:ObjectCreated:CompleteMultipartUpload"]
+    filter_suffix = ".json"
+  }
+
   depends_on = [aws_sqs_queue_policy.s3_notifications]
 }

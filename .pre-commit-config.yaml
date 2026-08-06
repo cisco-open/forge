@@ -245,7 +245,7 @@ repos:
         args:
           - --hook-config=--tf-path=tofu
           - --args=--disable-rule=terraform_required_providers
-        exclude: (modules/helpers/forge_subscription|modules/integrations/splunk_secrets/|modules/integrations/splunk_cloud_s3_runner_logs/)
+        exclude: (modules/helpers/forge_subscription|modules/integrations/splunk_secrets/)
       - id: terraform_validate
         name: Terraform · Validate
         always_run: true
@@ -254,7 +254,7 @@ repos:
           - --tf-init-args=-backend=false
           - --tf-init-args=--upgrade=true
           - --hook-config=--tf-path=tofu
-        exclude: (modules/integrations/splunk_cloud_data_manager|modules/integrations/splunk_cloud_s3_runner_logs)
+        exclude: (modules/integrations/splunk_cloud_data_manager)
 
   # ---------------------
   # Security Hooks

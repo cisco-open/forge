@@ -64,12 +64,60 @@ run "splunk_cloud_shared_dashboard_and_props_contract" {
 
   assert {
     condition = (
-      splunk_configs_conf.forgecicd_runner_logs_json.name == "props/forgecicd:runner-logs:json"
-      && splunk_configs_conf.forgecicd_runner_logs_json.variables["REPORT-forgecicd_runner_logs_tenant_fields_event"] == "forgecicd_runner_logs_tenant_fields_event"
-      && splunk_configs_conf.forgecicd_runner_logs_json.variables["REPORT-forgecicd_runner_ec2"] == "forgecicd_runner_ec2"
-      && splunk_configs_conf.forgecicd_runner_logs_json.variables["REPORT-forgecicd_runner_arc"] == "forgecicd_runner_arc"
+      splunk_configs_conf.forgecicd_runner_logs_s3.name == "props/forgecicd:runner-logs:s3"
+      && splunk_configs_conf.forgecicd_runner_logs_s3.variables["REPORT-forgecicd_runner_logs_tenant_fields_logs"] == "forgecicd_runner_logs_tenant_fields_logs"
+      && splunk_configs_conf.forgecicd_runner_logs_s3.variables["TRUNCATE"] == "1000000"
+      && splunk_configs_conf.forgecicd_runner_logs_tenant_fields_logs.variables["REGEX"] == "^s3:\\/\\/(?<forgecicd_tenant>[a-z0-9]+)-(?<forgecicd_region_alias>[a-z0-9]+)-(?<forgecicd_vpc_alias>[a-z0-9]+)-forge-gh-logs-(?<account_id>\\d+)\\/(?<github_org>[a-zA-Z0-9._-]+)\\/(?<github_repo>[a-zA-Z0-9._-]+)\\/(?<workflow_run>\\d+)\\/(?<attempt>\\d+)\\/(?<job_id>\\d+)\\.log$"
+      && splunk_configs_conf.forgecicd_runner_logs_tenant_fields_logs.variables["FORMAT"] == "forgecicd_tenant::$1 forgecicd_region_alias::$2 forgecicd_vpc_alias::$3 github_org::$5 github_repo::$6 workflow_run::$7 attempt::$8 job_id::$9 forgecicd_log_type::runner-job-logs"
+      && splunk_configs_conf.forgecicd_runner_logs_tenant_fields_logs.variables["SOURCE_KEY"] == "source"
+      && splunk_configs_conf.forgecicd_runner_logs_tenant_fields_logs.variables["CLEAN_KEYS"] == "0"
+      && try(
+        regex(
+          splunk_configs_conf.forgecicd_runner_logs_tenant_fields_logs.variables["REGEX"],
+          "s3://srea-euw1-sl-forge-gh-logs-152772858171/cisco-sbg-emu/cloudsec_srea_forge-installation-test/31038335761/1/92416147467.log",
+        ),
+        {},
+        ) == {
+        account_id             = "152772858171"
+        attempt                = "1"
+        forgecicd_region_alias = "euw1"
+        forgecicd_tenant       = "srea"
+        forgecicd_vpc_alias    = "sl"
+        github_org             = "cisco-sbg-emu"
+        github_repo            = "cloudsec_srea_forge-installation-test"
+        job_id                 = "92416147467"
+        workflow_run           = "31038335761"
+      }
     )
-    error_message = "Splunk shared props must keep JSON runner log sourcetype transforms for tenant, EC2, and ARC metadata."
+    error_message = "Splunk shared props must extract tenant and GitHub run identifiers from S3 runner-log source URIs."
+  }
+
+  assert {
+    condition = (
+      splunk_configs_conf.forgecicd_runner_logs_s3.variables["REPORT-forgecicd_runner_logs_tenant_fields_event"] == "forgecicd_runner_logs_tenant_fields_event"
+      && splunk_configs_conf.forgecicd_runner_logs_tenant_fields_event.variables["REGEX"] == "^s3:\\/\\/(?<forgecicd_tenant>[a-z0-9]+)-(?<forgecicd_region_alias>[a-z0-9]+)-(?<forgecicd_vpc_alias>[a-z0-9]+)-forge-gh-logs-(?<account_id>\\d+)\\/(?<github_org>[a-zA-Z0-9._-]+)\\/(?<github_repo>[a-zA-Z0-9._-]+)\\/(?<workflow_run>\\d+)\\/(?<attempt>\\d+)\\/(?<job_id>\\d+)\\.json$"
+      && splunk_configs_conf.forgecicd_runner_logs_tenant_fields_event.variables["FORMAT"] == "forgecicd_tenant::$1 forgecicd_region_alias::$2 forgecicd_vpc_alias::$3 github_org::$5 github_repo::$6 workflow_run::$7 attempt::$8 job_id::$9 forgecicd_log_type::runner-job-event"
+      && splunk_configs_conf.forgecicd_runner_logs_tenant_fields_event.variables["SOURCE_KEY"] == "source"
+      && splunk_configs_conf.forgecicd_runner_logs_tenant_fields_event.variables["CLEAN_KEYS"] == "0"
+      && try(
+        regex(
+          splunk_configs_conf.forgecicd_runner_logs_tenant_fields_event.variables["REGEX"],
+          "s3://srea-euw1-sl-forge-gh-logs-152772858171/cisco-sbg-emu/cloudsec_srea_forge-installation-test/31038335761/1/92416147467.json",
+        ),
+        {},
+        ) == {
+        account_id             = "152772858171"
+        attempt                = "1"
+        forgecicd_region_alias = "euw1"
+        forgecicd_tenant       = "srea"
+        forgecicd_vpc_alias    = "sl"
+        github_org             = "cisco-sbg-emu"
+        github_repo            = "cloudsec_srea_forge-installation-test"
+        job_id                 = "92416147467"
+        workflow_run           = "31038335761"
+      }
+    )
+    error_message = "Splunk shared props must extract tenant and GitHub run identifiers from S3 runner-event source URIs."
   }
 
   assert {
@@ -77,8 +125,6 @@ run "splunk_cloud_shared_dashboard_and_props_contract" {
       splunk_configs_conf.forgecicd_cloudwatchlogs.variables["REPORT-forgecicd_shared_lambda_fields"] == "forgecicd_shared_lambda_fields"
       && splunk_configs_conf.forgecicd_shared_lambda_fields.name == "transforms/forgecicd_shared_lambda_fields"
       && strcontains(splunk_configs_conf.forgecicd_shared_lambda_fields.variables["REGEX"], "splunk-dependency-monitor")
-      && strcontains(splunk_configs_conf.forgecicd_shared_lambda_fields.variables["REGEX"], "splunk-s3-runner-logs-lambda")
-      && strcontains(splunk_configs_conf.forgecicd_shared_lambda_fields.variables["REGEX"], "splunk-s3-runner-logs-redrive")
       && strcontains(splunk_configs_conf.forgecicd_shared_lambda_fields.variables["REGEX"], "forge-aws-billing-per-service")
       && strcontains(splunk_configs_conf.forgecicd_shared_lambda_fields.variables["REGEX"], "forge-aws-billing-per-resource-process")
       && strcontains(splunk_configs_conf.forgecicd_shared_lambda_fields.variables["REGEX"], "forge-aws-billing-per-resource")
@@ -173,10 +219,12 @@ run "orders_control_plane_dashboards_for_operator_triage" {
   assert {
     condition = (
       strcontains(splunk_data_ui_views.forge_runner_capacity.eai_data, "One elevated percentile is not enough to infer failure")
+      && strcontains(splunk_data_ui_views.forge_runner_capacity.eai_data, "sourcetype=\\\"forgecicd:runner-logs:s3\\\" source=\\\"*.json\\\"")
+      && strcontains(splunk_data_ui_views.forge_runner_capacity.eai_data, "spath input=_raw path=workflow_job.created_at")
       && strcontains(splunk_data_ui_views.forge_runner_control_plane_health.eai_data, "Global-lock cleanup is diagnostic and is not causal evidence for a stuck job")
       && strcontains(splunk_data_ui_views.forge_trust_failures.eai_data, "TagSession")
     )
-    error_message = "Control-plane guidance must prevent single-chart failure inference, false global-lock causality, and incomplete STS trust triage."
+    error_message = "Capacity must use native S3 JSON metadata, while control-plane guidance prevents single-chart failure inference, false global-lock causality, and incomplete STS trust triage."
   }
 
   assert {
@@ -350,7 +398,6 @@ run "orders_ingestion_dashboards_for_operator_triage" {
       for body in [
         splunk_data_ui_views.forge_ingestion_quality.eai_data,
         splunk_data_ui_views.forge_lambda_operations.eai_data,
-        splunk_data_ui_views.forge_webhook_job_log_pipeline.eai_data,
       ] :
       !strcontains(body, "\"operator_guide\"")
       && !strcontains(body, "\"type\": \"splunk.markdown\"")
@@ -365,16 +412,11 @@ run "orders_ingestion_dashboards_for_operator_triage" {
     condition = (
       can(regex("\"item\": \"missing_fields_table\"[\\s\\S]*\"item\": \"volume_anomaly_chart\"[\\s\\S]*\"item\": \"source_inventory_table\"", splunk_data_ui_views.forge_ingestion_quality.eai_data))
       && can(regex("\"item\": \"lambda_errors_table\"[\\s\\S]*\"item\": \"lambda_error_trend_chart\"[\\s\\S]*\"item\": \"lambda_samples_table\"", splunk_data_ui_views.forge_lambda_operations.eai_data))
+      && strcontains(splunk_data_ui_views.forge_ingestion_quality.eai_data, "forgecicd:runner-logs:s3")
+      && !strcontains(splunk_data_ui_views.forge_ingestion_quality.eai_data, "splunk-s3-runner-logs")
+      && !strcontains(splunk_data_ui_views.forge_lambda_operations.eai_data, "splunk-s3-runner-logs")
     )
-    error_message = "Actionable ingestion and Lambda failures must appear before trends, source inventory, and raw samples."
-  }
-
-  assert {
-    condition = (
-      strcontains(splunk_data_ui_views.forge_webhook_job_log_pipeline.eai_data, "Unequal broad totals alone are not proof of loss")
-      && strcontains(splunk_data_ui_views.forge_webhook_job_log_pipeline.eai_data, "Which job-log archive operations failed?")
-    )
-    error_message = "The job-log pipeline dashboard must distinguish confirmed failures from non-causal count differences."
+    error_message = "Ingestion and Lambda dashboards must retain useful diagnostics without references to the retired runner-log streaming pipeline."
   }
 }
 
@@ -414,8 +456,11 @@ run "makes_investigation_dashboards_explicitly_diagnostic" {
       strcontains(splunk_data_ui_views.forge_tenant_logs.eai_data, "Which tenant log events match the investigation?")
       && strcontains(splunk_data_ui_views.forge_tenant_logs.eai_data, "an empty result can mean no matching retained events")
       && strcontains(splunk_data_ui_views.forge_tenant_logs.eai_data, "Raw logs provide evidence but do not assign")
+      && strcontains(splunk_data_ui_views.forge_tenant_logs.eai_data, "sourcetype=\\\"forgecicd:runner-logs:s3\\\"")
+      && strcontains(splunk_data_ui_views.forge_tenant_logs.eai_data, "eventstats latest(runner_job_json)")
+      && strcontains(splunk_data_ui_views.forge_tenant_logs.eai_data, "spath input=runner_job_json path=workflow_job.runner_name")
     )
-    error_message = "Tenant logs must not present an empty raw-event result as proof of health or assign ownership by itself."
+    error_message = "Tenant logs must correlate native S3 log objects with sibling JSON metadata without overstating empty results or ownership."
   }
 
   assert {
@@ -423,8 +468,12 @@ run "makes_investigation_dashboards_explicitly_diagnostic" {
       strcontains(splunk_data_ui_views.forge_ci_job_details.eai_data, "\"description\": \"Answers")
       && strcontains(splunk_data_ui_views.forge_troubleshooting.eai_data, "\"description\": \"Answers")
       && can(regex("\"item\": \"queued_windows_table\"[\\s\\S]*\"item\": \"ci_job_details_table\"", splunk_data_ui_views.forge_ci_job_details.eai_data))
+      && strcontains(splunk_data_ui_views.forge_ci_job_details.eai_data, "sourcetype=\\\"forgecicd:runner-logs:s3\\\" source=\\\"*.json\\\"")
+      && strcontains(splunk_data_ui_views.forge_ci_job_details.eai_data, "spath input=_raw path=workflow_job.runner_name")
+      && strcontains(splunk_data_ui_views.forge_ci_job_details.eai_data, "eval forgecicd_type=case")
+      && strcontains(splunk_data_ui_views.forge_troubleshooting.eai_data, "sourcetype=\\\"forgecicd:runner-logs:s3\\\" source=\\\"*.json\\\"")
     )
-    error_message = "CI and troubleshooting panels must have question-oriented descriptions and leave high-cardinality job detail after queue diagnostics."
+    error_message = "CI and troubleshooting panels must query native S3 JSON explicitly, extract metadata with spath, and leave high-cardinality job detail after queue diagnostics."
   }
 }
 

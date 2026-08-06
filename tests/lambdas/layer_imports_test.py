@@ -37,8 +37,6 @@ def test_klayers_provided_dep_is_importable(dep):
         'validate_signature',
         'job_log_dispatcher',
         'job_log_archiver',
-        'splunk_s3_runner_logs',
-        'redrive_runner_logs',
         'sec_meta_ec2_tags',
         'redrive_deadletter',
         'github_app_runner_group',
@@ -62,8 +60,6 @@ def test_handler_module_imports(module_name, monkeypatch, aws):
         'KMS_KEY_ARN',
         'GITHUB_API',
         'SQS_MAP',
-        'DLQ_ARN',
-        'KINESIS_STREAM_NAME',
         'WEBHOOK_SECRET',
     ):
         monkeypatch.setenv(var, 'placeholder')

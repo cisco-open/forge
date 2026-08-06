@@ -60,52 +60,6 @@ dashboard_variables:
         value_required: false
         values_suggested: [Forge MT]
         restricted_suggestions: true
-  kinesis_control_plane:
-    dynamic_variables:
-      - property: aws_account_id
-        alias: AWS account
-        description: Forge AWS accounts containing control-plane resources.
-        values: []
-        value_required: false
-        values_suggested: ['111111111111']
-        restricted_suggestions: true
-      - property: aws_region
-        alias: AWS region
-        description: Forge AWS regions containing control-plane resources.
-        values: []
-        value_required: false
-        values_suggested: [eu-west-1]
-        restricted_suggestions: true
-      - property: aws_tag_ProductFamilyName
-        alias: Product family
-        description: Forge AWS product-family tag for control-plane resources.
-        values: []
-        value_required: false
-        values_suggested: [Forge MT]
-        restricted_suggestions: true
-  runner_logs_ingestion:
-    dynamic_variables:
-      - property: aws_account_id
-        alias: AWS account
-        description: Forge AWS accounts containing the runner-log ingestion pipeline.
-        values: []
-        value_required: false
-        values_suggested: ['111111111111']
-        restricted_suggestions: true
-      - property: aws_region
-        alias: AWS region
-        description: Forge AWS regions containing the runner-log ingestion pipeline.
-        values: []
-        value_required: false
-        values_suggested: [eu-west-1]
-        restricted_suggestions: true
-      - property: aws_tag_ProductFamilyName
-        alias: Product family
-        description: Forge AWS product-family tag for the runner-log ingestion pipeline.
-        values: []
-        value_required: false
-        values_suggested: [Forge MT]
-        restricted_suggestions: true
   metric_ingest:
     token_ids: [example-ingest-token-id]
   sqs_control_plane:

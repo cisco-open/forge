@@ -43,7 +43,6 @@ Do not treat an empty chart as healthy until freshness is established.
 | Several ARC tenants fail in one cluster.                                | Forge Control Plane - Kubernetes              | Kubernetes Storage and Network in Splunk Cloud                          |
 | Lambdas fail, throttle, or become slow.                                 | Forge Tenant - Lambdas                        | Forge Lambda Operations in Splunk Cloud                                 |
 | Shared Lambdas fail, throttle, or become slow.                          | Forge Control Plane - Lambdas                 | Matching regional control-plane Lambda logs                             |
-| Shared Kinesis streams throttle, lag, or become slow.                   | Forge Control Plane - Kinesis                 | Kinesis producers, consumers, and matching Lambda/Firehose logs         |
 | Work accumulates or enters a DLQ.                                       | Forge Tenant - SQS                            | Webhook pipeline, dispatcher, redrive, or control-plane logs            |
 | Shared work accumulates or enters a DLQ.                                | Forge Control Plane - SQS                     | Matching regional control-plane queue producer and consumer logs        |
 | Tenant or shared S3 storage grows unexpectedly.                         | Forge Tenant - S3 or Forge Control Plane - S3 | Bucket lifecycle, retention, and producer logs                          |
@@ -239,23 +238,6 @@ function; correlate errors, throttles, and duration; then inspect its regional
 Lambda logs. If the dashboard is unexpectedly empty, verify the AWS resource
 tags and the `aws_tag_TenantName` dimension exported by the Splunk AWS
 integration.
-
-### Forge Control Plane - Kinesis
-
-Purpose: inspect shared Forge Kinesis streams that are not tagged to a tenant.
-
-Normal: read/write throttling is zero, iterator age remains near the consumer
-baseline, successful operations continue, and latency follows the stream's
-normal pattern.
-
-Problem: throughput-exceeded counters rise, iterator age grows, successful
-operations stop unexpectedly, or producer/consumer latency increases.
-
-Action: confirm the account, region, and product-family scope; identify the
-stream; compare incoming volume with successful operations; then inspect the
-producer, consumer, Lambda, or Firehose logs. Iterator age is milliseconds and
-represents consumer lag; correlate it with expected traffic before assigning
-severity.
 
 ### Forge Tenant - SQS
 

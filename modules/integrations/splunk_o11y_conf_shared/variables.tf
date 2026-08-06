@@ -222,30 +222,6 @@ variable "dashboard_variables" {
         }
       ))
     })
-    kinesis_control_plane = object({
-      dynamic_variables = list(object({
-        property               = string
-        alias                  = string
-        description            = string
-        values                 = list(string)
-        value_required         = bool
-        values_suggested       = list(string)
-        restricted_suggestions = bool
-        }
-      ))
-    })
-    runner_logs_ingestion = object({
-      dynamic_variables = list(object({
-        property               = string
-        alias                  = string
-        description            = string
-        values                 = list(string)
-        value_required         = bool
-        values_suggested       = list(string)
-        restricted_suggestions = bool
-        }
-      ))
-    })
     metric_ingest = optional(object({
       token_ids = optional(list(string), [])
     }), {})
