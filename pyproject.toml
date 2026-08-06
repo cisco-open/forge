@@ -14,14 +14,14 @@ pre-commit-image = [
     "pre-commit==4.6.1",
     "bandit==1.9.4",
     "pip-audit==2.10.1",
-    "uv==0.12.1",
+    "uv==0.12.2",
 ]
 
 # Runtime deps for .docker/forge-github-app-register.
 forge-github-app-register = [
     "Flask==3.1.3",
     "requests==2.34.2",
-    "uv==0.12.1",
+    "uv==0.12.2",
 ]
 
 # Dev/test deps for ForgeMT first-party Lambda unit tests.
@@ -31,19 +31,19 @@ lambda-tests = [
     "pytest==9.1.1",
     "pytest-cov==7.1.0",
     "moto[all]==5.2.2",
-    "boto3==1.43.63",
+    "boto3==1.43.65",
     # Runtime libs provided by Klayers in production. Installing them here lets
     # tests import handlers the same way the Lambda runtime does.
     "PyJWT==2.13.0",
     "requests==2.34.2",
     "cryptography==50.0.0",
     "responses==0.26.2",
-    "hypothesis==6.165.0",
+    "hypothesis==6.165.2",
 ]
 
 # Dev/test deps for the MiniStack smoke suite under tests/smoke.
 # No moto here: these tests point boto3 at the local MiniStack endpoint.
 smoke-tests = [
     "pytest==9.1.1",
-    "boto3==1.43.63",
+    "boto3==1.43.65",
 ]

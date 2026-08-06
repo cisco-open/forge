@@ -22,8 +22,8 @@ module "cur_per_resource_process" {
   }]
 
   layers = [
-    "arn:aws:lambda:${var.aws_region}:770693421928:layer:Klayers-p312-requests:17",
-    "arn:aws:lambda:${var.aws_region}:336392948345:layer:AWSSDKPandas-Python312:19"
+    "arn:aws:lambda:${var.aws_region}:770693421928:layer:Klayers-p312-requests:26",
+    "arn:aws:lambda:${var.aws_region}:336392948345:layer:AWSSDKPandas-Python312:31"
   ]
 
   logging_log_group                 = aws_cloudwatch_log_group.cur_per_resource_process.name

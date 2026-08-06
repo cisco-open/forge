@@ -14,9 +14,9 @@ module "register_github_app_runner_group_lambda" {
   }]
 
   layers = [
-    "arn:aws:lambda:${data.aws_region.current.region}:770693421928:layer:Klayers-p312-cryptography:17",
-    "arn:aws:lambda:${data.aws_region.current.region}:770693421928:layer:Klayers-p312-requests:17",
-    "arn:aws:lambda:${data.aws_region.current.region}:770693421928:layer:Klayers-p312-PyJWT:1",
+    "arn:aws:lambda:${data.aws_region.current.region}:770693421928:layer:Klayers-p312-cryptography:26",
+    "arn:aws:lambda:${data.aws_region.current.region}:770693421928:layer:Klayers-p312-requests:26",
+    "arn:aws:lambda:${data.aws_region.current.region}:770693421928:layer:Klayers-p312-PyJWT:4",
   ]
 
   logging_log_group                 = aws_cloudwatch_log_group.register_github_app_runner_group_lambda.name
