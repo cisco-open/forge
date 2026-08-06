@@ -8,8 +8,11 @@ resource "splunk_configs_conf" "forgecicd_kube_container_runner" {
   }
 
   acl {
-    read  = var.splunk_conf.acl.read
-    write = var.splunk_conf.acl.write
+    app     = var.splunk_conf.acl.app
+    owner   = var.splunk_conf.acl.owner
+    sharing = var.splunk_conf.acl.sharing
+    read    = var.splunk_conf.acl.read
+    write   = var.splunk_conf.acl.write
   }
 
   lifecycle {
@@ -75,8 +78,11 @@ resource "splunk_configs_conf" "forgecicd_kube_container_runner_logs" {
   }
 
   acl {
-    read  = var.splunk_conf.acl.read
-    write = var.splunk_conf.acl.write
+    app     = var.splunk_conf.acl.app
+    owner   = var.splunk_conf.acl.owner
+    sharing = var.splunk_conf.acl.sharing
+    read    = var.splunk_conf.acl.read
+    write   = var.splunk_conf.acl.write
   }
 
   lifecycle {
@@ -140,8 +146,11 @@ resource "splunk_configs_conf" "forgecicd_kube_container_init_docker_creds" {
   }
 
   acl {
-    read  = var.splunk_conf.acl.read
-    write = var.splunk_conf.acl.write
+    app     = var.splunk_conf.acl.app
+    owner   = var.splunk_conf.acl.owner
+    sharing = var.splunk_conf.acl.sharing
+    read    = var.splunk_conf.acl.read
+    write   = var.splunk_conf.acl.write
   }
 
   lifecycle {
@@ -203,8 +212,11 @@ resource "splunk_configs_conf" "forgecicd_kube_container_init_dind_rootless" {
   }
 
   acl {
-    read  = var.splunk_conf.acl.read
-    write = var.splunk_conf.acl.write
+    app     = var.splunk_conf.acl.app
+    owner   = var.splunk_conf.acl.owner
+    sharing = var.splunk_conf.acl.sharing
+    read    = var.splunk_conf.acl.read
+    write   = var.splunk_conf.acl.write
   }
 
   lifecycle {
@@ -266,8 +278,11 @@ resource "splunk_configs_conf" "forgecicd_kube_container_init_work" {
   }
 
   acl {
-    read  = var.splunk_conf.acl.read
-    write = var.splunk_conf.acl.write
+    app     = var.splunk_conf.acl.app
+    owner   = var.splunk_conf.acl.owner
+    sharing = var.splunk_conf.acl.sharing
+    read    = var.splunk_conf.acl.read
+    write   = var.splunk_conf.acl.write
   }
 
   lifecycle {
@@ -329,8 +344,11 @@ resource "splunk_configs_conf" "forgecicd_kube_container_init_dind_externals" {
   }
 
   acl {
-    read  = var.splunk_conf.acl.read
-    write = var.splunk_conf.acl.write
+    app     = var.splunk_conf.acl.app
+    owner   = var.splunk_conf.acl.owner
+    sharing = var.splunk_conf.acl.sharing
+    read    = var.splunk_conf.acl.read
+    write   = var.splunk_conf.acl.write
   }
 
   lifecycle {
@@ -392,8 +410,11 @@ resource "splunk_configs_conf" "forgecicd_kube_container_dind" {
   }
 
   acl {
-    read  = var.splunk_conf.acl.read
-    write = var.splunk_conf.acl.write
+    app     = var.splunk_conf.acl.app
+    owner   = var.splunk_conf.acl.owner
+    sharing = var.splunk_conf.acl.sharing
+    read    = var.splunk_conf.acl.read
+    write   = var.splunk_conf.acl.write
   }
 
   lifecycle {
@@ -455,8 +476,11 @@ resource "splunk_configs_conf" "forgecicd_kube_container_listener" {
   }
 
   acl {
-    read  = var.splunk_conf.acl.read
-    write = var.splunk_conf.acl.write
+    app     = var.splunk_conf.acl.app
+    owner   = var.splunk_conf.acl.owner
+    sharing = var.splunk_conf.acl.sharing
+    read    = var.splunk_conf.acl.read
+    write   = var.splunk_conf.acl.write
   }
 
   lifecycle {
@@ -518,8 +542,11 @@ resource "splunk_configs_conf" "forgecicd_kube_container_manager" {
   }
 
   acl {
-    read  = var.splunk_conf.acl.read
-    write = var.splunk_conf.acl.write
+    app     = var.splunk_conf.acl.app
+    owner   = var.splunk_conf.acl.owner
+    sharing = var.splunk_conf.acl.sharing
+    read    = var.splunk_conf.acl.read
+    write   = var.splunk_conf.acl.write
   }
 
   lifecycle {
@@ -580,8 +607,11 @@ resource "splunk_configs_conf" "forgecicd_kube_container_log_worker" {
   }
 
   acl {
-    read  = var.splunk_conf.acl.read
-    write = var.splunk_conf.acl.write
+    app     = var.splunk_conf.acl.app
+    owner   = var.splunk_conf.acl.owner
+    sharing = var.splunk_conf.acl.sharing
+    read    = var.splunk_conf.acl.read
+    write   = var.splunk_conf.acl.write
   }
 
   lifecycle {
@@ -642,8 +672,11 @@ resource "splunk_configs_conf" "forgecicd_kube_container_log_hook" {
   }
 
   acl {
-    read  = var.splunk_conf.acl.read
-    write = var.splunk_conf.acl.write
+    app     = var.splunk_conf.acl.app
+    owner   = var.splunk_conf.acl.owner
+    sharing = var.splunk_conf.acl.sharing
+    read    = var.splunk_conf.acl.read
+    write   = var.splunk_conf.acl.write
   }
 
   lifecycle {

@@ -48,6 +48,8 @@ resource "splunk_configs_conf" "forgecicd_cloudwatchlogs" {
   }
 
   acl {
+    app   = var.splunk_conf.acl.app
+    owner = var.splunk_conf.acl.owner
     read  = var.splunk_conf.acl.read
     write = var.splunk_conf.acl.write
   }
