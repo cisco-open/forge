@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.11.1](https://github.com/cisco-open/forge/compare/v4.11.0...v4.11.1) (2026-08-06)
+
+
+### Bug Fixes
+
+* **splunk-conf:** ignore trackPipelineLatency drift ([#629](https://github.com/cisco-open/forge/issues/629)) ([3dc7235](https://github.com/cisco-open/forge/commit/3dc7235d7362bd5774d79349262a615b22b0a525))
+
 ## [4.11.0](https://github.com/cisco-open/forge/compare/v4.10.0...v4.11.0) (2026-08-05)
 
 
