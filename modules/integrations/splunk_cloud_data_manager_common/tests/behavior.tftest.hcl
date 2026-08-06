@@ -80,6 +80,25 @@ run "splunk_data_manager_common_role_contract" {
 
   assert {
     condition = (
+      data.external.splunk_data.program[0] == "python3.12"
+      && data.external.splunk_data.program[1] == "${path.module}/scripts/splunk_data_manager.py"
+      && data.external.splunk_data.program[2] == "authenticate"
+      && data.external.splunk_data.query.splunk_cloud == "https://splunk.example.com"
+      && nonsensitive(data.external.splunk_data.query.username) == "mock-splunk-secret"
+      && nonsensitive(data.external.splunk_data.query.password) == "mock-splunk-secret"
+      && data.external.config.program[0] == "python3.12"
+      && data.external.config.program[1] == "${path.module}/scripts/splunk_data_manager.py"
+      && data.external.config.program[2] == "config"
+      && data.external.config.query.splunk_cloud == "https://splunk.example.com"
+      && data.external.config.query.splunkweb_csrf_token_8443 == "csrf"
+      && data.external.config.query.splunkd_8443 == "splunkd"
+      && data.external.config.query.awselb == "awselb"
+    )
+    error_message = "Splunk Data Manager discovery must invoke both Python helper subcommands and pass credentials and cookies through external data queries."
+  }
+
+  assert {
+    condition = (
       aws_iam_role.splunk_dm_read_only.name == "SplunkDMReadOnly"
       && jsondecode(aws_iam_role.splunk_dm_read_only.assume_role_policy).Statement[0].Principal.AWS[0] == "arn:aws:iam::999999999999:role/splunk-data-manager"
       && jsondecode(aws_iam_role.splunk_dm_read_only.assume_role_policy).Statement[0].Condition.StringEquals["sts:ExternalId"] == "external-id-123"

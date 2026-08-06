@@ -16,6 +16,15 @@ run "integrations_splunk_cloud_data_manager_common_contract" {
       "data \"aws_secretsmanager_secret_version\" \"secrets\"",
       "data \"external\" \"splunk_data\"",
       "data \"external\" \"config\"",
+      "\"python3.12\"",
+      "\"$${path.module}/scripts/splunk_data_manager.py\"",
+      "\"authenticate\"",
+      "\"config\"",
+      "username     = local.splunk_cloud_username",
+      "password     = local.splunk_cloud_password",
+      "splunkweb_csrf_token_8443 = data.external.splunk_data.result[\"splunkweb_csrf_token_8443\"]",
+      "splunkd_8443              = data.external.splunk_data.result[\"splunkd_8443\"]",
+      "awselb                    = data.external.splunk_data.result[\"awselb\"]",
       "provider \"aws\"",
     ]
   }
