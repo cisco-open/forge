@@ -56,6 +56,7 @@ resource "splunk_configs_conf" "forgecicd_cloudwatchlogs_forgecicd" {
       variables["priority"],
       variables["sourcetype"],
       variables["termFrequencyWeightedDist"],
+      variables["trackPipelineLatency"],
       variables["unarchive_cmd_start_mode"],
     ]
   }
@@ -121,6 +122,7 @@ resource "splunk_configs_conf" "forgecicd_metadata" {
       variables["priority"],
       variables["sourcetype"],
       variables["termFrequencyWeightedDist"],
+      variables["trackPipelineLatency"],
       variables["unarchive_cmd_start_mode"],
     ]
   }

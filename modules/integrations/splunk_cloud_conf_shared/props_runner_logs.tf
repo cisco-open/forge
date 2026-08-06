@@ -53,6 +53,7 @@ resource "splunk_configs_conf" "forgecicd_runner_logs_s3" {
       variables["priority"],
       variables["sourcetype"],
       variables["termFrequencyWeightedDist"],
+      variables["trackPipelineLatency"],
       variables["unarchive_cmd_start_mode"],
     ]
   }
