@@ -17,6 +17,7 @@ Data Manager needs a read-only AWS role to inventory and ingest logs or metadata
 
 - Keep the role trust aligned with Splunk Data Manager requirements.
 - When Splunk integration setup fails, confirm both the secret values and the external data-source scripts.
+- The external data helper requires Python 3.12 and uses only the Python standard library; `curl` and `jq` are not required.
 - This module is shared foundation for several Data Manager inputs.
 
 <!-- BEGIN_TF_DOCS -->
