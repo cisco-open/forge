@@ -53,6 +53,7 @@ resource "splunk_configs_conf" "forgecicd_aws_billing_cur" {
       variables["priority"],
       variables["sourcetype"],
       variables["termFrequencyWeightedDist"],
+      variables["trackPipelineLatency"],
       variables["unarchive_cmd_start_mode"],
     ]
   }

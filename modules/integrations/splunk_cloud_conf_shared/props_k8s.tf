@@ -54,6 +54,7 @@ resource "splunk_configs_conf" "forgecicd_kube_container_runner" {
       variables["priority"],
       variables["sourcetype"],
       variables["termFrequencyWeightedDist"],
+      variables["trackPipelineLatency"],
       variables["unarchive_cmd_start_mode"],
     ]
   }
@@ -120,6 +121,7 @@ resource "splunk_configs_conf" "forgecicd_kube_container_runner_logs" {
       variables["priority"],
       variables["sourcetype"],
       variables["termFrequencyWeightedDist"],
+      variables["trackPipelineLatency"],
       variables["unarchive_cmd_start_mode"],
     ]
   }
@@ -184,6 +186,7 @@ resource "splunk_configs_conf" "forgecicd_kube_container_init_docker_creds" {
       variables["priority"],
       variables["sourcetype"],
       variables["termFrequencyWeightedDist"],
+      variables["trackPipelineLatency"],
       variables["unarchive_cmd_start_mode"],
     ]
   }
@@ -246,6 +249,7 @@ resource "splunk_configs_conf" "forgecicd_kube_container_init_dind_rootless" {
       variables["priority"],
       variables["sourcetype"],
       variables["termFrequencyWeightedDist"],
+      variables["trackPipelineLatency"],
       variables["unarchive_cmd_start_mode"],
     ]
   }
@@ -308,6 +312,7 @@ resource "splunk_configs_conf" "forgecicd_kube_container_init_work" {
       variables["priority"],
       variables["sourcetype"],
       variables["termFrequencyWeightedDist"],
+      variables["trackPipelineLatency"],
       variables["unarchive_cmd_start_mode"],
     ]
   }
@@ -370,6 +375,7 @@ resource "splunk_configs_conf" "forgecicd_kube_container_init_dind_externals" {
       variables["priority"],
       variables["sourcetype"],
       variables["termFrequencyWeightedDist"],
+      variables["trackPipelineLatency"],
       variables["unarchive_cmd_start_mode"],
     ]
   }
@@ -432,6 +438,7 @@ resource "splunk_configs_conf" "forgecicd_kube_container_dind" {
       variables["priority"],
       variables["sourcetype"],
       variables["termFrequencyWeightedDist"],
+      variables["trackPipelineLatency"],
       variables["unarchive_cmd_start_mode"],
     ]
   }
@@ -494,6 +501,7 @@ resource "splunk_configs_conf" "forgecicd_kube_container_listener" {
       variables["priority"],
       variables["sourcetype"],
       variables["termFrequencyWeightedDist"],
+      variables["trackPipelineLatency"],
       variables["unarchive_cmd_start_mode"],
     ]
   }
@@ -556,6 +564,7 @@ resource "splunk_configs_conf" "forgecicd_kube_container_manager" {
       variables["priority"],
       variables["sourcetype"],
       variables["termFrequencyWeightedDist"],
+      variables["trackPipelineLatency"],
       variables["unarchive_cmd_start_mode"],
     ]
   }
@@ -617,6 +626,7 @@ resource "splunk_configs_conf" "forgecicd_kube_container_log_worker" {
       variables["priority"],
       variables["sourcetype"],
       variables["termFrequencyWeightedDist"],
+      variables["trackPipelineLatency"],
       variables["unarchive_cmd_start_mode"],
     ]
   }
@@ -678,6 +688,7 @@ resource "splunk_configs_conf" "forgecicd_kube_container_log_hook" {
       variables["priority"],
       variables["sourcetype"],
       variables["termFrequencyWeightedDist"],
+      variables["trackPipelineLatency"],
       variables["unarchive_cmd_start_mode"],
     ]
   }
