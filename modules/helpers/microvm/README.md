@@ -28,10 +28,6 @@ is needed.
   lifecycle cleanup under `lambda-microvms/`.
 - A Lambda-trusted build role for artifact access, optional private ECR pulls,
   and scoped build-log writes.
-- An unattached regional image-management policy for artifact upload, ECR
-  publication, image create/update/inspection, and passing only the build role
-  to Lambda. `forge_subscription` attaches it directly to
-  `role_for_forge_runners`.
 - For every `network_connectors` map entry, a dedicated no-ingress security
   group with IPv4 or dual-stack egress and a regional Network Connector for
   `MicroVm` compute. Entries can target different VPCs in the same region.
@@ -100,6 +96,9 @@ set for each launch.
 Forge owns only this regional foundation: S3 storage, IAM boundaries, one
 AppRegistry application, and the configured Network Connectors. It does not
 create or update MicroVM images and does not manage a CloudWatch log group.
+`forge_subscription` owns the single account-level publisher policy attached to
+`role_for_forge_runners`; this regional helper does not create or attach a
+publisher policy.
 
 The internal runner-image publisher currently selects
 `/aws/lambda/microvms/<image-name>` in its `loggingConfig`. The build role has
@@ -110,22 +109,22 @@ those permissions are simply unused.
 
 ## IAM Boundaries
 
-Most Lambda MicroVM operations are scoped to the
-`<image_name_prefix>-*` namespace owned by the internal publisher. This module
-does not enumerate images or define runner sizes. AWS does not support
-resource-level permissions for `CreateMicrovmImage` or the account-level list
-operations, so only those actions use `Resource = "*"`.
+The runtime policy is scoped to the `<image_name_prefix>-*` namespace owned by
+the internal publisher. This module does not enumerate images or define runner
+sizes. The account-level publisher policy in `forge_subscription` independently
+scopes resource-aware image operations to the configured regional namespaces.
 
 The prefix can contain at most 62 characters, leaving room for the namespace
 separator and at least one suffix character within AWS's 64-character image
 name limit. The publisher remains responsible for validating each complete
 image name.
 
-The regional image-management policy uses `iam:PassRole` only for the
-image-build role, with `iam:PassedToService = lambda.amazonaws.com`. The
-policy remains unattached in this module because its exact S3, build-role,
-image-namespace, and ECR scopes are regional. `forge_subscription` owns
-attaching each regional policy ARN directly to `role_for_forge_runners`.
+`forge_subscription` creates one publisher policy for
+`role_for_forge_runners`, aggregating the configured regional artifact buckets,
+build roles, image namespaces, and ECR repositories. Its `iam:PassRole`
+permission is restricted to the regional image-build roles and
+`iam:PassedToService = lambda.amazonaws.com`. Keeping that policy at the
+subscription level avoids creating one account-global IAM policy per region.
 
 This helper deliberately does not create runtime execution or control-plane
 roles. The runner module owns those roles and their service permissions because
@@ -177,7 +176,6 @@ No modules.
 | ---- | ---- |
 | [aws_cloudformation_stack.connector](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudformation_stack) | resource |
 | [aws_iam_policy.build](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
-| [aws_iam_policy.image_management](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
 | [aws_iam_policy.usage](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
 | [aws_iam_role.build](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role.operator](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
@@ -197,7 +195,6 @@ No modules.
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_iam_policy_document.artifact_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.build](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.image_management](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.lambda_assume_operator_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.lambda_service_assume_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.usage](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
@@ -213,7 +210,7 @@ No modules.
 | <a name="input_aws_profile"></a> [aws\_profile](#input\_aws\_profile) | AWS profile to use. | `string` | n/a | yes |
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | AWS region in which to create the Lambda MicroVM prerequisites. | `string` | n/a | yes |
 | <a name="input_default_tags"></a> [default\_tags](#input\_default\_tags) | A map of default tags to apply to resources. | `map(string)` | n/a | yes |
-| <a name="input_ecr_repository_arns"></a> [ecr\_repository\_arns](#input\_ecr\_repository\_arns) | Optional regional ECR repository ARNs from which builds can pull and publishers can push runner base images. | `set(string)` | `[]` | no |
+| <a name="input_ecr_repository_arns"></a> [ecr\_repository\_arns](#input\_ecr\_repository\_arns) | Optional regional ECR repository ARNs from which MicroVM image builds can pull runner base images. | `set(string)` | `[]` | no |
 | <a name="input_image_name_prefix"></a> [image\_name\_prefix](#input\_image\_name\_prefix) | IAM namespace prefix reserved for externally published Lambda MicroVM image names. This module does not create or enumerate images. | `string` | n/a | yes |
 | <a name="input_network_connectors"></a> [network\_connectors](#input\_network\_connectors) | Regional Lambda MicroVM Network Connectors keyed by a stable consumer-defined identity. | <pre>map(object({<br/>    name             = string<br/>    vpc_id           = string<br/>    subnet_ids       = set(string)<br/>    network_protocol = optional(string, "IPv4")<br/>  }))</pre> | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of module-specific tags to apply to resources. | `map(string)` | n/a | yes |
@@ -228,7 +225,6 @@ No modules.
 | <a name="output_artifact_prefix"></a> [artifact\_prefix](#output\_artifact\_prefix) | Bucket prefix to which the MicroVM image publisher uploads content-addressed build artifacts. |
 | <a name="output_build_role_arn"></a> [build\_role\_arn](#output\_build\_role\_arn) | ARN of the Lambda-trusted role used during MicroVM image builds. |
 | <a name="output_connector_arns"></a> [connector\_arns](#output\_connector\_arns) | Map of connector key to ARN returned by each AWS::Lambda::NetworkConnector CloudFormation resource. |
-| <a name="output_image_management_policy_arn"></a> [image\_management\_policy\_arn](#output\_image\_management\_policy\_arn) | ARN of the unattached regional MicroVM image-management policy for role\_for\_forge\_runners. |
 | <a name="output_security_group_ids"></a> [security\_group\_ids](#output\_security\_group\_ids) | Map of connector key to its dedicated no-ingress security group ID. |
 | <a name="output_usage_policy_arn"></a> [usage\_policy\_arn](#output\_usage\_policy\_arn) | ARN of the reusable regional policy for operating MicroVM images in the reserved namespace and passing their Network Connectors. |
 <!-- END_TF_DOCS -->

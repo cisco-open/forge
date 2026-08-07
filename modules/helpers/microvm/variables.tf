@@ -57,7 +57,7 @@ variable "image_name_prefix" {
 
 variable "ecr_repository_arns" {
   type        = set(string)
-  description = "Optional regional ECR repository ARNs from which builds can pull and publishers can push runner base images."
+  description = "Optional regional ECR repository ARNs from which MicroVM image builds can pull runner base images."
   default     = []
 }
 

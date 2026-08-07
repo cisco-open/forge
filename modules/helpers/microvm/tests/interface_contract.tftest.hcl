@@ -25,7 +25,6 @@ run "helpers_microvm_interface_contract" {
       "artifact_prefix",
       "build_role_arn",
       "connector_arns",
-      "image_management_policy_arn",
       "security_group_ids",
       "usage_policy_arn",
     ]
@@ -51,7 +50,6 @@ run "helpers_microvm_interface_contract" {
       "output \"artifact_bucket_arn\"",
       "output \"artifact_prefix\"",
       "output \"build_role_arn\"",
-      "output \"image_management_policy_arn\"",
       "output \"usage_policy_arn\"",
       "output \"connector_arns\"",
       "output \"security_group_ids\"",
@@ -87,8 +85,8 @@ run "helpers_microvm_interface_contract" {
   assert {
     condition = (
       output.expected_input_variable_count == 9
-      && output.expected_output_value_count == 9
-      && output.expected_interface_literal_count == 26
+      && output.expected_output_value_count == 8
+      && output.expected_interface_literal_count == 25
     )
     error_message = "Interface contract counts must remain pinned for MicroVM helper inputs, outputs, and source literals."
   }

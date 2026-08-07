@@ -18,11 +18,6 @@ output "build_role_arn" {
   value       = aws_iam_role.build.arn
 }
 
-output "image_management_policy_arn" {
-  description = "ARN of the unattached regional MicroVM image-management policy for role_for_forge_runners."
-  value       = aws_iam_policy.image_management.arn
-}
-
 output "usage_policy_arn" {
   description = "ARN of the reusable regional policy for operating MicroVM images in the reserved namespace and passing their Network Connectors."
   value       = aws_iam_policy.usage.arn

@@ -32,7 +32,11 @@ run "helpers_forge_subscription_interface_contract" {
       "ecr_access_account_ids = list(string)",
       "regions                = list(string)",
       "microvm = optional(object({",
-      "image_management_policy_arns = optional(set(string), [])",
+      "image_name_prefix = string",
+      "regions = optional(map(object({",
+      "artifact_bucket_name = string",
+      "ecr_repository_names = optional(set(string), [])",
+      "})), {})",
       "description = \"Configuration for Forge runners.\"",
       "default = {",
       "runner_roles = []",
@@ -40,8 +44,6 @@ run "helpers_forge_subscription_interface_contract" {
       "names                  = []",
       "ecr_access_account_ids = []",
       "regions                = []",
-      "microvm = {",
-      "image_management_policy_arns = []",
       "variable \"tags\"",
     ]
   }
@@ -75,7 +77,7 @@ run "helpers_forge_subscription_interface_contract" {
     condition = (
       output.expected_input_variable_count == 5
       && output.expected_output_value_count == 0
-      && output.expected_interface_literal_count == 27
+      && output.expected_interface_literal_count == 29
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

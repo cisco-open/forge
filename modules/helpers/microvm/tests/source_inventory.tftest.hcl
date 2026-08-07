@@ -17,7 +17,6 @@ run "helpers_microvm_source_inventory" {
       "resource \"aws_s3_bucket_policy\" \"artifacts\"",
       "resource \"aws_iam_role\" \"build\"",
       "resource \"aws_iam_policy\" \"build\"",
-      "resource \"aws_iam_policy\" \"image_management\"",
       "resource \"aws_iam_policy\" \"usage\"",
       "resource \"aws_iam_role_policy_attachment\" \"build\"",
       "resource \"aws_cloudformation_stack\" \"connector\"",
@@ -38,15 +37,9 @@ run "helpers_microvm_source_inventory" {
       "for_each = var.network_connectors",
       "resource \"aws_servicecatalogappregistry_application\" \"this\"",
       "provider \"aws\"",
-      "\"lambda:CreateMicrovmImage\"",
-      "\"lambda:UpdateMicrovmImage\"",
       "\"lambda:RunMicrovm\"",
       "\"lambda:TerminateMicrovm\"",
-      "\"iam:PassRole\"",
-      "variable = \"iam:PassedToService\"",
-      "values   = [\"lambda.amazonaws.com\"]",
       "\"s3:GetObject\"",
-      "\"s3:PutObject\"",
       "\"ecr:GetAuthorizationToken\"",
       "\"ecr:BatchGetImage\"",
       "\"logs:CreateLogGroup\"",
@@ -66,8 +59,8 @@ run "helpers_microvm_source_inventory" {
   }
 
   assert {
-    condition     = output.expected_literal_count == 49
-    error_message = "Source inventory must keep 49 MicroVM publishing, connector, and IAM boundary literals pinned."
+    condition     = output.expected_literal_count == 42
+    error_message = "Source inventory must keep 42 MicroVM build, runtime, connector, and IAM boundary literals pinned."
   }
 
 }

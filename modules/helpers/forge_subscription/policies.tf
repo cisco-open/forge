@@ -168,12 +168,178 @@ resource "aws_iam_role_policy" "packer_support_for_forge_runners" {
   policy = data.aws_iam_policy_document.packer_support_for_forge_runners.json
 }
 
-# The MicroVM foundation defines one exact-scoped image-management policy per
-# region. Subscription owns attaching those policies to the existing Forge
-# runner role so the internal image publisher uses one direct identity chain.
+data "aws_caller_identity" "current" {}
+
+data "aws_partition" "current" {}
+
+locals {
+  microvm_regions           = var.forge.microvm == null ? tomap({}) : var.forge.microvm.regions
+  microvm_image_name_prefix = var.forge.microvm == null ? "" : var.forge.microvm.image_name_prefix
+  microvm_region_names      = sort(keys(local.microvm_regions))
+
+  microvm_image_arns = sort([
+    for region, config in local.microvm_regions :
+    "arn:${data.aws_partition.current.partition}:lambda:${region}:${data.aws_caller_identity.current.account_id}:microvm-image:${local.microvm_image_name_prefix}-*"
+  ])
+  microvm_artifact_bucket_arns = sort([
+    for region, config in local.microvm_regions :
+    "arn:${data.aws_partition.current.partition}:s3:::${config.artifact_bucket_name}"
+  ])
+  microvm_artifact_object_arns = sort([
+    for region, config in local.microvm_regions :
+    "arn:${data.aws_partition.current.partition}:s3:::${config.artifact_bucket_name}/lambda-microvms/*"
+  ])
+  microvm_build_role_arns = sort([
+    for region, config in local.microvm_regions :
+    "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:role/forge-microvm-build-${region}"
+  ])
+  microvm_ecr_repository_arns = sort(distinct(flatten([
+    for region, config in local.microvm_regions : [
+      for repository_name in config.ecr_repository_names :
+      "arn:${data.aws_partition.current.partition}:ecr:${region}:${data.aws_caller_identity.current.account_id}:repository/${repository_name}"
+    ]
+  ])))
+}
+
+# IAM is account-global, so Forge owns one managed image-publisher policy that
+# aggregates the exact regional resource scopes configured for this tenant.
+data "aws_iam_policy_document" "microvm_image_management" {
+  count = length(local.microvm_regions) > 0 ? 1 : 0
+
+  #checkov:skip=CKV_AWS_111:CreateMicrovmImage and the account-level list operations do not support resource-level permissions.
+  #checkov:skip=CKV_AWS_356:CreateMicrovmImage and the account-level list operations require Resource '*'; all resource-aware actions are scoped below.
+  statement {
+    sid    = "CreateAndDiscoverMicrovmImages"
+    effect = "Allow"
+    actions = [
+      "lambda:CreateMicrovmImage",
+      "lambda:ListManagedMicrovmImages",
+      "lambda:ListMicrovmImages",
+    ]
+    resources = ["*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:RequestedRegion"
+      values   = local.microvm_region_names
+    }
+  }
+
+  statement {
+    sid    = "ManageConfiguredMicrovmImages"
+    effect = "Allow"
+    actions = [
+      "lambda:DeleteMicrovmImage",
+      "lambda:DeleteMicrovmImageVersion",
+      "lambda:GetMicrovmImage",
+      "lambda:GetMicrovmImageBuild",
+      "lambda:GetMicrovmImageVersion",
+      "lambda:ListMicrovmImageBuilds",
+      "lambda:ListMicrovmImageVersions",
+      "lambda:ListTags",
+      "lambda:TagResource",
+      "lambda:UntagResource",
+      "lambda:UpdateMicrovmImage",
+      "lambda:UpdateMicrovmImageVersion",
+    ]
+    resources = local.microvm_image_arns
+  }
+
+  statement {
+    sid       = "InspectMicrovmArtifactBuckets"
+    effect    = "Allow"
+    actions   = ["s3:GetBucketLocation"]
+    resources = local.microvm_artifact_bucket_arns
+  }
+
+  statement {
+    sid       = "ListMicrovmBuildArtifacts"
+    effect    = "Allow"
+    actions   = ["s3:ListBucket"]
+    resources = local.microvm_artifact_bucket_arns
+
+    condition {
+      test     = "StringLike"
+      variable = "s3:prefix"
+      values   = ["lambda-microvms/*"]
+    }
+  }
+
+  statement {
+    sid    = "PublishMicrovmBuildArtifacts"
+    effect = "Allow"
+    actions = [
+      "s3:AbortMultipartUpload",
+      "s3:DeleteObject",
+      "s3:GetObject",
+      "s3:PutObject",
+    ]
+    resources = local.microvm_artifact_object_arns
+  }
+
+  statement {
+    sid       = "PassMicrovmBuildRoles"
+    effect    = "Allow"
+    actions   = ["iam:PassRole"]
+    resources = local.microvm_build_role_arns
+
+    condition {
+      test     = "StringEquals"
+      variable = "iam:PassedToService"
+      values   = ["lambda.amazonaws.com"]
+    }
+  }
+
+  dynamic "statement" {
+    for_each = length(local.microvm_ecr_repository_arns) > 0 ? [true] : []
+    content {
+      sid       = "AuthorizeEcrPublication"
+      effect    = "Allow"
+      actions   = ["ecr:GetAuthorizationToken"]
+      resources = ["*"]
+
+      condition {
+        test     = "StringEquals"
+        variable = "aws:RequestedRegion"
+        values   = local.microvm_region_names
+      }
+    }
+  }
+
+  dynamic "statement" {
+    for_each = length(local.microvm_ecr_repository_arns) > 0 ? [true] : []
+    content {
+      sid    = "PublishAndInspectEcrImages"
+      effect = "Allow"
+      actions = [
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:BatchGetImage",
+        "ecr:CompleteLayerUpload",
+        "ecr:DescribeImages",
+        "ecr:DescribeRepositories",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:InitiateLayerUpload",
+        "ecr:ListImages",
+        "ecr:PutImage",
+        "ecr:UploadLayerPart",
+      ]
+      resources = local.microvm_ecr_repository_arns
+    }
+  }
+}
+
+resource "aws_iam_policy" "microvm_image_management" {
+  count = length(local.microvm_regions) > 0 ? 1 : 0
+
+  name        = "forge-microvm-image-management"
+  description = "Publish and manage Forge Lambda MicroVM images in configured regional namespaces."
+  policy      = data.aws_iam_policy_document.microvm_image_management[0].json
+  tags        = local.all_security_tags
+}
+
 resource "aws_iam_role_policy_attachment" "microvm_image_management" {
-  for_each = var.forge.microvm.image_management_policy_arns
+  count = length(local.microvm_regions) > 0 ? 1 : 0
 
   role       = aws_iam_role.role_for_forge_runners.name
-  policy_arn = each.value
+  policy_arn = aws_iam_policy.microvm_image_management[0].arn
 }

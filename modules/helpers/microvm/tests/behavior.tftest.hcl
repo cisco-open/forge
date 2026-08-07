@@ -55,13 +55,6 @@ override_data {
 }
 
 override_data {
-  target = data.aws_iam_policy_document.image_management
-  values = {
-    json = "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"lambda:CreateMicrovmImage\",\"Resource\":\"*\"}]}"
-  }
-}
-
-override_data {
   target = data.aws_iam_policy_document.usage
   values = {
     json = "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"lambda:RunMicrovm\",\"lambda:PassNetworkConnector\"],\"Resource\":\"*\"}]}"
@@ -98,13 +91,6 @@ override_resource {
   target = aws_iam_policy.build
   values = {
     arn = "arn:aws:iam::123456789012:policy/forge-microvm-build-eu-west-1"
-  }
-}
-
-override_resource {
-  target = aws_iam_policy.image_management
-  values = {
-    arn = "arn:aws:iam::123456789012:policy/forge-microvm-image-management-eu-west-1"
   }
 }
 
@@ -201,10 +187,9 @@ run "regional_microvm_foundation_contract" {
       && strcontains(aws_iam_role.build.assume_role_policy, "lambda.amazonaws.com")
       && strcontains(aws_iam_role.build.assume_role_policy, "sts:TagSession")
       && aws_iam_role_policy_attachment.build.role == "forge-microvm-build-eu-west-1"
-      && aws_iam_policy.image_management.name == "forge-microvm-image-management-eu-west-1"
       && aws_iam_policy.usage.name == "forge-microvm-runtime-usage-eu-west-1"
     )
-    error_message = "MicroVM helper must create the Lambda-only build role and expose unattached regional image-management and usage policies."
+    error_message = "MicroVM helper must create the Lambda-only build role and expose the unattached regional runtime-usage policy."
   }
 
   assert {
@@ -213,11 +198,10 @@ run "regional_microvm_foundation_contract" {
       && output.artifact_bucket_arn == "arn:aws:s3:::forge-microvm-test-eu-west-1"
       && output.artifact_prefix == "lambda-microvms"
       && output.build_role_arn == "arn:aws:iam::123456789012:role/forge-microvm-build-eu-west-1"
-      && output.image_management_policy_arn == "arn:aws:iam::123456789012:policy/forge-microvm-image-management-eu-west-1"
       && output.usage_policy_arn == "arn:aws:iam::123456789012:policy/forge-microvm-runtime-usage-eu-west-1"
       && output.appregistry_application_arn == "arn:aws:servicecatalog:eu-west-1:123456789012:/applications/test"
     )
-    error_message = "MicroVM helper must expose regional publishing, usage-policy, and AppRegistry outputs without owning publisher image inventory."
+    error_message = "MicroVM helper must expose regional build, usage-policy, and AppRegistry outputs without owning publisher IAM or image inventory."
   }
 
   assert {
@@ -234,13 +218,12 @@ run "regional_microvm_foundation_contract" {
       length(regexall("(?s)sid\\s*=\\s*\"ReadRegionalBuildArtifact\".*?resources\\s*=\\s*\\[\"\\$\\{aws_s3_bucket\\.artifacts\\.arn\\}/\\$\\{local\\.artifact_prefix\\}/\\*\"\\]", file("${path.module}/policies.tf"))) == 1
       && length(regexall("(?s)sid\\s*=\\s*\"CreateMicrovmBuildLogGroups\".*?resources\\s*=\\s*\\[local\\.log_group_arn_pattern\\]", file("${path.module}/policies.tf"))) == 1
       && length(regexall("(?s)sid\\s*=\\s*\"WriteMicrovmBuildLogs\".*?resources\\s*=\\s*\\[local\\.log_stream_arn_pattern\\]", file("${path.module}/policies.tf"))) == 1
-      && length(regexall("(?s)sid\\s*=\\s*\"ManageConfiguredMicrovmImages\".*?resources\\s*=\\s*\\[local\\.image_arn_pattern\\]", file("${path.module}/policies.tf"))) == 1
       && length(regexall("(?s)sid\\s*=\\s*\"UseConfiguredMicrovmImages\".*?resources\\s*=\\s*\\[local\\.image_arn_pattern\\]", file("${path.module}/policies.tf"))) == 1
-      && length(regexall("(?s)sid\\s*=\\s*\"PassMicrovmBuildRole\".*?actions\\s*=\\s*\\[\"iam:PassRole\"\\].*?resources\\s*=\\s*\\[aws_iam_role\\.build\\.arn\\].*?variable\\s*=\\s*\"iam:PassedToService\".*?values\\s*=\\s*\\[\"lambda.amazonaws.com\"\\]", file("${path.module}/policies.tf"))) == 1
       && length(regexall("resource\\s+\"aws_cloudwatch_log_group\"", join("\n", [for source_file in fileset(path.module, "*.tf") : file("${path.module}/${source_file}")]))) == 0
+      && length(regexall("(data\\s+\"aws_iam_policy_document\"|resource\\s+\"aws_iam_policy\")\\s+\"image_management\"", join("\n", [for source_file in fileset(path.module, "*.tf") : file("${path.module}/${source_file}")]))) == 0
       && length(regexall("resource\\s+\"aws_iam_role_policy_attachment\"\\s+\"publisher\"", join("\n", [for source_file in fileset(path.module, "*.tf") : file("${path.module}/${source_file}")]))) == 0
     )
-    error_message = "Forge must provide scoped build/log IAM without a log-group resource or image-management policy attachment."
+    error_message = "The helper must provide scoped build, log, and runtime IAM without a log-group resource or publisher image-management policy."
   }
 }
 

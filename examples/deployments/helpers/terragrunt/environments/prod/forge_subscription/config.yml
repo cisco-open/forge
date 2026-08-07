@@ -17,3 +17,11 @@ forge:
       - '123456789013'
     regions:
       - eu-west-1
+
+  microvm:
+    image_name_prefix: forge-gh-runner-ubuntu-arm64
+    regions:
+      eu-west-1:
+        artifact_bucket_name: 123456789012-forge-microvm-artifacts-eu-west-1
+        ecr_repository_names:
+          - actions-runner-base-image
