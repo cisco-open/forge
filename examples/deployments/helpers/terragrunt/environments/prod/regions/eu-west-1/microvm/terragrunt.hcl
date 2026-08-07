@@ -15,29 +15,15 @@ include "env" {
   expose = true
 }
 
-# Global settings.
+# Module settings.
 include "mod_global" {
   path   = find_in_parent_folders("_global_settings/${basename(get_terragrunt_dir())}.hcl")
   expose = true
 }
 
-# The regional MicroVM foundation owns the exact-scoped managed policy. This
-# account-level subscription attaches it to role_for_forge_runners, so the
-# dependency points only from subscription to MicroVM and cannot form a cycle.
-dependency "microvm_eu_west_1" {
-  config_path = "../regions/eu-west-1/microvm"
-
-  mock_outputs = {
-    image_management_policy_arn = "arn:aws:iam::123456789012:policy/forge-microvm-image-management-eu-west-1"
-  }
-  mock_outputs_allowed_terraform_commands = ["validate", "plan", "render"]
-}
-
 # Version of module to use.
 locals {
   module_name = basename(get_terragrunt_dir())
-  project     = include.global.locals.project_name
-  env         = include.env.locals.env
 
   release_version_env     = get_env("RELEASE_VERSION_PATH", "")
   release_version_file    = length(trimspace(local.release_version_env)) > 0 ? local.release_version_env : "${get_repo_root()}/release_versions.yml"
@@ -53,20 +39,8 @@ locals {
   module_ref     = local.use_local_repos ? "${local.module_base}//${local.module_root["module_path"]}" : "${local.module_base}//${local.module_root["module_path"]}?ref=${local.module_version}"
 }
 
-# Construct the terraform.source attribute using the source_base.
 terraform {
   source = local.module_ref
-}
-
-inputs = {
-  forge = merge(
-    include.mod_global.locals.forge_subscription_data.locals.forge,
-    {
-      microvm = {
-        image_management_policy_arns = [dependency.microvm_eu_west_1.outputs.image_management_policy_arn]
-      }
-    },
-  )
 }
 
 # Remote state storage/locks.

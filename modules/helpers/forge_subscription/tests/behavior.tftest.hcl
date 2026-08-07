@@ -31,6 +31,12 @@ variables {
       ecr_access_account_ids = []
       regions                = []
     }
+    microvm = {
+      image_management_policy_arns = [
+        "arn:aws:iam::123456789012:policy/forge-microvm-image-management-eu-west-1",
+        "arn:aws:iam::123456789012:policy/forge-microvm-image-management-us-east-1",
+      ]
+    }
   }
 }
 
@@ -59,7 +65,54 @@ run "forge_subscription_runner_role_contract" {
       && strcontains(aws_iam_role_policy.packer_support_for_forge_runners.policy, "ec2:CreateImage")
       && strcontains(aws_iam_role_policy.packer_support_for_forge_runners.policy, "ecr:GetAuthorizationToken")
       && length(aws_ecr_repository_policy.repository_policy) == 0
+      && length(aws_iam_role_policy_attachment.microvm_image_management) == 2
+      && aws_iam_role_policy_attachment.microvm_image_management["arn:aws:iam::123456789012:policy/forge-microvm-image-management-eu-west-1"].role == aws_iam_role.role_for_forge_runners.name
+      && aws_iam_role_policy_attachment.microvm_image_management["arn:aws:iam::123456789012:policy/forge-microvm-image-management-us-east-1"].policy_arn == "arn:aws:iam::123456789012:policy/forge-microvm-image-management-us-east-1"
     )
-    error_message = "Forge subscription must keep S3, Secrets Manager, and Packer inline policies, while skipping regional ECR policies when no repositories are configured."
+    error_message = "Forge subscription must keep its inline policies and attach each exact regional MicroVM policy directly to role_for_forge_runners."
   }
+}
+
+run "legacy_config_omits_microvm" {
+  command = plan
+
+  variables {
+    forge = {
+      runner_roles = [
+        "arn:aws:iam::210987654321:role/forge-runner"
+      ]
+      ecr_repositories = {
+        names                  = []
+        ecr_access_account_ids = []
+        regions                = []
+      }
+    }
+  }
+
+  assert {
+    condition     = length(aws_iam_role_policy_attachment.microvm_image_management) == 0
+    error_message = "Existing Forge subscription callers that omit microvm must remain valid and create no MicroVM policy attachments."
+  }
+}
+
+run "rejects_invalid_microvm_policy_arn" {
+  command = plan
+
+  variables {
+    forge = {
+      runner_roles = [
+        "arn:aws:iam::210987654321:role/forge-runner"
+      ]
+      ecr_repositories = {
+        names                  = []
+        ecr_access_account_ids = []
+        regions                = []
+      }
+      microvm = {
+        image_management_policy_arns = ["not-an-arn"]
+      }
+    }
+  }
+
+  expect_failures = [var.forge]
 }

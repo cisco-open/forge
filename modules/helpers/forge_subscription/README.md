@@ -11,6 +11,8 @@ Forge keeps runner credentials short-lived. A runner starts with the identity at
 - IAM role trust for Forge runner principals.
 - Policies for tenant S3, Secrets Manager, Packer, and ECR access patterns.
 - ECR repository policy statements that allow runner pulls where configured.
+- Optional direct attachment of regional MicroVM image-management policies to
+  `role_for_forge_runners`.
 - Tags for tenant ownership and auditability.
 
 ## Operational Notes
@@ -18,6 +20,10 @@ Forge keeps runner credentials short-lived. A runner starts with the identity at
 - The tenant still owns what its role can do; this module only wires the Forge bridge.
 - Trust and `sts:TagSession` behavior should be validated with the Forge trust-validator after changes.
 - Keep this narrow when onboarding a tenant; broad tenant roles are harder to reason about later.
+- The MicroVM foundation module keeps each managed policy definition regional
+  because its S3 bucket, Lambda build role, image ARNs, ECR repositories, and
+  image namespace are region-specific. This subscription module owns only
+  attaching the supplied policy ARNs to `role_for_forge_runners`.
 
 <!-- BEGIN_TF_DOCS -->
 

@@ -167,3 +167,13 @@ resource "aws_iam_role_policy" "packer_support_for_forge_runners" {
   role   = aws_iam_role.role_for_forge_runners.id
   policy = data.aws_iam_policy_document.packer_support_for_forge_runners.json
 }
+
+# The MicroVM foundation defines one exact-scoped image-management policy per
+# region. Subscription owns attaching those policies to the existing Forge
+# runner role so the internal image publisher uses one direct identity chain.
+resource "aws_iam_role_policy_attachment" "microvm_image_management" {
+  for_each = var.forge.microvm.image_management_policy_arns
+
+  role       = aws_iam_role.role_for_forge_runners.name
+  policy_arn = each.value
+}

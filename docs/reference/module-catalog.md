@@ -39,6 +39,7 @@ EC2-only deployments can skip `examples/deployments/infra`.
 | `modules/helpers/dedicated_mac_hosts`  | Mac Dedicated Hosts, host groups, and license configuration. | Optional  | `examples/deployments/helpers` | Host allocation and group membership review.    |
 | `modules/helpers/ecr`                  | ECR repositories for runner and CI helper containers.        | Optional  | `examples/deployments/helpers` | Push/pull smoke for configured repositories.    |
 | `modules/helpers/forge_subscription`   | Tenant-side access for ForgeMT jobs and artifacts.           | Optional  | `examples/deployments/helpers` | Tenant role can access intended S3/ECR/secrets. |
+| `modules/helpers/microvm`              | Regional MicroVM publishing and VPC egress foundation.       | Optional  | `examples/deployments/helpers` | Artifact plan and connector `ACTIVE` state.     |
 | `modules/helpers/opt_in_regions`       | Enables AWS opt-in regions.                                  | Sometimes | `examples/deployments/helpers` | AWS account region status is enabled.           |
 | `modules/helpers/service_linked_roles` | Creates service-linked roles such as EC2 Spot roles.         | Sometimes | `examples/deployments/helpers` | Role exists before EC2 runner launch.           |
 | `modules/helpers/storage`              | S3 buckets for artifacts, templates, logs, and integrations. | Optional  | `examples/deployments/helpers` | Bucket policy, encryption, and access checks.   |

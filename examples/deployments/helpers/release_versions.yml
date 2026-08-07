@@ -53,6 +53,11 @@ spec:
         repo: git@github.com:cisco-open/forge.git
         module_path: modules/helpers/forge_subscription
         ref: main
+      microvm:
+        local_path: ../forge
+        repo: git@github.com:cisco-open/forge.git
+        module_path: modules/helpers/microvm
+        ref: main
       opt_in_regions:
         local_path: ../forge
         repo: git@github.com:cisco-open/forge.git
