@@ -19,7 +19,6 @@ variable "forge" {
     microvm = optional(object({
       image_name_prefix = string
       regions = optional(map(object({
-        artifact_bucket_name = string
         ecr_repository_names = optional(set(string), [])
       })), {})
     }))
@@ -49,7 +48,6 @@ variable "forge" {
       && alltrue([
         for region, config in var.forge.microvm.regions : (
           can(regex("^[a-z]{2}(-[a-z]+)+-[0-9]+$", region))
-          && length(config.artifact_bucket_name) > 0
           && alltrue([
             for repository_name in config.ecr_repository_names :
             can(regex("^[a-z0-9]+([._/-][a-z0-9]+)*$", repository_name))
@@ -57,7 +55,7 @@ variable "forge" {
         )
       ])
     )
-    error_message = "forge.microvm.regions must contain at least one valid AWS region with a non-empty artifact bucket name and valid ECR repository names."
+    error_message = "forge.microvm.regions must contain at least one valid AWS region with valid ECR repository names."
   }
 }
 

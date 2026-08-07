@@ -54,14 +54,12 @@ variables {
       image_name_prefix = "srea-gh-runner-ubuntu-arm64"
       regions = {
         eu-west-1 = {
-          artifact_bucket_name = "forge-microvm-test-eu-west-1"
           ecr_repository_names = [
             "actions-runner-base-image",
             "mirror-hardened-ubuntu24",
           ]
         }
         us-east-1 = {
-          artifact_bucket_name = "forge-microvm-test-us-east-1"
           ecr_repository_names = [
             "actions-runner-base-image",
           ]
@@ -112,40 +110,25 @@ run "forge_subscription_runner_role_contract" {
         "arn:aws:lambda:eu-west-1:123456789012:microvm-image:srea-gh-runner-ubuntu-arm64-*",
         "arn:aws:lambda:us-east-1:123456789012:microvm-image:srea-gh-runner-ubuntu-arm64-*",
       ])
-      && local.microvm_artifact_bucket_arns == tolist([
-        "arn:aws:s3:::forge-microvm-test-eu-west-1",
-        "arn:aws:s3:::forge-microvm-test-us-east-1",
-      ])
-      && local.microvm_artifact_object_arns == tolist([
-        "arn:aws:s3:::forge-microvm-test-eu-west-1/lambda-microvms/*",
-        "arn:aws:s3:::forge-microvm-test-us-east-1/lambda-microvms/*",
-      ])
-      && local.microvm_build_role_arns == tolist([
-        "arn:aws:iam::123456789012:role/forge-microvm-build-eu-west-1",
-        "arn:aws:iam::123456789012:role/forge-microvm-build-us-east-1",
-      ])
       && local.microvm_ecr_repository_arns == tolist([
         "arn:aws:ecr:eu-west-1:123456789012:repository/actions-runner-base-image",
         "arn:aws:ecr:eu-west-1:123456789012:repository/mirror-hardened-ubuntu24",
         "arn:aws:ecr:us-east-1:123456789012:repository/actions-runner-base-image",
       ])
-      && local.microvm_region_names == tolist([
-        "eu-west-1",
-        "us-east-1",
-      ])
     )
-    error_message = "The account-wide MicroVM policy must derive exact regional image, artifact, build-role, and ECR scopes from Forge configuration."
+    error_message = "The account-wide MicroVM policy must derive exact regional image and ECR scopes from Forge configuration."
   }
 
   assert {
     condition = (
-      length(regexall("(?s)sid\\s*=\\s*\"CreateAndDiscoverMicrovmImages\".*?resources\\s*=\\s*\\[\"\\*\"\\].*?variable\\s*=\\s*\"aws:RequestedRegion\".*?values\\s*=\\s*local\\.microvm_region_names", file("${path.module}/policies.tf"))) == 1
-      && length(regexall("(?s)sid\\s*=\\s*\"ListMicrovmBuildArtifacts\".*?resources\\s*=\\s*local\\.microvm_artifact_bucket_arns.*?variable\\s*=\\s*\"s3:prefix\".*?values\\s*=\\s*\\[\"lambda-microvms/\\*\"\\]", file("${path.module}/policies.tf"))) == 1
-      && length(regexall("(?s)sid\\s*=\\s*\"PassMicrovmBuildRoles\".*?resources\\s*=\\s*local\\.microvm_build_role_arns.*?variable\\s*=\\s*\"iam:PassedToService\".*?values\\s*=\\s*\\[\"lambda.amazonaws.com\"\\]", file("${path.module}/policies.tf"))) == 1
-      && length(regexall("(?s)sid\\s*=\\s*\"AuthorizeEcrPublication\".*?resources\\s*=\\s*\\[\"\\*\"\\].*?variable\\s*=\\s*\"aws:RequestedRegion\".*?values\\s*=\\s*local\\.microvm_region_names", file("${path.module}/policies.tf"))) == 1
+      strcontains(file("${path.module}/policies.tf"), "arn:$${data.aws_partition.current.partition}:s3:::$${data.aws_caller_identity.current.account_id}-forge-microvm-artifacts-*")
+      && strcontains(file("${path.module}/policies.tf"), "arn:$${data.aws_partition.current.partition}:s3:::$${data.aws_caller_identity.current.account_id}-forge-microvm-artifacts-*/lambda-microvms/*")
+      && strcontains(file("${path.module}/policies.tf"), "arn:$${data.aws_partition.current.partition}:iam::$${data.aws_caller_identity.current.account_id}:role/forge-microvm-build-*")
+      && length(regexall("(?s)sid\\s*=\\s*\"ListMicrovmBuildArtifacts\".*?variable\\s*=\\s*\"s3:prefix\".*?values\\s*=\\s*\\[\"lambda-microvms/\\*\"\\]", file("${path.module}/policies.tf"))) == 1
+      && length(regexall("(?s)sid\\s*=\\s*\"PassMicrovmBuildRoles\".*?variable\\s*=\\s*\"iam:PassedToService\".*?values\\s*=\\s*\\[\"lambda.amazonaws.com\"\\]", file("${path.module}/policies.tf"))) == 1
       && length(regexall("(?s)sid\\s*=\\s*\"PublishAndInspectEcrImages\".*?resources\\s*=\\s*local\\.microvm_ecr_repository_arns", file("${path.module}/policies.tf"))) == 1
     )
-    error_message = "The singleton publisher policy must retain regional conditions and exact S3, build-role, and ECR scopes."
+    error_message = "The singleton publisher policy must retain convention-scoped wildcard S3/build-role resources and exact ECR scopes without requested-region conditions."
   }
 }
 
@@ -191,9 +174,7 @@ run "rejects_invalid_microvm_image_prefix" {
       microvm = {
         image_name_prefix = "not/a/microvm/image"
         regions = {
-          eu-west-1 = {
-            artifact_bucket_name = "forge-microvm-test-eu-west-1"
-          }
+          eu-west-1 = {}
         }
       }
     }

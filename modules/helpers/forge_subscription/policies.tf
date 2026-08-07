@@ -175,23 +175,10 @@ data "aws_partition" "current" {}
 locals {
   microvm_regions           = var.forge.microvm == null ? tomap({}) : var.forge.microvm.regions
   microvm_image_name_prefix = var.forge.microvm == null ? "" : var.forge.microvm.image_name_prefix
-  microvm_region_names      = sort(keys(local.microvm_regions))
 
   microvm_image_arns = sort([
     for region, config in local.microvm_regions :
     "arn:${data.aws_partition.current.partition}:lambda:${region}:${data.aws_caller_identity.current.account_id}:microvm-image:${local.microvm_image_name_prefix}-*"
-  ])
-  microvm_artifact_bucket_arns = sort([
-    for region, config in local.microvm_regions :
-    "arn:${data.aws_partition.current.partition}:s3:::${config.artifact_bucket_name}"
-  ])
-  microvm_artifact_object_arns = sort([
-    for region, config in local.microvm_regions :
-    "arn:${data.aws_partition.current.partition}:s3:::${config.artifact_bucket_name}/lambda-microvms/*"
-  ])
-  microvm_build_role_arns = sort([
-    for region, config in local.microvm_regions :
-    "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:role/forge-microvm-build-${region}"
   ])
   microvm_ecr_repository_arns = sort(distinct(flatten([
     for region, config in local.microvm_regions : [
@@ -201,8 +188,8 @@ locals {
   ])))
 }
 
-# IAM is account-global, so Forge owns one managed image-publisher policy that
-# aggregates the exact regional resource scopes configured for this tenant.
+# IAM is account-global, so Forge owns one managed image-publisher policy for
+# configured image/ECR scopes and the regional artifact/build naming convention.
 data "aws_iam_policy_document" "microvm_image_management" {
   count = length(local.microvm_regions) > 0 ? 1 : 0
 
@@ -217,12 +204,6 @@ data "aws_iam_policy_document" "microvm_image_management" {
       "lambda:ListMicrovmImages",
     ]
     resources = ["*"]
-
-    condition {
-      test     = "StringEquals"
-      variable = "aws:RequestedRegion"
-      values   = local.microvm_region_names
-    }
   }
 
   statement {
@@ -249,14 +230,14 @@ data "aws_iam_policy_document" "microvm_image_management" {
     sid       = "InspectMicrovmArtifactBuckets"
     effect    = "Allow"
     actions   = ["s3:GetBucketLocation"]
-    resources = local.microvm_artifact_bucket_arns
+    resources = ["arn:${data.aws_partition.current.partition}:s3:::${data.aws_caller_identity.current.account_id}-forge-microvm-artifacts-*"]
   }
 
   statement {
     sid       = "ListMicrovmBuildArtifacts"
     effect    = "Allow"
     actions   = ["s3:ListBucket"]
-    resources = local.microvm_artifact_bucket_arns
+    resources = ["arn:${data.aws_partition.current.partition}:s3:::${data.aws_caller_identity.current.account_id}-forge-microvm-artifacts-*"]
 
     condition {
       test     = "StringLike"
@@ -274,14 +255,14 @@ data "aws_iam_policy_document" "microvm_image_management" {
       "s3:GetObject",
       "s3:PutObject",
     ]
-    resources = local.microvm_artifact_object_arns
+    resources = ["arn:${data.aws_partition.current.partition}:s3:::${data.aws_caller_identity.current.account_id}-forge-microvm-artifacts-*/lambda-microvms/*"]
   }
 
   statement {
     sid       = "PassMicrovmBuildRoles"
     effect    = "Allow"
     actions   = ["iam:PassRole"]
-    resources = local.microvm_build_role_arns
+    resources = ["arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:role/forge-microvm-build-*"]
 
     condition {
       test     = "StringEquals"
@@ -297,12 +278,6 @@ data "aws_iam_policy_document" "microvm_image_management" {
       effect    = "Allow"
       actions   = ["ecr:GetAuthorizationToken"]
       resources = ["*"]
-
-      condition {
-        test     = "StringEquals"
-        variable = "aws:RequestedRegion"
-        values   = local.microvm_region_names
-      }
     }
   }
 

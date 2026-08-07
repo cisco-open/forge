@@ -12,8 +12,9 @@ Forge keeps runner credentials short-lived. A runner starts with the identity at
 - Policies for tenant S3, Secrets Manager, Packer, and ECR access patterns.
 - ECR repository policy statements that allow runner pulls where configured.
 - Optional account-wide MicroVM image-management policy attached to
-  `role_for_forge_runners`, with regional image, artifact-bucket, build-role,
-  and ECR repository scopes derived from configuration.
+  `role_for_forge_runners`, with regional image and ECR repository scopes
+  derived from configuration and artifact/build scopes bound to Forge naming
+  conventions.
 - Tags for tenant ownership and auditability.
 
 ## Operational Notes
@@ -22,14 +23,13 @@ Forge keeps runner credentials short-lived. A runner starts with the identity at
 - Trust and `sts:TagSession` behavior should be validated with the Forge trust-validator after changes.
 - Keep this narrow when onboarding a tenant; broad tenant roles are harder to reason about later.
 - IAM policies are account-global. Configure the shared image namespace and
-  each supported region's artifact bucket and ECR repository names here; this
-  module creates one managed policy and attaches it once to
-  `role_for_forge_runners`.
-- The policy leaves only Lambda image creation/account-level discovery and ECR
-  authorization-token actions on `*`, with `aws:RequestedRegion` limited to the
-  configured regions. Image management, artifact access, build-role passing,
-  and ECR publication use derived regional ARNs. Build-role passing is
-  additionally restricted to `lambda.amazonaws.com`.
+  each supported region's ECR repository names here; this module creates one
+  managed policy and attaches it once to `role_for_forge_runners`.
+- Artifact access uses the default
+  `<account-id>-forge-microvm-artifacts-*` bucket convention, and build-role
+  passing uses `forge-microvm-build-*`. Build-role passing remains restricted
+  to `lambda.amazonaws.com`; image and ECR actions retain their configured ARN
+  scopes.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -77,7 +77,7 @@ No modules.
 | <a name="input_aws_profile"></a> [aws\_profile](#input\_aws\_profile) | AWS profile to use. | `string` | n/a | yes |
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | Default AWS region. | `string` | n/a | yes |
 | <a name="input_default_tags"></a> [default\_tags](#input\_default\_tags) | A map of tags to apply to resources. | `map(string)` | n/a | yes |
-| <a name="input_forge"></a> [forge](#input\_forge) | Configuration for Forge runners. | <pre>object({<br/>    runner_roles = list(string)<br/>    ecr_repositories = object({<br/>      names                  = list(string)<br/>      ecr_access_account_ids = list(string)<br/>      regions                = list(string)<br/>    })<br/>    microvm = optional(object({<br/>      image_name_prefix = string<br/>      regions = optional(map(object({<br/>        artifact_bucket_name = string<br/>        ecr_repository_names = optional(set(string), [])<br/>      })), {})<br/>    }))<br/>  })</pre> | <pre>{<br/>  "ecr_repositories": {<br/>    "ecr_access_account_ids": [],<br/>    "names": [],<br/>    "regions": []<br/>  },<br/>  "runner_roles": []<br/>}</pre> | no |
+| <a name="input_forge"></a> [forge](#input\_forge) | Configuration for Forge runners. | <pre>object({<br/>    runner_roles = list(string)<br/>    ecr_repositories = object({<br/>      names                  = list(string)<br/>      ecr_access_account_ids = list(string)<br/>      regions                = list(string)<br/>    })<br/>    microvm = optional(object({<br/>      image_name_prefix = string<br/>      regions = optional(map(object({<br/>        ecr_repository_names = optional(set(string), [])<br/>      })), {})<br/>    }))<br/>  })</pre> | <pre>{<br/>  "ecr_repositories": {<br/>    "ecr_access_account_ids": [],<br/>    "names": [],<br/>    "regions": []<br/>  },<br/>  "runner_roles": []<br/>}</pre> | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to apply to resources. | `map(string)` | n/a | yes |
 
 ## Outputs
