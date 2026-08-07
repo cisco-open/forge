@@ -63,7 +63,7 @@ resource "aws_cloudformation_stack" "connector" {
   }
 
   depends_on = [
-    aws_iam_role_policy_attachment.operator,
+    time_sleep.operator_role_propagation,
     aws_vpc_security_group_egress_rule.ipv4,
     aws_vpc_security_group_egress_rule.ipv6,
   ]

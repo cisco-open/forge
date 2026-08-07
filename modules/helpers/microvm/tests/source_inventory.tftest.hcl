@@ -32,6 +32,7 @@ run "helpers_microvm_source_inventory" {
       "cidr_ipv6         = \"::/0\"",
       "resource \"aws_iam_role\" \"operator\"",
       "resource \"aws_iam_role_policy_attachment\" \"operator\"",
+      "resource \"time_sleep\" \"operator_role_propagation\"",
       "AWSLambdaNetworkConnectorOperatorPolicy",
       "OperatorRole = aws_iam_role.operator.arn",
       "for_each = var.network_connectors",
@@ -59,8 +60,8 @@ run "helpers_microvm_source_inventory" {
   }
 
   assert {
-    condition     = output.expected_literal_count == 42
-    error_message = "Source inventory must keep 42 MicroVM build, runtime, connector, and IAM boundary literals pinned."
+    condition     = output.expected_literal_count == 43
+    error_message = "Source inventory must keep 43 MicroVM build, runtime, connector, and IAM boundary literals pinned."
   }
 
 }

@@ -1,4 +1,5 @@
 mock_provider "aws" {}
+mock_provider "time" {}
 
 override_data {
   target = data.aws_caller_identity.current
@@ -112,8 +113,9 @@ override_resource {
 override_resource {
   target = aws_iam_role.operator
   values = {
-    arn = "arn:aws:iam::123456789012:role/forge-microvm-network-operator-eu-west-1"
-    id  = "forge-microvm-network-operator-eu-west-1"
+    arn       = "arn:aws:iam::123456789012:role/forge-microvm-network-operator-eu-west-1"
+    id        = "forge-microvm-network-operator-eu-west-1"
+    unique_id = "AROATESTNETWORKOPERATOR"
   }
 }
 
@@ -274,9 +276,12 @@ run "multiple_network_connector_contract" {
       && !strcontains(aws_iam_role.operator.assume_role_policy, "aws:SourceAccount")
       && aws_iam_role_policy_attachment.operator.role == "forge-microvm-network-operator-eu-west-1"
       && aws_iam_role_policy_attachment.operator.policy_arn == "arn:aws:iam::aws:policy/AWSLambdaNetworkConnectorOperatorPolicy"
+      && time_sleep.operator_role_propagation.create_duration == "30s"
+      && time_sleep.operator_role_propagation.triggers.operator_role_unique_id == aws_iam_role.operator.unique_id
+      && time_sleep.operator_role_propagation.triggers.operator_trust_policy_sha1 == sha1(aws_iam_role.operator.assume_role_policy)
       && aws_iam_policy.usage.name == "forge-microvm-runtime-usage-eu-west-1"
     )
-    error_message = "Every connector must share one regional Lambda-trusted operator role with the AWS-managed Network Connector policy."
+    error_message = "Every connector must share one regional Lambda-trusted operator role and wait for its AWS-managed Network Connector policy to propagate."
   }
 
   assert {
@@ -312,13 +317,15 @@ run "multiple_network_connector_contract" {
     condition = (
       length(regexall("(?s)resource\\s+\"aws_iam_role\"\\s+\"operator\".*?name\\s*=\\s*\"forge-microvm-network-operator-\\$\\{var\\.aws_region\\}\"", file("${path.module}/network_connector_operator.tf"))) == 1
       && length(regexall("(?s)resource\\s+\"aws_iam_role_policy_attachment\"\\s+\"operator\".*?policy_arn\\s*=\\s*\"arn:\\$\\{data\\.aws_partition\\.current\\.partition\\}:iam::aws:policy/AWSLambdaNetworkConnectorOperatorPolicy\"", file("${path.module}/network_connector_operator.tf"))) == 1
+      && length(regexall("(?s)resource\\s+\"time_sleep\"\\s+\"operator_role_propagation\".*?depends_on\\s*=\\s*\\[aws_iam_role_policy_attachment\\.operator\\].*?create_duration\\s*=\\s*\"30s\".*?replace_triggered_by\\s*=\\s*\\[aws_iam_role_policy_attachment\\.operator\\]", file("${path.module}/network_connector_operator.tf"))) == 1
+      && length(regexall("(?s)depends_on\\s*=\\s*\\[.*?time_sleep\\.operator_role_propagation.*?aws_vpc_security_group_egress_rule\\.ipv4.*?aws_vpc_security_group_egress_rule\\.ipv6.*?\\]", file("${path.module}/network_connector.tf"))) == 1
       && length(regexall("(?s)identity applying this stack must have iam:PassRole.*?iam:PassedToService restricted to lambda.amazonaws.com", file("${path.module}/network_connector.tf"))) == 1
       && length(regexall("vpc_id\\s*=\\s*each\\.value\\.vpc_id", file("${path.module}/network_connector_security_group.tf"))) == 1
       && length(regexall("data\\.aws_subnet\\.selected\\[\"\\$\\{each\\.key\\}/\\$\\{subnet_id\\}\"\\]\\.vpc_id\\s*==\\s*each\\.value\\.vpc_id", file("${path.module}/network_connector.tf"))) == 1
       && length(regexall("(?s)sid\\s*=\\s*\"ReadConfiguredNetworkConnectors\".*?resources\\s*=\\s*values\\(local\\.connector_arns\\)", file("${path.module}/policies.tf"))) == 1
       && length(regexall("(?s)sid\\s*=\\s*\"PassAndDiscoverNetworkConnectors\".*?resources\\s*=\\s*\\[\"\\*\"\\]", file("${path.module}/policies.tf"))) == 1
     )
-    error_message = "Connector IAM must keep one AWS-managed operator role, an explicit deployment pass-role contract, scoped connector reads, and isolated pass/list permissions."
+    error_message = "Connector IAM must keep one propagated AWS-managed operator role, an explicit deployment pass-role contract, scoped connector reads, and isolated pass/list permissions."
   }
 }
 
