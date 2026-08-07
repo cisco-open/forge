@@ -11,10 +11,8 @@ Forge keeps runner credentials short-lived. A runner starts with the identity at
 - IAM role trust for Forge runner principals.
 - Policies for tenant S3, Secrets Manager, Packer, and ECR access patterns.
 - ECR repository policy statements that allow runner pulls where configured.
-- Optional account-wide MicroVM image-management policy attached to
-  `role_for_forge_runners`, with regional image and ECR repository scopes
-  derived from configuration and artifact/build scopes bound to Forge naming
-  conventions.
+- Account-wide MicroVM image-management policy attached to
+  `role_for_forge_runners`.
 - Tags for tenant ownership and auditability.
 
 ## Operational Notes
@@ -22,14 +20,12 @@ Forge keeps runner credentials short-lived. A runner starts with the identity at
 - The tenant still owns what its role can do; this module only wires the Forge bridge.
 - Trust and `sts:TagSession` behavior should be validated with the Forge trust-validator after changes.
 - Keep this narrow when onboarding a tenant; broad tenant roles are harder to reason about later.
-- IAM policies are account-global. Configure the shared image namespace and
-  each supported region's ECR repository names here; this module creates one
-  managed policy and attaches it once to `role_for_forge_runners`.
-- Artifact access uses the default
-  `<account-id>-forge-microvm-artifacts-*` bucket convention, and build-role
-  passing uses `forge-microvm-build-*`. Build-role passing remains restricted
-  to `lambda.amazonaws.com`; image and ECR actions retain their configured ARN
-  scopes.
+- IAM policies are account-global, so this module creates one managed policy
+  and attaches it once to `role_for_forge_runners`; no regional MicroVM policy
+  configuration is required.
+- The MicroVM publisher policy uses `Resource = "*"`. S3 listing remains
+  restricted to the `lambda-microvms/*` prefix, and role passing remains
+  restricted to `lambda.amazonaws.com`.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -61,14 +57,12 @@ No modules.
 | [aws_iam_role_policy.secrets_access_for_forge_runners](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy) | resource |
 | [aws_iam_role_policy_attachment.microvm_image_management](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_servicecatalogappregistry_application.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/servicecatalogappregistry_application) | resource |
-| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_iam_policy_document.assume_role_for_forge_runners](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.ecr_repository_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.microvm_image_management](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.packer_support_for_forge_runners](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.s3_access_for_forge_runners](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.secrets_access_for_forge_runners](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
-| [aws_partition.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/partition) | data source |
 
 ## Inputs
 
@@ -77,7 +71,7 @@ No modules.
 | <a name="input_aws_profile"></a> [aws\_profile](#input\_aws\_profile) | AWS profile to use. | `string` | n/a | yes |
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | Default AWS region. | `string` | n/a | yes |
 | <a name="input_default_tags"></a> [default\_tags](#input\_default\_tags) | A map of tags to apply to resources. | `map(string)` | n/a | yes |
-| <a name="input_forge"></a> [forge](#input\_forge) | Configuration for Forge runners. | <pre>object({<br/>    runner_roles = list(string)<br/>    ecr_repositories = object({<br/>      names                  = list(string)<br/>      ecr_access_account_ids = list(string)<br/>      regions                = list(string)<br/>    })<br/>    microvm = optional(object({<br/>      image_name_prefix = string<br/>      regions = optional(map(object({<br/>        ecr_repository_names = optional(set(string), [])<br/>      })), {})<br/>    }))<br/>  })</pre> | <pre>{<br/>  "ecr_repositories": {<br/>    "ecr_access_account_ids": [],<br/>    "names": [],<br/>    "regions": []<br/>  },<br/>  "runner_roles": []<br/>}</pre> | no |
+| <a name="input_forge"></a> [forge](#input\_forge) | Configuration for Forge runners. | <pre>object({<br/>    runner_roles = list(string)<br/>    ecr_repositories = object({<br/>      names                  = list(string)<br/>      ecr_access_account_ids = list(string)<br/>      regions                = list(string)<br/>    })<br/>  })</pre> | <pre>{<br/>  "ecr_repositories": {<br/>    "ecr_access_account_ids": [],<br/>    "names": [],<br/>    "regions": []<br/>  },<br/>  "runner_roles": []<br/>}</pre> | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to apply to resources. | `map(string)` | n/a | yes |
 
 ## Outputs

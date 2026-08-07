@@ -17,8 +17,6 @@ run "helpers_forge_subscription_source_inventory" {
       "resource \"aws_iam_role_policy\" \"secrets_access_for_forge_runners\"",
       "resource \"aws_iam_role_policy\" \"packer_support_for_forge_runners\"",
       "provider \"aws\"",
-      "data \"aws_caller_identity\" \"current\"",
-      "data \"aws_partition\" \"current\"",
       "data \"aws_iam_policy_document\" \"assume_role_for_forge_runners\"",
       "data \"aws_iam_policy_document\" \"microvm_image_management\"",
       "resource \"aws_iam_role\" \"role_for_forge_runners\"",
@@ -33,7 +31,7 @@ run "helpers_forge_subscription_source_inventory" {
   }
 
   assert {
-    condition     = output.expected_literal_count == 16
-    error_message = "Source inventory must keep 16 module-specific Terraform blocks pinned."
+    condition     = output.expected_literal_count == 14
+    error_message = "Source inventory must keep 14 module-specific Terraform blocks pinned."
   }
 }
