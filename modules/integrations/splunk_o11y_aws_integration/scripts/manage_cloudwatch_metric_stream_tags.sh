@@ -18,7 +18,7 @@ resolve_metric_stream_arn() {
 
     if ! matching_output="$(aws cloudwatch list-metric-streams \
         --region "$AWS_REGION" \
-        --query "Entries[?starts_with(Name, '$STREAM_NAME_PREFIX')].Arn" \
+        --query "max_by(Entries[?starts_with(Name, '$STREAM_NAME_PREFIX')], &CreationDate).Arn" \
         --output text)"; then
         return 2
     fi
@@ -34,7 +34,7 @@ resolve_metric_stream_arn() {
     fi
 
     if [ "${#matching_arns[@]}" -ne 1 ]; then
-        echo "Expected exactly one CloudWatch Metric Stream with prefix '$STREAM_NAME_PREFIX'; found ${#matching_arns[@]}." >&2
+        echo "Expected one newest CloudWatch Metric Stream with prefix '$STREAM_NAME_PREFIX'; query returned ${#matching_arns[@]}." >&2
         printf '  %s\n' "${matching_arns[@]}" >&2
         return 2
     fi

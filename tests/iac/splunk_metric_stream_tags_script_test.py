@@ -45,6 +45,8 @@ if operation == 'list-metric-streams':
     if scenario == 'missing':
         print('None')
     elif scenario == 'multiple':
+        print(f'{arn}-newest')
+    elif scenario == 'malformed-multiple':
         print(f'{arn}\\t{arn}-second')
     elif scenario == 'list-error':
         print('ListMetricStreams failed', file=sys.stderr)
@@ -140,7 +142,10 @@ def test_apply_tags_the_single_matching_stream(tmp_path: Path) -> None:
         '--region',
         'us-east-1',
         '--query',
-        "Entries[?starts_with(Name, 'splunk-metric-stream-')].Arn",
+        (
+            'max_by(Entries[?starts_with(Name, '
+            "'splunk-metric-stream-')], &CreationDate).Arn"
+        ),
         '--output',
         'text',
     ]
@@ -178,17 +183,38 @@ def test_remove_untags_the_single_matching_stream(tmp_path: Path) -> None:
     assert METRIC_STREAM_ARN in result.stdout
 
 
-@pytest.mark.parametrize('mode', ['apply', 'remove'])
-def test_ambiguous_stream_matches_fail_safely(
+@pytest.mark.parametrize(
+    ('mode', 'operation'),
+    [('apply', 'tag-resource'), ('remove', 'untag-resource')],
+)
+def test_multiple_stream_matches_select_the_newest(
     tmp_path: Path,
     mode: str,
+    operation: str,
 ) -> None:
     result, calls = run_script(tmp_path, mode, scenario='multiple')
 
+    assert result.returncode == 0
+    assert [call[1] for call in calls] == [
+        'list-metric-streams',
+        operation,
+    ]
+    assert calls[1][calls[1].index('--resource-arn') + 1] == (
+        f'{METRIC_STREAM_ARN}-newest'
+    )
+
+
+@pytest.mark.parametrize('mode', ['apply', 'remove'])
+def test_unexpected_multiple_query_results_fail_safely(
+    tmp_path: Path,
+    mode: str,
+) -> None:
+    result, calls = run_script(tmp_path, mode, scenario='malformed-multiple')
+
     assert result.returncode == 2
     assert [call[1] for call in calls] == ['list-metric-streams']
-    assert 'Expected exactly one CloudWatch Metric Stream' in result.stderr
-    assert 'found 2' in result.stderr
+    assert 'Expected one newest CloudWatch Metric Stream' in result.stderr
+    assert 'query returned 2' in result.stderr
 
 
 def test_apply_retries_until_the_stream_is_available(tmp_path: Path) -> None:

@@ -19,7 +19,8 @@ Forge uses Splunk Observability for AWS metrics while Splunk Cloud handles logs.
 - CloudFormation failures should be debugged in both Terraform output and the CloudFormation events.
 - Use the common integration module for IAM role setup when needed.
 - Metric Stream tag management requires the AWS CLI and `cloudwatch:ListMetricStreams`, `cloudwatch:TagResource`, and `cloudwatch:UntagResource` permissions for the configured AWS profile.
-- The tag helper finds exactly one stream in the configured region whose name starts with `splunk-metric-stream-`. It waits up to 15 minutes for a newly configured stream and fails rather than choosing arbitrarily if multiple streams match.
+- The tag helper finds streams in the configured region whose names start with `splunk-metric-stream-`. It waits up to 15 minutes for a newly configured stream and selects the newest match by its AWS creation date.
+- Discovery assumes one current Splunk integration per account and region. Apply and remove each resolve the newest match, so tag cleanup on an older stream is not guaranteed after a later integration appears; stale-stream deletion remains owned by the Splunk integration lifecycle.
 - Tag drift outside Terraform is not detected unless the stack, template, helper script, or desired tag map changes and replaces the helper.
 
 <!-- BEGIN_TF_DOCS -->
