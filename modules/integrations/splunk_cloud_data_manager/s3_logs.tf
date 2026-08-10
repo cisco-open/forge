@@ -112,7 +112,8 @@ resource "aws_cloudformation_stack" "cf_splunk_s3_logs_iam_region" {
   ]
 
   depends_on = [
-    module.splunk_s3_logs
+    module.splunk_s3_logs,
+    module.splunk_dm_log_group_reconciler,
   ]
 
   lifecycle {

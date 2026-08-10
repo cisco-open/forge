@@ -80,6 +80,7 @@ resource "aws_cloudformation_stack" "cf_splunk_security_metadata_iam_region" {
 
   depends_on = [
     module.splunk_security_metadata,
+    module.splunk_dm_log_group_reconciler,
   ]
 }
 
@@ -101,6 +102,7 @@ resource "aws_cloudformation_stack" "cf_splunk_security_metadata_region" {
 
   depends_on = [
     module.splunk_security_metadata,
+    module.splunk_dm_log_group_reconciler,
     aws_cloudformation_stack.cf_splunk_security_metadata_iam_region
   ]
 }
