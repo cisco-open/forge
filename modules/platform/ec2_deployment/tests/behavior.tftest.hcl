@@ -167,26 +167,11 @@ variables {
         }
       }
 
-      microvm = {
-        runner_labels       = ["self-hosted", "microvm"]
-        runner_os           = "linux"
-        runner_architecture = "x64"
-        extra_labels        = []
-        max_instances       = 2
-        min_run_time        = 5
-        pool_config         = []
-        runner_user         = "runner"
-        compute_provider = {
-          microvm = {
-            image_identifier = "arn:aws:lambda:eu-west-1:123456789012:microvm-image:test"
-          }
-        }
-      }
     }
   }
 }
 
-run "mixed_provider_plan" {
+run "ec2_v2_plan" {
   command = plan
 
   plan_options {
@@ -202,8 +187,8 @@ run "mixed_provider_plan" {
   }
 
   assert {
-    condition     = toset(keys(local.multi_runner_config_v2)) == toset(["ec2", "microvm"])
-    error_message = "The upstream v2 map must preserve all provider lane keys."
+    condition     = toset(keys(local.multi_runner_config_v2)) == toset(["ec2"])
+    error_message = "The upstream v2 map must preserve every EC2 lane key."
   }
 
   assert {
@@ -217,11 +202,8 @@ run "mixed_provider_plan" {
       && tolist(local.multi_runner_config_v2.ec2.compute_provider.ec2.ami.filter.name) == tolist(["forge-*"])
       && local.multi_runner_config_v2.ec2.compute_provider.ec2.ami.id_ssm_parameter == null
       && local.multi_runner_config_v2.ec2.compute_provider.ec2.ebs_optimized
-      && local.multi_runner_config_v2.ec2.compute_provider.microvm == null
-      && local.multi_runner_config_v2.microvm.compute_provider.ec2 == null
-      && local.multi_runner_config_v2.microvm.compute_provider.microvm.image_identifier == "arn:aws:lambda:eu-west-1:123456789012:microvm-image:test"
     )
-    error_message = "The v2 translation must select exactly one configured provider per lane."
+    error_message = "The v2 translation must preserve the nested EC2 provider configuration."
   }
 
   assert {
@@ -235,8 +217,8 @@ run "mixed_provider_plan" {
 
   assert {
     condition = (
-      length(local.multi_runner_config_v2.microvm.matcherConfig.labelMatchers) == 1
-      && tolist(local.multi_runner_config_v2.microvm.matcherConfig.labelMatchers[0]) == tolist(["self-hosted", "microvm"])
+      length(local.multi_runner_config_v2.ec2.matcherConfig.labelMatchers) == 1
+      && tolist(local.multi_runner_config_v2.ec2.matcherConfig.labelMatchers[0]) == tolist(["self-hosted", "ec2"])
     )
     error_message = "Empty extra labels must retain the base label matcher."
   }

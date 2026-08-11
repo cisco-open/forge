@@ -140,50 +140,6 @@ locals {
     }
   }
 
-  microvm_runner_specs = {
-    for name, spec in try(local.config.microvm_runner_specs, {}) :
-    "microvm-${name}" => {
-      runner_os           = try(spec.runner_os, "linux")
-      runner_architecture = spec.runner_architecture
-      runner_labels = [
-        "type:${spec.type}",
-        "self-hosted",
-        spec.runner_architecture,
-        "env:ops-${include.env.locals.env}",
-      ]
-      extra_labels = [
-        "microvm",
-        "rgn:${local.region_alias}",
-        "vpc:${local.vpc_alias}",
-        "tnt:${local.tenant_name}",
-      ]
-      enable_dynamic_labels                                          = try(spec.enable_dynamic_labels, false)
-      aws_dynamic_labels_policy                                      = try(spec.aws_dynamic_labels_policy, null)
-      lambda_event_source_mapping_batch_size                         = try(spec.lambda_event_source_mapping_batch_size, 10)
-      lambda_event_source_mapping_maximum_batching_window_in_seconds = try(spec.lambda_event_source_mapping_maximum_batching_window_in_seconds, 0)
-      redrive_build_queue                                            = try(spec.redrive_build_queue, {})
-      runner_user                                                    = spec.runner_user
-      min_run_time                                                   = try(spec.min_run_time, 30)
-      max_instances                                                  = spec.max_instances
-      pool_config                                                    = try(spec.pool_config, [])
-      compute_provider = {
-        microvm = {
-          image_identifier            = spec.image_identifier
-          image_version               = try(spec.image_version, null)
-          egress_network_connectors   = try(spec.egress_network_connectors, [])
-          idle_policy                 = try(spec.idle_policy, null)
-          logging                     = try(spec.logging, null)
-          run_hook_payload            = try(spec.run_hook_payload, null)
-          maximum_duration_in_seconds = try(spec.maximum_duration_in_seconds, null)
-          environment_variables       = try(spec.environment_variables, {})
-          tags                        = try(spec.tags, {})
-          iam                         = try(spec.iam, {})
-        }
-      }
-    }
-  }
-
-  runner_specs        = merge(local.ec2_runner_specs, local.microvm_runner_specs)
   arc_cluster_name    = local.config.arc_cluster_name
   migrate_arc_cluster = local.config.migrate_arc_cluster
 

@@ -43,7 +43,7 @@ variable "ec2_deployment_specs" {
       }))
       runner_user = string
       compute_provider = object({
-        ec2 = optional(object({
+        ec2 = object({
           metadata_options = optional(object({
             instance_metadata_tags      = optional(string, "enabled")
             http_endpoint               = optional(string, "enabled")
@@ -146,42 +146,7 @@ variable "ec2_deployment_specs" {
             log_class        = optional(string, "STANDARD")
           })), null)
           tags = optional(map(string), {})
-        }), null)
-        microvm = optional(object({
-          image_identifier          = string
-          image_version             = optional(string, null)
-          egress_network_connectors = optional(list(string), [])
-          idle_policy = optional(object({
-            max_idle_duration_seconds  = number
-            suspended_duration_seconds = number
-            auto_resume_enabled        = bool
-          }), null)
-          logging = optional(object({
-            cloud_watch = optional(object({
-              log_group  = optional(string, null)
-              log_stream = optional(string, null)
-            }), null)
-            disabled = optional(bool, false)
-          }), null)
-          run_hook_payload            = optional(string, null)
-          maximum_duration_in_seconds = optional(number, null)
-          environment_variables       = optional(map(string), {})
-          tags                        = optional(map(string), {})
-          iam = optional(object({
-            resource_arns = optional(list(string), ["*"])
-            actions = optional(object({
-              scale_up   = optional(list(string), null)
-              scale_down = optional(list(string), null)
-            }), {})
-            additional_policy_json = optional(object({
-              scale_up = optional(string, null)
-            }), {})
-            managed_policy_arns = optional(object({
-              scale_up = optional(string, null)
-              pool     = optional(string, null)
-            }), {})
-          }), {})
-        }), null)
+        })
       })
     }))
   })
@@ -189,21 +154,8 @@ variable "ec2_deployment_specs" {
   validation {
     condition = alltrue([
       for runner_config in values(var.ec2_deployment_specs.runner_specs) :
-      length([
-        for provider_type, provider_config in runner_config.compute_provider : provider_type
-        if provider_config != null
-      ]) == 1
-    ])
-    error_message = "Each runner_specs entry must configure exactly one compute provider: ec2 or microvm."
-  }
-
-  validation {
-    condition = alltrue([
-      for runner_config in values(var.ec2_deployment_specs.runner_specs) :
-      runner_config.compute_provider.ec2 == null ? true : (
-        length(runner_config.compute_provider.ec2.ami[*]) == 1
-        && try(length(runner_config.compute_provider.ec2.ami.id_ssm_parameter[*]) == 0, false)
-      )
+      length(runner_config.compute_provider.ec2.ami[*]) == 1
+      && try(length(runner_config.compute_provider.ec2.ami.id_ssm_parameter[*]) == 0, false)
     ])
     error_message = "Forge EC2 runner_specs must configure a module-managed ami block; ami = null and external ami.id_ssm_parameter ownership are not supported."
   }
@@ -211,7 +163,7 @@ variable "ec2_deployment_specs" {
   validation {
     condition = alltrue([
       for runner_config in values(var.ec2_deployment_specs.runner_specs) :
-      runner_config.compute_provider.ec2 == null ? true : length(runner_config.compute_provider.ec2.instance_profile[*]) == 0
+      length(runner_config.compute_provider.ec2.instance_profile[*]) == 0
     ])
     error_message = "Forge EC2 runner_specs do not support an external instance_profile."
   }
@@ -222,9 +174,9 @@ variable "ec2_deployment_specs" {
   Top-level fields:
     - lambda_subnet_ids: Subnets where runner-related lambdas execute.
       These can be more permissive than the runner subnets.
-    - subnet_ids       : Default subnets for compute providers that use the VPC.
+    - subnet_ids       : Default subnets for EC2 runners.
     - vpc_id           : VPC that contains both runner and lambda subnets.
-    - runner_specs     : Map of provider-aware runner lanes.
+    - runner_specs     : Map of EC2 runner lanes.
 
   runner_specs[*] object fields:
     - runner_labels   : Base GitHub labels applied to jobs for this pool.
@@ -251,7 +203,7 @@ variable "ec2_deployment_specs" {
     - pool_config     : List of pool size schedules (size + cron expression
                         and optional time zone) controlling baseline capacity.
     - runner_user     : OS user under which the GitHub runner process runs.
-    - compute_provider: Exactly one typed provider block: ec2 or microvm.
+    - compute_provider: Nested upstream EC2 provider configuration.
 
   compute_provider.ec2 fields:
     - ami             : Upstream-compatible EC2 AMI configuration.
@@ -264,16 +216,7 @@ variable "ec2_deployment_specs" {
     - vpc_id/subnet_ids/additional_security_group_ids: Per-lane networking.
     - cpu_options/placement/license_specifications: EC2 launch-template options.
     - instance_profile: Upstream contract field reserved for future Forge support.
-    - log_files/tags  : Provider-specific logging and resource tags.
-
-  compute_provider.microvm fields:
-    - image_identifier: ARN or ID of the Lambda MicroVM image.
-    - image_version   : Optional Lambda MicroVM image version.
-    - egress_network_connectors: Optional Lambda MicroVM network connectors.
-    - idle_policy/logging/run_hook_payload: Optional runtime behavior.
-    - maximum_duration_in_seconds: Optional maximum MicroVM lifetime.
-    - environment_variables/tags: Provider-specific runtime configuration.
-    - iam             : Optional MicroVM control-plane IAM overrides.
+    - log_files/tags  : EC2 logging and resource tags.
   EOT
 }
 

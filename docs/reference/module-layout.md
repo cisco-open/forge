@@ -25,12 +25,12 @@ ______________________________________________________________________
 
 ## Platform Modules
 
-| Module                            | Purpose                                                                                                                                                           | Directly call it?                              |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| `modules/platform/forge_runners`  | Tenant runner entry point. Wires compute-provider and ARC runner specs, GitHub App behavior, trust validation, job logs, relay options, and service catalog data. | Yes. This is the normal tenant-facing module.  |
-| `modules/platform/ec2_deployment` | EC2 and Lambda MicroVM runner lanes backed by `terraform-aws-github-runner`; the historical path is retained.                                                     | Usually through `forge_runners`.               |
-| `modules/platform/arc_deployment` | Tenant ARC runner lane wrapper.                                                                                                                                   | Usually through `forge_runners`.               |
-| `modules/platform/arc`            | Lower-level ARC controller and scale-set Helm wrapper.                                                                                                            | No, unless building a custom platform wrapper. |
+| Module                            | Purpose                                                                                                                                              | Directly call it?                              |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| `modules/platform/forge_runners`  | Tenant runner entry point. Wires EC2 and ARC runner specs, GitHub App behavior, trust validation, job logs, relay options, and service catalog data. | Yes. This is the normal tenant-facing module.  |
+| `modules/platform/ec2_deployment` | EC2 runner lane backed by `terraform-aws-github-runner`.                                                                                             | Usually through `forge_runners`.               |
+| `modules/platform/arc_deployment` | Tenant ARC runner lane wrapper.                                                                                                                      | Usually through `forge_runners`.               |
+| `modules/platform/arc`            | Lower-level ARC controller and scale-set Helm wrapper.                                                                                               | No, unless building a custom platform wrapper. |
 
 ______________________________________________________________________
 

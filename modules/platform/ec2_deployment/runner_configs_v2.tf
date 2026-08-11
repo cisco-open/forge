@@ -1,22 +1,10 @@
 locals {
-  ec2_runner_configs = {
-    for key, runner_config in var.runner_configs.runner_specs :
-    key => runner_config
-    if runner_config.compute_provider.ec2 != null
-  }
-
-  microvm_runner_configs = {
-    for key, runner_config in var.runner_configs.runner_specs :
-    key => runner_config
-    if runner_config.compute_provider.microvm != null
-  }
+  ec2_runner_configs = var.runner_configs.runner_specs
 
   active_ec2_runner_oses = {
     for key, runner_config in local.ec2_runner_configs :
     key => runner_config.runner_os
   }
-
-  active_ec2_runner_keys = toset(keys(local.ec2_runner_configs))
 
   active_ec2_subnet_ids = toset(flatten([
     for runner_config in values(local.ec2_runner_configs) :
@@ -129,7 +117,7 @@ locals {
         run_as        = runner_config.runner_user
         maximum_count = runner_config.max_instances
         ephemeral     = true
-        hooks = runner_config.compute_provider.ec2 == null ? {} : {
+        hooks = {
           job_started = templatefile(
             "${local.user_data_prefix}/hook_job_started_${runner_config.runner_os}.tftpl",
             {
@@ -148,9 +136,9 @@ locals {
         iam = {
           managed_policy_arns = merge(
             local.runner_iam_role_managed_policy_arns,
-            runner_config.compute_provider.ec2 == null ? {} : {
-              forge_ec2_tags         = aws_iam_policy.ec2_tags[0].arn
-              forge_runner_hooks_ssm = aws_iam_policy.runner_hooks_ssm_read[0].arn
+            {
+              forge_ec2_tags         = aws_iam_policy.ec2_tags.arn
+              forge_runner_hooks_ssm = aws_iam_policy.runner_hooks_ssm_read.arn
             },
           )
         }
@@ -185,8 +173,7 @@ locals {
       }
 
       compute_provider = {
-        ec2     = runner_config.compute_provider.ec2 == null ? null : local.ec2_compute_provider[key]
-        microvm = runner_config.compute_provider.microvm
+        ec2 = local.ec2_compute_provider[key]
       }
 
       matcherConfig = {

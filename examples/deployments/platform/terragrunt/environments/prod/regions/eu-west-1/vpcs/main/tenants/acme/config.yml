@@ -98,7 +98,6 @@ ec2_runner_specs:
       iops: 3000
       throughput: 125
       type: gp3
-microvm_runner_specs: {}
 arc_runner_specs:
   dependabot:
     runner_size:

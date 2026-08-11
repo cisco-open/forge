@@ -3,25 +3,6 @@ output "webhook_endpoint" {
   description = "Public HTTPS endpoint URL for the GitHub Actions webhook relay."
 }
 
-output "runners_arn_map" {
-  value = merge(
-    {
-      for runner_key in keys(local.ec2_runner_configs) :
-      runner_key => module.runners.runners_map_v2[runner_key].runner.role.arn
-    },
-    {
-      for runner_key in keys(local.microvm_runner_configs) :
-      runner_key => module.runners.runners_map_v2[runner_key].provider.microvm.execution_role_arn
-    },
-  )
-  description = "Map of runner keys to the IAM role ARNs used by their compute runtime."
-}
-
-output "runners_labels_map" {
-  value       = local.runner_labels
-  description = "Map of runner keys to their base and extra GitHub labels."
-}
-
 output "ec2_runners_map" {
   value = {
     for runner_key in keys(local.ec2_runner_configs) :
@@ -50,29 +31,6 @@ output "ec2_runners_labels_map" {
     for runner_key in keys(local.ec2_runner_configs) : runner_key => local.runner_labels[runner_key]
   }
   description = "Map of EC2 runner keys to their base and extra GitHub labels."
-}
-
-output "microvm_runners_map" {
-  value = {
-    for runner_key in keys(local.microvm_runner_configs) :
-    runner_key => module.runners.runners_map_v2[runner_key].provider.microvm
-  }
-  description = "Map of MicroVM runner keys to their provider-specific resources."
-}
-
-output "microvm_runners_arn_map" {
-  value = {
-    for runner_key in keys(local.microvm_runner_configs) :
-    runner_key => module.runners.runners_map_v2[runner_key].provider.microvm.execution_role_arn
-  }
-  description = "Map of MicroVM runner keys to their execution role ARNs."
-}
-
-output "microvm_runners_labels_map" {
-  value = {
-    for runner_key in keys(local.microvm_runner_configs) : runner_key => local.runner_labels[runner_key]
-  }
-  description = "Map of MicroVM runner keys to their base and extra GitHub labels."
 }
 
 output "subnet_cidr_blocks" {

@@ -1,8 +1,8 @@
 # Platform Deployment
 
 This is the main Forge runtime path. It deploys tenant runner control planes
-through `modules/platform/forge_runners`, which can create EC2 or Lambda
-MicroVM runners and ARC runner scale sets.
+through `modules/platform/forge_runners`, which can create EC2 runners and ARC
+runner scale sets.
 
 Deploy root:
 
@@ -24,7 +24,7 @@ ______________________________________________________________________
 | `environments/prod/_environment_wide_settings/_environment.yml`             | AWS account, default region, remote state, and naming suffixes.          |
 | `environments/prod/regions/eu-west-1/_region_wide_settings/_region.hcl`     | Region and short region alias used in labels and names.                  |
 | `environments/prod/regions/eu-west-1/vpcs/main/_vpc_wide_settings/_vpc.yml` | VPC ID, Lambda subnets, runner subnets, VPC alias, and cluster name.     |
-| `environments/prod/regions/eu-west-1/vpcs/main/tenants/acme/config.yml`     | Tenant GitHub App, IAM, compute-provider runner specs, and ARC specs.    |
+| `environments/prod/regions/eu-west-1/vpcs/main/tenants/acme/config.yml`     | Tenant GitHub App, IAM, EC2 runner specs, and optional ARC specs.        |
 | `release_versions.yml`                                                      | Module source, version, and `module_path` metadata.                      |
 
 The example uses `prod`, `eu-west-1`, `main`, and `acme` as copyable defaults.
@@ -72,7 +72,7 @@ wide applies.
 
 ______________________________________________________________________
 
-## Compute Providers and ARC
+## EC2 Only vs ARC
 
 For EC2-only tenants:
 
@@ -80,12 +80,6 @@ For EC2-only tenants:
 - Keep `arc_cluster_name: ''`.
 - Skip `examples/deployments/infra`.
 - Skip Kubernetes and EKS integrations.
-
-For Lambda MicroVM lanes, add entries under `microvm_runner_specs`; the
-Terragrunt translation merges them with EC2 lanes into the same provider-aware
-`runner_specs` map and prefixes generated lane keys with `microvm-`. Until
-upstream publishes the provider-aware Lambda release, draft validation requires
-matching PR-built ZIPs through `USE_CACHE` and `CACHE_PATH`.
 
 For ARC tenants:
 

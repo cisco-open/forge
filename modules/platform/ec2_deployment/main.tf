@@ -68,9 +68,9 @@ data "aws_subnet" "runner_subnet" {
 }
 
 data "external" "download_lambdas" {
-  # TODO: Provider-aware Lambda artifacts are not released yet. Draft plans
+  # TODO: v2 Lambda artifacts are not released yet. Draft plans
   # must set USE_CACHE/CACHE_PATH to ZIPs built from upstream PR #5260. Once a
-  # provider-aware release exists, move this ref, the module source, and the
+  # v2 release exists, move this ref, the module source, and the
   # terraform-aws-github-runner-ref tag to that release together.
   program = ["bash", "${path.module}/scripts/download_lambdas.sh", "/tmp/${var.runner_configs.prefix}/", "961c1208a3831d19af8c0cfb43a7ed8b2d81e34b", "github-aws-runners/terraform-aws-github-runner"]
 }
@@ -110,8 +110,6 @@ resource "aws_ssm_parameter" "hook_job_completed" {
 }
 
 data "aws_iam_policy_document" "runner_hooks_ssm_read" {
-  count = length(local.active_ec2_runner_keys) > 0 ? 1 : 0
-
   statement {
     sid     = "ReadRunnerHookParameters"
     effect  = "Allow"
@@ -124,11 +122,9 @@ data "aws_iam_policy_document" "runner_hooks_ssm_read" {
 }
 
 resource "aws_iam_policy" "runner_hooks_ssm_read" {
-  count = length(local.active_ec2_runner_keys) > 0 ? 1 : 0
-
   name        = "${var.runner_configs.prefix}-runner-hooks-ssm-read"
   description = "Allow runners to read their gzip'd job-hook scripts from SSM."
-  policy      = data.aws_iam_policy_document.runner_hooks_ssm_read[0].json
+  policy      = data.aws_iam_policy_document.runner_hooks_ssm_read.json
   tags        = var.tenant_configs.tags
 }
 
