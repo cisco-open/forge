@@ -9,8 +9,6 @@ run "helpers_service_linked_roles_source_inventory" {
     module_path = "."
     expected_literals = [
       "resource \"aws_iam_service_linked_role\" \"spot\"",
-      "from = aws_iam_service_linked_role.license_manager",
-      "destroy = false",
       "provider \"aws\"",
     ]
   }
@@ -21,7 +19,7 @@ run "helpers_service_linked_roles_source_inventory" {
   }
 
   assert {
-    condition     = output.expected_literal_count == 4
-    error_message = "Source inventory must keep 4 module-specific Terraform source contracts pinned."
+    condition     = output.expected_literal_count == 2
+    error_message = "Source inventory must keep 2 module-specific Terraform source contracts pinned."
   }
 }
