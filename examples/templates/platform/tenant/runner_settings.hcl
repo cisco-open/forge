@@ -114,7 +114,8 @@ locals {
           detailed_monitoring_enabled = true
           ssm_enabled                 = true
           user_data = {
-            enabled = true
+            enabled     = true
+            pre_install = "# No pre-install steps."
           }
           instance_target_capacity_type = "on-demand"
           instance_types                = spec.instance_types
