@@ -34,6 +34,10 @@ S3_DATASETS = frozenset(
 
 NOAH_TOKEN_PENDING = 'Noah stack token creation in progress'
 
+DELETE_READINESS_MAX_ATTEMPTS = 10
+DELETE_READINESS_MAX_RETRY_DELAY_SECONDS = 30
+DELETE_READINESS_INITIAL_RETRY_DELAY_SECONDS = 2
+
 DATASET_HEC_CATEGORIES = {
     'cwl-api-gateway': 'aws-cwl',
     'cwl-cloudhsm': 'aws-cwl',
@@ -527,9 +531,41 @@ def get_integration(
     }
 
 
+def wait_for_delete_readiness(
+    client,
+    *,
+    sleep: Callable[[float], None] = time.sleep,
+    logger: Logger | None = None,
+) -> None:
+    """Retry transient Splunk delete-readiness failures."""
+    log = logger or (lambda _message: None)
+    delay = DELETE_READINESS_INITIAL_RETRY_DELAY_SECONDS
+    for attempt in range(1, DELETE_READINESS_MAX_ATTEMPTS + 1):
+        try:
+            client.check_delete_readiness()
+            return
+        except SplunkHttpError as error:
+            retryable = error.status in (0, 429) or 500 <= error.status < 600
+            if not retryable or attempt == DELETE_READINESS_MAX_ATTEMPTS:
+                raise
+
+            log(
+                'Splunk delete readiness returned retryable status '
+                f'{error.status} on attempt '
+                f'{attempt}/{DELETE_READINESS_MAX_ATTEMPTS}; '
+                f'retrying in {delay} seconds.'
+            )
+            sleep(delay)
+            delay = min(
+                delay * 2,
+                DELETE_READINESS_MAX_RETRY_DELAY_SECONDS,
+            )
+
+
 def delete_integration(
     client,
     *,
+    sleep: Callable[[float], None] = time.sleep,
     logger: Logger | None = None,
 ) -> None:
     """Delete an input and clean up push-input HEC tokens."""
@@ -542,15 +578,23 @@ def delete_integration(
             return
         raise
 
-    client.check_delete_readiness()
+    # The legacy flow treated this pre-transition probe as advisory.
+    try:
+        client.check_delete_readiness()
+    except SplunkHttpError as error:
+        log(
+            'Initial Splunk delete readiness returned status '
+            f'{error.status}; continuing with MarkedForDelete.'
+        )
+
     client.put_input(build_delete_payload(input_document))
-    client.check_delete_readiness()
+    wait_for_delete_readiness(client, sleep=sleep, logger=log)
 
     if not input_uses_s3(input_document):
         for category in PUSH_HEC_CLEANUP_CATEGORIES:
             client.delete_hec_token(category)
 
-    client.check_delete_readiness()
+    wait_for_delete_readiness(client, sleep=sleep, logger=log)
     client.delete_input()
 
 

@@ -172,6 +172,7 @@ class FakeClient:
         input_responses=(),
         template: bytes = VALID_TEMPLATE,
         hec_responses: dict[str, list[dict[str, object]]] | None = None,
+        delete_readiness_responses=(),
         put_error: BaseException | None = None,
     ):
         self.input_responses = deque(input_responses)
@@ -180,6 +181,9 @@ class FakeClient:
             category: deque(responses)
             for category, responses in (hec_responses or {}).items()
         }
+        self.delete_readiness_responses = deque(
+            delete_readiness_responses
+        )
         self.put_error = put_error
         self.calls: list[tuple[str, object]] = []
 
@@ -234,6 +238,14 @@ class FakeClient:
 
     def check_delete_readiness(self) -> None:
         self.calls.append(('check_delete_readiness', None))
+        if self.delete_readiness_responses:
+            response = (
+                self.delete_readiness_responses.popleft()
+                if len(self.delete_readiness_responses) > 1
+                else self.delete_readiness_responses[0]
+            )
+            if isinstance(response, BaseException):
+                raise response
 
     def delete_input(self) -> None:
         self.calls.append(('delete_input', None))
@@ -569,6 +581,200 @@ def test_delete_accepts_an_already_missing_input() -> None:
     assert client.calls == [('get_input', None)]
 
 
+@pytest.mark.parametrize(
+    'status',
+    (0, 403, 500),
+)
+def test_delete_treats_initial_readiness_failure_as_advisory(
+    status: int,
+) -> None:
+    document = push_response()
+    client = FakeClient(
+        input_responses=[document],
+        delete_readiness_responses=[
+            splunk_integration.SplunkHttpError(status, 'not ready'),
+            None,
+            None,
+        ],
+    )
+    messages: list[str] = []
+
+    splunk_integration.delete_integration(
+        client,
+        sleep=lambda _seconds: None,
+        logger=messages.append,
+    )
+
+    assert messages == [
+        'Initial Splunk delete readiness returned status '
+        f'{status}; continuing with MarkedForDelete.'
+    ]
+    assert client.calls[0:3] == [
+        ('get_input', None),
+        ('check_delete_readiness', None),
+        (
+            'put_input',
+            splunk_integration.build_delete_payload(document),
+        ),
+    ]
+    assert client.calls[-1] == ('delete_input', None)
+
+
+def test_delete_stops_after_failed_mark_for_delete() -> None:
+    document = push_response()
+    client = FakeClient(
+        input_responses=[document],
+        delete_readiness_responses=[
+            splunk_integration.SplunkHttpError(500, 'not ready'),
+        ],
+        put_error=splunk_integration.SplunkHttpError(500, 'PUT failed'),
+    )
+
+    with pytest.raises(
+        splunk_integration.SplunkHttpError,
+        match='PUT failed',
+    ):
+        splunk_integration.delete_integration(client)
+
+    assert client.calls == [
+        ('get_input', None),
+        ('check_delete_readiness', None),
+        (
+            'put_input',
+            splunk_integration.build_delete_payload(document),
+        ),
+    ]
+
+
+@pytest.mark.parametrize(
+    'status',
+    (0, 429, 500, 502, 503, 504, 599),
+)
+def test_wait_for_delete_readiness_retries_transient_status(
+    status: int,
+) -> None:
+    client = FakeClient(
+        delete_readiness_responses=[
+            splunk_integration.SplunkHttpError(status, 'not ready'),
+            None,
+        ],
+    )
+    sleeps: list[float] = []
+    messages: list[str] = []
+
+    splunk_integration.wait_for_delete_readiness(
+        client,
+        sleep=sleeps.append,
+        logger=messages.append,
+    )
+
+    assert sleeps == [2]
+    assert messages == [
+        'Splunk delete readiness returned retryable status '
+        f'{status} on attempt 1/10; retrying in 2 seconds.'
+    ]
+    assert client.calls == [
+        ('check_delete_readiness', None),
+        ('check_delete_readiness', None),
+    ]
+
+
+def test_delete_continues_after_transient_readiness_failure() -> None:
+    document = push_response()
+    client = FakeClient(
+        input_responses=[document],
+        delete_readiness_responses=[
+            None,
+            splunk_integration.SplunkHttpError(500, 'not ready'),
+            None,
+        ],
+    )
+    sleeps: list[float] = []
+    messages: list[str] = []
+
+    splunk_integration.delete_integration(
+        client,
+        sleep=sleeps.append,
+        logger=messages.append,
+    )
+
+    assert sleeps == [2]
+    assert messages == [
+        'Splunk delete readiness returned retryable status 500 on attempt '
+        '1/10; retrying in 2 seconds.',
+    ]
+    assert sum(
+        operation == 'check_delete_readiness'
+        for operation, _value in client.calls
+    ) == 4
+    assert client.calls[-1] == ('delete_input', None)
+
+
+def test_delete_fails_after_readiness_retry_budget_is_exhausted() -> None:
+    client = FakeClient(
+        input_responses=[push_response()],
+        delete_readiness_responses=[
+            None,
+            splunk_integration.SplunkHttpError(500, 'not ready')
+        ],
+    )
+    sleeps: list[float] = []
+
+    with pytest.raises(
+        splunk_integration.SplunkHttpError,
+        match='not ready',
+    ):
+        splunk_integration.delete_integration(
+            client,
+            sleep=sleeps.append,
+        )
+
+    assert sleeps == [2, 4, 8, 16, 30, 30, 30, 30, 30]
+    assert client.calls == [
+        ('get_input', None),
+        ('check_delete_readiness', None),
+        (
+            'put_input',
+            splunk_integration.build_delete_payload(push_response()),
+        ),
+        *[
+            ('check_delete_readiness', None)
+            for _attempt in range(10)
+        ],
+    ]
+
+
+def test_delete_does_not_retry_non_retryable_readiness_failure() -> None:
+    client = FakeClient(
+        input_responses=[push_response()],
+        delete_readiness_responses=[
+            None,
+            splunk_integration.SplunkHttpError(403, 'forbidden')
+        ],
+    )
+    sleeps: list[float] = []
+
+    with pytest.raises(
+        splunk_integration.SplunkHttpError,
+        match='forbidden',
+    ):
+        splunk_integration.delete_integration(
+            client,
+            sleep=sleeps.append,
+        )
+
+    assert sleeps == []
+    assert client.calls == [
+        ('get_input', None),
+        ('check_delete_readiness', None),
+        (
+            'put_input',
+            splunk_integration.build_delete_payload(push_response()),
+        ),
+        ('check_delete_readiness', None),
+    ]
+
+
 class FakeResponse:
     def __init__(self, status: int, body: bytes):
         self.status = status
@@ -860,6 +1066,57 @@ def test_client_tolerates_already_deleted_resources() -> None:
         request.get_method()
         for request in opener.requests[2:]
     ] == ['DELETE', 'DELETE']
+
+
+def test_client_preserves_delete_endpoint_contract() -> None:
+    opener = FakeOpener(
+        [
+            FakeResponse(200, b'login'),
+            FakeResponse(200, b'authenticated'),
+            FakeResponse(200, b'ready'),
+            FakeResponse(200, b'deleted token'),
+            FakeResponse(200, b'deleted input'),
+        ]
+    )
+    client = splunk_integration.SplunkWebClient(
+        runtime_config(push_request()),
+        cookies=authenticated_cookie_jar(),
+        opener=opener,
+    )
+
+    client.login()
+    client.check_delete_readiness()
+    client.delete_hec_token('cloudtrail')
+    client.delete_input()
+
+    readiness_request, hec_request, input_request = opener.requests[2:]
+    assert readiness_request.get_method() == 'GET'
+    assert readiness_request.full_url.endswith(
+        '/en-GB/splunkd/__raw/servicesNS/nobody/'
+        'data_manager/cloudinput/inputs/input-id/'
+        'validate/checkdeletereadiness'
+    )
+    assert request_headers(readiness_request)['content-type'] == (
+        'application/json'
+    )
+    assert readiness_request.data is None
+
+    assert hec_request.get_method() == 'DELETE'
+    assert hec_request.full_url.endswith(
+        '/en-US/splunkd/__raw/servicesNS/nobody/'
+        'data_manager/cloudinput/inputs/input-id/'
+        'hectoken?dataset=cloudtrail'
+    )
+    assert request_headers(hec_request)['content-type'] == 'text/plain'
+    assert hec_request.data is None
+
+    assert input_request.get_method() == 'DELETE'
+    assert input_request.full_url.endswith(
+        '/en-US/splunkd/__raw/servicesNS/nobody/'
+        'data_manager/cloudinput/inputs/input-id'
+    )
+    assert request_headers(input_request)['content-type'] == 'text/plain'
+    assert input_request.data is None
 
 
 @pytest.mark.parametrize(
