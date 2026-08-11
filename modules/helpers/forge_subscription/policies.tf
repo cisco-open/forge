@@ -209,18 +209,12 @@ data "aws_iam_policy_document" "microvm_image_management" {
   }
 
   # Lambda resolves omitted egress configuration to the AWS-managed
-  # INTERNET_EGRESS connector. Customer-managed connector ARNs are assigned by
-  # the service, so the publisher resolves the region-unique name before
-  # passing the returned ARN. This account-wide module does not consume the
-  # regional helper output, and PassNetworkConnector does not support
-  # resource-level permissions, so both actions require this wildcard grant.
+  # INTERNET_EGRESS connector. PassNetworkConnector does not support
+  # resource-level permissions, so the publisher requires this wildcard grant.
   statement {
-    sid    = "ResolveAndPassMicrovmNetworkConnectors"
-    effect = "Allow"
-    actions = [
-      "lambda:GetNetworkConnector",
-      "lambda:PassNetworkConnector",
-    ]
+    sid       = "PassMicrovmNetworkConnectors"
+    effect    = "Allow"
+    actions   = ["lambda:PassNetworkConnector"]
     resources = ["*"]
   }
 
