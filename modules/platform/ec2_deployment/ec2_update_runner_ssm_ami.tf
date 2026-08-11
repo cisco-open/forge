@@ -1,10 +1,6 @@
-data "aws_caller_identity" "current" {
-  count = length(local.ec2_runner_configs) > 0 ? 1 : 0
-}
+data "aws_caller_identity" "current" {}
 
-data "aws_partition" "current" {
-  count = length(local.ec2_runner_configs) > 0 ? 1 : 0
-}
+data "aws_partition" "current" {}
 
 locals {
   runner_ami_ssm_parameter_names = {
@@ -14,7 +10,7 @@ locals {
 
   runner_ami_ssm_parameter_arns = {
     for key, name in local.runner_ami_ssm_parameter_names :
-    key => "arn:${data.aws_partition.current[0].partition}:ssm:${var.aws_region}:${data.aws_caller_identity.current[0].account_id}:parameter${name}"
+    key => "arn:${data.aws_partition.current.partition}:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter${name}"
   }
 }
 
