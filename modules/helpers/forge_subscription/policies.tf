@@ -208,6 +208,16 @@ data "aws_iam_policy_document" "microvm_image_management" {
     resources = ["*"]
   }
 
+  # Lambda resolves omitted egress configuration to the AWS-managed
+  # INTERNET_EGRESS connector. PassNetworkConnector does not support
+  # resource-level permissions, so the publisher requires this wildcard grant.
+  statement {
+    sid       = "PassMicrovmNetworkConnectors"
+    effect    = "Allow"
+    actions   = ["lambda:PassNetworkConnector"]
+    resources = ["*"]
+  }
+
   statement {
     sid       = "InspectMicrovmArtifactBuckets"
     effect    = "Allow"

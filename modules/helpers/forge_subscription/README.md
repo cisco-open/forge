@@ -26,6 +26,10 @@ Forge keeps runner credentials short-lived. A runner starts with the identity at
 - The MicroVM publisher policy uses `Resource = "*"`. S3 listing remains
   restricted to the `lambda-microvms/*` prefix, and role passing remains
   restricted to `lambda.amazonaws.com`.
+- Lambda applies the AWS-managed `INTERNET_EGRESS` Network Connector when no
+  image egress connector is specified. The publisher therefore requires
+  `lambda:PassNetworkConnector`, which AWS does not support scoping to a
+  resource ARN.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
