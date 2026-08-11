@@ -12,17 +12,17 @@ examples/templates/helpers
 
 ## Helper Modules
 
-| Helper                 | Use when                                                            | Skip when                                    |
-| ---------------------- | ------------------------------------------------------------------- | -------------------------------------------- |
-| `opt_in_regions`       | The AWS region is disabled by default.                              | The region is already enabled.               |
-| `service_linked_roles` | EC2 Spot or another AWS service role is missing.                    | Your account bootstrap already creates them. |
-| `ami_policy`           | You enforce AMI use through account policy.                         | AMI policy is handled elsewhere.             |
-| `ami_sharing`          | Runner AMIs are produced in one account and consumed in another.    | AMIs are local to the runner account.        |
-| `ecr`                  | Forge owns ECR repos for runner or helper images.                   | Your container platform owns ECR/GHCR.       |
-| `storage`              | Forge owns buckets for artifacts, logs, templates, or integrations. | Buckets are provided by another platform.    |
-| `cloud_formation`      | An integration needs CloudFormation admin/execution roles.          | No integration needs those roles.            |
-| `forge_subscription`   | Tenants need Forge-managed IAM, S3, Packer, ECR, or Secrets access. | Tenant access is managed elsewhere.          |
-| `cloud_custodian`      | You want scheduled cleanup and policy sweeps.                       | Another job owns cleanup.                    |
+| Helper                 | Use when                                                            | Skip when                                  |
+| ---------------------- | ------------------------------------------------------------------- | ------------------------------------------ |
+| `opt_in_regions`       | The AWS region is disabled by default.                              | The region is already enabled.             |
+| `service_linked_roles` | The EC2 Spot service-linked role is missing.                        | Your account bootstrap already creates it. |
+| `ami_policy`           | You enforce AMI use through account policy.                         | AMI policy is handled elsewhere.           |
+| `ami_sharing`          | Runner AMIs are produced in one account and consumed in another.    | AMIs are local to the runner account.      |
+| `ecr`                  | Forge owns ECR repos for runner or helper images.                   | Your container platform owns ECR/GHCR.     |
+| `storage`              | Forge owns buckets for artifacts, logs, templates, or integrations. | Buckets are provided by another platform.  |
+| `cloud_formation`      | An integration needs CloudFormation admin/execution roles.          | No integration needs those roles.          |
+| `forge_subscription`   | Tenants need Forge-managed IAM, S3, Packer, ECR, or Secrets access. | Tenant access is managed elsewhere.        |
+| `cloud_custodian`      | You want scheduled cleanup and policy sweeps.                       | Another job owns cleanup.                  |
 
 ## Files To Change First
 
