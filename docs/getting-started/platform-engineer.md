@@ -56,8 +56,7 @@ ______________________________________________________________________
    - `modules/helpers/ecr` for operational ECR repositories.
    - `modules/helpers/storage` for operational S3 buckets.
    - `modules/helpers/opt_in_regions` for AWS opt-in regions.
-   - `modules/helpers/service_linked_roles` for EC2 Spot and AWS service-linked
-     roles.
+   - `modules/helpers/service_linked_roles` for the EC2 Spot service-linked role.
    - `modules/helpers/cloud_formation` for CloudFormation-backed integrations.
    - `modules/helpers/aws_config_recording` for Dedicated Host and instance
      configuration history.

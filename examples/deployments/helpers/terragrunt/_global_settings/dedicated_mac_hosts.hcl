@@ -29,12 +29,6 @@ locals {
   }
 }
 
-dependencies {
-  paths = [
-    find_in_parent_folders("service_linked_roles")
-  ]
-}
-
 inputs = {
   aws_profile = local.default_aws_profile
   aws_region  = local.region
