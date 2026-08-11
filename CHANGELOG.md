@@ -1,5 +1,19 @@
 # Changelog
 
+## [4.13.0](https://github.com/cisco-open/forge/compare/v4.12.0...v4.13.0) (2026-08-11)
+
+
+### Features
+
+* **microvm:** add regional publishing foundation ([#635](https://github.com/cisco-open/forge/issues/635)) ([d9be0f9](https://github.com/cisco-open/forge/commit/d9be0f91922fc0b4c5eaaea83cdb084bc816c0dd))
+* **runners:** adopt nested EC2 provider configuration ([#638](https://github.com/cisco-open/forge/issues/638)) ([5937cf6](https://github.com/cisco-open/forge/commit/5937cf6a7441577b1af49d4f19271894373b1885))
+
+
+### Bug Fixes
+
+* **helpers:** remove License Manager service-linked role ([#642](https://github.com/cisco-open/forge/issues/642)) ([8f08eec](https://github.com/cisco-open/forge/commit/8f08eecd446e97d284349ca0c5c9084213b8a388))
+* **runners:** preserve example pre-install userdata ([#645](https://github.com/cisco-open/forge/issues/645)) ([7f0fd09](https://github.com/cisco-open/forge/commit/7f0fd09e7ee255ff7c8683d0c658294a1669f14c))
+
 ## [4.12.0](https://github.com/cisco-open/forge/compare/v4.11.3...v4.12.0) (2026-08-11)
 
 
