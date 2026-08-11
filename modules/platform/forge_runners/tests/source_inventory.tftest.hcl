@@ -22,7 +22,7 @@ run "platform_forge_runners_contract" {
       "compute_provider = object({",
       "ec2 = optional(object({",
       "microvm = optional(object({",
-      "scale_errors                  = optional(list(string), [])",
+      "scale_errors = optional(list(string), [",
       "for key in local.active_redrive_runner_keys :",
       "try(module.ec2_runners[0].runners_arn_map, {}),",
       "runners_arn_map = try(module.ec2_runners[0].microvm_runners_arn_map, {})",

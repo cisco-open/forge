@@ -88,13 +88,34 @@ locals {
       pool_config                                                    = spec.pool_config
       compute_provider = {
         ec2 = {
-          ami_filter = {
-            name  = [spec.ami_name]
-            state = ["available"]
+          metadata_options = {
+            http_endpoint               = "enabled"
+            http_put_response_hop_limit = 2
+            http_tokens                 = "optional"
+            instance_metadata_tags      = "enabled"
           }
-          ami_owners                    = [spec.ami_owner]
-          ami_kms_key_arn               = trimspace(spec.ami_kms_key_arn) == "" ? null : spec.ami_kms_key_arn
-          enable_userdata               = true
+          ami = {
+            filter = {
+              name  = [spec.ami_name]
+              state = ["available"]
+            }
+            owners = [spec.ami_owner]
+            kms_key = trimspace(spec.ami_kms_key_arn) == "" ? null : {
+              arn = spec.ami_kms_key_arn
+            }
+          }
+          create_service_linked_role_spot = true
+          cloudwatch_agent = {
+            enabled = true
+          }
+          binaries_syncer = {
+            enabled = false
+          }
+          detailed_monitoring_enabled = true
+          ssm_enabled                 = true
+          user_data = {
+            enabled = true
+          }
           instance_target_capacity_type = "on-demand"
           instance_types                = spec.instance_types
           placement                     = try(spec.placement, null)

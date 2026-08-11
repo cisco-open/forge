@@ -30,10 +30,8 @@ run "platform_ec2_deployment_ec2_update_runner_ssm_ami_interface_contract" {
       "type = map(object({",
       "resource_ssm_id = string",
       "ssm_id          = string",
-      "ami_filter = object({",
-      "name  = list(string)",
-      "state = list(string)",
-      "ami_owners = list(string)",
+      "ami_filter      = map(list(string))",
+      "ami_owners      = list(string)",
       "}))",
       "variable \"tags\"",
       "description = \"Tags to apply to created resources.\"",
@@ -71,7 +69,7 @@ run "platform_ec2_deployment_ec2_update_runner_ssm_ami_interface_contract" {
     condition = (
       output.expected_input_variable_count == 5
       && output.expected_output_value_count == 0
-      && output.expected_interface_literal_count == 23
+      && output.expected_interface_literal_count == 21
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

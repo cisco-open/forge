@@ -23,6 +23,18 @@ locals {
     runner_config.compute_provider.ec2.subnet_ids == null ? var.network_configs.subnet_ids : runner_config.compute_provider.ec2.subnet_ids
   ]))
 
+  # This is the upstream EC2 provider's default AMI selection. Normalize it
+  # here so the provider and Forge's scheduled AMI refresh use one effective
+  # filter map.
+  ec2_default_ami_filters = {
+    for key, runner_config in local.ec2_runner_configs :
+    key => ({
+      windows = { name = ["Windows_Server-2022-English-Full-ECS_Optimized-*"] }
+      linux   = runner_config.runner_architecture == "arm64" ? { name = ["al2023-ami-2023.*-kernel-6.*-arm64"] } : { name = ["al2023-ami-2023.*-kernel-6.*-x86_64"] }
+      osx     = runner_config.runner_architecture == "arm64" ? { name = ["amzn-ec2-macos-15.*-arm64"] } : { name = ["amzn-ec2-macos-15.*"] }
+    })[runner_config.runner_os]
+  }
+
   runner_labels = {
     for key, runner_config in var.runner_configs.runner_specs :
     key => concat(runner_config.runner_labels, runner_config.extra_labels)
@@ -33,84 +45,77 @@ locals {
     "forge-${policy_index}" => policy_arn
   }
 
+  forge_ec2_log_files = {
+    for key, runner_config in local.ec2_runner_configs :
+    key => concat(
+      runner_config.runner_os == "windows" ? [] : [
+        {
+          log_group_name   = "forge-logs"
+          prefix_log_group = true
+          file_path        = "/var/log/syslog"
+          log_stream_name  = "{instance_id}/syslog"
+        },
+      ],
+      [
+        {
+          log_group_name   = "forge-logs"
+          prefix_log_group = true
+          file_path        = runner_config.runner_os == "windows" ? "C:/UserData.log" : "/var/log/user-data.log"
+          log_stream_name  = "{instance_id}/user-data"
+        },
+        {
+          log_group_name   = "forge-logs"
+          prefix_log_group = true
+          file_path        = runner_config.runner_os == "windows" ? "C:/actions-runner/_diag/Runner_*.log" : "/opt/actions-runner/_diag/Runner_**.log"
+          log_stream_name  = "{instance_id}/runner"
+        },
+        {
+          log_group_name   = "forge-logs"
+          prefix_log_group = true
+          file_path        = runner_config.runner_os == "windows" ? "C:/Users/Administrator/AppData/Local/Temp/hook_*.log" : "/home/${runner_config.runner_user}/hook.log"
+          log_stream_name  = "{instance_id}/hook"
+        },
+      ],
+    )
+  }
+
   ec2_compute_provider = {
     for key, runner_config in local.ec2_runner_configs :
-    key => {
-      metadata_options = {
-        http_endpoint               = "enabled"
-        http_put_response_hop_limit = 2
-        http_tokens                 = "optional"
-        instance_metadata_tags      = "enabled"
-      }
-      ami = {
-        owners = runner_config.compute_provider.ec2.ami_owners
-        filter = runner_config.compute_provider.ec2.ami_filter
-        kms_key = runner_config.compute_provider.ec2.ami_kms_key_arn == null ? null : {
-          arn = runner_config.compute_provider.ec2.ami_kms_key_arn
-        }
-      }
-      block_device_mappings           = runner_config.compute_provider.ec2.block_device_mappings
-      create_service_linked_role_spot = true
-      cloudwatch_agent = {
-        enabled = true
-      }
-      binaries_syncer = {
-        enabled = false
-      }
-      detailed_monitoring_enabled = true
-      ssm_enabled                 = true
-      user_data = {
-        enabled     = runner_config.compute_provider.ec2.enable_userdata
-        template    = "${local.user_data_prefix}/user_data_${runner_config.runner_os}.tftpl"
-        pre_install = "# No pre-install steps."
-        post_install = templatefile(
-          local.userdata_template_post_install,
+    key => merge(
+      runner_config.compute_provider.ec2,
+      {
+        ami = runner_config.compute_provider.ec2.ami == null ? null : merge(
+          runner_config.compute_provider.ec2.ami,
           {
-            runner_user    = runner_config.runner_user
-            ecr_registries = var.tenant_configs.ecr_registries
+            filter = merge(
+              local.ec2_default_ami_filters[key],
+              runner_config.compute_provider.ec2.ami.filter,
+            )
           }
         )
+        user_data = merge(
+          runner_config.compute_provider.ec2.user_data,
+          {
+            template = (
+              runner_config.compute_provider.ec2.user_data.content == null
+              && runner_config.compute_provider.ec2.user_data.template == null
+            ) ? "${local.user_data_prefix}/user_data_${runner_config.runner_os}.tftpl" : runner_config.compute_provider.ec2.user_data.template
+            post_install = join("\n", compact([
+              runner_config.compute_provider.ec2.user_data.post_install,
+              templatefile(
+                local.userdata_template_post_install,
+                {
+                  runner_user    = runner_config.runner_user
+                  ecr_registries = var.tenant_configs.ecr_registries
+                }
+              ),
+            ]))
+          }
+        )
+        log_files = coalesce(runner_config.compute_provider.ec2.log_files, local.forge_ec2_log_files[key])
+        tags      = merge(var.tenant_configs.tags, runner_config.compute_provider.ec2.tags)
       }
-      instance_target_capacity_type = runner_config.compute_provider.ec2.instance_target_capacity_type
-      instance_types                = runner_config.compute_provider.ec2.instance_types
-      scale_errors                  = runner_config.compute_provider.ec2.scale_errors
-      vpc_id                        = runner_config.compute_provider.ec2.vpc_id
-      subnet_ids                    = runner_config.compute_provider.ec2.subnet_ids
-      placement                     = runner_config.compute_provider.ec2.placement
-      license_specifications        = runner_config.compute_provider.ec2.license_specifications
-      use_dedicated_host            = runner_config.compute_provider.ec2.use_dedicated_host
-      log_files = concat(
-        runner_config.runner_os == "windows" ? [] : [
-          {
-            log_group_name   = "forge-logs"
-            prefix_log_group = true
-            file_path        = "/var/log/syslog"
-            log_stream_name  = "{instance_id}/syslog"
-          },
-        ],
-        [
-          {
-            log_group_name   = "forge-logs"
-            prefix_log_group = true
-            file_path        = runner_config.runner_os == "windows" ? "C:/UserData.log" : "/var/log/user-data.log"
-            log_stream_name  = "{instance_id}/user-data"
-          },
-          {
-            log_group_name   = "forge-logs"
-            prefix_log_group = true
-            file_path        = runner_config.runner_os == "windows" ? "C:/actions-runner/_diag/Runner_*.log" : "/opt/actions-runner/_diag/Runner_**.log"
-            log_stream_name  = "{instance_id}/runner"
-          },
-          {
-            log_group_name   = "forge-logs"
-            prefix_log_group = true
-            file_path        = runner_config.runner_os == "windows" ? "C:/Users/Administrator/AppData/Local/Temp/hook_*.log" : "/home/${runner_config.runner_user}/hook.log"
-            log_stream_name  = "{instance_id}/hook"
-          },
-        ],
-      )
-      tags = var.tenant_configs.tags
-    }
+    )
   }
 
   multi_runner_config_v2 = {

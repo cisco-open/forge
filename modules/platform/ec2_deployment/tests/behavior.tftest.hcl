@@ -138,16 +138,20 @@ variables {
         runner_user         = "ec2-user"
         compute_provider = {
           ec2 = {
-            ami_filter = {
-              name  = ["forge-*"]
-              state = ["available"]
+            ami = {
+              filter = {
+                name  = ["forge-*"]
+                state = ["available"]
+              }
+              owners = ["123456789012"]
             }
-            ami_kms_key_arn               = null
-            ami_owners                    = ["123456789012"]
+            ebs_optimized                 = true
             instance_types                = ["m7i.large"]
-            enable_userdata               = true
             instance_target_capacity_type = "on-demand"
             subnet_ids                    = ["subnet-override"]
+            user_data = {
+              enabled = true
+            }
             block_device_mappings = [{
               delete_on_termination = true
               device_name           = "/dev/xvda"
@@ -193,22 +197,40 @@ run "mixed_provider_plan" {
   }
 
   assert {
-    condition = (
-      toset(keys(local.ec2_runner_configs)) == toset(["ec2"])
-      && toset(keys(local.multi_runner_config_v2)) == toset(["ec2", "microvm"])
-      && local.active_ec2_subnet_ids == toset(["subnet-override"])
-    )
-    error_message = "Provider filtering and EC2 effective subnet resolution must preserve both provider lanes."
+    condition     = toset(keys(local.ec2_runner_configs)) == toset(["ec2"])
+    error_message = "EC2 provider filtering must retain every EC2 lane."
+  }
+
+  assert {
+    condition     = toset(keys(local.multi_runner_config_v2)) == toset(["ec2", "microvm"])
+    error_message = "The upstream v2 map must preserve all provider lane keys."
+  }
+
+  assert {
+    condition     = local.active_ec2_subnet_ids == toset(["subnet-override"])
+    error_message = "EC2 effective subnet resolution must preserve per-lane overrides."
   }
 
   assert {
     condition = (
       local.multi_runner_config_v2.ec2.compute_provider.ec2 != null
+      && tolist(local.multi_runner_config_v2.ec2.compute_provider.ec2.ami.filter.name) == tolist(["forge-*"])
+      && local.multi_runner_config_v2.ec2.compute_provider.ec2.ami.id_ssm_parameter == null
+      && local.multi_runner_config_v2.ec2.compute_provider.ec2.ebs_optimized
       && local.multi_runner_config_v2.ec2.compute_provider.microvm == null
       && local.multi_runner_config_v2.microvm.compute_provider.ec2 == null
       && local.multi_runner_config_v2.microvm.compute_provider.microvm.image_identifier == "arn:aws:lambda:eu-west-1:123456789012:microvm-image:test"
     )
     error_message = "The v2 translation must select exactly one configured provider per lane."
+  }
+
+  assert {
+    condition = (
+      tolist(local.ec2_default_ami_filters.ec2.name) == tolist(["al2023-ami-2023.*-kernel-6.*-x86_64"])
+      && tolist(local.ec2_compute_provider.ec2.ami.filter.name) == tolist(["forge-*"])
+      && tolist(local.ec2_compute_provider.ec2.ami.filter.state) == tolist(["available"])
+    )
+    error_message = "The scheduled AMI refresh must merge upstream defaults with caller filters."
   }
 
   assert {
