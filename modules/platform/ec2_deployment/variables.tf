@@ -167,6 +167,14 @@ variable "runner_configs" {
   validation {
     condition = alltrue([
       for runner_config in values(var.runner_configs.runner_specs) :
+      !runner_config.compute_provider.ec2.user_data.debug_logging_enabled
+    ])
+    error_message = "Forge EC2 runner_specs do not support user_data.debug_logging_enabled while the upstream v1 adapter is active."
+  }
+
+  validation {
+    condition = alltrue([
+      for runner_config in values(var.runner_configs.runner_specs) :
       length(runner_config.compute_provider.ec2.instance_profile[*]) == 0
     ])
     error_message = "Forge EC2 runner_specs do not support an external instance_profile."

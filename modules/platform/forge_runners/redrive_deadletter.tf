@@ -3,7 +3,6 @@ locals {
 }
 
 module "redrive_deadletter" {
-  count  = local.has_active_runners ? 1 : 0
   source = "./redrive_deadletter"
 
   providers = {
@@ -17,7 +16,7 @@ module "redrive_deadletter" {
 
   sqs_map = merge(
     {
-      for key in local.active_redrive_runner_keys :
+      for key in keys(var.ec2_deployment_specs.runner_specs) :
       key => {
         dlq  = "${local.sqs_prefix_arn}:${var.deployment_config.deployment_prefix}-${key}-queued-builds_dead_letter"
         main = "${local.sqs_prefix_arn}:${var.deployment_config.deployment_prefix}-${key}-queued-builds"

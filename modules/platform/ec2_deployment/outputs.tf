@@ -3,18 +3,9 @@ output "webhook_endpoint" {
   description = "Public HTTPS endpoint URL for the GitHub Actions webhook relay."
 }
 
-output "ec2_runners_map" {
-  value = {
-    for runner_key in keys(local.ec2_runner_configs) :
-    runner_key => module.runners.runners_map_v2[runner_key].provider.ec2
-  }
-  description = "Map of EC2 runner keys to their provider-specific resources."
-}
-
 output "ec2_runners_arn_map" {
   value = {
-    for runner_key in keys(local.ec2_runner_configs) :
-    runner_key => module.runners.runners_map_v2[runner_key].runner.role.arn
+    for runner_key, runner in module.runners.runners_map : runner_key => runner.role_runner[0].arn
   }
   description = "Map of EC2 runner keys to their IAM role ARNs."
 }

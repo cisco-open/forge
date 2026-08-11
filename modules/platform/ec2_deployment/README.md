@@ -5,9 +5,11 @@ This module deploys Forge EC2 runner pools through the upstream
 
 ## Why This Module Exists
 
-The nested EC2 v2 contract lets each runner lane configure the complete
+The nested, v2-compatible EC2 input lets each runner lane configure the
 upstream EC2 provider object while sharing Forge's webhook and runner control
-plane. EC2 supports custom AMIs, macOS/Windows, dedicated hosts, and larger
+plane. Forge currently translates that input to the released v1
+`multi_runner_config`, so this phase does not enable upstream's experimental v2
+runtime. EC2 supports custom AMIs, macOS/Windows, dedicated hosts, and larger
 hardware profiles.
 
 ## What It Manages
@@ -21,19 +23,17 @@ hardware profiles.
 
 - This is a breaking input migration: every `runner_specs` entry must contain
   `compute_provider.ec2`. The legacy flat EC2 shape is not accepted.
-- The EC2 block mirrors the upstream v2 nested contract. Forge still owns AMI
+- The EC2 block mirrors the upstream v2 nested contract and is adapted to the
+  stable upstream v1 fields. Forge still owns AMI
   refresh and runner instance profiles, so EC2 lanes require a non-null,
   module-managed `ami` block and cannot select `ami.id_ssm_parameter` or an
   external `instance_profile`. The scheduled refresh uses the same default AMI
   name filter as the upstream EC2 provider for each runner OS and architecture;
   values in `ami.filter` override those defaults.
-- The upstream v2 path changes Terraform resource addresses from the v1 runner
-  modules to provider-oriented runner stacks; this module does not include an
-  in-place state migration.
-- The upstream dependency is pinned to draft PR #5260. Until its v2
-  Lambda artifacts are released, plans require matching PR-built ZIPs supplied
-  with `USE_CACHE` and `CACHE_PATH`.
-- Every compute runner is ephemeral and is expected to register for one job and then be reaped.
+- Stable v1 has no per-lane user-data debug flag, so
+  `user_data.debug_logging_enabled` must remain `false` during this adapter
+  phase.
+- Every EC2 runner is ephemeral and is expected to register for one job and then be reaped.
 - Label sets are the API contract with tenant workflows, so exact matching matters.
 - Use warm pools only where startup latency justifies the idle cost.
 - Subnet IP capacity and EC2 capacity errors are expected operational signals, not unusual exceptions.
@@ -61,7 +61,7 @@ hardware profiles.
 | ---- | ------ | ------- |
 | <a name="module_ec2_update_runner_ssm_ami"></a> [ec2\_update\_runner\_ssm\_ami](#module\_ec2\_update\_runner\_ssm\_ami) | ./ec2_update_runner_ssm_ami | n/a |
 | <a name="module_ec2_update_runner_tags"></a> [ec2\_update\_runner\_tags](#module\_ec2\_update\_runner\_tags) | ./ec2_update_runner_tags | n/a |
-| <a name="module_runners"></a> [runners](#module\_runners) | git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner | 961c1208a3831d19af8c0cfb43a7ed8b2d81e34b |
+| <a name="module_runners"></a> [runners](#module\_runners) | git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner | v7.10.1 |
 
 ## Resources
 
@@ -100,7 +100,6 @@ hardware profiles.
 | <a name="output_ec2_runners_ami_name_map"></a> [ec2\_runners\_ami\_name\_map](#output\_ec2\_runners\_ami\_name\_map) | Map of EC2 runner keys to the AMI names used for each runner. |
 | <a name="output_ec2_runners_arn_map"></a> [ec2\_runners\_arn\_map](#output\_ec2\_runners\_arn\_map) | Map of EC2 runner keys to their IAM role ARNs. |
 | <a name="output_ec2_runners_labels_map"></a> [ec2\_runners\_labels\_map](#output\_ec2\_runners\_labels\_map) | Map of EC2 runner keys to their base and extra GitHub labels. |
-| <a name="output_ec2_runners_map"></a> [ec2\_runners\_map](#output\_ec2\_runners\_map) | Map of EC2 runner keys to their provider-specific resources. |
 | <a name="output_event_bus_name"></a> [event\_bus\_name](#output\_event\_bus\_name) | Name of the EventBridge event bus used by the webhook relay. |
 | <a name="output_subnet_cidr_blocks"></a> [subnet\_cidr\_blocks](#output\_subnet\_cidr\_blocks) | Map of EC2 runner subnet IDs to their CIDR blocks. |
 | <a name="output_webhook_endpoint"></a> [webhook\_endpoint](#output\_webhook\_endpoint) | Public HTTPS endpoint URL for the GitHub Actions webhook relay. |

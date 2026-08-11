@@ -1,8 +1,5 @@
 locals {
-  # Draft dependency on terraform-aws-github-runner PR #5260. Replace this
-  # commit with the first release that includes multi_runner_config_v2 and the
-  # EC2 v2 Lambda artifacts.
-  github_runner_module_source = get_env("GITHUB_RUNNER_MODULE_SOURCE", "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=961c1208a3831d19af8c0cfb43a7ed8b2d81e34b")
+  github_runner_module_source = get_env("GITHUB_RUNNER_MODULE_SOURCE", "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=v7.10.1")
 }
 
 generate "github_runner_source_override" {

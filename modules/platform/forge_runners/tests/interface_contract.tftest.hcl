@@ -241,9 +241,11 @@ run "platform_forge_runners_interface_contract" {
       "length(runner_config.compute_provider.ec2.ami[*]) == 1",
       "&& try(length(runner_config.compute_provider.ec2.ami.id_ssm_parameter[*]) == 0, false)",
       "error_message = \"Forge EC2 runner_specs must configure a module-managed ami block; ami = null and external ami.id_ssm_parameter ownership are not supported.\"",
+      "!runner_config.compute_provider.ec2.user_data.debug_logging_enabled",
+      "error_message = \"Forge EC2 runner_specs do not support user_data.debug_logging_enabled while the upstream v1 adapter is active.\"",
       "length(runner_config.compute_provider.ec2.instance_profile[*]) == 0",
       "error_message = \"Forge EC2 runner_specs do not support an external instance_profile.\"",
-      "Compute deployment configuration for GitHub Actions runners.",
+      "EC2 deployment configuration for GitHub Actions runners. The public runner",
       "- lambda_subnet_ids: Subnets where runner-related lambdas execute.",
       "These can be more permissive than the runner subnets.",
       "- subnet_ids       : Default subnets for EC2 runners.",
@@ -252,7 +254,7 @@ run "platform_forge_runners_interface_contract" {
       "- runner_labels   : Base GitHub labels applied to jobs for this pool.",
       "- runner_os       : Runner operating system (for example, linux).",
       "- redrive_build_queue: Optional dead-letter queue redrive configuration.",
-      "- compute_provider: Nested upstream EC2 provider configuration.",
+      "- compute_provider: Nested v2-compatible EC2 provider configuration.",
       "compute_provider.ec2 fields:",
       "- ami             : Upstream-compatible EC2 AMI configuration.",
       "variable \"github_webhook_relay\"",
@@ -341,7 +343,7 @@ run "platform_forge_runners_interface_contract" {
     condition = (
       output.expected_input_variable_count == 10
       && output.expected_output_value_count == 5
-      && output.expected_interface_literal_count == 282
+      && output.expected_interface_literal_count == 284
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

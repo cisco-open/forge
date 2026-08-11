@@ -1,5 +1,5 @@
 module "github_actions_job_logs" {
-  count  = local.has_active_runners ? 1 : 0
+  count  = length(var.ec2_deployment_specs.runner_specs) > 0 ? 1 : 0
   source = "./github_actions_job_logs"
 
   providers = {

@@ -163,13 +163,23 @@ variable "ec2_deployment_specs" {
   validation {
     condition = alltrue([
       for runner_config in values(var.ec2_deployment_specs.runner_specs) :
+      !runner_config.compute_provider.ec2.user_data.debug_logging_enabled
+    ])
+    error_message = "Forge EC2 runner_specs do not support user_data.debug_logging_enabled while the upstream v1 adapter is active."
+  }
+
+  validation {
+    condition = alltrue([
+      for runner_config in values(var.ec2_deployment_specs.runner_specs) :
       length(runner_config.compute_provider.ec2.instance_profile[*]) == 0
     ])
     error_message = "Forge EC2 runner_specs do not support an external instance_profile."
   }
 
   description = <<-EOT
-  Compute deployment configuration for GitHub Actions runners.
+  EC2 deployment configuration for GitHub Actions runners. The public runner
+  shape follows the nested v2 EC2 contract and is translated internally to the
+  released upstream v1 multi_runner_config interface.
 
   Top-level fields:
     - lambda_subnet_ids: Subnets where runner-related lambdas execute.
@@ -203,7 +213,7 @@ variable "ec2_deployment_specs" {
     - pool_config     : List of pool size schedules (size + cron expression
                         and optional time zone) controlling baseline capacity.
     - runner_user     : OS user under which the GitHub runner process runs.
-    - compute_provider: Nested upstream EC2 provider configuration.
+    - compute_provider: Nested v2-compatible EC2 provider configuration.
 
   compute_provider.ec2 fields:
     - ami             : Upstream-compatible EC2 AMI configuration.
@@ -212,6 +222,8 @@ variable "ec2_deployment_specs" {
     - metadata_options: EC2 instance metadata service configuration.
     - block_device_mappings: EBS mappings for runner instances.
     - cloudwatch_agent/binaries_syncer/user_data: Runner bootstrap configuration.
+                        user_data.debug_logging_enabled must remain false while
+                        the stable upstream v1 adapter is active.
     - instance_types and allocation fields: EC2 Fleet capacity configuration.
     - vpc_id/subnet_ids/additional_security_group_ids: Per-lane networking.
     - cpu_options/placement/license_specifications: EC2 launch-template options.

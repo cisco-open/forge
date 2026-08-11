@@ -17,7 +17,6 @@ run "platform_ec2_deployment_interface_contract" {
       "ec2_runners_ami_name_map",
       "ec2_runners_arn_map",
       "ec2_runners_labels_map",
-      "ec2_runners_map",
       "event_bus_name",
       "subnet_cidr_blocks",
       "webhook_endpoint",
@@ -153,6 +152,8 @@ run "platform_ec2_deployment_interface_contract" {
       "length(runner_config.compute_provider.ec2.ami[*]) == 1",
       "&& try(length(runner_config.compute_provider.ec2.ami.id_ssm_parameter[*]) == 0, false)",
       "error_message = \"Forge EC2 runner_specs must configure a module-managed ami block; ami = null and external ami.id_ssm_parameter ownership are not supported.\"",
+      "!runner_config.compute_provider.ec2.user_data.debug_logging_enabled",
+      "error_message = \"Forge EC2 runner_specs do not support user_data.debug_logging_enabled while the upstream v1 adapter is active.\"",
       "length(runner_config.compute_provider.ec2.instance_profile[*]) == 0",
       "error_message = \"Forge EC2 runner_specs do not support an external instance_profile.\"",
       "active_ec2_subnet_ids = toset(flatten([",
@@ -171,17 +172,20 @@ run "platform_ec2_deployment_interface_contract" {
       "runner_config.compute_provider.ec2,",
       "log_files = coalesce(runner_config.compute_provider.ec2.log_files, local.forge_ec2_log_files[key])",
       "tags      = merge(var.tenant_configs.tags, runner_config.compute_provider.ec2.tags)",
-      "managed_policy_arns = merge(",
-      "local.runner_iam_role_managed_policy_arns,",
-      "forge_ec2_tags         = aws_iam_policy.ec2_tags.arn",
-      "forge_runner_hooks_ssm = aws_iam_policy.runner_hooks_ssm_read.arn",
+      "multi_runner_config_v1 = {",
+      "runner_metadata_options     = local.ec2_compute_provider[key].metadata_options",
+      "id_ssm_parameter_arn = try(local.ec2_compute_provider[key].ami.id_ssm_parameter.arn, null)",
+      "kms_key_arn          = try(local.ec2_compute_provider[key].ami.kms_key.arn, null)",
+      "enable_cloudwatch_agent              = local.ec2_compute_provider[key].cloudwatch_agent.enabled",
+      "enable_userdata                      = local.ec2_compute_provider[key].user_data.enabled",
+      "runner_additional_security_group_ids = local.ec2_compute_provider[key].additional_security_group_ids",
+      "runner_log_files                     = local.ec2_compute_provider[key].log_files",
+      "runner_ec2_tags                      = local.ec2_compute_provider[key].tags",
+      "runner_iam_role_managed_policy_arns = concat(",
       "labelMatchers = length(runner_config.extra_labels) == 0 ? [runner_config.runner_labels] : concat(",
-      "multi_runner_config = {}",
-      "multi_runner_config_v2 = local.multi_runner_config_v2",
-      "output \"ec2_runners_map\"",
-      "module.runners.runners_map_v2[runner_key].provider.ec2",
+      "multi_runner_config = local.multi_runner_config_v1",
       "output \"ec2_runners_arn_map\"",
-      "module.runners.runners_map_v2[runner_key].runner.role.arn",
+      "for runner_key, runner in module.runners.runners_map : runner_key => runner.role_runner[0].arn",
       "output \"ec2_runners_ami_name_map\"",
       "data.aws_ami.runner_ami[runner_key].name",
       "output \"ec2_runners_labels_map\"",
@@ -222,8 +226,8 @@ run "platform_ec2_deployment_interface_contract" {
   assert {
     condition = (
       output.expected_input_variable_count == 4
-      && output.expected_output_value_count == 7
-      && output.expected_interface_literal_count == 168
+      && output.expected_output_value_count == 6
+      && output.expected_interface_literal_count == 173
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

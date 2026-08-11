@@ -28,11 +28,6 @@ locals {
     key => concat(runner_config.runner_labels, runner_config.extra_labels)
   }
 
-  runner_iam_role_managed_policy_arns = {
-    for policy_index, policy_arn in var.runner_configs.runner_iam_role_managed_policy_arns :
-    "forge-${policy_index}" => policy_arn
-  }
-
   forge_ec2_log_files = {
     for key, runner_config in local.ec2_runner_configs :
     key => concat(
@@ -106,74 +101,91 @@ locals {
     )
   }
 
-  multi_runner_config_v2 = {
-    for key, runner_config in var.runner_configs.runner_specs :
+  # Keep Forge's public input aligned with the nested v2 EC2 contract while
+  # the upstream module remains on its stable v1 multi_runner_config path.
+  multi_runner_config_v1 = {
+    for key, runner_config in local.ec2_runner_configs :
     key => {
-      runner = {
-        os            = runner_config.runner_os
-        architecture  = runner_config.runner_architecture
-        extra_labels  = runner_config.extra_labels
-        group_name    = var.runner_configs.runner_group_name
-        run_as        = runner_config.runner_user
-        maximum_count = runner_config.max_instances
-        ephemeral     = true
-        hooks = {
-          job_started = templatefile(
-            "${local.user_data_prefix}/hook_job_started_${runner_config.runner_os}.tftpl",
-            {
-              param_name = aws_ssm_parameter.hook_job_started[runner_config.runner_os].name
-              region     = var.aws_region
-            }
-          )
-          job_completed = templatefile(
-            "${local.user_data_prefix}/hook_job_completed_${runner_config.runner_os}.tftpl",
-            {
-              param_name = aws_ssm_parameter.hook_job_completed[runner_config.runner_os].name
-              region     = var.aws_region
-            }
-          )
+      runner_config = {
+        runner_os                   = runner_config.runner_os
+        runner_architecture         = runner_config.runner_architecture
+        runner_metadata_options     = local.ec2_compute_provider[key].metadata_options
+        runner_extra_labels         = runner_config.extra_labels
+        runner_group_name           = var.runner_configs.runner_group_name
+        runner_run_as               = runner_config.runner_user
+        runners_maximum_count       = runner_config.max_instances
+        enable_ephemeral_runners    = true
+        enable_organization_runners = true
+
+        ami = {
+          filter               = local.ec2_compute_provider[key].ami.filter
+          owners               = local.ec2_compute_provider[key].ami.owners
+          id_ssm_parameter_arn = try(local.ec2_compute_provider[key].ami.id_ssm_parameter.arn, null)
+          kms_key_arn          = try(local.ec2_compute_provider[key].ami.kms_key.arn, null)
         }
-        iam = {
-          managed_policy_arns = merge(
-            local.runner_iam_role_managed_policy_arns,
-            {
-              forge_ec2_tags         = aws_iam_policy.ec2_tags.arn
-              forge_runner_hooks_ssm = aws_iam_policy.runner_hooks_ssm_read.arn
-            },
-          )
-        }
-      }
 
-      github = {
-        organization_runners = true
-      }
+        block_device_mappings                = local.ec2_compute_provider[key].block_device_mappings
+        create_service_linked_role_spot      = local.ec2_compute_provider[key].create_service_linked_role_spot
+        credit_specification                 = local.ec2_compute_provider[key].credit_specification
+        ebs_optimized                        = local.ec2_compute_provider[key].ebs_optimized
+        enable_cloudwatch_agent              = local.ec2_compute_provider[key].cloudwatch_agent.enabled
+        cloudwatch_config                    = local.ec2_compute_provider[key].cloudwatch_agent.config
+        enable_runner_binaries_syncer        = local.ec2_compute_provider[key].binaries_syncer.enabled
+        enable_runner_detailed_monitoring    = local.ec2_compute_provider[key].detailed_monitoring_enabled
+        enable_ssm_on_runners                = local.ec2_compute_provider[key].ssm_enabled
+        enable_userdata                      = local.ec2_compute_provider[key].user_data.enabled
+        userdata_template                    = local.ec2_compute_provider[key].user_data.template
+        userdata_content                     = local.ec2_compute_provider[key].user_data.content
+        userdata_pre_install                 = local.ec2_compute_provider[key].user_data.pre_install
+        userdata_post_install                = local.ec2_compute_provider[key].user_data.post_install
+        instance_allocation_strategy         = local.ec2_compute_provider[key].instance_allocation_strategy
+        instance_max_spot_price              = local.ec2_compute_provider[key].instance_max_spot_price
+        instance_target_capacity_type        = local.ec2_compute_provider[key].instance_target_capacity_type
+        instance_type_priorities             = local.ec2_compute_provider[key].instance_type_priorities
+        instance_types                       = local.ec2_compute_provider[key].instance_types
+        runner_additional_security_group_ids = local.ec2_compute_provider[key].additional_security_group_ids
+        enable_on_demand_failover_for_errors = local.ec2_compute_provider[key].enable_on_demand_failover_for_errors
+        scale_errors                         = local.ec2_compute_provider[key].scale_errors
+        subnet_ids                           = local.ec2_compute_provider[key].subnet_ids
+        vpc_id                               = local.ec2_compute_provider[key].vpc_id
+        cpu_options                          = local.ec2_compute_provider[key].cpu_options
+        placement                            = local.ec2_compute_provider[key].placement
+        license_specifications               = local.ec2_compute_provider[key].license_specifications
+        use_dedicated_host                   = local.ec2_compute_provider[key].use_dedicated_host
+        runner_log_files                     = local.ec2_compute_provider[key].log_files
+        runner_ec2_tags                      = local.ec2_compute_provider[key].tags
 
-      queue = {
-        delay_webhook_event            = 0
-        job_queue_retention_in_seconds = 172800
-        event_source_mapping = {
-          batch_size                         = runner_config.lambda_event_source_mapping_batch_size
-          maximum_batching_window_in_seconds = runner_config.lambda_event_source_mapping_maximum_batching_window_in_seconds
-        }
-        redrive_build_queue = runner_config.redrive_build_queue
-      }
+        delay_webhook_event                                            = 0
+        job_queue_retention_in_seconds                                 = 172800
+        lambda_event_source_mapping_batch_size                         = runner_config.lambda_event_source_mapping_batch_size
+        lambda_event_source_mapping_maximum_batching_window_in_seconds = runner_config.lambda_event_source_mapping_maximum_batching_window_in_seconds
+        enable_job_queued_check                                        = false
+        scale_down_schedule_expression                                 = "cron(*/5 * * * ? *)"
+        minimum_running_time_in_minutes                                = runner_config.min_run_time
+        pool_config                                                    = runner_config.pool_config
+        pool_runner_owner                                              = var.runner_configs.ghes_org
 
-      scale_up = {
-        job_queued_check_enabled = false
-      }
-
-      scale_down = {
-        schedule_expression             = "cron(*/5 * * * ? *)"
-        minimum_running_time_in_minutes = runner_config.min_run_time
-      }
-
-      pool = {
-        config       = runner_config.pool_config
-        runner_owner = var.runner_configs.ghes_org
-      }
-
-      compute_provider = {
-        ec2 = local.ec2_compute_provider[key]
+        runner_hook_job_started = templatefile(
+          "${local.user_data_prefix}/hook_job_started_${runner_config.runner_os}.tftpl",
+          {
+            param_name = aws_ssm_parameter.hook_job_started[runner_config.runner_os].name
+            region     = var.aws_region
+          }
+        )
+        runner_hook_job_completed = templatefile(
+          "${local.user_data_prefix}/hook_job_completed_${runner_config.runner_os}.tftpl",
+          {
+            param_name = aws_ssm_parameter.hook_job_completed[runner_config.runner_os].name
+            region     = var.aws_region
+          }
+        )
+        runner_iam_role_managed_policy_arns = concat(
+          var.runner_configs.runner_iam_role_managed_policy_arns,
+          [
+            aws_iam_policy.ec2_tags.arn,
+            aws_iam_policy.runner_hooks_ssm_read.arn,
+          ],
+        )
       }
 
       matcherConfig = {
@@ -190,6 +202,8 @@ locals {
         enableDynamicLabels    = runner_config.enable_dynamic_labels
         awsDynamicLabelsPolicy = runner_config.aws_dynamic_labels_policy
       }
+
+      redrive_build_queue = runner_config.redrive_build_queue
     }
   }
 }

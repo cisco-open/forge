@@ -28,7 +28,6 @@ run "platform_ec2_deployment_contract" {
       "data \"aws_iam_policy_document\" \"runner_hooks_ssm_read\"",
       "data \"aws_iam_policy_document\" \"ec2_tags\"",
       "output \"webhook_endpoint\"",
-      "output \"ec2_runners_map\"",
       "output \"ec2_runners_arn_map\"",
       "output \"ec2_runners_ami_name_map\"",
       "output \"ec2_runners_labels_map\"",

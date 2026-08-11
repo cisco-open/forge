@@ -138,19 +138,44 @@ variables {
         runner_user         = "ec2-user"
         compute_provider = {
           ec2 = {
+            metadata_options = {
+              http_endpoint               = "enabled"
+              http_put_response_hop_limit = 2
+              http_tokens                 = "optional"
+              instance_metadata_tags      = "enabled"
+            }
             ami = {
               filter = {
                 name  = ["forge-*"]
                 state = ["available"]
               }
               owners = ["123456789012"]
+              kms_key = {
+                arn = "arn:aws:kms:eu-west-1:123456789012:key/11111111-1111-1111-1111-111111111111"
+              }
             }
+            cloudwatch_agent = {
+              enabled = true
+              config  = "{\"agent\":{}}"
+            }
+            binaries_syncer = {
+              enabled = false
+            }
+            detailed_monitoring_enabled   = true
             ebs_optimized                 = true
+            instance_allocation_strategy  = "prioritized"
+            instance_type_priorities      = { "m7i.large" = 1 }
             instance_types                = ["m7i.large"]
             instance_target_capacity_type = "on-demand"
+            additional_security_group_ids = ["sg-runner"]
+            scale_errors                  = ["InsufficientInstanceCapacity"]
+            ssm_enabled                   = true
             subnet_ids                    = ["subnet-override"]
+            tags                          = { Lane = "ec2" }
             user_data = {
-              enabled = true
+              enabled      = true
+              pre_install  = "caller-pre"
+              post_install = "caller-post"
             }
             block_device_mappings = [{
               delete_on_termination = true
@@ -171,7 +196,7 @@ variables {
   }
 }
 
-run "ec2_v2_plan" {
+run "ec2_v2_input_v1_adapter_plan" {
   command = plan
 
   plan_options {
@@ -187,8 +212,8 @@ run "ec2_v2_plan" {
   }
 
   assert {
-    condition     = toset(keys(local.multi_runner_config_v2)) == toset(["ec2"])
-    error_message = "The upstream v2 map must preserve every EC2 lane key."
+    condition     = toset(keys(local.multi_runner_config_v1)) == toset(["ec2"])
+    error_message = "The stable v1 adapter must preserve every EC2 lane key."
   }
 
   assert {
@@ -198,12 +223,37 @@ run "ec2_v2_plan" {
 
   assert {
     condition = (
-      local.multi_runner_config_v2.ec2.compute_provider.ec2 != null
-      && tolist(local.multi_runner_config_v2.ec2.compute_provider.ec2.ami.filter.name) == tolist(["forge-*"])
-      && local.multi_runner_config_v2.ec2.compute_provider.ec2.ami.id_ssm_parameter == null
-      && local.multi_runner_config_v2.ec2.compute_provider.ec2.ebs_optimized
+      tolist(local.multi_runner_config_v1.ec2.runner_config.ami.filter.name) == tolist(["forge-*"])
+      && local.multi_runner_config_v1.ec2.runner_config.ami.id_ssm_parameter_arn == null
+      && local.multi_runner_config_v1.ec2.runner_config.ami.kms_key_arn == "arn:aws:kms:eu-west-1:123456789012:key/11111111-1111-1111-1111-111111111111"
+      && local.multi_runner_config_v1.ec2.runner_config.ebs_optimized
     )
-    error_message = "The v2 translation must preserve the nested EC2 provider configuration."
+    error_message = "The v1 adapter must flatten the nested EC2 AMI and fleet configuration."
+  }
+
+  assert {
+    condition = (
+      local.multi_runner_config_v1.ec2.runner_config.runner_metadata_options.http_tokens == "optional"
+      && local.multi_runner_config_v1.ec2.runner_config.runner_metadata_options.http_put_response_hop_limit == 2
+      && local.multi_runner_config_v1.ec2.runner_config.enable_cloudwatch_agent
+      && local.multi_runner_config_v1.ec2.runner_config.cloudwatch_config == "{\"agent\":{}}"
+      && !local.multi_runner_config_v1.ec2.runner_config.enable_runner_binaries_syncer
+      && local.multi_runner_config_v1.ec2.runner_config.enable_runner_detailed_monitoring
+      && local.multi_runner_config_v1.ec2.runner_config.enable_ssm_on_runners
+      && tolist(local.multi_runner_config_v1.ec2.runner_config.runner_additional_security_group_ids) == tolist(["sg-runner"])
+    )
+    error_message = "The v1 adapter must preserve nested EC2 bootstrap, metadata, and networking settings."
+  }
+
+  assert {
+    condition = (
+      local.multi_runner_config_v1.ec2.runner_config.userdata_pre_install == "caller-pre"
+      && startswith(local.multi_runner_config_v1.ec2.runner_config.userdata_post_install, "caller-post\n")
+      && length(local.multi_runner_config_v1.ec2.runner_config.runner_log_files) == 4
+      && local.multi_runner_config_v1.ec2.runner_config.runner_ec2_tags.Environment == "test"
+      && local.multi_runner_config_v1.ec2.runner_config.runner_ec2_tags.Lane == "ec2"
+    )
+    error_message = "The v1 adapter must retain Forge user-data, logging, and tag overlays."
   }
 
   assert {
@@ -217,8 +267,8 @@ run "ec2_v2_plan" {
 
   assert {
     condition = (
-      length(local.multi_runner_config_v2.ec2.matcherConfig.labelMatchers) == 1
-      && tolist(local.multi_runner_config_v2.ec2.matcherConfig.labelMatchers[0]) == tolist(["self-hosted", "ec2"])
+      length(local.multi_runner_config_v1.ec2.matcherConfig.labelMatchers) == 1
+      && tolist(local.multi_runner_config_v1.ec2.matcherConfig.labelMatchers[0]) == tolist(["self-hosted", "ec2"])
     )
     error_message = "Empty extra labels must retain the base label matcher."
   }

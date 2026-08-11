@@ -5,8 +5,7 @@ locals {
   terraform_aws_github_runner_tags = merge(
     var.tenant_configs.tags,
     {
-      # Immutable head of upstream draft PR #5260.
-      terraform-aws-github-runner-ref = "961c1208a3831d19af8c0cfb43a7ed8b2d81e34b"
+      terraform-aws-github-runner-ref = "v7.10.1"
     }
   )
   webhook_api_gateway_access_log_format = jsonencode({
@@ -68,11 +67,7 @@ data "aws_subnet" "runner_subnet" {
 }
 
 data "external" "download_lambdas" {
-  # TODO: v2 Lambda artifacts are not released yet. Draft plans
-  # must set USE_CACHE/CACHE_PATH to ZIPs built from upstream PR #5260. Once a
-  # v2 release exists, move this ref, the module source, and the
-  # terraform-aws-github-runner-ref tag to that release together.
-  program = ["bash", "${path.module}/scripts/download_lambdas.sh", "/tmp/${var.runner_configs.prefix}/", "961c1208a3831d19af8c0cfb43a7ed8b2d81e34b", "github-aws-runners/terraform-aws-github-runner"]
+  program = ["bash", "${path.module}/scripts/download_lambdas.sh", "/tmp/${var.runner_configs.prefix}/", "v7.10.1", "github-aws-runners/terraform-aws-github-runner"]
 }
 
 # ---------------------------------------------------------------------------
@@ -130,8 +125,8 @@ resource "aws_iam_policy" "runner_hooks_ssm_read" {
 
 
 module "runners" {
-  #checkov:skip=CKV_TF_1:Draft integration is pinned to the immutable upstream PR head.
-  source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=961c1208a3831d19af8c0cfb43a7ed8b2d81e34b"
+  #checkov:skip=CKV_TF_1:Module source uses Renovate-managed version tags; commit SHA pinning is an accepted policy tradeoff.
+  source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=v7.10.1"
 
   aws_region = var.aws_region
 
@@ -168,11 +163,9 @@ module "runners" {
   runner_binaries_syncer_lambda_zip = "${data.external.download_lambdas.result.path}/runner-binaries-syncer.zip"
   runners_lambda_zip                = "${data.external.download_lambdas.result.path}/runners.zip"
 
-  multi_runner_config = {}
-
-  experimental = {
-    multi_runner_config_v2 = local.multi_runner_config_v2
-  }
+  # Temporary compatibility boundary: Forge accepts the nested v2 EC2 input
+  # shape, then translates it to the released upstream v1 contract.
+  multi_runner_config = local.multi_runner_config_v1
 
   depends_on = [
     data.external.download_lambdas,

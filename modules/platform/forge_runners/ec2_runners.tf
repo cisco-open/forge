@@ -2,12 +2,12 @@
 # For generating a webhook secret. Apparently this is a cryptographically secure
 # PRNG.
 resource "random_id" "random" {
-  count       = local.has_active_runners ? 1 : 0
+  count       = length(var.ec2_deployment_specs.runner_specs) > 0 ? 1 : 0
   byte_length = 20
 }
 
 module "ec2_runners" {
-  count = local.has_active_runners ? 1 : 0
+  count = length(var.ec2_deployment_specs.runner_specs) > 0 ? 1 : 0
   # Using multi-runner example as a baseline.
   source = "../ec2_deployment"
 
