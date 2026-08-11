@@ -26,6 +26,7 @@ variable "forge" {
       regions                = []
     }
   }
+
 }
 
 variable "tags" {

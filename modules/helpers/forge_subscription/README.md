@@ -11,6 +11,8 @@ Forge keeps runner credentials short-lived. A runner starts with the identity at
 - IAM role trust for Forge runner principals.
 - Policies for tenant S3, Secrets Manager, Packer, and ECR access patterns.
 - ECR repository policy statements that allow runner pulls where configured.
+- Account-wide MicroVM image-management policy attached to
+  `role_for_forge_runners`.
 - Tags for tenant ownership and auditability.
 
 ## Operational Notes
@@ -18,21 +20,30 @@ Forge keeps runner credentials short-lived. A runner starts with the identity at
 - The tenant still owns what its role can do; this module only wires the Forge bridge.
 - Trust and `sts:TagSession` behavior should be validated with the Forge trust-validator after changes.
 - Keep this narrow when onboarding a tenant; broad tenant roles are harder to reason about later.
+- IAM policies are account-global, so this module creates one managed policy
+  and attaches it once to `role_for_forge_runners`; no regional MicroVM policy
+  configuration is required.
+- The MicroVM publisher policy uses `Resource = "*"`. S3 listing remains
+  restricted to the `lambda-microvms/*` prefix, and role passing remains
+  restricted to `lambda.amazonaws.com`.
+- Lambda applies the AWS-managed `INTERNET_EGRESS` Network Connector when no
+  image egress connector is specified. The publisher therefore requires
+  `lambda:PassNetworkConnector`, which AWS does not support scoping to a
+  resource ARN.
 
 <!-- BEGIN_TF_DOCS -->
-
 ## Requirements
 
-| Name                                                                     | Version  |
-| ------------------------------------------------------------------------ | -------- |
-| <a name="requirement_terraform"></a> [terraform](#requirement_terraform) | >= 1.9.1 |
-| <a name="requirement_aws"></a> [aws](#requirement_aws)                   | ~> 5.90  |
+| Name | Version |
+| ---- | ------- |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~> 1.11 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.47 |
 
 ## Providers
 
-| Name                                             | Version |
-| ------------------------------------------------ | ------- |
-| <a name="provider_aws"></a> [aws](#provider_aws) | 5.98.0  |
+| Name | Version |
+| ---- | ------- |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.58.0 |
 
 ## Modules
 
@@ -40,31 +51,34 @@ No modules.
 
 ## Resources
 
-| Name                                                                                                                                                           | Type        |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| [aws_ecr_repository_policy.repository_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecr_repository_policy)               | resource    |
-| [aws_iam_role.role_for_forge_runners](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role)                                    | resource    |
-| [aws_iam_role_policy.packer_support_for_forge_runners](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy)            | resource    |
-| [aws_iam_role_policy.s3_access_for_forge_runners](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy)                 | resource    |
-| [aws_iam_role_policy.secrets_access_for_forge_runners](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy)            | resource    |
-| [aws_iam_policy_document.assume_role_for_forge_runners](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document)    | data source |
-| [aws_iam_policy_document.ecr_repository_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document)            | data source |
+| Name | Type |
+| ---- | ---- |
+| [aws_ecr_repository_policy.repository_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecr_repository_policy) | resource |
+| [aws_iam_policy.microvm_image_management](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
+| [aws_iam_role.role_for_forge_runners](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role_policy.packer_support_for_forge_runners](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy) | resource |
+| [aws_iam_role_policy.s3_access_for_forge_runners](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy) | resource |
+| [aws_iam_role_policy.secrets_access_for_forge_runners](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy) | resource |
+| [aws_iam_role_policy_attachment.microvm_image_management](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_servicecatalogappregistry_application.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/servicecatalogappregistry_application) | resource |
+| [aws_iam_policy_document.assume_role_for_forge_runners](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.ecr_repository_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.microvm_image_management](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.packer_support_for_forge_runners](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.s3_access_for_forge_runners](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document)      | data source |
+| [aws_iam_policy_document.s3_access_for_forge_runners](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.secrets_access_for_forge_runners](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 
 ## Inputs
 
-| Name                                                                  | Description                          | Type                                                                                                                                                                       | Default | Required |
-| --------------------------------------------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | :------: |
-| <a name="input_aws_profile"></a> [aws_profile](#input_aws_profile)    | AWS profile to use.                  | `string`                                                                                                                                                                   | n/a     |   yes    |
-| <a name="input_aws_region"></a> [aws_region](#input_aws_region)       | Default AWS region.                  | `string`                                                                                                                                                                   | n/a     |   yes    |
-| <a name="input_default_tags"></a> [default_tags](#input_default_tags) | A map of tags to apply to resources. | `map(string)`                                                                                                                                                              | n/a     |   yes    |
-| <a name="input_forge"></a> [forge](#input_forge)                      | Configuration for Forge runners.     | <pre>object({<br/> runner_roles = list(string)<br/> ecr_repositories = object({<br/> names = list(string)<br/> ecr_access_account_ids = list(string)<br/> })<br/> })</pre> | n/a     |   yes    |
-| <a name="input_tags"></a> [tags](#input_tags)                         | A map of tags to apply to resources. | `map(string)`                                                                                                                                                              | n/a     |   yes    |
+| Name | Description | Type | Default | Required |
+| ---- | ----------- | ---- | ------- | :------: |
+| <a name="input_aws_profile"></a> [aws\_profile](#input\_aws\_profile) | AWS profile to use. | `string` | n/a | yes |
+| <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | Default AWS region. | `string` | n/a | yes |
+| <a name="input_default_tags"></a> [default\_tags](#input\_default\_tags) | A map of tags to apply to resources. | `map(string)` | n/a | yes |
+| <a name="input_forge"></a> [forge](#input\_forge) | Configuration for Forge runners. | <pre>object({<br/>    runner_roles = list(string)<br/>    ecr_repositories = object({<br/>      names                  = list(string)<br/>      ecr_access_account_ids = list(string)<br/>      regions                = list(string)<br/>    })<br/>  })</pre> | <pre>{<br/>  "ecr_repositories": {<br/>    "ecr_access_account_ids": [],<br/>    "names": [],<br/>    "regions": []<br/>  },<br/>  "runner_roles": []<br/>}</pre> | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to apply to resources. | `map(string)` | n/a | yes |
 
 ## Outputs
 
 No outputs.
-
 <!-- END_TF_DOCS -->

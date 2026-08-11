@@ -65,6 +65,8 @@ ______________________________________________________________________
    - `modules/helpers/cloud_custodian` for cleanup and policy jobs.
    - `modules/helpers/forge_subscription` for tenant-side IAM and artifact
      access used by Forge jobs.
+   - `modules/helpers/microvm` for regional Lambda MicroVM image-publishing
+     prerequisites and reusable VPC egress.
 
 1. Add integrations last:
 

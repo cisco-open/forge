@@ -1,7 +1,7 @@
 mock_provider "aws" {
   mock_data "aws_iam_policy_document" {
     defaults = {
-      json = "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Action\":[\"sts:AssumeRole\",\"s3:GetObject\",\"secretsmanager:GetSecretValue\",\"ec2:CreateImage\",\"ecr:GetAuthorizationToken\"],\"Effect\":\"Allow\",\"Resource\":\"*\"}]}"
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Action\":[\"sts:AssumeRole\",\"s3:GetObject\",\"secretsmanager:GetSecretValue\",\"ec2:CreateImage\",\"ecr:GetAuthorizationToken\",\"lambda:CreateMicrovmImage\",\"lambda:PassNetworkConnector\"],\"Effect\":\"Allow\",\"Resource\":\"*\"}]}"
     }
   }
 
@@ -9,6 +9,13 @@ mock_provider "aws" {
     defaults = {
       id  = "role_for_forge_runners"
       arn = "arn:aws:iam::123456789012:role/role_for_forge_runners"
+    }
+  }
+
+  mock_resource "aws_iam_policy" {
+    defaults = {
+      id  = "arn:aws:iam::123456789012:policy/forge-microvm-image-management"
+      arn = "arn:aws:iam::123456789012:policy/forge-microvm-image-management"
     }
   }
 }
@@ -59,7 +66,28 @@ run "forge_subscription_runner_role_contract" {
       && strcontains(aws_iam_role_policy.packer_support_for_forge_runners.policy, "ec2:CreateImage")
       && strcontains(aws_iam_role_policy.packer_support_for_forge_runners.policy, "ecr:GetAuthorizationToken")
       && length(aws_ecr_repository_policy.repository_policy) == 0
+      && aws_iam_policy.microvm_image_management.name == "forge-microvm-image-management"
+      && strcontains(aws_iam_policy.microvm_image_management.policy, "lambda:CreateMicrovmImage")
+      && strcontains(aws_iam_policy.microvm_image_management.policy, "lambda:PassNetworkConnector")
+      && aws_iam_role_policy_attachment.microvm_image_management.role == aws_iam_role.role_for_forge_runners.name
+      && aws_iam_role_policy_attachment.microvm_image_management.policy_arn == aws_iam_policy.microvm_image_management.arn
     )
-    error_message = "Forge subscription must keep S3, Secrets Manager, and Packer inline policies, while skipping regional ECR policies when no repositories are configured."
+    error_message = "Forge subscription must keep its existing inline policies and attach one account-wide MicroVM image-management policy to role_for_forge_runners."
+  }
+
+  assert {
+    condition = (
+      length(regexall("(?s)sid\\s*=\\s*\"CreateAndDiscoverMicrovmImages\".*?resources\\s*=\\s*\\[\"\\*\"\\]", file("${path.module}/policies.tf"))) == 1
+      && length(regexall("(?s)sid\\s*=\\s*\"ManageMicrovmImages\".*?resources\\s*=\\s*\\[\"\\*\"\\]", file("${path.module}/policies.tf"))) == 1
+      && length(regexall("(?s)sid\\s*=\\s*\"PassMicrovmNetworkConnectors\".*?actions\\s*=\\s*\\[\"lambda:PassNetworkConnector\"\\].*?resources\\s*=\\s*\\[\"\\*\"\\]", file("${path.module}/policies.tf"))) == 1
+      && length(regexall("(?s)sid\\s*=\\s*\"InspectMicrovmArtifactBuckets\".*?resources\\s*=\\s*\\[\"\\*\"\\]", file("${path.module}/policies.tf"))) == 1
+      && length(regexall("(?s)sid\\s*=\\s*\"ListMicrovmBuildArtifacts\".*?resources\\s*=\\s*\\[\"\\*\"\\].*?variable\\s*=\\s*\"s3:prefix\".*?values\\s*=\\s*\\[\"lambda-microvms/\\*\"\\]", file("${path.module}/policies.tf"))) == 1
+      && length(regexall("(?s)sid\\s*=\\s*\"PublishMicrovmBuildArtifacts\".*?resources\\s*=\\s*\\[\"\\*\"\\]", file("${path.module}/policies.tf"))) == 1
+      && length(regexall("(?s)sid\\s*=\\s*\"PassMicrovmBuildRoles\".*?resources\\s*=\\s*\\[\"\\*\"\\].*?variable\\s*=\\s*\"iam:PassedToService\".*?values\\s*=\\s*\\[\"lambda.amazonaws.com\"\\]", file("${path.module}/policies.tf"))) == 1
+      && length(regexall("(?s)sid\\s*=\\s*\"AuthorizeEcrPublication\".*?resources\\s*=\\s*\\[\"\\*\"\\]", file("${path.module}/policies.tf"))) == 1
+      && length(regexall("(?s)sid\\s*=\\s*\"PublishAndInspectEcrImages\".*?resources\\s*=\\s*\\[\"\\*\"\\]", file("${path.module}/policies.tf"))) == 1
+      && length(regexall("resources\\s*=\\s*\\[\"\\*\"\\]", file("${path.module}/policies.tf"))) == 9
+    )
+    error_message = "The singleton publisher policy must use wildcard resources for MicroVM publication and Network Connector passing while retaining the S3 prefix and Lambda PassRole service conditions."
   }
 }

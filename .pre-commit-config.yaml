@@ -112,7 +112,7 @@ repos:
   # ---------------------
   # Shell Hooks
   # ---------------------
-  - repo: http://github.com/jumanjihouse/pre-commit-hooks
+  - repo: https://github.com/jumanjihouse/pre-commit-hooks
     rev: 38980559e3a605691d6579f96222c30778e5a69e  # frozen: 3.0.0
     hooks:
       - id: shellcheck

@@ -167,3 +167,136 @@ resource "aws_iam_role_policy" "packer_support_for_forge_runners" {
   role   = aws_iam_role.role_for_forge_runners.id
   policy = data.aws_iam_policy_document.packer_support_for_forge_runners.json
 }
+
+# IAM is account-global, so Forge owns and attaches one managed image-publisher
+# policy rather than creating separate policies in each regional helper.
+data "aws_iam_policy_document" "microvm_image_management" {
+  #checkov:skip=CKV_AWS_107:Forge runners intentionally publish MicroVM images and artifacts across the tenant account.
+  #checkov:skip=CKV_AWS_108:Forge runners intentionally publish MicroVM images and artifacts across the tenant account.
+  #checkov:skip=CKV_AWS_109:Forge runners intentionally publish MicroVM images and artifacts across the tenant account.
+  #checkov:skip=CKV_AWS_110:PassRole remains restricted to the Lambda service by iam:PassedToService.
+  #checkov:skip=CKV_AWS_111:MicroVM publishing intentionally uses wildcard resources in the tenant account.
+  #checkov:skip=CKV_AWS_356:MicroVM publishing intentionally uses wildcard resources in the tenant account.
+  statement {
+    sid    = "CreateAndDiscoverMicrovmImages"
+    effect = "Allow"
+    actions = [
+      "lambda:CreateMicrovmImage",
+      "lambda:ListManagedMicrovmImages",
+      "lambda:ListMicrovmImages",
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "ManageMicrovmImages"
+    effect = "Allow"
+    actions = [
+      "lambda:DeleteMicrovmImage",
+      "lambda:DeleteMicrovmImageVersion",
+      "lambda:GetMicrovmImage",
+      "lambda:GetMicrovmImageBuild",
+      "lambda:GetMicrovmImageVersion",
+      "lambda:ListMicrovmImageBuilds",
+      "lambda:ListMicrovmImageVersions",
+      "lambda:ListTags",
+      "lambda:TagResource",
+      "lambda:UntagResource",
+      "lambda:UpdateMicrovmImage",
+      "lambda:UpdateMicrovmImageVersion",
+    ]
+    resources = ["*"]
+  }
+
+  # Lambda resolves omitted egress configuration to the AWS-managed
+  # INTERNET_EGRESS connector. PassNetworkConnector does not support
+  # resource-level permissions, so the publisher requires this wildcard grant.
+  statement {
+    sid       = "PassMicrovmNetworkConnectors"
+    effect    = "Allow"
+    actions   = ["lambda:PassNetworkConnector"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid       = "InspectMicrovmArtifactBuckets"
+    effect    = "Allow"
+    actions   = ["s3:GetBucketLocation"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid       = "ListMicrovmBuildArtifacts"
+    effect    = "Allow"
+    actions   = ["s3:ListBucket"]
+    resources = ["*"]
+
+    condition {
+      test     = "StringLike"
+      variable = "s3:prefix"
+      values   = ["lambda-microvms/*"]
+    }
+  }
+
+  statement {
+    sid    = "PublishMicrovmBuildArtifacts"
+    effect = "Allow"
+    actions = [
+      "s3:AbortMultipartUpload",
+      "s3:DeleteObject",
+      "s3:GetObject",
+      "s3:PutObject",
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid       = "PassMicrovmBuildRoles"
+    effect    = "Allow"
+    actions   = ["iam:PassRole"]
+    resources = ["*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "iam:PassedToService"
+      values   = ["lambda.amazonaws.com"]
+    }
+  }
+
+  statement {
+    sid       = "AuthorizeEcrPublication"
+    effect    = "Allow"
+    actions   = ["ecr:GetAuthorizationToken"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "PublishAndInspectEcrImages"
+    effect = "Allow"
+    actions = [
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:BatchGetImage",
+      "ecr:CompleteLayerUpload",
+      "ecr:DescribeImages",
+      "ecr:DescribeRepositories",
+      "ecr:GetDownloadUrlForLayer",
+      "ecr:InitiateLayerUpload",
+      "ecr:ListImages",
+      "ecr:PutImage",
+      "ecr:UploadLayerPart",
+    ]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_policy" "microvm_image_management" {
+  name        = "forge-microvm-image-management"
+  description = "Publish and manage Forge Lambda MicroVM images and their build artifacts."
+  policy      = data.aws_iam_policy_document.microvm_image_management.json
+  tags        = local.all_security_tags
+}
+
+resource "aws_iam_role_policy_attachment" "microvm_image_management" {
+  role       = aws_iam_role.role_for_forge_runners.name
+  policy_arn = aws_iam_policy.microvm_image_management.arn
+}

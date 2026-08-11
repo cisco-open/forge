@@ -27,6 +27,7 @@ ______________________________________________________________________
 | `modules/helpers/dedicated_mac_hosts`  | `environments/prod/regions/eu-west-1/dedicated_mac_hosts`  | Forge owns EC2 Mac Dedicated Host capacity.                          |
 | `modules/helpers/ecr`                  | `environments/prod/regions/eu-west-1/ecr`                  | Forge owns ECR repositories for runner or helper images.             |
 | `modules/helpers/forge_subscription`   | `environments/prod/forge_subscription`                     | Tenant accounts need Forge-managed IAM, Packer, S3, or ECR access.   |
+| `modules/helpers/microvm`              | `environments/prod/regions/eu-west-1/microvm`              | Provides regional MicroVM publishing/runtime foundations and egress. |
 | `modules/helpers/opt_in_regions`       | `environments/prod/opt_in_regions`                         | You need to enable AWS opt-in regions before regional deploys.       |
 | `modules/helpers/service_linked_roles` | `environments/prod/service_linked_roles`                   | The account needs the EC2 Spot service-linked role.                  |
 | `modules/helpers/storage`              | `environments/prod/storage`                                | Forge owns operational S3 buckets for logs, artifacts, or templates. |
