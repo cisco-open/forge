@@ -27,9 +27,12 @@ Forge keeps runner credentials short-lived. A runner starts with the identity at
   restricted to the `lambda-microvms/*` prefix, and role passing remains
   restricted to `lambda.amazonaws.com`.
 - Lambda applies the AWS-managed `INTERNET_EGRESS` Network Connector when no
-  image egress connector is specified. The publisher therefore requires
-  `lambda:PassNetworkConnector`, which AWS does not support scoping to a
-  resource ARN.
+  image egress connector is specified. For a customer-managed connector, the
+  publisher uses `lambda:GetNetworkConnector` to resolve its region-unique name
+  to the service-assigned ARN, then uses `lambda:PassNetworkConnector` when
+  publishing the image. This account-wide module does not consume regional
+  connector outputs, and `PassNetworkConnector` does not support resource-level
+  permissions, so the publisher policy grants both actions on `Resource = "*"`.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements

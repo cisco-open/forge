@@ -1,7 +1,7 @@
 mock_provider "aws" {
   mock_data "aws_iam_policy_document" {
     defaults = {
-      json = "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Action\":[\"sts:AssumeRole\",\"s3:GetObject\",\"secretsmanager:GetSecretValue\",\"ec2:CreateImage\",\"ecr:GetAuthorizationToken\",\"lambda:CreateMicrovmImage\",\"lambda:PassNetworkConnector\"],\"Effect\":\"Allow\",\"Resource\":\"*\"}]}"
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Action\":[\"sts:AssumeRole\",\"s3:GetObject\",\"secretsmanager:GetSecretValue\",\"ec2:CreateImage\",\"ecr:GetAuthorizationToken\",\"lambda:CreateMicrovmImage\",\"lambda:GetNetworkConnector\",\"lambda:PassNetworkConnector\"],\"Effect\":\"Allow\",\"Resource\":\"*\"}]}"
     }
   }
 
@@ -68,6 +68,7 @@ run "forge_subscription_runner_role_contract" {
       && length(aws_ecr_repository_policy.repository_policy) == 0
       && aws_iam_policy.microvm_image_management.name == "forge-microvm-image-management"
       && strcontains(aws_iam_policy.microvm_image_management.policy, "lambda:CreateMicrovmImage")
+      && strcontains(aws_iam_policy.microvm_image_management.policy, "lambda:GetNetworkConnector")
       && strcontains(aws_iam_policy.microvm_image_management.policy, "lambda:PassNetworkConnector")
       && aws_iam_role_policy_attachment.microvm_image_management.role == aws_iam_role.role_for_forge_runners.name
       && aws_iam_role_policy_attachment.microvm_image_management.policy_arn == aws_iam_policy.microvm_image_management.arn
@@ -79,7 +80,7 @@ run "forge_subscription_runner_role_contract" {
     condition = (
       length(regexall("(?s)sid\\s*=\\s*\"CreateAndDiscoverMicrovmImages\".*?resources\\s*=\\s*\\[\"\\*\"\\]", file("${path.module}/policies.tf"))) == 1
       && length(regexall("(?s)sid\\s*=\\s*\"ManageMicrovmImages\".*?resources\\s*=\\s*\\[\"\\*\"\\]", file("${path.module}/policies.tf"))) == 1
-      && length(regexall("(?s)sid\\s*=\\s*\"PassMicrovmNetworkConnectors\".*?actions\\s*=\\s*\\[\"lambda:PassNetworkConnector\"\\].*?resources\\s*=\\s*\\[\"\\*\"\\]", file("${path.module}/policies.tf"))) == 1
+      && length(regexall("(?s)sid\\s*=\\s*\"ResolveAndPassMicrovmNetworkConnectors\".*?actions\\s*=\\s*\\[.*?\"lambda:GetNetworkConnector\".*?\"lambda:PassNetworkConnector\".*?\\].*?resources\\s*=\\s*\\[\"\\*\"\\]", file("${path.module}/policies.tf"))) == 1
       && length(regexall("(?s)sid\\s*=\\s*\"InspectMicrovmArtifactBuckets\".*?resources\\s*=\\s*\\[\"\\*\"\\]", file("${path.module}/policies.tf"))) == 1
       && length(regexall("(?s)sid\\s*=\\s*\"ListMicrovmBuildArtifacts\".*?resources\\s*=\\s*\\[\"\\*\"\\].*?variable\\s*=\\s*\"s3:prefix\".*?values\\s*=\\s*\\[\"lambda-microvms/\\*\"\\]", file("${path.module}/policies.tf"))) == 1
       && length(regexall("(?s)sid\\s*=\\s*\"PublishMicrovmBuildArtifacts\".*?resources\\s*=\\s*\\[\"\\*\"\\]", file("${path.module}/policies.tf"))) == 1
@@ -88,6 +89,6 @@ run "forge_subscription_runner_role_contract" {
       && length(regexall("(?s)sid\\s*=\\s*\"PublishAndInspectEcrImages\".*?resources\\s*=\\s*\\[\"\\*\"\\]", file("${path.module}/policies.tf"))) == 1
       && length(regexall("resources\\s*=\\s*\\[\"\\*\"\\]", file("${path.module}/policies.tf"))) == 9
     )
-    error_message = "The singleton publisher policy must use wildcard resources for MicroVM publication and Network Connector passing while retaining the S3 prefix and Lambda PassRole service conditions."
+    error_message = "The singleton publisher policy must use wildcard resources for MicroVM publication and Network Connector resolution and passing while retaining the S3 prefix and Lambda PassRole service conditions."
   }
 }
