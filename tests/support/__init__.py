@@ -55,6 +55,10 @@ LAMBDA_DIRS: dict[str, str] = {
         'modules/integrations/splunk_cloud_data_manager/'
         'sec_meta_ec2_tags/lambda'
     ),
+    'splunk_dm_log_group_reconciler': (
+        'modules/integrations/splunk_cloud_data_manager/'
+        'log_group_reconciler/lambda'
+    ),
     'redrive_deadletter': (
         'modules/platform/forge_runners/redrive_deadletter/lambda'
     ),
@@ -90,6 +94,7 @@ LAMBDA_MODULE_FILES: dict[str, str] = {
     # suite uses the module's integration name to avoid colliding with other
     # first-party files named handler.py.
     'webex_webhook_relay': 'handler.py',
+    'splunk_dm_log_group_reconciler': 'log_group_reconciler.py',
 }
 
 

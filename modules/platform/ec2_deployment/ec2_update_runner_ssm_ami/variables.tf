@@ -25,10 +25,7 @@ variable "runner_ami_map" {
   type = map(object({
     resource_ssm_id = string
     ssm_id          = string
-    ami_filter = object({
-      name  = list(string)
-      state = list(string)
-    })
-    ami_owners = list(string)
+    ami_filter      = map(list(string))
+    ami_owners      = list(string)
   }))
 }

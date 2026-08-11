@@ -1,22 +1,20 @@
 # Service-Linked Roles
 
-This module creates AWS service-linked roles that Forge expects to exist in runner accounts.
+This module creates the EC2 Spot service-linked role that Forge expects to exist in runner accounts.
 
 ## Why This Module Exists
 
-EC2 runner pools can use Spot capacity and other AWS services that depend on account-level service-linked roles. Creating those roles up front avoids first-use failures during runner scale-up.
+EC2 runner pools can use Spot capacity, which depends on an account-level service-linked role. Creating that role up front avoids first-use failures during runner scale-up.
 
 ## What It Manages
 
 - The EC2 Spot service-linked role.
-- The License Manager core service-linked role used by dedicated Mac hosts.
 - Standard account and region inputs for bootstrap consistency.
 
 ## Operational Notes
 
 - Apply this before enabling Spot-backed EC2 runner pools.
-- Apply this before creating the License Manager configuration and resource group for dedicated Mac hosts.
-- AWS service-linked roles are account scoped and may already exist; Terraform should own them only where this module is the bootstrap authority.
+- The EC2 Spot service-linked role is account scoped and may already exist; Terraform should own it only where this module is the bootstrap authority.
 - This does not decide whether a runner pool uses Spot; that is configured in the EC2 deployment specs.
 
 <!-- BEGIN_TF_DOCS -->
@@ -41,7 +39,6 @@ No modules.
 
 | Name | Type |
 | ---- | ---- |
-| [aws_iam_service_linked_role.license_manager](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_service_linked_role) | resource |
 | [aws_iam_service_linked_role.spot](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_service_linked_role) | resource |
 | [aws_servicecatalogappregistry_application.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/servicecatalogappregistry_application) | resource |
 

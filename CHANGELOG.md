@@ -1,5 +1,19 @@
 # Changelog
 
+## [4.12.0](https://github.com/cisco-open/forge/compare/v4.11.3...v4.12.0) (2026-08-11)
+
+
+### Features
+
+* **splunk:** manage Data Manager Lambda log groups ([#637](https://github.com/cisco-open/forge/issues/637)) ([57d0e6d](https://github.com/cisco-open/forge/commit/57d0e6d81882c3f609c15caa2d5852b259896ce1))
+
+## [4.11.3](https://github.com/cisco-open/forge/compare/v4.11.2...v4.11.3) (2026-08-11)
+
+
+### Bug Fixes
+
+* **splunk:** restore Data Manager delete flow ([#639](https://github.com/cisco-open/forge/issues/639)) ([a451322](https://github.com/cisco-open/forge/commit/a451322baa516313c4ef450c75ea98d06fd04437))
+
 ## [4.11.2](https://github.com/cisco-open/forge/compare/v4.11.1...v4.11.2) (2026-08-06)
 
 

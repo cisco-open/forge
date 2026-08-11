@@ -12,15 +12,14 @@ output "ec2_runners_arn_map" {
 
 output "ec2_runners_ami_name_map" {
   value = {
-    for runner_key, runner in module.runners.runners_map : runner_key => data.aws_ami.runner_ami[runner_key].name
+    for runner_key in keys(local.ec2_runner_configs) : runner_key => data.aws_ami.runner_ami[runner_key].name
   }
   description = "Map of EC2 runner keys to the AMI names used for each runner."
 }
 
 output "ec2_runners_labels_map" {
   value = {
-    for runner_key, spec in var.runner_configs.runner_specs :
-    runner_key => concat(spec.runner_labels, spec.extra_labels)
+    for runner_key in keys(local.ec2_runner_configs) : runner_key => local.runner_labels[runner_key]
   }
   description = "Map of EC2 runner keys to their base and extra GitHub labels."
 }

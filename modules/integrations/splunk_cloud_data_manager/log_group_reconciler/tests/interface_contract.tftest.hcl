@@ -1,4 +1,4 @@
-run "platform_ec2_deployment_ec2_update_runner_ssm_ami_interface_contract" {
+run "integrations_splunk_cloud_data_manager_log_group_reconciler_interface_contract" {
   command = plan
 
   module {
@@ -8,35 +8,22 @@ run "platform_ec2_deployment_ec2_update_runner_ssm_ami_interface_contract" {
   variables {
     module_path = "."
     expected_input_variables = [
-      "log_level",
-      "logging_retention_in_days",
-      "prefix",
-      "runner_ami_map",
+      "region",
       "tags",
     ]
-    expected_output_values = []
+    expected_output_values = [
+      "lambda_function_name",
+    ]
     expected_interface_literals = [
-      "variable \"log_level\"",
+      "variable \"region\"",
       "type        = string",
-      "description = \"Log level for application logging (e.g., INFO, DEBUG, WARN, ERROR)\"",
-      "default     = \"INFO\"",
-      "variable \"logging_retention_in_days\"",
-      "description = \"Retention in days for CloudWatch Log Group for the Lambdas.\"",
-      "type        = number",
-      "default     = 30",
-      "variable \"prefix\"",
-      "description = \"Prefix for all resources\"",
-      "variable \"runner_ami_map\"",
-      "type = map(object({",
-      "resource_ssm_id = string",
-      "ssm_id          = string",
-      "ami_filter      = map(list(string))",
-      "ami_owners      = list(string)",
-      "}))",
+      "description = \"AWS region where the reconciler and Splunk Data Manager stacks run.\"",
       "variable \"tags\"",
-      "description = \"Tags to apply to created resources.\"",
       "type        = map(string)",
-      "default     = {}",
+      "description = \"Tags to apply to reconciler resources.\"",
+      "output \"lambda_function_name\"",
+      "description = \"Name of the regional Splunk Data Manager log-group reconciler Lambda.\"",
+      "value       = module.log_group_reconciler.lambda_function_name",
     ]
   }
 
@@ -67,9 +54,9 @@ run "platform_ec2_deployment_ec2_update_runner_ssm_ami_interface_contract" {
 
   assert {
     condition = (
-      output.expected_input_variable_count == 5
-      && output.expected_output_value_count == 0
-      && output.expected_interface_literal_count == 21
+      output.expected_input_variable_count == 2
+      && output.expected_output_value_count == 1
+      && output.expected_interface_literal_count == 9
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

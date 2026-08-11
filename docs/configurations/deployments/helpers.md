@@ -29,7 +29,7 @@ ______________________________________________________________________
 | `modules/helpers/forge_subscription`   | `environments/prod/forge_subscription`                     | Tenant accounts need Forge-managed IAM, Packer, S3, or ECR access.   |
 | `modules/helpers/microvm`              | `environments/prod/regions/eu-west-1/microvm`              | Provides regional MicroVM publishing/runtime foundations and egress. |
 | `modules/helpers/opt_in_regions`       | `environments/prod/opt_in_regions`                         | You need to enable AWS opt-in regions before regional deploys.       |
-| `modules/helpers/service_linked_roles` | `environments/prod/service_linked_roles`                   | Spot or related AWS services need service-linked roles.              |
+| `modules/helpers/service_linked_roles` | `environments/prod/service_linked_roles`                   | The account needs the EC2 Spot service-linked role.                  |
 | `modules/helpers/storage`              | `environments/prod/storage`                                | Forge owns operational S3 buckets for logs, artifacts, or templates. |
 
 ______________________________________________________________________
@@ -90,7 +90,7 @@ ______________________________________________________________________
 
 ## Common Adoption Order
 
-1. `service_linked_roles` when Spot or other AWS services need bootstrap roles.
+1. `service_linked_roles` when the account needs the EC2 Spot service-linked role.
 1. `opt_in_regions` before deploying into opt-in regions.
 1. `storage` before `aws_config_recording` so the long-term bucket is available as its delivery dependency.
 1. `aws_config_recording` before allocating Dedicated Hosts so their full history is captured.

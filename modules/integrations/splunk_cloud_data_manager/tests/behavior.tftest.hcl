@@ -1,9 +1,33 @@
 mock_provider "aws" {
+  mock_resource "aws_iam_role" {
+    defaults = {
+      arn = "arn:aws:iam::166060576821:role/mock-lambda-role"
+    }
+  }
+
+  mock_resource "aws_lambda_function" {
+    defaults = {
+      arn = "arn:aws:lambda:eu-west-1:166060576821:function:mock-reconciler"
+    }
+  }
+
+  mock_resource "aws_cloudwatch_event_rule" {
+    defaults = {
+      arn = "arn:aws:events:eu-west-1:166060576821:rule/mock-reconciler-sweep"
+    }
+  }
+
   mock_data "aws_caller_identity" {
     defaults = {
       account_id = "166060576821"
       arn        = "arn:aws:iam::166060576821:user/test"
       user_id    = "test"
+    }
+  }
+
+  mock_data "aws_iam_policy_document" {
+    defaults = {
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
     }
   }
 
@@ -44,8 +68,12 @@ mock_provider "external" {
   mock_data "external" {
     defaults = {
       result = {
-        version       = "1"
-        template_hash = "template-sha"
+        build_plan          = "{}"
+        build_plan_filename = "/tmp/mock-lambda-build-plan"
+        filename            = "/tmp/mock-lambda.zip"
+        template_hash       = "template-sha"
+        timestamp           = "0"
+        version             = "1"
       }
     }
   }
@@ -77,6 +105,17 @@ variables {
   }
   tags = {
     Env = "test"
+  }
+}
+
+run "disabled_inputs_create_no_log_group_reconciler" {
+  command = plan
+
+  assert {
+    condition = (
+      length(aws_lambda_invocation.splunk_dm_log_group_reconciler) == 0
+    )
+    error_message = "No regional reconciler invocation should exist when every Data Manager input is disabled."
   }
 }
 
@@ -242,6 +281,22 @@ run "s3_all_datasets_request_and_stack_contract" {
       ])
     )
     error_message = "Every generated S3 input must create a named-IAM CloudFormation stack in its configured region."
+  }
+
+  assert {
+    condition = (
+      toset(keys(aws_lambda_invocation.splunk_dm_log_group_reconciler)) == toset([
+        "eu-west-1",
+        "us-east-1",
+        "us-east-2",
+        "us-west-2",
+      ])
+      && alltrue([
+        for invocation in values(aws_lambda_invocation.splunk_dm_log_group_reconciler) :
+        invocation.lifecycle_scope == "CREATE_ONLY"
+      ])
+    )
+    error_message = "S3-only IAM regions must each receive one create/update reconciler invocation."
   }
 }
 

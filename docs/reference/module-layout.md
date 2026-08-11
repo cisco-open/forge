@@ -58,7 +58,7 @@ ______________________________________________________________________
 | `modules/helpers/forge_subscription`   | Creates tenant-side roles and access policies for Forge runner jobs.                        |
 | `modules/helpers/microvm`              | Creates regional image-publishing prerequisites, VPC egress, and a reusable usage policy.   |
 | `modules/helpers/opt_in_regions`       | Enables AWS opt-in regions.                                                                 |
-| `modules/helpers/service_linked_roles` | Creates AWS service-linked roles used by services such as EC2 Spot.                         |
+| `modules/helpers/service_linked_roles` | Creates the EC2 Spot service-linked role.                                                   |
 | `modules/helpers/storage`              | Creates S3 buckets for artifacts, templates, logs, and operational data.                    |
 
 Helpers are useful, but they are not the runner runtime. Deploy them when your

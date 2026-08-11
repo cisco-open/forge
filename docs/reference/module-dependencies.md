@@ -8,16 +8,16 @@ ______________________________________________________________________
 
 ## Practical Rollout Order
 
-| Step | Deploy root or module group                                        | Required?                       | Apply when                                                                 |
-| ---- | ------------------------------------------------------------------ | ------------------------------- | -------------------------------------------------------------------------- |
-| 1    | State backend, AWS profiles or roles, tags, and account guardrails | Yes                             | Before any Terragrunt stack.                                               |
-| 2    | `examples/deployments/helpers`: `opt_in_regions`                   | Only for opt-in regions         | Before deploying resources into regions that are disabled by default.      |
-| 3    | `examples/deployments/helpers`: `service_linked_roles`             | Usually for EC2 Spot            | Before EC2 runners if the account lacks required AWS service-linked roles. |
-| 4    | Runner AMI build and optional AMI sharing                          | Needed for EC2 runners          | Before tenant EC2 runner specs reference the AMI.                          |
-| 5    | `examples/deployments/infra`: EKS                                  | Only for ARC/Kubernetes runners | Before tenant `arc_runner_specs`.                                          |
-| 6    | `examples/deployments/platform`: one tenant                        | Yes for Forge runners           | The first real Forge runtime deployment.                                   |
-| 7    | `examples/deployments/helpers`: remaining helpers                  | Optional                        | When Forge owns ECR, buckets, tenant subscription roles, or cleanup jobs.  |
-| 8    | `examples/deployments/integrations`                                | Optional                        | After the platform path works.                                             |
+| Step | Deploy root or module group                                        | Required?                       | Apply when                                                                |
+| ---- | ------------------------------------------------------------------ | ------------------------------- | ------------------------------------------------------------------------- |
+| 1    | State backend, AWS profiles or roles, tags, and account guardrails | Yes                             | Before any Terragrunt stack.                                              |
+| 2    | `examples/deployments/helpers`: `opt_in_regions`                   | Only for opt-in regions         | Before deploying resources into regions that are disabled by default.     |
+| 3    | `examples/deployments/helpers`: `service_linked_roles`             | Usually for EC2 Spot            | Before EC2 runners if the account lacks the EC2 Spot service-linked role. |
+| 4    | Runner AMI build and optional AMI sharing                          | Needed for EC2 runners          | Before tenant EC2 runner specs reference the AMI.                         |
+| 5    | `examples/deployments/infra`: EKS                                  | Only for ARC/Kubernetes runners | Before tenant `arc_runner_specs`.                                         |
+| 6    | `examples/deployments/platform`: one tenant                        | Yes for Forge runners           | The first real Forge runtime deployment.                                  |
+| 7    | `examples/deployments/helpers`: remaining helpers                  | Optional                        | When Forge owns ECR, buckets, tenant subscription roles, or cleanup jobs. |
+| 8    | `examples/deployments/integrations`                                | Optional                        | After the platform path works.                                            |
 
 Do not block a first tenant on Splunk, Teleport, billing, dashboards, or helper
 modules your company already provides.
@@ -49,7 +49,7 @@ ______________________________________________________________________
 | `modules/helpers/storage`              | Before AWS Config recording    | Supplies the long-term S3 delivery bucket used by the example.   |
 | `modules/helpers/aws_config_recording` | Before recorded resources      | Captures configuration history from resource creation.           |
 | `modules/helpers/opt_in_regions`       | Yes, for opt-in regions        | Regional resources cannot deploy until the region is enabled.    |
-| `modules/helpers/service_linked_roles` | Usually, for EC2 Spot          | Some accounts need AWS service-linked roles created first.       |
+| `modules/helpers/service_linked_roles` | Usually, for EC2 Spot          | Some accounts need the EC2 Spot service-linked role first.       |
 | `modules/helpers/ami_policy`           | Optional                       | Account policy support for AMI usage.                            |
 | `modules/helpers/ami_sharing`          | Yes, if tenant AMIs are shared | Tenant runner specs must be able to find the AMI.                |
 | `modules/helpers/ecr`                  | Optional                       | Only if Forge owns runner/helper image repositories.             |
