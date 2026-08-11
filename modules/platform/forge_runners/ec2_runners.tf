@@ -2,12 +2,12 @@
 # For generating a webhook secret. Apparently this is a cryptographically secure
 # PRNG.
 resource "random_id" "random" {
-  count       = length(var.ec2_deployment_specs.runner_specs) > 0 ? 1 : 0
+  count       = local.has_active_runners ? 1 : 0
   byte_length = 20
 }
 
 module "ec2_runners" {
-  count = length(var.ec2_deployment_specs.runner_specs) > 0 ? 1 : 0
+  count = local.has_active_runners ? 1 : 0
   # Using multi-runner example as a baseline.
   source = "../ec2_deployment"
 
@@ -43,7 +43,6 @@ module "ec2_runners" {
       webhook_secret = aws_ssm_parameter.github_app_webhook_secret.value
     }
     runner_group_name = var.deployment_config.github.runner_group_name
-    scale_errors      = var.ec2_deployment_specs.scale_errors
     runner_specs      = var.ec2_deployment_specs.runner_specs
   }
 }

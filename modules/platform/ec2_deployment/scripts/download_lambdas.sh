@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+set -ex
 
 if [ "$#" -lt 3 ]; then
     echo "Usage: $0 <download_path> <version> <repo>"
@@ -23,5 +23,12 @@ else
     wget --no-verbose -P "$DOWNLOAD_PATH" "https://github.com/${REPO}/releases/download/${VERSION}/runners.zip"
     wget --no-verbose -P "$DOWNLOAD_PATH" "https://github.com/${REPO}/releases/download/${VERSION}/webhook.zip"
 fi
+
+for lambda_zip in runner-binaries-syncer runners webhook; do
+    if [ ! -f "${DOWNLOAD_PATH}/${lambda_zip}.zip" ]; then
+        echo "Missing ${DOWNLOAD_PATH}/${lambda_zip}.zip for terraform-aws-github-runner ${VERSION}." >&2
+        exit 1
+    fi
+done
 
 echo -n "{\"version\":\"${VERSION}\",\"path\":\"${DOWNLOAD_PATH}\",\"repo\":\"${REPO}\"}"

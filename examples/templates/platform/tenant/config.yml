@@ -59,6 +59,25 @@ ec2_runner_specs:
       iops: <VOLUME_IOPS>
       throughput: <VOLUME_THROUGHPUT>
       type: <VOLUME_TYPE>
+microvm_runner_specs:
+  <runner_type-alias>:
+    type: <runner_type>
+    runner_os: linux
+    runner_architecture: <ARCH>
+    runner_user: <RUNNER_USER>
+    max_instances: <MAX_PARALLEL>
+    image_identifier: <MICROVM_IMAGE_IDENTIFIER>
+    image_version: <MICROVM_IMAGE_VERSION>
+    egress_network_connectors:
+      - <EGRESS_NETWORK_CONNECTOR>
+    idle_policy:
+      max_idle_duration_seconds: <MAX_IDLE_SECONDS>
+      suspended_duration_seconds: <SUSPENDED_SECONDS>
+      auto_resume_enabled: <AUTO_RESUME_ENABLED>
+    maximum_duration_in_seconds: <MAXIMUM_DURATION_SECONDS>
+    environment_variables: {}
+    tags: {}
+    pool_config: []
 arc_runner_specs:
   <runner_type>:
     runner_size:

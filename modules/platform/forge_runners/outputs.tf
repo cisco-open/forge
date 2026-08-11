@@ -7,13 +7,22 @@ output "forge_core" {
 }
 
 output "forge_runners" {
-  description = "Combined runners output (EC2 + ARC)"
+  description = "Combined compute-provider and ARC runner outputs."
   value = {
+    compute = {
+      runners_arn_map = try(module.ec2_runners[0].runners_arn_map, {})
+      runner_labels   = try(module.ec2_runners[0].runners_labels_map, {})
+    }
     ec2 = {
       runners_arn_map    = try(module.ec2_runners[0].ec2_runners_arn_map, {})
       ami_name_map       = try(module.ec2_runners[0].ec2_runners_ami_name_map, {})
       subnet_cidr_blocks = try(module.ec2_runners[0].subnet_cidr_blocks, [])
       runner_labels      = try(module.ec2_runners[0].ec2_runners_labels_map, {})
+    }
+    microvm = {
+      runners_arn_map = try(module.ec2_runners[0].microvm_runners_arn_map, {})
+      runners         = try(module.ec2_runners[0].microvm_runners_map, {})
+      runner_labels   = try(module.ec2_runners[0].microvm_runners_labels_map, {})
     }
     arc = {
       cluster_name       = try(module.arc_runners.arc_cluster_name, {})

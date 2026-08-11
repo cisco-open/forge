@@ -35,7 +35,7 @@ ______________________________________________________________________
 | Module                            | Depends on                                                             | Notes                                               |
 | --------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------- |
 | `modules/platform/forge_runners`  | Tenant GitHub App values, SSM key parameter, VPC/subnets, runner specs | Main entry point for tenant runners.                |
-| `modules/platform/ec2_deployment` | Called by `forge_runners`; runner AMIs; GitHub App                     | EC2 ephemeral runners.                              |
+| `modules/platform/ec2_deployment` | Called by `forge_runners`; provider configuration; GitHub App          | EC2 or Lambda MicroVM ephemeral runners.            |
 | `modules/platform/arc_deployment` | Called by `forge_runners`; EKS; Kubernetes/Helm access                 | ARC scale sets.                                     |
 | `modules/platform/arc`            | EKS cluster and Kubernetes providers                                   | Lower-level ARC controller and scale-set wrapper.   |
 | `modules/infra/eks`               | VPC, private subnets, AWS access                                       | Needed only when Forge owns the ARC EKS foundation. |

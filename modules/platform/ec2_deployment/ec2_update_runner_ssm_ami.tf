@@ -1,21 +1,26 @@
-data "aws_caller_identity" "current" {}
+data "aws_caller_identity" "current" {
+  count = length(local.ec2_runner_configs) > 0 ? 1 : 0
+}
 
-data "aws_partition" "current" {}
+data "aws_partition" "current" {
+  count = length(local.ec2_runner_configs) > 0 ? 1 : 0
+}
 
 locals {
   runner_ami_ssm_parameter_names = {
-    for key in keys(var.runner_configs.runner_specs) :
+    for key in keys(local.ec2_runner_configs) :
     key => "/github-action-runners/${var.runner_configs.prefix}/${key}/runners/config/ami_id"
   }
 
   runner_ami_ssm_parameter_arns = {
     for key, name in local.runner_ami_ssm_parameter_names :
-    key => "arn:${data.aws_partition.current.partition}:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter${name}"
+    key => "arn:${data.aws_partition.current[0].partition}:ssm:${var.aws_region}:${data.aws_caller_identity.current[0].account_id}:parameter${name}"
   }
 }
 
 module "ec2_update_runner_ssm_ami" {
   source = "./ec2_update_runner_ssm_ami"
+  count  = length(local.ec2_runner_configs) > 0 ? 1 : 0
 
   providers = {
     aws = aws
@@ -27,12 +32,12 @@ module "ec2_update_runner_ssm_ami" {
   tags                      = var.tenant_configs.tags
 
   runner_ami_map = {
-    for key in keys(var.runner_configs.runner_specs) :
+    for key, runner_config in local.ec2_runner_configs :
     key => {
       resource_ssm_id = local.runner_ami_ssm_parameter_arns[key]
       ssm_id          = local.runner_ami_ssm_parameter_names[key]
-      ami_filter      = var.runner_configs.runner_specs[key].ami_filter
-      ami_owners      = var.runner_configs.runner_specs[key].ami_owners
+      ami_filter      = runner_config.compute_provider.ec2.ami_filter
+      ami_owners      = runner_config.compute_provider.ec2.ami_owners
     }
   }
 

@@ -1,4 +1,6 @@
 data "aws_iam_policy_document" "ec2_tags" {
+  count = length(local.active_ec2_runner_keys) > 0 ? 1 : 0
+
   statement {
     actions = [
       "ec2:CreateTags"
@@ -32,9 +34,11 @@ data "aws_iam_policy_document" "ec2_tags" {
 
 # Define the actual IAM policy for EC2 tags
 resource "aws_iam_policy" "ec2_tags" {
+  count = length(local.active_ec2_runner_keys) > 0 ? 1 : 0
+
   name        = "${var.runner_configs.prefix}-policy-for-ec2-tags"
   description = "Policy that allows EC2 instances to create tags on themselves."
-  policy      = data.aws_iam_policy_document.ec2_tags.json
+  policy      = data.aws_iam_policy_document.ec2_tags[0].json
 
   tags     = var.tenant_configs.tags
   tags_all = var.tenant_configs.tags

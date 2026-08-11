@@ -63,12 +63,6 @@ locals {
   ec2_runner_specs = {
     for size, spec in local.config.ec2_runner_specs :
     size => {
-      ami_filter = {
-        name  = [spec.ami_name],
-        state = ["available"],
-      }
-      ami_owners          = [spec.ami_owner]
-      ami_kms_key_arn     = spec.ami_kms_key_arn
       runner_os           = spec.runner_os
       runner_architecture = spec.runner_architecture
       runner_labels = [
@@ -83,36 +77,92 @@ locals {
         "vpc:${local.vpc_alias}",
         "tnt:${local.tenant_name}",
       ]
-      enable_userdata                                                = true
       enable_dynamic_labels                                          = try(spec.enable_dynamic_labels, false)
       aws_dynamic_labels_policy                                      = try(spec.aws_dynamic_labels_policy, null)
       lambda_event_source_mapping_batch_size                         = try(spec.lambda_event_source_mapping_batch_size, 10)
       lambda_event_source_mapping_maximum_batching_window_in_seconds = try(spec.lambda_event_source_mapping_maximum_batching_window_in_seconds, 0)
       redrive_build_queue                                            = try(spec.redrive_build_queue, {})
       runner_user                                                    = spec.runner_user
-      instance_target_capacity_type                                  = "on-demand"
       min_run_time                                                   = 30
       max_instances                                                  = spec.max_instances
-      instance_types                                                 = spec.instance_types
-      placement                                                      = try(spec.placement, null)
-      license_specifications                                         = try(spec.license_specifications, null)
-      use_dedicated_host                                             = try(spec.use_dedicated_host, false)
-      vpc_id                                                         = try(spec.vpc_id, null)
-      subnet_ids                                                     = try(spec.subnet_ids, null)
-      block_device_mappings = [{
-        delete_on_termination = true
-        device_name           = spec.volume.device_name
-        encrypted             = true
-        iops                  = spec.volume.iops
-        kms_key_id            = null
-        snapshot_id           = null
-        throughput            = spec.volume.throughput
-        volume_size           = spec.volume.size
-        volume_type           = spec.volume.type
-      }]
-      pool_config = spec.pool_config
+      pool_config                                                    = spec.pool_config
+      compute_provider = {
+        ec2 = {
+          ami_filter = {
+            name  = [spec.ami_name]
+            state = ["available"]
+          }
+          ami_owners                    = [spec.ami_owner]
+          ami_kms_key_arn               = trimspace(spec.ami_kms_key_arn) == "" ? null : spec.ami_kms_key_arn
+          enable_userdata               = true
+          instance_target_capacity_type = "on-demand"
+          instance_types                = spec.instance_types
+          placement                     = try(spec.placement, null)
+          license_specifications        = try(spec.license_specifications, null)
+          use_dedicated_host            = try(spec.use_dedicated_host, false)
+          vpc_id                        = try(spec.vpc_id, null)
+          subnet_ids                    = try(spec.subnet_ids, null)
+          scale_errors                  = try(spec.scale_errors, null)
+          block_device_mappings = [{
+            delete_on_termination = true
+            device_name           = spec.volume.device_name
+            encrypted             = true
+            iops                  = spec.volume.iops
+            kms_key_id            = null
+            snapshot_id           = null
+            throughput            = spec.volume.throughput
+            volume_size           = spec.volume.size
+            volume_type           = spec.volume.type
+          }]
+        }
+      }
     }
   }
+
+  microvm_runner_specs = {
+    for name, spec in try(local.config.microvm_runner_specs, {}) :
+    "microvm-${name}" => {
+      runner_os           = try(spec.runner_os, "linux")
+      runner_architecture = spec.runner_architecture
+      runner_labels = [
+        "type:${spec.type}",
+        "self-hosted",
+        spec.runner_architecture,
+        "env:ops-${include.env.locals.env}",
+      ]
+      extra_labels = [
+        "microvm",
+        "rgn:${local.region_alias}",
+        "vpc:${local.vpc_alias}",
+        "tnt:${local.tenant_name}",
+      ]
+      enable_dynamic_labels                                          = try(spec.enable_dynamic_labels, false)
+      aws_dynamic_labels_policy                                      = try(spec.aws_dynamic_labels_policy, null)
+      lambda_event_source_mapping_batch_size                         = try(spec.lambda_event_source_mapping_batch_size, 10)
+      lambda_event_source_mapping_maximum_batching_window_in_seconds = try(spec.lambda_event_source_mapping_maximum_batching_window_in_seconds, 0)
+      redrive_build_queue                                            = try(spec.redrive_build_queue, {})
+      runner_user                                                    = spec.runner_user
+      min_run_time                                                   = try(spec.min_run_time, 30)
+      max_instances                                                  = spec.max_instances
+      pool_config                                                    = try(spec.pool_config, [])
+      compute_provider = {
+        microvm = {
+          image_identifier            = spec.image_identifier
+          image_version               = try(spec.image_version, null)
+          egress_network_connectors   = try(spec.egress_network_connectors, [])
+          idle_policy                 = try(spec.idle_policy, null)
+          logging                     = try(spec.logging, null)
+          run_hook_payload            = try(spec.run_hook_payload, null)
+          maximum_duration_in_seconds = try(spec.maximum_duration_in_seconds, null)
+          environment_variables       = try(spec.environment_variables, {})
+          tags                        = try(spec.tags, {})
+          iam                         = try(spec.iam, {})
+        }
+      }
+    }
+  }
+
+  runner_specs        = merge(local.ec2_runner_specs, local.microvm_runner_specs)
   arc_cluster_name    = local.config.arc_cluster_name
   migrate_arc_cluster = local.config.migrate_arc_cluster
 

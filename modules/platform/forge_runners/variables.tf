@@ -14,83 +14,137 @@ variable "ec2_deployment_specs" {
     subnet_ids        = list(string)
     lambda_vpc_id     = string
     vpc_id            = string
-    scale_errors      = optional(list(string), [])
     runner_specs = map(object({
-      ami_filter = object({
-        name  = list(string)
-        state = list(string)
-      })
-      ami_kms_key_arn                                                = string
-      ami_owners                                                     = list(string)
-      runner_labels                                                  = list(string)
-      runner_os                                                      = string
-      runner_architecture                                            = string
-      extra_labels                                                   = list(string)
-      enable_dynamic_labels                                          = optional(bool, false)
-      aws_dynamic_labels_policy                                      = optional(any, null)
+      runner_labels         = list(string)
+      runner_os             = string
+      runner_architecture   = string
+      extra_labels          = list(string)
+      enable_dynamic_labels = optional(bool, false)
+      aws_dynamic_labels_policy = optional(object({
+        blocked_keys = optional(list(string), [])
+        restricted_keys = optional(map(object({
+          allowed = optional(list(string), [])
+          denied  = optional(list(string), [])
+          max     = optional(string, null)
+        })), {})
+      }), null)
       lambda_event_source_mapping_batch_size                         = optional(number, 10)
       lambda_event_source_mapping_maximum_batching_window_in_seconds = optional(number, 0)
       redrive_build_queue = optional(object({
         enabled         = optional(bool, true)
         maxReceiveCount = optional(number, 10)
       }), {})
-      max_instances  = number
-      min_run_time   = number
-      instance_types = list(string)
-      license_specifications = optional(list(object({
-        license_configuration_arn = string
-      })), null)
-      placement = optional(object({
-        affinity                = optional(string)
-        availability_zone       = optional(string)
-        group_id                = optional(string)
-        group_name              = optional(string)
-        host_id                 = optional(string)
-        host_resource_group_arn = optional(string)
-        spread_domain           = optional(string)
-        tenancy                 = optional(string)
-        partition_number        = optional(number)
-      }), null)
-      use_dedicated_host = optional(bool, false)
+      max_instances = number
+      min_run_time  = number
       pool_config = list(object({
         size                         = number
         schedule_expression          = string
         schedule_expression_timezone = string
       }))
-      runner_user                   = string
-      enable_userdata               = bool
-      instance_target_capacity_type = string
-      vpc_id                        = optional(string, null)
-      subnet_ids                    = optional(list(string), null)
-      block_device_mappings = list(object({
-        delete_on_termination = bool
-        device_name           = string
-        encrypted             = bool
-        iops                  = number
-        kms_key_id            = string
-        snapshot_id           = string
-        throughput            = number
-        volume_size           = number
-        volume_type           = string
-      }))
+      runner_user = string
+      compute_provider = object({
+        ec2 = optional(object({
+          ami_filter = object({
+            name  = list(string)
+            state = list(string)
+          })
+          ami_kms_key_arn = string
+          ami_owners      = list(string)
+          instance_types  = list(string)
+          license_specifications = optional(list(object({
+            license_configuration_arn = string
+          })), null)
+          placement = optional(object({
+            affinity                = optional(string)
+            availability_zone       = optional(string)
+            group_id                = optional(string)
+            group_name              = optional(string)
+            host_id                 = optional(string)
+            host_resource_group_arn = optional(string)
+            spread_domain           = optional(string)
+            tenancy                 = optional(string)
+            partition_number        = optional(number)
+          }), null)
+          use_dedicated_host            = optional(bool, false)
+          enable_userdata               = bool
+          instance_target_capacity_type = string
+          vpc_id                        = optional(string, null)
+          subnet_ids                    = optional(list(string), null)
+          scale_errors                  = optional(list(string), [])
+          block_device_mappings = list(object({
+            delete_on_termination      = bool
+            device_name                = string
+            encrypted                  = bool
+            iops                       = number
+            kms_key_id                 = string
+            snapshot_id                = string
+            throughput                 = number
+            volume_initialization_rate = optional(number)
+            volume_size                = number
+            volume_type                = string
+          }))
+        }), null)
+        microvm = optional(object({
+          image_identifier          = string
+          image_version             = optional(string, null)
+          egress_network_connectors = optional(list(string), [])
+          idle_policy = optional(object({
+            max_idle_duration_seconds  = number
+            suspended_duration_seconds = number
+            auto_resume_enabled        = bool
+          }), null)
+          logging = optional(object({
+            cloud_watch = optional(object({
+              log_group  = optional(string, null)
+              log_stream = optional(string, null)
+            }), null)
+            disabled = optional(bool, false)
+          }), null)
+          run_hook_payload            = optional(string, null)
+          maximum_duration_in_seconds = optional(number, null)
+          environment_variables       = optional(map(string), {})
+          tags                        = optional(map(string), {})
+          iam = optional(object({
+            resource_arns = optional(list(string), ["*"])
+            actions = optional(object({
+              scale_up   = optional(list(string), null)
+              scale_down = optional(list(string), null)
+            }), {})
+            additional_policy_json = optional(object({
+              scale_up = optional(string, null)
+            }), {})
+            managed_policy_arns = optional(object({
+              scale_up = optional(string, null)
+              pool     = optional(string, null)
+            }), {})
+          }), {})
+        }), null)
+      })
     }))
   })
 
+  validation {
+    condition = alltrue([
+      for runner_config in values(var.ec2_deployment_specs.runner_specs) :
+      length([
+        for provider_type, provider_config in runner_config.compute_provider : provider_type
+        if provider_config != null
+      ]) == 1
+    ])
+    error_message = "Each runner_specs entry must configure exactly one compute provider: ec2 or microvm."
+  }
+
   description = <<-EOT
-  EC2 deployment configuration for GitHub Actions runners.
+  Compute deployment configuration for GitHub Actions runners.
 
   Top-level fields:
     - lambda_subnet_ids: Subnets where runner-related lambdas execute.
       These can be more permissive than the runner subnets.
-    - subnet_ids       : Subnets where the EC2 runners are launched.
+    - subnet_ids       : Default subnets for compute providers that use the VPC.
     - vpc_id           : VPC that contains both runner and lambda subnets.
-    - runner_specs     : Map of runner pool keys to their EC2 sizing and
-                         scheduling configuration.
+    - runner_specs     : Map of provider-aware runner lanes.
 
   runner_specs[*] object fields:
-    - ami_filter      : Name/state filters used to select the runner AMI.
-    - ami_kms_key_arn : KMS key ARN used to encrypt AMI EBS volumes.
-    - ami_owners      : List of AWS account IDs that own the AMI.
     - runner_labels   : Base GitHub labels applied to jobs for this pool.
     - runner_os       : Runner operating system (for example, linux).
     - runner_architecture: CPU architecture (for example, x86_64 or arm64).
@@ -109,24 +163,36 @@ variable "ec2_deployment_specs" {
                         Controls whether redrive is enabled and how many times a
                         message can be received before moving to the dead-letter
                         queue.
-    - max_instances   : Maximum number of EC2 runners in this pool.
+    - max_instances   : Maximum number of runners in this pool.
     - min_run_time    : Minimum job run time (in minutes) before a runner
                         is eligible for scale-down.
-    - instance_types  : Allowed EC2 instance types for runners in this pool.
-    - placement       : Optional EC2 placement configuration for the runner
-                        launch template.
-    - license_specifications: Optional EC2 License Manager configuration ARNs.
-    - use_dedicated_host: Whether this runner pool should use EC2 dedicated
-                        hosts.
     - pool_config     : List of pool size schedules (size + cron expression
                         and optional time zone) controlling baseline capacity.
     - runner_user     : OS user under which the GitHub runner process runs.
-    - enable_userdata : Whether the module should inject its standard
-                        userdata to configure the runner VM.
-    - instance_target_capacity_type: EC2 capacity type to use (spot or
-                        on-demand).
-    - block_device_mappings: EBS volume configuration for the runner
-                        instances, including size, type, encryption, and KMS.
+    - compute_provider: Exactly one typed provider block: ec2 or microvm.
+
+  compute_provider.ec2 fields:
+    - ami_filter      : Name/state filters used to select the runner AMI.
+    - ami_kms_key_arn : KMS key ARN used to encrypt AMI EBS volumes.
+    - ami_owners      : List of AWS account IDs that own the AMI.
+    - instance_types  : Allowed EC2 instance types for runners in this pool.
+    - placement       : Optional EC2 placement configuration.
+    - license_specifications: Optional EC2 License Manager configuration ARNs.
+    - use_dedicated_host: Whether this runner pool should use dedicated hosts.
+    - enable_userdata : Whether to inject the standard runner user data.
+    - instance_target_capacity_type: EC2 capacity type (spot or on-demand).
+    - vpc_id/subnet_ids: Optional per-lane network overrides.
+    - block_device_mappings: EBS volume configuration for runner instances.
+    - scale_errors    : Retryable EC2 scale-up error codes.
+
+  compute_provider.microvm fields:
+    - image_identifier: ARN or ID of the Lambda MicroVM image.
+    - image_version   : Optional Lambda MicroVM image version.
+    - egress_network_connectors: Optional Lambda MicroVM network connectors.
+    - idle_policy/logging/run_hook_payload: Optional runtime behavior.
+    - maximum_duration_in_seconds: Optional maximum MicroVM lifetime.
+    - environment_variables/tags: Provider-specific runtime configuration.
+    - iam             : Optional MicroVM control-plane IAM overrides.
   EOT
 }
 

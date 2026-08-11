@@ -5,7 +5,8 @@ locals {
   terraform_aws_github_runner_tags = merge(
     var.tenant_configs.tags,
     {
-      terraform-aws-github-runner-ref = "v7.10.1"
+      # Immutable head of upstream draft PR #5260.
+      terraform-aws-github-runner-ref = "961c1208a3831d19af8c0cfb43a7ed8b2d81e34b"
     }
   )
   webhook_api_gateway_access_log_format = jsonencode({
@@ -62,12 +63,16 @@ resource "aws_kms_alias" "github" {
 }
 
 data "aws_subnet" "runner_subnet" {
-  for_each = toset(var.network_configs.subnet_ids)
+  for_each = local.active_ec2_subnet_ids
   id       = each.value
 }
 
 data "external" "download_lambdas" {
-  program = ["bash", "${path.module}/scripts/download_lambdas.sh", "/tmp/${var.runner_configs.prefix}/", "v7.10.1", "github-aws-runners/terraform-aws-github-runner"]
+  # TODO: Provider-aware Lambda artifacts are not released yet. Draft plans
+  # must set USE_CACHE/CACHE_PATH to ZIPs built from upstream PR #5260. Once a
+  # provider-aware release exists, move this ref, the module source, and the
+  # terraform-aws-github-runner-ref tag to that release together.
+  program = ["bash", "${path.module}/scripts/download_lambdas.sh", "/tmp/${var.runner_configs.prefix}/", "961c1208a3831d19af8c0cfb43a7ed8b2d81e34b", "github-aws-runners/terraform-aws-github-runner"]
 }
 
 # ---------------------------------------------------------------------------
@@ -83,9 +88,7 @@ locals {
   # Every runner OS delivers its (large) hook scripts via SSM; at job time the
   # runner runs a small wrapper (hook_job_<event>_<os>.tftpl) that fetches the
   # param, decompresses it, and execs the real hook (hooks/job_<event>_<os>).
-  hook_ssm_oses = toset([
-    for key, val in var.runner_configs.runner_specs : val["runner_os"]
-  ])
+  hook_ssm_oses = toset(values(local.active_ec2_runner_oses))
 }
 
 resource "aws_ssm_parameter" "hook_job_started" {
@@ -107,6 +110,8 @@ resource "aws_ssm_parameter" "hook_job_completed" {
 }
 
 data "aws_iam_policy_document" "runner_hooks_ssm_read" {
+  count = length(local.active_ec2_runner_keys) > 0 ? 1 : 0
+
   statement {
     sid     = "ReadRunnerHookParameters"
     effect  = "Allow"
@@ -119,16 +124,18 @@ data "aws_iam_policy_document" "runner_hooks_ssm_read" {
 }
 
 resource "aws_iam_policy" "runner_hooks_ssm_read" {
+  count = length(local.active_ec2_runner_keys) > 0 ? 1 : 0
+
   name        = "${var.runner_configs.prefix}-runner-hooks-ssm-read"
   description = "Allow runners to read their gzip'd job-hook scripts from SSM."
-  policy      = data.aws_iam_policy_document.runner_hooks_ssm_read.json
+  policy      = data.aws_iam_policy_document.runner_hooks_ssm_read[0].json
   tags        = var.tenant_configs.tags
 }
 
 
 module "runners" {
-  #checkov:skip=CKV_TF_1:Module source uses Renovate-managed version tags; commit SHA pinning is an accepted policy tradeoff.
-  source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=v7.10.1"
+  #checkov:skip=CKV_TF_1:Draft integration is pinned to the immutable upstream PR head.
+  source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=961c1208a3831d19af8c0cfb43a7ed8b2d81e34b"
 
   aws_region = var.aws_region
 
@@ -165,142 +172,10 @@ module "runners" {
   runner_binaries_syncer_lambda_zip = "${data.external.download_lambdas.result.path}/runner-binaries-syncer.zip"
   runners_lambda_zip                = "${data.external.download_lambdas.result.path}/runners.zip"
 
-  # Configure the various types of runners we provide, along with on-demand
-  # versus standby pools, etc.
-  multi_runner_config = {
-    for key, val in var.runner_configs.runner_specs :
-    key => {
-      matcherConfig : {
-        # Generate all unique combinations of extra_labels and combine them with runner_labels
-        labelMatchers = concat(
-          [val["runner_labels"]],
-          concat([
-            # Iterate over lengths from 1 to the length of extra_labels
-            for length in range(1, length(val["extra_labels"]) + 1) : concat([
-              # For each length, iterate over starting positions to slice the extra_labels
-              for start in range(0, length(val["extra_labels"]) - length + 1) :
-              # Combine runner_labels and the current slice of extra_labels
-              concat(val["runner_labels"], slice(val["extra_labels"], start, start + length))
-            ])
-          ]...)
-        )
-        exactMatch             = true
-        enableDynamicLabels    = val["enable_dynamic_labels"]
-        awsDynamicLabelsPolicy = val["aws_dynamic_labels_policy"]
-      }
-      redrive_build_queue = val["redrive_build_queue"]
-      runner_config = {
-        runner_metadata_options = {
-          "http_endpoint" : "enabled",
-          "http_put_response_hop_limit" : 2,
-          "http_tokens" : "optional",
-          "instance_metadata_tags" : "enabled"
-        }
-        delay_webhook_event                                            = 0
-        runner_ec2_tags                                                = var.tenant_configs.tags
-        runner_os                                                      = val["runner_os"]
-        runner_architecture                                            = val["runner_architecture"]
-        runner_extra_labels                                            = val["extra_labels"]
-        enable_ssm_on_runners                                          = true
-        instance_types                                                 = val["instance_types"]
-        runners_maximum_count                                          = val["max_instances"]
-        scale_down_schedule_expression                                 = "cron(*/5 * * * ? *)"
-        minimum_running_time_in_minutes                                = val["min_run_time"]
-        runner_group_name                                              = var.runner_configs.runner_group_name
-        enable_runner_binaries_syncer                                  = false
-        enable_userdata                                                = val["enable_userdata"]
-        scale_errors                                                   = var.runner_configs.scale_errors
-        lambda_event_source_mapping_batch_size                         = val["lambda_event_source_mapping_batch_size"]
-        lambda_event_source_mapping_maximum_batching_window_in_seconds = val["lambda_event_source_mapping_maximum_batching_window_in_seconds"]
-        userdata_template                                              = "${local.user_data_prefix}/user_data_${val["runner_os"]}.tftpl"
-        userdata_pre_install                                           = "# No pre-install steps."
-        userdata_post_install = templatefile(
-          local.userdata_template_post_install,
-          {
-            runner_user    = val["runner_user"]
-            ecr_registries = var.tenant_configs.ecr_registries
-          }
-        )
-        # The real hook scripts live (gzip+base64) in SSM; the runner hook is a
-        # small wrapper that fetches+decompresses+runs them at job time. The
-        # wrapper is small enough to inline in user_data. See hooks/ for the real
-        # scripts and hook_job_*_<os>.tftpl for the wrappers.
-        runner_hook_job_started = templatefile(
-          "${local.user_data_prefix}/hook_job_started_${val["runner_os"]}.tftpl",
-          {
-            param_name = aws_ssm_parameter.hook_job_started[val["runner_os"]].name
-            region     = var.aws_region
-          }
-        )
-        runner_hook_job_completed = templatefile(
-          "${local.user_data_prefix}/hook_job_completed_${val["runner_os"]}.tftpl",
-          {
-            param_name = aws_ssm_parameter.hook_job_completed[val["runner_os"]].name
-            region     = var.aws_region
-          }
-        )
-        enable_runner_detailed_monitoring = true
-        runner_run_as                     = val["runner_user"]
-        block_device_mappings             = val["block_device_mappings"]
-        license_specifications            = val["license_specifications"]
-        placement                         = val["placement"]
-        use_dedicated_host                = val["use_dedicated_host"]
-        runner_log_files = concat(
-          // Linux/macOS-only logs
-          val["runner_os"] == "windows" ? [] : [
-            {
-              "log_group_name" : "forge-logs",
-              "prefix_log_group" : true,
-              "file_path" : "/var/log/syslog",
-              "log_stream_name" : "{instance_id}/syslog"
-            },
-          ],
-          // Logs that exist on all OSes, with OS-specific paths
-          [
-            {
-              "log_group_name" : "forge-logs",
-              "prefix_log_group" : true,
-              "file_path" : val["runner_os"] == "windows" ? "C:/UserData.log" : "/var/log/user-data.log",
-              "log_stream_name" : "{instance_id}/user-data"
-            },
-            {
-              "log_group_name" : "forge-logs",
-              "prefix_log_group" : true,
-              "file_path" : val["runner_os"] == "windows" ? "C:/actions-runner/_diag/Runner_*.log" : "/opt/actions-runner/_diag/Runner_**.log",
-              "log_stream_name" : "{instance_id}/runner"
-            },
-            {
-              "log_group_name" : "forge-logs",
-              "prefix_log_group" : true,
-              "file_path" : val["runner_os"] == "windows" ? "C:/Users/Administrator/AppData/Local/Temp/hook_*.log" : "/home/${val["runner_user"]}/hook.log",
-              "log_stream_name" : "{instance_id}/hook"
-            },
-          ],
-        )
-        ami = {
-          owners      = val["ami_owners"]
-          filter      = val["ami_filter"]
-          kms_key_arn = val["ami_kms_key_arn"]
-        }
-        instance_target_capacity_type = val["instance_target_capacity_type"]
-        enable_job_queued_check       = false
-        runner_iam_role_managed_policy_arns = concat(
-          var.runner_configs.runner_iam_role_managed_policy_arns,
-          [
-            aws_iam_policy.ec2_tags.arn,
-            aws_iam_policy.runner_hooks_ssm_read.arn,
-          ],
-        )
-        vpc_id                          = val["vpc_id"]
-        subnet_ids                      = val["subnet_ids"]
-        enable_ephemeral_runners        = true
-        create_service_linked_role_spot = true
-        enable_organization_runners     = true
-        job_queue_retention_in_seconds  = 172800
-        pool_config                     = val["pool_config"]
-        pool_runner_owner               = var.runner_configs.ghes_org
-      }
-    }
+  multi_runner_config = {}
+
+  experimental = {
+    multi_runner_config_v2 = local.multi_runner_config_v2
   }
 
   depends_on = [
