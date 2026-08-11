@@ -8,7 +8,7 @@ data "aws_ssm_parameter" "ami_id" {
 }
 
 data "aws_ami" "runner_ami" {
-  for_each    = var.runner_configs.runner_specs
+  for_each    = local.ec2_runner_configs
   most_recent = false
 
   filter {

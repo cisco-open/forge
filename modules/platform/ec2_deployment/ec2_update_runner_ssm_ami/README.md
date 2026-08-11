@@ -56,7 +56,7 @@ Forge runner AMIs are updated as images are rebuilt and tested. This helper keep
 | <a name="input_log_level"></a> [log\_level](#input\_log\_level) | Log level for application logging (e.g., INFO, DEBUG, WARN, ERROR) | `string` | `"INFO"` | no |
 | <a name="input_logging_retention_in_days"></a> [logging\_retention\_in\_days](#input\_logging\_retention\_in\_days) | Retention in days for CloudWatch Log Group for the Lambdas. | `number` | `30` | no |
 | <a name="input_prefix"></a> [prefix](#input\_prefix) | Prefix for all resources | `string` | n/a | yes |
-| <a name="input_runner_ami_map"></a> [runner\_ami\_map](#input\_runner\_ami\_map) | n/a | <pre>map(object({<br/>    resource_ssm_id = string<br/>    ssm_id          = string<br/>    ami_filter = object({<br/>      name  = list(string)<br/>      state = list(string)<br/>    })<br/>    ami_owners = list(string)<br/>  }))</pre> | n/a | yes |
+| <a name="input_runner_ami_map"></a> [runner\_ami\_map](#input\_runner\_ami\_map) | n/a | <pre>map(object({<br/>    resource_ssm_id = string<br/>    ssm_id          = string<br/>    ami_filter      = map(list(string))<br/>    ami_owners      = list(string)<br/>  }))</pre> | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to created resources. | `map(string)` | `{}` | no |
 
 ## Outputs
