@@ -30,6 +30,8 @@ run "integrations_splunk_cloud_conf_shared_contract" {
       "resource \"splunk_configs_conf\" \"forgecicd_aws_billing_cur\"",
       "resource \"splunk_configs_conf\" \"forgecicd_cloudwatchlogs\"",
       "resource \"splunk_configs_conf\" \"forgecicd_cloudwatchlogs_forgecicd\"",
+      "acl[0].app",
+      "acl[0].sharing",
       "resource \"splunk_configs_conf\" \"forgecicd_metadata\"",
       "resource \"splunk_configs_conf\" \"forgecicd_kube_container_runner\"",
       "resource \"splunk_configs_conf\" \"forgecicd_kube_container_runner_logs\"",
