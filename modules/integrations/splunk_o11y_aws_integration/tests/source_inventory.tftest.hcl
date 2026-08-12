@@ -12,6 +12,7 @@ run "integrations_splunk_o11y_aws_integration_contract" {
       "resource \"terraform_data\" \"cloudwatch_metric_stream_tags\"",
       "data \"aws_secretsmanager_secret\" \"secrets\"",
       "data \"aws_secretsmanager_secret_version\" \"secrets\"",
+      "region   = local.splunk_ingest_token_region",
       "provider \"aws\"",
       "AWS_PROFILE",
       "working_dir = path.module",

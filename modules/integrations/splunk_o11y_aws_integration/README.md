@@ -10,12 +10,14 @@ Forge uses Splunk Observability for AWS metrics while Splunk Cloud handles logs.
 
 - A CloudFormation stack created from the configured template URL.
 - Secret lookups for Splunk access material.
+- Optional cross-region lookup of the Splunk ingest token, defaulting to the deployment region.
 - Region, ingest URL, and tagging inputs for the integration.
 - Application of the common Forge tags to the regional Splunk-managed CloudWatch Metric Stream.
 
 ## Operational Notes
 
 - This module depends on a valid Splunk-provided template URL.
+- Set `splunk_ingest_token_region` when the regional stack is deployed outside the region that stores the shared ingest token. Existing callers continue to read the token from `aws_region` by default.
 - CloudFormation failures should be debugged in both Terraform output and the CloudFormation events.
 - Use the common integration module for IAM role setup when needed.
 - Metric Stream tag management requires the AWS CLI and `cloudwatch:ListMetricStreams`, `cloudwatch:TagResource`, and `cloudwatch:UntagResource` permissions for the configured AWS profile.
@@ -58,6 +60,7 @@ No modules.
 | <a name="input_aws_profile"></a> [aws\_profile](#input\_aws\_profile) | AWS profile to use. | `string` | n/a | yes |
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | Default AWS region. | `string` | n/a | yes |
 | <a name="input_default_tags"></a> [default\_tags](#input\_default\_tags) | A map of tags to apply to resources. | `map(string)` | n/a | yes |
+| <a name="input_splunk_ingest_token_region"></a> [splunk\_ingest\_token\_region](#input\_splunk\_ingest\_token\_region) | AWS region containing the Splunk ingest token secret. Defaults to aws\_region. | `string` | `null` | no |
 | <a name="input_splunk_ingest_url"></a> [splunk\_ingest\_url](#input\_splunk\_ingest\_url) | URL for Splunk Ingest. | `string` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to apply to resources. | `map(string)` | n/a | yes |
 | <a name="input_template_url"></a> [template\_url](#input\_template\_url) | URL for the CloudFormation template. | `string` | n/a | yes |

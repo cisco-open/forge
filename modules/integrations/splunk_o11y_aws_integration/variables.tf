@@ -13,6 +13,12 @@ variable "splunk_ingest_url" {
   type        = string
 }
 
+variable "splunk_ingest_token_region" {
+  description = "AWS region containing the Splunk ingest token secret. Defaults to aws_region."
+  type        = string
+  default     = null
+}
+
 variable "template_url" {
   description = "URL for the CloudFormation template."
   type        = string

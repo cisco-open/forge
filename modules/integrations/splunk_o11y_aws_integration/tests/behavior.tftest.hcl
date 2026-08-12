@@ -87,3 +87,20 @@ run "splunk_o11y_cloudformation_stack_contract" {
     error_message = "Metric Stream tag management must replace on stack, template, script, or desired-tag changes."
   }
 }
+
+run "splunk_o11y_cross_region_secret_lookup" {
+  command = plan
+
+  variables {
+    aws_region                 = "us-west-2"
+    splunk_ingest_token_region = "us-east-1"
+  }
+
+  assert {
+    condition = (
+      data.aws_secretsmanager_secret.secrets["splunk_o11y_ingest_token_aws_integration"].region == "us-east-1"
+      && data.aws_secretsmanager_secret_version.secrets["splunk_o11y_ingest_token_aws_integration"].region == "us-east-1"
+    )
+    error_message = "The regional integration must be able to read the shared Splunk ingest token from a different AWS region."
+  }
+}

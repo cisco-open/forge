@@ -12,6 +12,7 @@ run "integrations_splunk_o11y_aws_integration_interface_contract" {
       "aws_region",
       "default_tags",
       "splunk_ingest_url",
+      "splunk_ingest_token_region",
       "tags",
       "template_url",
     ]
@@ -27,6 +28,9 @@ run "integrations_splunk_o11y_aws_integration_interface_contract" {
       "description = \"A map of tags to apply to resources.\"",
       "variable \"splunk_ingest_url\"",
       "description = \"URL for Splunk Ingest.\"",
+      "variable \"splunk_ingest_token_region\"",
+      "description = \"AWS region containing the Splunk ingest token secret. Defaults to aws_region.\"",
+      "default     = null",
       "variable \"tags\"",
       "variable \"template_url\"",
       "description = \"URL for the CloudFormation template.\"",
@@ -60,9 +64,9 @@ run "integrations_splunk_o11y_aws_integration_interface_contract" {
 
   assert {
     condition = (
-      output.expected_input_variable_count == 6
+      output.expected_input_variable_count == 7
       && output.expected_output_value_count == 0
-      && output.expected_interface_literal_count == 13
+      && output.expected_interface_literal_count == 16
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }
