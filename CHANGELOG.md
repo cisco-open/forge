@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.13.1](https://github.com/cisco-open/forge/compare/v4.13.0...v4.13.1) (2026-08-12)
+
+
+### Bug Fixes
+
+* **splunk:** make Data Manager reconciler names unique ([#647](https://github.com/cisco-open/forge/issues/647)) ([c1fa284](https://github.com/cisco-open/forge/commit/c1fa284afcc13d85a973648852afa8c0300298ec))
+* **splunk:** prevent CloudWatch props ACL recreation ([#648](https://github.com/cisco-open/forge/issues/648)) ([d9a615e](https://github.com/cisco-open/forge/commit/d9a615ed9f81d32f72209927cfe2ff2376b3f5c6))
+
 ## [4.13.0](https://github.com/cisco-open/forge/compare/v4.12.0...v4.13.0) (2026-08-11)
 
 
