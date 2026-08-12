@@ -11,7 +11,7 @@ Forge sends EC2, Lambda, EKS, CloudWatch, and security metadata through supporte
 - CloudFormation stacks for CloudWatch, custom CloudWatch, S3/SQS logs, and security metadata integrations.
 - Generated Splunk data input modules for each integration payload.
 - A metadata Lambda trigger for EC2 tag enrichment.
-- One regional reconciler Lambda that applies Forge tags to the default log groups of Splunk-managed Lambdas and deletes those groups after the owning Data Manager functions are removed.
+- One reconciler Lambda per active region and configuration alias set that applies Forge tags to the default log groups of Splunk-managed Lambdas and deletes those groups after the owning Data Manager functions are removed.
 - Outputs containing the resulting Splunk input JSON.
 
 ## Operational Notes
@@ -29,6 +29,7 @@ Forge sends EC2, Lambda, EKS, CloudWatch, and security metadata through supporte
 - To rename an input that will reuse the same queue, first disable and apply the old item, then rename, re-enable, and apply it. This prevents old and new consumers from overlapping.
 - Each item's `enabled`, `name`, and `iam_region` values must be known during planning because they determine instance membership, identity, and the stack region.
 - The OpenTofu caller needs `lambda:InvokeFunction` for each regional reconciler. The helper execution role has only the regional CloudFormation and CloudWatch Logs permissions required by its handler.
+- Reconciler Lambda, IAM role, log-group, and EventBridge names include the enabled configuration aliases, so different Data Manager configurations can coexist in the same account and region.
 - On create and update, the helper walks the exact regional `SplunkDM*` stack IDs (including nested stacks), derives `/aws/lambda/<physical-function-name>`, creates that exact group if it is late, and upserts the configured tags without removing unrelated keys.
 - A regional EventBridge rule receives Lambda `DeleteFunction20150331` management events from CloudTrail. For a `SplunkDM*` physical name in the same account and region, the helper idempotently deletes only `/aws/lambda/<physical-function-name>`.
 - Deletion automation requires an enabled CloudTrail trail that records Lambda management events, and delivery to EventBridge is best effort. Existing legacy groups whose function was deleted before this helper was deployed are intentionally left untouched.

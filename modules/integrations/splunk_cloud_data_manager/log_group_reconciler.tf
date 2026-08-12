@@ -119,6 +119,7 @@ module "splunk_dm_log_group_reconciler" {
 
   source = "./log_group_reconciler"
 
+  name   = join("-", local.config_aliases)
   region = each.key
   tags   = local.all_security_tags
 }

@@ -8,6 +8,7 @@ run "integrations_splunk_cloud_data_manager_log_group_reconciler_interface_contr
   variables {
     module_path = "."
     expected_input_variables = [
+      "name",
       "region",
       "tags",
     ]
@@ -15,6 +16,8 @@ run "integrations_splunk_cloud_data_manager_log_group_reconciler_interface_contr
       "lambda_function_name",
     ]
     expected_interface_literals = [
+      "variable \"name\"",
+      "description = \"Name that distinguishes this Splunk Data Manager configuration from others in the same region.\"",
       "variable \"region\"",
       "type        = string",
       "description = \"AWS region where the reconciler and Splunk Data Manager stacks run.\"",
@@ -54,9 +57,9 @@ run "integrations_splunk_cloud_data_manager_log_group_reconciler_interface_contr
 
   assert {
     condition = (
-      output.expected_input_variable_count == 2
+      output.expected_input_variable_count == 3
       && output.expected_output_value_count == 1
-      && output.expected_interface_literal_count == 9
+      && output.expected_interface_literal_count == 11
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }
