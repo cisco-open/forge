@@ -298,6 +298,22 @@ run "s3_all_datasets_request_and_stack_contract" {
     )
     error_message = "S3-only IAM regions must each receive one create/update reconciler invocation."
   }
+
+  assert {
+    condition = (
+      join("-", local.config_aliases) == "s3-logs"
+      && aws_servicecatalogappregistry_application.this.name == "integrations_splunk_cloud_data_manager_s3-logs_eu-west-1"
+      && alltrue([
+        for region in [
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2",
+        ] : module.splunk_dm_log_group_reconciler[region].lambda_function_name == "ForgeSplunkDMLog-s3-logs-${region}"
+      ])
+    )
+    error_message = "The shared configuration aliases must scope both the application and every regional reconciler name."
+  }
 }
 
 run "s3_dataset_list_filters_disabled_inputs" {

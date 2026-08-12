@@ -1,5 +1,8 @@
 locals {
-  function_name = "ForgeSplunkDMLogGroupReconciler-${var.region}"
+  # Keep aliases visible while leaving room for the longest supported AWS
+  # region within the 64-character Lambda, IAM role, and EventBridge limits.
+  function_name   = "ForgeSplunkDMLog-${var.name}-${var.region}"
+  event_rule_name = "ForgeSplunkDMDel-${var.name}-${var.region}"
 }
 
 data "aws_caller_identity" "current" {}
@@ -71,7 +74,7 @@ module "log_group_reconciler" {
 }
 
 resource "aws_cloudwatch_event_rule" "lambda_delete" {
-  name        = "${local.function_name}-delete"
+  name        = local.event_rule_name
   description = "Delete the log group after a Splunk Data Manager Lambda is deleted."
   region      = var.region
   tags        = var.tags

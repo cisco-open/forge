@@ -11,6 +11,8 @@ run "integrations_splunk_cloud_data_manager_log_group_reconciler_contract" {
       "module \"log_group_reconciler\"",
       "source  = \"terraform-aws-modules/lambda/aws\"",
       "version = \"8.8.0\"",
+      "function_name   = \"ForgeSplunkDMLog-$${var.name}-$${var.region}\"",
+      "event_rule_name = \"ForgeSplunkDMDel-$${var.name}-$${var.region}\"",
       "region        = var.region",
       "cloudwatch_logs_retention_in_days = 3",
       "data \"aws_iam_policy_document\" \"log_group_reconciler\"",
