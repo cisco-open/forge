@@ -610,7 +610,7 @@ run "organizes_webhook_health_for_operator_triage" {
   }
 }
 
-run "seed_cloudwatchlogs_forgecicd_acl" {
+run "seed_cloudwatchlogs_acl_state" {
   command = apply
 
   variables {
@@ -633,7 +633,7 @@ run "seed_cloudwatchlogs_forgecicd_acl" {
   }
 }
 
-run "ignores_only_force_new_cloudwatchlogs_forgecicd_acl_drift" {
+run "scopes_cloudwatchlogs_acl_drift_ignore" {
   command = plan
 
   plan_options {
@@ -661,12 +661,22 @@ run "ignores_only_force_new_cloudwatchlogs_forgecicd_acl_drift" {
 
   assert {
     condition = (
-      splunk_configs_conf.forgecicd_cloudwatchlogs_forgecicd.acl[0].app == "baseline-app"
-      && splunk_configs_conf.forgecicd_cloudwatchlogs_forgecicd.acl[0].sharing == "app"
+      splunk_configs_conf.forgecicd_cloudwatchlogs.acl[0].app == "baseline-app"
+      && splunk_configs_conf.forgecicd_cloudwatchlogs.acl[0].owner == "baseline-owner"
+      && splunk_configs_conf.forgecicd_cloudwatchlogs.acl[0].read[0] == "baseline-reader"
+      && splunk_configs_conf.forgecicd_cloudwatchlogs.acl[0].write[0] == "baseline-writer"
+    )
+    error_message = "The props/aws:cloudwatchlogs stanza must retain its existing ACL block when replacement-only ACL fields drift."
+  }
+
+  assert {
+    condition = (
+      splunk_configs_conf.forgecicd_cloudwatchlogs_forgecicd.acl[0].app == "changed-app"
+      && splunk_configs_conf.forgecicd_cloudwatchlogs_forgecicd.acl[0].sharing == "global"
       && splunk_configs_conf.forgecicd_cloudwatchlogs_forgecicd.acl[0].owner == "changed-owner"
       && splunk_configs_conf.forgecicd_cloudwatchlogs_forgecicd.acl[0].read[0] == "changed-reader"
       && splunk_configs_conf.forgecicd_cloudwatchlogs_forgecicd.acl[0].write[0] == "changed-writer"
     )
-    error_message = "CloudWatch Logs props must ignore replacement-only ACL app/sharing drift while continuing to manage owner and read/write permissions."
+    error_message = "The forgecicd CloudWatch Logs stanza must continue to manage every configured ACL field."
   }
 }
