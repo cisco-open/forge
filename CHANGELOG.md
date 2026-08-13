@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.14.0](https://github.com/cisco-open/forge/compare/v4.13.2...v4.14.0) (2026-08-13)
+
+
+### Features
+
+* **runners:** adapt nested v2 configuration contract ([#654](https://github.com/cisco-open/forge/issues/654)) ([5b75fd8](https://github.com/cisco-open/forge/commit/5b75fd8ae9439610ad1edc50642848dc58c6fc71))
+
 ## [4.13.2](https://github.com/cisco-open/forge/compare/v4.13.1...v4.13.2) (2026-08-13)
 
 
