@@ -272,56 +272,6 @@ variable "runner_configs" {
     error_message = "Forge EC2 runner_specs must configure a module-managed ami block; ami = null and external ami.id_ssm_parameter ownership are not supported."
   }
 
-  validation {
-    condition = alltrue([
-      for runner_config in values(var.runner_configs.runner_specs) :
-      try(!runner_config.compute_provider.ec2.user_data.debug_logging_enabled, false)
-    ])
-    error_message = "Forge EC2 runner_specs do not support user_data.debug_logging_enabled while the upstream v1 adapter is active."
-  }
-
-  validation {
-    condition = alltrue([
-      for runner_config in values(var.runner_configs.runner_specs) :
-      try(
-        length(runner_config.compute_provider.ec2.instance_profile[*]) == 0
-        && length(runner_config.runner.iam.role[*]) == 0,
-        false,
-      )
-    ])
-    error_message = "Forge EC2 runner_specs do not support external runner.iam.role or compute_provider.ec2.instance_profile ownership while the upstream v1 adapter is active."
-  }
-
-  validation {
-    condition = alltrue([
-      for runner_config in values(var.runner_configs.runner_specs) :
-      length(runner_config.tags) == 0
-      && length(runner_config.runner.tags) == 0
-      && length(runner_config.lambda.tags) == 0
-      && length(runner_config.queue.tags) == 0
-      && length(runner_config.scale_up.tags) == 0
-      && length(runner_config.scale_down.tags) == 0
-      && length(runner_config.pool.tags) == 0
-      && length(runner_config.job_retry.tags) == 0
-      && length(runner_config.ssm.tags) == 0
-      && length(runner_config.ssm.parameters.tags) == 0
-      && length(runner_config.ssm.housekeeper.tags) == 0
-      && length(runner_config.observability.logs.tags) == 0
-    ])
-    error_message = "Forge EC2 runner_specs only support compute_provider.ec2.tags while the upstream v1 adapter is active; all other v2 per-lane tag maps must remain empty."
-  }
-
-  validation {
-    condition = alltrue([
-      for runner_config in values(var.runner_configs.runner_specs) :
-      runner_config.runner.iam.additional_trust_policy_json == null
-      && runner_config.runner.iam.path == null
-      && runner_config.runner.iam.permissions_boundary == null
-      && runner_config.job_retry.lambda.reserved_concurrent_executions == 1
-      && runner_config.ssm.kms_key == null
-    ])
-    error_message = "Forge EC2 runner_specs do not support per-lane IAM trust/path/boundary, non-default job-retry Lambda reserved concurrency, or per-lane SSM KMS keys while the upstream v1 adapter is active."
-  }
 }
 
 variable "network_configs" {

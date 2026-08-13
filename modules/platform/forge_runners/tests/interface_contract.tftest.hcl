@@ -304,18 +304,6 @@ run "platform_forge_runners_interface_contract" {
       "length(runner_config.compute_provider.ec2.ami[*]) == 1",
       "&& length(runner_config.compute_provider.ec2.ami.id_ssm_parameter[*]) == 0,",
       "error_message = \"Forge EC2 runner_specs must configure a module-managed ami block; ami = null and external ami.id_ssm_parameter ownership are not supported.\"",
-      "try(!runner_config.compute_provider.ec2.user_data.debug_logging_enabled, false)",
-      "error_message = \"Forge EC2 runner_specs do not support user_data.debug_logging_enabled while the upstream v1 adapter is active.\"",
-      "length(runner_config.compute_provider.ec2.instance_profile[*]) == 0",
-      "&& length(runner_config.runner.iam.role[*]) == 0,",
-      "error_message = \"Forge EC2 runner_specs do not support external runner.iam.role or compute_provider.ec2.instance_profile ownership while the upstream v1 adapter is active.\"",
-      "length(runner_config.runner.tags) == 0",
-      "&& length(runner_config.observability.logs.tags) == 0",
-      "error_message = \"Forge EC2 runner_specs only support compute_provider.ec2.tags while the upstream v1 adapter is active; all other v2 per-lane tag maps must remain empty.\"",
-      "runner_config.runner.iam.additional_trust_policy_json == null",
-      "&& runner_config.job_retry.lambda.reserved_concurrent_executions == 1",
-      "&& runner_config.ssm.kms_key == null",
-      "error_message = \"Forge EC2 runner_specs do not support per-lane IAM trust/path/boundary, non-default job-retry Lambda reserved concurrency, or per-lane SSM KMS keys while the upstream v1 adapter is active.\"",
       "EC2 deployment configuration for GitHub Actions runners. The public runner",
       "- lambda_subnet_ids: Subnets where runner-related lambdas execute.",
       "These can be more permissive than the runner subnets.",
@@ -326,11 +314,14 @@ run "platform_forge_runners_interface_contract" {
       "- queue           : Webhook delay, retention, Lambda batching, and DLQ",
       "- job_retry       : Retry timing, attempts, and Lambda sizing.",
       "- matcherConfig   : Static and dynamic GitHub label matching.",
-      "- compute_provider: Nested v2-compatible EC2 provider configuration.",
-      "- tags/lambda/ssm/observability: Included for v2 contract compatibility.",
+      "shape follows the nested experimental multi_runner_config_v2 EC2 contract and",
+      "is passed directly to the upstream provider-oriented runner stack.",
+      "- compute_provider: Nested v2 EC2 provider configuration.",
+      "- tags/lambda/ssm/observability: Component-level tags, SSM configuration,",
       "compute_provider.ec2 fields:",
       "- ami             : Upstream-compatible EC2 AMI configuration.",
-      "The v7.10.1 compatibility adapter also requires external runner IAM ownership,",
+      "- instance_profile: Optional externally managed instance profile. It requires",
+      "supplies Forge's EC2-tag and hook-SSM permissions.",
       "variable \"github_webhook_relay\"",
       "Configuration for the (optional) webhook relay source module.",
       "If enabled=true we provision the API Gateway + source EventBridge forwarding rule.",
@@ -417,7 +408,7 @@ run "platform_forge_runners_interface_contract" {
     condition = (
       output.expected_input_variable_count == 10
       && output.expected_output_value_count == 5
-      && output.expected_interface_literal_count == 358
+      && output.expected_interface_literal_count == 343
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }
