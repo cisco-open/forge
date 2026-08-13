@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.13.2](https://github.com/cisco-open/forge/compare/v4.13.1...v4.13.2) (2026-08-13)
+
+
+### Bug Fixes
+
+* ignore acl ([#651](https://github.com/cisco-open/forge/issues/651)) ([e23985e](https://github.com/cisco-open/forge/commit/e23985efd676f392e1f553c9679b22557ee38fd6))
+
 ## [4.13.1](https://github.com/cisco-open/forge/compare/v4.13.0...v4.13.1) (2026-08-12)
 
 
