@@ -56,6 +56,8 @@ resource "splunk_configs_conf" "forgecicd_cloudwatchlogs" {
 
   lifecycle {
     ignore_changes = [
+      acl["app"],
+      acl["sharing"],
       variables["ADD_EXTRA_TIME_FIELDS"],
       variables["ANNOTATE_PUNCT"],
       variables["AUTO_KV_JSON"],
