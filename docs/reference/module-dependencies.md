@@ -46,8 +46,8 @@ ______________________________________________________________________
 
 | Module                                 | Deploy before platform?        | Why                                                              |
 | -------------------------------------- | ------------------------------ | ---------------------------------------------------------------- |
-| `modules/helpers/storage`              | Before AWS Config recording    | Supplies the long-term S3 delivery bucket used by the example.   |
-| `modules/helpers/aws_config_recording` | Before recorded resources      | Captures configuration history from resource creation.           |
+| `modules/helpers/storage`              | For external Config buckets    | Owns the legacy long-term bucket and Config delivery policy.     |
+| `modules/helpers/aws_config_recording` | Before recorded resources      | Creates its delivery bucket and queue, then captures history.    |
 | `modules/helpers/opt_in_regions`       | Yes, for opt-in regions        | Regional resources cannot deploy until the region is enabled.    |
 | `modules/helpers/service_linked_roles` | Usually, for EC2 Spot          | Some accounts need the EC2 Spot service-linked role first.       |
 | `modules/helpers/ami_policy`           | Optional                       | Account policy support for AMI usage.                            |
@@ -73,6 +73,9 @@ ______________________________________________________________________
   events to it.
 - Deploy `splunk_secrets` and `splunk_o11y_conf_shared` before each regional
   `splunk_dependency_monitor` instance.
+- For AWS Config ingestion, apply the regional `aws_config_recording` helper,
+  copy its `splunk_s3_logs` queue URL and bucket ARN into the disabled Data
+  Manager custom S3 input, validate parsing, and then enable the input.
 
 ______________________________________________________________________
 

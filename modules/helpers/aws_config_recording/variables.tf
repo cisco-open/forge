@@ -19,12 +19,14 @@ variable "tags" {
 }
 
 variable "delivery_bucket_name" {
-  description = "Name of the existing S3 bucket that receives AWS Config data. The bucket can be in another Region or account."
+  description = "Optional name of an existing S3 delivery bucket. When null, the module creates a regional bucket and SQS notification queue."
   type        = string
+  default     = null
+  nullable    = true
 
   validation {
-    condition     = can(regex("^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$", var.delivery_bucket_name))
-    error_message = "The delivery bucket name must be a valid 3-63 character S3 bucket name."
+    condition     = var.delivery_bucket_name == null || can(regex("^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$", var.delivery_bucket_name))
+    error_message = "delivery_bucket_name must be null or a valid 3-63 character S3 bucket name."
   }
 }
 

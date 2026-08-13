@@ -29,20 +29,20 @@ EC2-only deployments can skip `examples/deployments/infra`.
 
 ## Helper Modules
 
-| Module                                 | Role                                                         | Required? | Example root                   | Validation                                      |
-| -------------------------------------- | ------------------------------------------------------------ | --------- | ------------------------------ | ----------------------------------------------- |
-| `modules/helpers/aws_config_recording` | AWS Config history for caller-selected AWS resource types.   | Optional  | `examples/deployments/helpers` | Recorder is active for the configured types.    |
-| `modules/helpers/ami_policy`           | AMI policy support for approved runner images.               | Optional  | `examples/deployments/helpers` | Policy plan plus AMI usage review.              |
-| `modules/helpers/ami_sharing`          | Shares runner AMIs across accounts or regions.               | Optional  | `examples/deployments/helpers` | Target account can describe and launch AMI.     |
-| `modules/helpers/cloud_custodian`      | Cleanup and policy jobs for stale resources.                 | Optional  | `examples/deployments/helpers` | Custodian dry run and scheduled job output.     |
-| `modules/helpers/cloud_formation`      | CloudFormation admin/execution roles for setup paths.        | Optional  | `examples/deployments/helpers` | Stack role assumption check.                    |
-| `modules/helpers/dedicated_mac_hosts`  | Mac Dedicated Hosts, host groups, and license configuration. | Optional  | `examples/deployments/helpers` | Host allocation and group membership review.    |
-| `modules/helpers/ecr`                  | ECR repositories for runner and CI helper containers.        | Optional  | `examples/deployments/helpers` | Push/pull smoke for configured repositories.    |
-| `modules/helpers/forge_subscription`   | Tenant-side access for ForgeMT jobs and artifacts.           | Optional  | `examples/deployments/helpers` | Tenant role can access intended S3/ECR/secrets. |
-| `modules/helpers/microvm`              | Regional MicroVM publishing and VPC egress foundation.       | Optional  | `examples/deployments/helpers` | Artifact plan and connector `ACTIVE` state.     |
-| `modules/helpers/opt_in_regions`       | Enables AWS opt-in regions.                                  | Sometimes | `examples/deployments/helpers` | AWS account region status is enabled.           |
-| `modules/helpers/service_linked_roles` | Creates the EC2 Spot service-linked role.                    | Sometimes | `examples/deployments/helpers` | Role exists before EC2 runner launch.           |
-| `modules/helpers/storage`              | S3 buckets for artifacts, templates, logs, and integrations. | Optional  | `examples/deployments/helpers` | Bucket policy, encryption, and access checks.   |
+| Module                                 | Role                                                         | Required? | Example root                   | Validation                                       |
+| -------------------------------------- | ------------------------------------------------------------ | --------- | ------------------------------ | ------------------------------------------------ |
+| `modules/helpers/aws_config_recording` | AWS Config history with a Data Manager-compatible producer.  | Optional  | `examples/deployments/helpers` | Recorder, queue, DLQ, and `.json.gz` event plan. |
+| `modules/helpers/ami_policy`           | AMI policy support for approved runner images.               | Optional  | `examples/deployments/helpers` | Policy plan plus AMI usage review.               |
+| `modules/helpers/ami_sharing`          | Shares runner AMIs across accounts or regions.               | Optional  | `examples/deployments/helpers` | Target account can describe and launch AMI.      |
+| `modules/helpers/cloud_custodian`      | Cleanup and policy jobs for stale resources.                 | Optional  | `examples/deployments/helpers` | Custodian dry run and scheduled job output.      |
+| `modules/helpers/cloud_formation`      | CloudFormation admin/execution roles for setup paths.        | Optional  | `examples/deployments/helpers` | Stack role assumption check.                     |
+| `modules/helpers/dedicated_mac_hosts`  | Mac Dedicated Hosts, host groups, and license configuration. | Optional  | `examples/deployments/helpers` | Host allocation and group membership review.     |
+| `modules/helpers/ecr`                  | ECR repositories for runner and CI helper containers.        | Optional  | `examples/deployments/helpers` | Push/pull smoke for configured repositories.     |
+| `modules/helpers/forge_subscription`   | Tenant-side access for ForgeMT jobs and artifacts.           | Optional  | `examples/deployments/helpers` | Tenant role can access intended S3/ECR/secrets.  |
+| `modules/helpers/microvm`              | Regional MicroVM publishing and VPC egress foundation.       | Optional  | `examples/deployments/helpers` | Artifact plan and connector `ACTIVE` state.      |
+| `modules/helpers/opt_in_regions`       | Enables AWS opt-in regions.                                  | Sometimes | `examples/deployments/helpers` | AWS account region status is enabled.            |
+| `modules/helpers/service_linked_roles` | Creates the EC2 Spot service-linked role.                    | Sometimes | `examples/deployments/helpers` | Role exists before EC2 runner launch.            |
+| `modules/helpers/storage`              | S3 buckets for artifacts, templates, logs, and integrations. | Optional  | `examples/deployments/helpers` | Bucket policy, encryption, and access checks.    |
 
 Helpers are not runtime platform modules. Deploy them only when ForgeMT owns
 that operating concern.

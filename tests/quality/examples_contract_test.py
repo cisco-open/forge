@@ -130,3 +130,95 @@ def test_dependency_monitor_example_is_regional_and_ordered() -> None:
     assert "github_api_version: '2022-11-28'" in regional_config
     assert 'name_prefix:' not in regional_config
     assert 'tenant_configs:' not in regional_config
+
+
+def test_splunk_data_manager_example_documents_aws_config_handoff() -> None:
+    integration_root = (
+        EXAMPLES / 'deployments' / 'integrations' / 'terragrunt'
+    )
+    global_config = integration_root.joinpath(
+        '_global_settings',
+        'splunk_cloud_data_manager.hcl',
+    ).read_text(encoding='utf-8')
+    deployment_config = integration_root.joinpath(
+        'environments',
+        'prod',
+        'splunk_cloud_data_manager',
+        'config.yml',
+    ).read_text(encoding='utf-8')
+    template_config = EXAMPLES.joinpath(
+        'templates',
+        'integrations',
+        'splunk_cloud_data_manager',
+        'config.yml',
+    ).read_text(encoding='utf-8')
+    producer_outputs = REPO_ROOT.joinpath(
+        'modules',
+        'helpers',
+        'aws_config_recording',
+        'outputs.tf',
+    ).read_text(encoding='utf-8')
+
+    assert 'dependency "aws_config_recording"' not in global_config
+    assert (
+        's3_logs_config               = '
+        'local.splunk_cloud.locals.s3_logs_config'
+    ) in global_config
+
+    assert deployment_config.count('name: forge-aws-config-prod') == 1
+    assert (
+        '    - enabled: false\n      name: forge-aws-config-prod'
+        in deployment_config
+    )
+    deployment_aws_config = deployment_config.split(
+        '      name: forge-aws-config-prod', 1
+    )[1].split('\n  ct-logs:', 1)[0]
+
+    for required in [
+        'name: forge-s3-logs-prod',
+        'source_type: forgecicd:runner-logs:s3',
+    ]:
+        assert required in deployment_config
+
+    for required in [
+        'iam_region: eu-west-1',
+        'index: forge-prod-index',
+        'source_type: forgecicd:aws:config:s3',
+        'splunk_s3_logs.sqs.url',
+        'splunk_s3_logs.bucket_arn',
+        'splunk_s3_logs.bucket_kms_key_arn',
+        'sqs_urls: []',
+        's3_bucket_patterns: []',
+        'kms_key_arns: []',
+    ]:
+        assert required in deployment_aws_config
+
+    assert template_config.count('name: forge-aws-config-prod') == 1
+    assert (
+        '    - enabled: false                        # enable only after '
+        'the producer output and Splunk parser are validated\n'
+        '      name: forge-aws-config-prod'
+    ) in template_config
+    template_aws_config = template_config.split(
+        '      name: forge-aws-config-prod', 1
+    )[1].split('\n  ct-logs:', 1)[0]
+
+    for required in [
+        'source_type: forgecicd:aws:config:s3',
+        'splunk_s3_logs.sqs.url',
+        'splunk_s3_logs.bucket_arn',
+        'splunk_s3_logs.bucket_kms_key_arn',
+        'sqs_urls: []',
+        's3_bucket_patterns: []',
+        'kms_key_arns: []',
+    ]:
+        assert required in template_aws_config
+
+    for required in [
+        'output "splunk_s3_logs"',
+        'bucket_arn',
+        'bucket_kms_key_arn',
+        'sqs = {',
+        'url',
+    ]:
+        assert required in producer_outputs
