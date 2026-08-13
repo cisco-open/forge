@@ -270,61 +270,10 @@ variable "ec2_deployment_specs" {
     error_message = "Forge EC2 runner_specs must configure a module-managed ami block; ami = null and external ami.id_ssm_parameter ownership are not supported."
   }
 
-  validation {
-    condition = alltrue([
-      for runner_config in values(var.ec2_deployment_specs.runner_specs) :
-      try(!runner_config.compute_provider.ec2.user_data.debug_logging_enabled, false)
-    ])
-    error_message = "Forge EC2 runner_specs do not support user_data.debug_logging_enabled while the upstream v1 adapter is active."
-  }
-
-  validation {
-    condition = alltrue([
-      for runner_config in values(var.ec2_deployment_specs.runner_specs) :
-      try(
-        length(runner_config.compute_provider.ec2.instance_profile[*]) == 0
-        && length(runner_config.runner.iam.role[*]) == 0,
-        false,
-      )
-    ])
-    error_message = "Forge EC2 runner_specs do not support external runner.iam.role or compute_provider.ec2.instance_profile ownership while the upstream v1 adapter is active."
-  }
-
-  validation {
-    condition = alltrue([
-      for runner_config in values(var.ec2_deployment_specs.runner_specs) :
-      length(runner_config.tags) == 0
-      && length(runner_config.runner.tags) == 0
-      && length(runner_config.lambda.tags) == 0
-      && length(runner_config.queue.tags) == 0
-      && length(runner_config.scale_up.tags) == 0
-      && length(runner_config.scale_down.tags) == 0
-      && length(runner_config.pool.tags) == 0
-      && length(runner_config.job_retry.tags) == 0
-      && length(runner_config.ssm.tags) == 0
-      && length(runner_config.ssm.parameters.tags) == 0
-      && length(runner_config.ssm.housekeeper.tags) == 0
-      && length(runner_config.observability.logs.tags) == 0
-    ])
-    error_message = "Forge EC2 runner_specs only support compute_provider.ec2.tags while the upstream v1 adapter is active; all other v2 per-lane tag maps must remain empty."
-  }
-
-  validation {
-    condition = alltrue([
-      for runner_config in values(var.ec2_deployment_specs.runner_specs) :
-      runner_config.runner.iam.additional_trust_policy_json == null
-      && runner_config.runner.iam.path == null
-      && runner_config.runner.iam.permissions_boundary == null
-      && runner_config.job_retry.lambda.reserved_concurrent_executions == 1
-      && runner_config.ssm.kms_key == null
-    ])
-    error_message = "Forge EC2 runner_specs do not support per-lane IAM trust/path/boundary, non-default job-retry Lambda reserved concurrency, or per-lane SSM KMS keys while the upstream v1 adapter is active."
-  }
-
   description = <<-EOT
   EC2 deployment configuration for GitHub Actions runners. The public runner
-  shape follows the nested v2 EC2 contract and is translated internally to the
-  released upstream v1 multi_runner_config interface.
+  shape follows the nested experimental multi_runner_config_v2 EC2 contract and
+  is passed directly to the upstream provider-oriented runner stack.
 
   Top-level fields:
     - lambda_subnet_ids: Subnets where runner-related lambdas execute.
@@ -344,10 +293,9 @@ variable "ec2_deployment_specs" {
     - pool            : Scheduled warm-pool sizes and runner owner.
     - job_retry       : Retry timing, attempts, and Lambda sizing.
     - matcherConfig   : Static and dynamic GitHub label matching.
-    - compute_provider: Nested v2-compatible EC2 provider configuration.
-    - tags/lambda/ssm/observability: Included for v2 contract compatibility.
-                        Tag scopes and per-lane SSM KMS settings that cannot be
-                        represented by v1 must retain their defaults.
+    - compute_provider: Nested v2 EC2 provider configuration.
+    - tags/lambda/ssm/observability: Component-level tags, SSM configuration,
+                        and CloudWatch Logs configuration.
 
   compute_provider.ec2 fields:
     - ami             : Upstream-compatible EC2 AMI configuration.
@@ -356,18 +304,13 @@ variable "ec2_deployment_specs" {
     - metadata_options: EC2 instance metadata service configuration.
     - block_device_mappings: EBS mappings for runner instances.
     - cloudwatch_agent/binaries_syncer/user_data: Runner bootstrap configuration.
-                        user_data.debug_logging_enabled must remain false while
-                        the stable upstream v1 adapter is active.
     - instance_types and allocation fields: EC2 Fleet capacity configuration.
     - vpc_id/subnet_ids/additional_security_group_ids: Per-lane networking.
     - cpu_options/placement/license_specifications: EC2 launch-template options.
-    - instance_profile: Upstream contract field reserved for future Forge support.
+    - instance_profile: Optional externally managed instance profile. It requires
+                        an externally managed runner IAM role whose owner also
+                        supplies Forge's EC2-tag and hook-SSM permissions.
     - log_files/tags  : EC2 logging and resource tags.
-
-  The v7.10.1 compatibility adapter also requires external runner IAM ownership,
-  per-lane IAM trust/path/boundary settings, and non-default job-retry Lambda
-  reserved concurrency to remain unset. These constraints prevent accepted v2
-  settings from being silently discarded by the stable v1 module.
   EOT
 }
 

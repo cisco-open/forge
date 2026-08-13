@@ -5,12 +5,12 @@ This module deploys Forge EC2 runner pools through the upstream
 
 ## Why This Module Exists
 
-The v2-compatible input lets each runner lane configure the common runner,
-GitHub, queue, scaling, pool, retry, matcher, and EC2 provider blocks while
-sharing Forge's webhook and runner control plane. Forge translates that input
-to the released v1 `multi_runner_config`, so this phase does not enable
-upstream's experimental v2 runtime. EC2 supports custom AMIs, macOS/Windows,
-dedicated hosts, and larger hardware profiles.
+The v2 input lets each runner lane configure the common runner, GitHub, queue,
+scaling, pool, retry, SSM, observability, matcher, and EC2 provider blocks while
+sharing Forge's webhook and runner control plane. Forge enriches each lane with
+its required hooks, IAM policies, bootstrap content, logging, tags, and KMS key,
+then passes it to upstream's experimental `multi_runner_config_v2`. EC2 supports
+custom AMIs, macOS/Windows, dedicated hosts, and larger hardware profiles.
 
 ## What It Manages
 
@@ -24,23 +24,22 @@ dedicated hosts, and larger hardware profiles.
 - This is a breaking input migration: every `runner_specs` entry uses the full
   nested v2 shape and must contain `runner`, `matcherConfig`, and
   `compute_provider.ec2`. The legacy flat EC2 shape is not accepted.
-- The common and EC2 blocks mirror the upstream v2 contract and are adapted to
-  stable upstream v1 fields. Forge still owns AMI
-  refresh and runner instance profiles, so EC2 lanes require a non-null,
-  module-managed `ami` block and cannot select `ami.id_ssm_parameter` or an
-  external `instance_profile`. The scheduled refresh uses the same default AMI
-  name filter as the upstream EC2 provider for each runner OS and architecture;
-  values in `ami.filter` override those defaults.
-- Stable v1 has no per-lane user-data debug flag, so
-  `user_data.debug_logging_enabled` must remain `false` during this adapter
-  phase.
-- Stable v1 also cannot represent v2's per-component tag maps, per-lane SSM KMS
-  key, per-lane IAM trust/path/boundary settings, or custom job-retry Lambda
-  concurrency. Compatibility validations reject those values instead of
-  silently dropping them. `compute_provider.ec2.tags` remains supported.
-- Preserve runner-lane map keys when migrating configuration; those keys are
-  used by v1 `for_each` resources and therefore define Terraform state
-  addresses.
+- Forge still owns scheduled AMI refresh, so EC2 lanes require a non-null,
+  module-managed `ami` block and cannot select `ami.id_ssm_parameter`. The
+  refresh uses the same default AMI name filter as the upstream EC2 provider for
+  each runner OS and architecture; values in `ami.filter` override those
+  defaults.
+- External runner roles and instance profiles are supported as a pair. Their
+  owner must provision Forge's EC2-tag and hook-SSM permissions because the
+  module does not modify externally managed IAM resources.
+- The upstream v2 ref is experimental and mutable. It moves lane resources from
+  `module.runners` to `module.runner_stacks` and currently provides no Terraform
+  `moved` blocks. Use it for new state only; existing deployments need a
+  separately reviewed state migration to avoid create/destroy plans and name
+  collisions. Preserving lane keys alone does not preserve internal addresses.
+- Forge currently supplies the v7.10.1 Lambda release artifacts to the
+  experimental Terraform graph. Keep rollout gated until artifact compatibility
+  is verified or exact-ref artifacts are published.
 - Label sets are the API contract with tenant workflows, so exact matching matters.
 - Use warm pools only where startup latency justifies the idle cost.
 - Subnet IP capacity and EC2 capacity errors are expected operational signals, not unusual exceptions.
@@ -59,7 +58,7 @@ dedicated hosts, and larger hardware profiles.
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.58.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.59.0 |
 | <a name="provider_external"></a> [external](#provider\_external) | 2.4.0 |
 
 ## Modules

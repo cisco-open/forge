@@ -163,9 +163,10 @@ module "runners" {
   runner_binaries_syncer_lambda_zip = "${data.external.download_lambdas.result.path}/runner-binaries-syncer.zip"
   runners_lambda_zip                = "${data.external.download_lambdas.result.path}/runners.zip"
 
-  # Temporary compatibility boundary: Forge accepts the nested v2 EC2 input
-  # shape, then translates it to the released upstream v1 contract.
-  multi_runner_config = local.multi_runner_config_v1
+  multi_runner_config = {}
+  experimental = {
+    multi_runner_config = local.multi_runner_config
+  }
 
   depends_on = [
     data.external.download_lambdas,
