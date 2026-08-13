@@ -46,7 +46,7 @@ ______________________________________________________________________
 
 | Module                                 | Deploy before platform?        | Why                                                              |
 | -------------------------------------- | ------------------------------ | ---------------------------------------------------------------- |
-| `modules/helpers/storage`              | For external Config buckets    | Owns the legacy long-term bucket and Config delivery policy.     |
+| `modules/helpers/storage`              | Optional                       | Creates shared artifact buckets; it has no Config delivery role. |
 | `modules/helpers/aws_config_recording` | Before recorded resources      | Creates its delivery bucket and queue, then captures history.    |
 | `modules/helpers/opt_in_regions`       | Yes, for opt-in regions        | Regional resources cannot deploy until the region is enabled.    |
 | `modules/helpers/service_linked_roles` | Usually, for EC2 Spot          | Some accounts need the EC2 Spot service-linked role first.       |
