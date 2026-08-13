@@ -11,7 +11,7 @@ run "platform_ec2_deployment_contract" {
       "module \"ec2_update_runner_ssm_ami\"",
       "module \"ec2_update_runner_tags\"",
       "module \"runners\"",
-      "source = \"git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=v7.11.0\"",
+      "source = \"git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=fix-multi-runner-v2-routing\"",
       "multi_runner_config = local.multi_runner_config_v1",
       "resource \"aws_cloudwatch_log_group\" \"webhook_api_gateway_access\"",
       "resource \"aws_kms_key\" \"github\"",
