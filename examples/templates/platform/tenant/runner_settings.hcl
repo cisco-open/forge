@@ -63,29 +63,46 @@ locals {
   ec2_runner_specs = {
     for size, spec in local.config.ec2_runner_specs :
     size => {
-      runner_os           = spec.runner_os
-      runner_architecture = spec.runner_architecture
-      runner_labels = [
-        "type:${spec.type}",
-        "self-hosted",
-        spec.runner_architecture,
-        "env:ops-${include.env.locals.env}",
-      ]
-      extra_labels = [
-        "ec2",
-        "rgn:${local.region_alias}",
-        "vpc:${local.vpc_alias}",
-        "tnt:${local.tenant_name}",
-      ]
-      enable_dynamic_labels                                          = try(spec.enable_dynamic_labels, false)
-      aws_dynamic_labels_policy                                      = try(spec.aws_dynamic_labels_policy, null)
-      lambda_event_source_mapping_batch_size                         = try(spec.lambda_event_source_mapping_batch_size, 10)
-      lambda_event_source_mapping_maximum_batching_window_in_seconds = try(spec.lambda_event_source_mapping_maximum_batching_window_in_seconds, 0)
-      redrive_build_queue                                            = try(spec.redrive_build_queue, {})
-      runner_user                                                    = spec.runner_user
-      min_run_time                                                   = 30
-      max_instances                                                  = spec.max_instances
-      pool_config                                                    = spec.pool_config
+      # Keep the former Forge v1 behavior explicit while adopting the v2 shape.
+      runner = {
+        os           = spec.runner_os
+        architecture = spec.runner_architecture
+        extra_labels = [
+          "ec2",
+          "rgn:${local.region_alias}",
+          "vpc:${local.vpc_alias}",
+          "tnt:${local.tenant_name}",
+        ]
+        group_name    = local.runner_group_name
+        run_as        = spec.runner_user
+        maximum_count = spec.max_instances
+        ephemeral     = true
+      }
+      github = {
+        organization_runners = true
+      }
+      queue = {
+        delay_webhook_event            = 0
+        job_queue_retention_in_seconds = 172800
+        event_source_mapping = {
+          batch_size                         = try(spec.lambda_event_source_mapping_batch_size, 10)
+          maximum_batching_window_in_seconds = try(spec.lambda_event_source_mapping_maximum_batching_window_in_seconds, 0)
+        }
+        redrive_build_queue = {
+          enabled         = try(spec.redrive_build_queue.enabled, true)
+          maxReceiveCount = try(spec.redrive_build_queue.maxReceiveCount, 10)
+        }
+      }
+      scale_up = {
+        job_queued_check_enabled = false
+      }
+      scale_down = {
+        minimum_running_time_in_minutes = 30
+      }
+      pool = {
+        config       = spec.pool_config
+        runner_owner = local.config.gh_config.ghes_org
+      }
       compute_provider = {
         ec2 = {
           metadata_options = {
@@ -137,6 +154,37 @@ locals {
             volume_type           = spec.volume.type
           }]
         }
+      }
+      matcherConfig = {
+        labelMatchers = concat(
+          [[
+            "type:${spec.type}",
+            "self-hosted",
+            spec.runner_architecture,
+            "env:ops-${include.env.locals.env}",
+          ]],
+          concat([
+            for label_count in range(1, 5) : concat([
+              for start in range(0, 5 - label_count) : concat(
+                [
+                  "type:${spec.type}",
+                  "self-hosted",
+                  spec.runner_architecture,
+                  "env:ops-${include.env.locals.env}",
+                ],
+                slice([
+                  "ec2",
+                  "rgn:${local.region_alias}",
+                  "vpc:${local.vpc_alias}",
+                  "tnt:${local.tenant_name}",
+                ], start, start + label_count),
+              )
+            ])
+          ]...),
+        )
+        exactMatch             = true
+        enableDynamicLabels    = try(spec.enable_dynamic_labels, false)
+        awsDynamicLabelsPolicy = try(spec.aws_dynamic_labels_policy, null)
       }
     }
   }

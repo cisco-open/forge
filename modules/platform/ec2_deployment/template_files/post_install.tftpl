@@ -5,7 +5,7 @@
 aws ecr get-login-password \
   --region $(echo ${registry} | awk -F. '{print $4}') \
   | su -l ${runner_user} -c \
-    "docker --config /home/${runner_user}/.docker login \
+    "docker --config ${runner_home}/.docker login \
     --username AWS \
     --password-stdin ${registry}"
 %{ endfor ~}
