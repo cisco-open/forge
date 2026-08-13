@@ -106,7 +106,7 @@ variables {
   }
 
   tenant_configs = {
-    ecr_registries = []
+    ecr_registries = ["123456789012.dkr.ecr.eu-west-1.amazonaws.com"]
     tags = {
       Environment = "test"
     }
@@ -116,7 +116,6 @@ variables {
     env                       = "test"
     prefix                    = "forge-test"
     ghes_url                  = ""
-    ghes_org                  = "cisco-open"
     log_level                 = "info"
     logging_retention_in_days = "3"
     github_app = {
@@ -125,17 +124,79 @@ variables {
       webhook_secret = "test"
     }
     runner_iam_role_managed_policy_arns = []
-    runner_group_name                   = "Default"
     runner_specs = {
       ec2 = {
-        runner_labels       = ["self-hosted", "ec2"]
-        runner_os           = "linux"
-        runner_architecture = "x64"
-        extra_labels        = []
-        max_instances       = 2
-        min_run_time        = 5
-        pool_config         = []
-        runner_user         = "ec2-user"
+        runner = {
+          os                     = "linux"
+          architecture           = "x64"
+          boot_time_in_minutes   = 7
+          disable_default_labels = true
+          extra_labels           = ["caller-extra"]
+          group_name             = "Forge"
+          name_prefix            = "forge-"
+          run_as_root            = true
+          run_as                 = "ec2-user"
+          maximum_count          = 2
+          ephemeral              = true
+          jit_config_enabled     = false
+          auto_update_disabled   = true
+          hooks = {
+            job_started   = "echo caller-started\nexit 0"
+            job_completed = "echo caller-completed"
+          }
+          iam = {
+            managed_policy_arns = {
+              caller = "arn:aws:iam::123456789012:policy/caller"
+            }
+          }
+        }
+        github = {
+          organization_runners = true
+        }
+        queue = {
+          delay_webhook_event            = 7
+          job_queue_retention_in_seconds = 90000
+          event_source_mapping = {
+            batch_size                         = 5
+            maximum_batching_window_in_seconds = 1
+          }
+          redrive_build_queue = {
+            enabled         = true
+            maxReceiveCount = 4
+          }
+        }
+        scale_up = {
+          reserved_concurrent_executions = 2
+          job_queued_check_enabled       = false
+        }
+        scale_down = {
+          schedule_expression             = "rate(10 minutes)"
+          minimum_running_time_in_minutes = 5
+          idle_config = [{
+            cron             = "* * * * *"
+            timeZone         = "Europe/Warsaw"
+            idleCount        = 1
+            evictionStrategy = "newest_first"
+          }]
+        }
+        pool = {
+          config = [{
+            schedule_expression          = "cron(0 8 * * ? *)"
+            schedule_expression_timezone = "Europe/Warsaw"
+            size                         = 1
+          }]
+          runner_owner = "cisco-open"
+        }
+        job_retry = {
+          enabled          = true
+          delay_in_seconds = 120
+          delay_backoff    = 3
+          max_attempts     = 2
+          lambda = {
+            memory_size = 512
+            timeout     = 45
+          }
+        }
         compute_provider = {
           ec2 = {
             metadata_options = {
@@ -190,8 +251,17 @@ variables {
             }]
           }
         }
+        matcherConfig = {
+          labelMatchers           = [["self-hosted", "ec2"], ["self-hosted", "gpu"]]
+          exactMatch              = true
+          bidirectionalLabelMatch = true
+          priority                = 5
+          enableDynamicLabels     = true
+          awsDynamicLabelsPolicy = {
+            blocked_keys = ["instance-type"]
+          }
+        }
       }
-
     }
   }
 }
@@ -247,9 +317,60 @@ run "ec2_v2_input_v1_adapter_plan" {
 
   assert {
     condition = (
+      local.multi_runner_config_v1.ec2.runner_config.runner_boot_time_in_minutes == 7
+      && local.multi_runner_config_v1.ec2.runner_config.runner_disable_default_labels
+      && tolist(local.multi_runner_config_v1.ec2.runner_config.runner_extra_labels) == tolist(["caller-extra"])
+      && local.multi_runner_config_v1.ec2.runner_config.runner_group_name == "Forge"
+      && local.multi_runner_config_v1.ec2.runner_config.runner_name_prefix == "forge-"
+      && local.multi_runner_config_v1.ec2.runner_config.runner_as_root
+      && local.multi_runner_config_v1.ec2.runner_config.runner_run_as == "ec2-user"
+      && local.multi_runner_config_v1.ec2.runner_config.runners_maximum_count == 2
+      && local.multi_runner_config_v1.ec2.runner_config.enable_ephemeral_runners
+      && !local.multi_runner_config_v1.ec2.runner_config.enable_jit_config
+      && local.multi_runner_config_v1.ec2.runner_config.disable_runner_autoupdate
+      && local.multi_runner_config_v1.ec2.runner_config.enable_organization_runners
+    )
+    error_message = "The v1 adapter must translate the complete nested runner and GitHub blocks."
+  }
+
+  assert {
+    condition = (
+      local.multi_runner_config_v1.ec2.runner_config.delay_webhook_event == 7
+      && local.multi_runner_config_v1.ec2.runner_config.job_queue_retention_in_seconds == 90000
+      && local.multi_runner_config_v1.ec2.runner_config.lambda_event_source_mapping_batch_size == 5
+      && local.multi_runner_config_v1.ec2.runner_config.lambda_event_source_mapping_maximum_batching_window_in_seconds == 1
+      && local.multi_runner_config_v1.ec2.runner_config.scale_up_reserved_concurrent_executions == 2
+      && !local.multi_runner_config_v1.ec2.runner_config.enable_job_queued_check
+      && local.multi_runner_config_v1.ec2.runner_config.scale_down_schedule_expression == "rate(10 minutes)"
+      && local.multi_runner_config_v1.ec2.runner_config.minimum_running_time_in_minutes == 5
+      && local.multi_runner_config_v1.ec2.runner_config.idle_config[0].idleCount == 1
+      && local.multi_runner_config_v1.ec2.redrive_build_queue.maxReceiveCount == 4
+    )
+    error_message = "The v1 adapter must translate the queue, scale-up, and scale-down blocks."
+  }
+
+  assert {
+    condition = (
+      local.multi_runner_config_v1.ec2.runner_config.pool_config[0].size == 1
+      && local.multi_runner_config_v1.ec2.runner_config.pool_runner_owner == "cisco-open"
+      && local.multi_runner_config_v1.ec2.runner_config.job_retry.enable
+      && local.multi_runner_config_v1.ec2.runner_config.job_retry.delay_in_seconds == 120
+      && local.multi_runner_config_v1.ec2.runner_config.job_retry.delay_backoff == 3
+      && local.multi_runner_config_v1.ec2.runner_config.job_retry.max_attempts == 2
+      && local.multi_runner_config_v1.ec2.runner_config.job_retry.lambda_memory_size == 512
+      && local.multi_runner_config_v1.ec2.runner_config.job_retry.lambda_timeout == 45
+    )
+    error_message = "The v1 adapter must translate the pool and job-retry blocks."
+  }
+
+  assert {
+    condition = (
       local.multi_runner_config_v1.ec2.runner_config.userdata_pre_install == "caller-pre"
       && startswith(local.multi_runner_config_v1.ec2.runner_config.userdata_post_install, "caller-post\n")
+      && strcontains(local.multi_runner_config_v1.ec2.runner_config.userdata_post_install, "su -l root -c")
+      && strcontains(local.multi_runner_config_v1.ec2.runner_config.userdata_post_install, "--config /root/.docker")
       && length(local.multi_runner_config_v1.ec2.runner_config.runner_log_files) == 4
+      && local.multi_runner_config_v1.ec2.runner_config.runner_log_files[3].file_path == "/root/hook.log"
       && local.multi_runner_config_v1.ec2.runner_config.runner_ec2_tags.Environment == "test"
       && local.multi_runner_config_v1.ec2.runner_config.runner_ec2_tags.Lane == "ec2"
     )
@@ -267,9 +388,30 @@ run "ec2_v2_input_v1_adapter_plan" {
 
   assert {
     condition = (
-      length(local.multi_runner_config_v1.ec2.matcherConfig.labelMatchers) == 1
-      && tolist(local.multi_runner_config_v1.ec2.matcherConfig.labelMatchers[0]) == tolist(["self-hosted", "ec2"])
+      startswith(
+        local.multi_runner_config_v1.ec2.runner_config.runner_hook_job_started,
+        "printf '%s' '${base64encode("echo caller-started\nexit 0")}' | base64 --decode | bash\n",
+      )
+      && startswith(
+        local.multi_runner_config_v1.ec2.runner_config.runner_hook_job_completed,
+        "printf '%s' '${base64encode("echo caller-completed")}' | base64 --decode | bash\n",
+      )
+      && local.multi_runner_config_v1.ec2.runner_config.runner_iam_role_managed_policy_arns[2] == "arn:aws:iam::123456789012:policy/caller"
     )
-    error_message = "Empty extra labels must retain the base label matcher."
+    error_message = "Caller hooks must be isolated from Forge's required lifecycle hooks, and caller policies must be appended."
+  }
+
+  assert {
+    condition = (
+      length(local.multi_runner_config_v1.ec2.matcherConfig.labelMatchers) == 2
+      && tolist(local.multi_runner_config_v1.ec2.matcherConfig.labelMatchers[0]) == tolist(["self-hosted", "ec2"])
+      && tolist(local.multi_runner_config_v1.ec2.matcherConfig.labelMatchers[1]) == tolist(["self-hosted", "gpu"])
+      && local.multi_runner_config_v1.ec2.matcherConfig.exactMatch
+      && local.multi_runner_config_v1.ec2.matcherConfig.bidirectionalLabelMatch
+      && local.multi_runner_config_v1.ec2.matcherConfig.priority == 5
+      && local.multi_runner_config_v1.ec2.matcherConfig.enableDynamicLabels
+      && tolist(local.multi_runner_config_v1.ec2.matcherConfig.awsDynamicLabelsPolicy.blocked_keys) == tolist(["instance-type"])
+    )
+    error_message = "The v1 adapter must preserve matcher configuration."
   }
 }

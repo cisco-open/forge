@@ -15,35 +15,125 @@ variable "ec2_deployment_specs" {
     lambda_vpc_id     = string
     vpc_id            = string
     runner_specs = map(object({
-      runner_labels         = list(string)
-      runner_os             = string
-      runner_architecture   = string
-      extra_labels          = list(string)
-      enable_dynamic_labels = optional(bool, false)
-      aws_dynamic_labels_policy = optional(object({
-        blocked_keys = optional(list(string), [])
-        restricted_keys = optional(map(object({
-          allowed = optional(list(string), [])
-          denied  = optional(list(string), [])
-          max     = optional(string, null)
-        })), {})
-      }), null)
-      lambda_event_source_mapping_batch_size                         = optional(number, 10)
-      lambda_event_source_mapping_maximum_batching_window_in_seconds = optional(number, 0)
-      redrive_build_queue = optional(object({
-        enabled         = optional(bool, true)
-        maxReceiveCount = optional(number, 10)
+      tags = optional(map(string), {})
+
+      runner = object({
+        os                     = string
+        architecture           = string
+        boot_time_in_minutes   = optional(number, 5)
+        disable_default_labels = optional(bool, false)
+        extra_labels           = optional(list(string), [])
+        group_name             = optional(string, "Default")
+        name_prefix            = optional(string, "")
+        run_as_root            = optional(bool, false)
+        run_as                 = optional(string, "ec2-user")
+        maximum_count          = number
+        ephemeral              = optional(bool, false)
+        jit_config_enabled     = optional(bool, null)
+        auto_update_disabled   = optional(bool, false)
+        tags                   = optional(map(string), {})
+        hooks = optional(object({
+          job_started   = optional(string, "")
+          job_completed = optional(string, "")
+        }), {})
+        iam = optional(object({
+          role = optional(object({
+            arn = string
+          }), null)
+          managed_policy_arns          = optional(map(string), {})
+          additional_trust_policy_json = optional(string, null)
+          path                         = optional(string, null)
+          permissions_boundary         = optional(string, null)
+        }), {})
+      })
+
+      github = optional(object({
+        organization_runners = optional(bool, false)
       }), {})
-      max_instances = number
-      min_run_time  = number
-      pool_config = list(object({
-        size                         = number
-        schedule_expression          = string
-        schedule_expression_timezone = string
-      }))
-      runner_user = string
+
+      lambda = optional(object({
+        tags = optional(map(string), {})
+      }), {})
+
+      queue = optional(object({
+        delay_webhook_event            = optional(number, 30)
+        job_queue_retention_in_seconds = optional(number, 86400)
+        event_source_mapping = optional(object({
+          batch_size                         = optional(number, null)
+          maximum_batching_window_in_seconds = optional(number, null)
+        }), {})
+        redrive_build_queue = optional(object({
+          enabled         = bool
+          maxReceiveCount = number
+          }), {
+          enabled         = false
+          maxReceiveCount = null
+        })
+        tags = optional(map(string), {})
+      }), {})
+
+      scale_up = optional(object({
+        reserved_concurrent_executions = optional(number, 1)
+        job_queued_check_enabled       = optional(bool, null)
+        tags                           = optional(map(string), {})
+      }), {})
+
+      scale_down = optional(object({
+        schedule_expression             = optional(string, "cron(*/5 * * * ? *)")
+        minimum_running_time_in_minutes = optional(number, null)
+        tags                            = optional(map(string), {})
+        idle_config = optional(list(object({
+          cron             = string
+          timeZone         = string
+          idleCount        = number
+          evictionStrategy = optional(string, "oldest_first")
+        })), [])
+      }), {})
+
+      pool = optional(object({
+        config = optional(list(object({
+          schedule_expression          = string
+          schedule_expression_timezone = optional(string)
+          size                         = number
+        })), [])
+        runner_owner = optional(string, null)
+        tags         = optional(map(string), {})
+      }), {})
+
+      job_retry = optional(object({
+        enabled          = optional(bool, false)
+        delay_in_seconds = optional(number, 300)
+        delay_backoff    = optional(number, 2)
+        max_attempts     = optional(number, 1)
+        tags             = optional(map(string), {})
+        lambda = optional(object({
+          memory_size                    = optional(number, 256)
+          reserved_concurrent_executions = optional(number, 1)
+          timeout                        = optional(number, 30)
+        }), {})
+      }), {})
+
+      ssm = optional(object({
+        tags = optional(map(string), {})
+        kms_key = optional(object({
+          arn = string
+        }), null)
+        parameters = optional(object({
+          tags = optional(map(string), {})
+        }), {})
+        housekeeper = optional(object({
+          tags = optional(map(string), {})
+        }), {})
+      }), {})
+
+      observability = optional(object({
+        logs = optional(object({
+          tags = optional(map(string), {})
+        }), {})
+      }), {})
+
       compute_provider = object({
-        ec2 = object({
+        ec2 = optional(object({
           metadata_options = optional(object({
             instance_metadata_tags      = optional(string, "enabled")
             http_endpoint               = optional(string, "enabled")
@@ -146,7 +236,23 @@ variable "ec2_deployment_specs" {
             log_class        = optional(string, "STANDARD")
           })), null)
           tags = optional(map(string), {})
-        })
+        }), null)
+      })
+
+      matcherConfig = object({
+        labelMatchers           = list(list(string))
+        exactMatch              = optional(bool, false)
+        bidirectionalLabelMatch = optional(bool, false)
+        priority                = optional(number, 999)
+        enableDynamicLabels     = optional(bool, false)
+        awsDynamicLabelsPolicy = optional(object({
+          blocked_keys = optional(list(string), [])
+          restricted_keys = optional(map(object({
+            allowed = optional(list(string), [])
+            denied  = optional(list(string), [])
+            max     = optional(string, null)
+          })), {})
+        }), null)
       })
     }))
   })
@@ -154,8 +260,12 @@ variable "ec2_deployment_specs" {
   validation {
     condition = alltrue([
       for runner_config in values(var.ec2_deployment_specs.runner_specs) :
-      length(runner_config.compute_provider.ec2.ami[*]) == 1
-      && try(length(runner_config.compute_provider.ec2.ami.id_ssm_parameter[*]) == 0, false)
+      try(
+        length(runner_config.compute_provider.ec2[*]) == 1
+        && length(runner_config.compute_provider.ec2.ami[*]) == 1
+        && length(runner_config.compute_provider.ec2.ami.id_ssm_parameter[*]) == 0,
+        false,
+      )
     ])
     error_message = "Forge EC2 runner_specs must configure a module-managed ami block; ami = null and external ami.id_ssm_parameter ownership are not supported."
   }
@@ -163,7 +273,7 @@ variable "ec2_deployment_specs" {
   validation {
     condition = alltrue([
       for runner_config in values(var.ec2_deployment_specs.runner_specs) :
-      !runner_config.compute_provider.ec2.user_data.debug_logging_enabled
+      try(!runner_config.compute_provider.ec2.user_data.debug_logging_enabled, false)
     ])
     error_message = "Forge EC2 runner_specs do not support user_data.debug_logging_enabled while the upstream v1 adapter is active."
   }
@@ -171,9 +281,44 @@ variable "ec2_deployment_specs" {
   validation {
     condition = alltrue([
       for runner_config in values(var.ec2_deployment_specs.runner_specs) :
-      length(runner_config.compute_provider.ec2.instance_profile[*]) == 0
+      try(
+        length(runner_config.compute_provider.ec2.instance_profile[*]) == 0
+        && length(runner_config.runner.iam.role[*]) == 0,
+        false,
+      )
     ])
-    error_message = "Forge EC2 runner_specs do not support an external instance_profile."
+    error_message = "Forge EC2 runner_specs do not support external runner.iam.role or compute_provider.ec2.instance_profile ownership while the upstream v1 adapter is active."
+  }
+
+  validation {
+    condition = alltrue([
+      for runner_config in values(var.ec2_deployment_specs.runner_specs) :
+      length(runner_config.tags) == 0
+      && length(runner_config.runner.tags) == 0
+      && length(runner_config.lambda.tags) == 0
+      && length(runner_config.queue.tags) == 0
+      && length(runner_config.scale_up.tags) == 0
+      && length(runner_config.scale_down.tags) == 0
+      && length(runner_config.pool.tags) == 0
+      && length(runner_config.job_retry.tags) == 0
+      && length(runner_config.ssm.tags) == 0
+      && length(runner_config.ssm.parameters.tags) == 0
+      && length(runner_config.ssm.housekeeper.tags) == 0
+      && length(runner_config.observability.logs.tags) == 0
+    ])
+    error_message = "Forge EC2 runner_specs only support compute_provider.ec2.tags while the upstream v1 adapter is active; all other v2 per-lane tag maps must remain empty."
+  }
+
+  validation {
+    condition = alltrue([
+      for runner_config in values(var.ec2_deployment_specs.runner_specs) :
+      runner_config.runner.iam.additional_trust_policy_json == null
+      && runner_config.runner.iam.path == null
+      && runner_config.runner.iam.permissions_boundary == null
+      && runner_config.job_retry.lambda.reserved_concurrent_executions == 1
+      && runner_config.ssm.kms_key == null
+    ])
+    error_message = "Forge EC2 runner_specs do not support per-lane IAM trust/path/boundary, non-default job-retry Lambda reserved concurrency, or per-lane SSM KMS keys while the upstream v1 adapter is active."
   }
 
   description = <<-EOT
@@ -189,31 +334,20 @@ variable "ec2_deployment_specs" {
     - runner_specs     : Map of EC2 runner lanes.
 
   runner_specs[*] object fields:
-    - runner_labels   : Base GitHub labels applied to jobs for this pool.
-    - runner_os       : Runner operating system (for example, linux).
-    - runner_architecture: CPU architecture (for example, x86_64 or arm64).
-    - extra_labels    : Additional GitHub labels that further specialize
-                        this runner pool.
-    - enable_dynamic_labels: Enables dynamic `ghr-` labels for this runner
-                        pool.
-    - aws_dynamic_labels_policy: Optional policy for `ghr-ec2-*` labels for
-                        this runner pool.
-    - lambda_event_source_mapping_batch_size: Optional maximum number of queued
-                        jobs passed to the scale-up Lambda per invocation.
-    - lambda_event_source_mapping_maximum_batching_window_in_seconds: Optional
-                        maximum time to collect queued jobs before invoking the
-                        scale-up Lambda.
-    - redrive_build_queue: Optional dead-letter queue redrive configuration.
-                        Controls whether redrive is enabled and how many times a
-                        message can be received before moving to the dead-letter
-                        queue.
-    - max_instances   : Maximum number of runners in this pool.
-    - min_run_time    : Minimum job run time (in minutes) before a runner
-                        is eligible for scale-down.
-    - pool_config     : List of pool size schedules (size + cron expression
-                        and optional time zone) controlling baseline capacity.
-    - runner_user     : OS user under which the GitHub runner process runs.
+    - runner          : Provider-neutral OS, architecture, labels, registration,
+                        hooks, capacity, and IAM-policy configuration.
+    - github          : Organization-versus-repository runner registration.
+    - queue           : Webhook delay, retention, Lambda batching, and DLQ
+                        redrive configuration.
+    - scale_up        : Scale-up concurrency and queued-job checks.
+    - scale_down      : Scale-down schedule, minimum runtime, and idle runners.
+    - pool            : Scheduled warm-pool sizes and runner owner.
+    - job_retry       : Retry timing, attempts, and Lambda sizing.
+    - matcherConfig   : Static and dynamic GitHub label matching.
     - compute_provider: Nested v2-compatible EC2 provider configuration.
+    - tags/lambda/ssm/observability: Included for v2 contract compatibility.
+                        Tag scopes and per-lane SSM KMS settings that cannot be
+                        represented by v1 must retain their defaults.
 
   compute_provider.ec2 fields:
     - ami             : Upstream-compatible EC2 AMI configuration.
@@ -229,6 +363,11 @@ variable "ec2_deployment_specs" {
     - cpu_options/placement/license_specifications: EC2 launch-template options.
     - instance_profile: Upstream contract field reserved for future Forge support.
     - log_files/tags  : EC2 logging and resource tags.
+
+  The v7.10.1 compatibility adapter also requires external runner IAM ownership,
+  per-lane IAM trust/path/boundary settings, and non-default job-retry Lambda
+  reserved concurrency to remain unset. These constraints prevent accepted v2
+  settings from being silently discarded by the stable v1 module.
   EOT
 }
 
