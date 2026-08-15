@@ -163,7 +163,7 @@ variables {
           }
         }
 
-        orchestration = {
+        orchestration_provider = {
           webhook = {
             runner = {
               boot_time_in_minutes = 7
@@ -375,7 +375,7 @@ variables {
           os           = "linux"
           architecture = "x64"
         }
-        orchestration = {
+        orchestration_provider = {
           webhook = {
             runner = {
               maximum_count = 1
@@ -423,7 +423,7 @@ run "ec2_v2_input_plan" {
     condition = alltrue([
       for runner_config in values(local.multi_runner_config) :
       length([
-        for provider_config in values(runner_config.orchestration) : provider_config
+        for provider_config in values(runner_config.orchestration_provider) : provider_config
         if provider_config != null
       ]) == 1
     ])
@@ -472,58 +472,58 @@ run "ec2_v2_input_plan" {
       && local.multi_runner_config.ec2.runner.name_prefix == "forge-"
       && local.multi_runner_config.ec2.runner.run_as_root
       && local.multi_runner_config.ec2.runner.run_as == "ec2-user"
-      && local.multi_runner_config.ec2.orchestration.webhook.runner.boot_time_in_minutes == 7
-      && local.multi_runner_config.ec2.orchestration.webhook.runner.ephemeral
-      && !local.multi_runner_config.ec2.orchestration.webhook.runner.jit_config_enabled
-      && local.multi_runner_config.ec2.orchestration.webhook.runner.maximum_count == 2
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.runner.boot_time_in_minutes == 7
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.runner.ephemeral
+      && !local.multi_runner_config.ec2.orchestration_provider.webhook.runner.jit_config_enabled
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.runner.maximum_count == 2
       && local.multi_runner_config.ec2.runner.auto_update_disabled
-      && local.multi_runner_config.ec2.orchestration.webhook.github.organization_runners
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.github.organization_runners
     )
     error_message = "The v2 configuration must preserve the common runner and webhook-owned runner and GitHub blocks."
   }
 
   assert {
     condition = (
-      local.multi_runner_config.ec2.orchestration.webhook.queue.delay_webhook_event == 7
-      && local.multi_runner_config.ec2.orchestration.webhook.queue.job_queue_retention_in_seconds == 90000
-      && local.multi_runner_config.ec2.orchestration.webhook.queue.visibility_timeout_seconds == 240
-      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale.up.event_source_mapping.batch_size == 5
-      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale.up.event_source_mapping.maximum_batching_window_in_seconds == 1
-      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale.up.memory_size == 768
-      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale.up.timeout == 40
-      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale.up.reserved_concurrent_executions == 2
-      && !local.multi_runner_config.ec2.orchestration.webhook.lambda.scale.up.job_queued_check_enabled
-      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale.down.memory_size == 1024
-      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale.down.timeout == 90
-      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale.down.schedule_expression == "rate(10 minutes)"
-      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale.down.minimum_running_time_in_minutes == 5
-      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale.down.idle_config[0].idleCount == 1
-      && local.multi_runner_config.ec2.orchestration.webhook.queue.redrive_build_queue.maxReceiveCount == 4
+      local.multi_runner_config.ec2.orchestration_provider.webhook.queue.delay_webhook_event == 7
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.queue.job_queue_retention_in_seconds == 90000
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.queue.visibility_timeout_seconds == 240
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.lambda.scale.up.event_source_mapping.batch_size == 5
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.lambda.scale.up.event_source_mapping.maximum_batching_window_in_seconds == 1
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.lambda.scale.up.memory_size == 768
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.lambda.scale.up.timeout == 40
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.lambda.scale.up.reserved_concurrent_executions == 2
+      && !local.multi_runner_config.ec2.orchestration_provider.webhook.lambda.scale.up.job_queued_check_enabled
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.lambda.scale.down.memory_size == 1024
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.lambda.scale.down.timeout == 90
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.lambda.scale.down.schedule_expression == "rate(10 minutes)"
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.lambda.scale.down.minimum_running_time_in_minutes == 5
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.lambda.scale.down.idle_config[0].idleCount == 1
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.queue.redrive_build_queue.maxReceiveCount == 4
     )
     error_message = "The v2 configuration must preserve the queue, scale-up, and scale-down blocks."
   }
 
   assert {
     condition = (
-      local.multi_runner_config.ec2.orchestration.webhook.lambda.pool.config[0].size == 1
-      && local.multi_runner_config.ec2.orchestration.webhook.lambda.pool.memory_size == 512
-      && local.multi_runner_config.ec2.orchestration.webhook.lambda.pool.timeout == 75
-      && local.multi_runner_config.ec2.orchestration.webhook.lambda.pool.reserved_concurrent_executions == 2
-      && !local.multi_runner_config.ec2.orchestration.webhook.lambda.pool.include_busy_runners
-      && local.multi_runner_config.ec2.orchestration.webhook.lambda.pool.runner_owner == "cisco-open"
-      && local.multi_runner_config.ec2.orchestration.webhook.job_retry.enabled
-      && local.multi_runner_config.ec2.orchestration.webhook.job_retry.delay_in_seconds == 120
-      && local.multi_runner_config.ec2.orchestration.webhook.job_retry.delay_backoff == 3
-      && local.multi_runner_config.ec2.orchestration.webhook.job_retry.max_attempts == 2
-      && local.multi_runner_config.ec2.orchestration.webhook.job_retry.lambda.memory_size == 512
-      && local.multi_runner_config.ec2.orchestration.webhook.job_retry.lambda.reserved_concurrent_executions == 3
-      && local.multi_runner_config.ec2.orchestration.webhook.job_retry.lambda.timeout == 45
+      local.multi_runner_config.ec2.orchestration_provider.webhook.lambda.pool.config[0].size == 1
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.lambda.pool.memory_size == 512
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.lambda.pool.timeout == 75
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.lambda.pool.reserved_concurrent_executions == 2
+      && !local.multi_runner_config.ec2.orchestration_provider.webhook.lambda.pool.include_busy_runners
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.lambda.pool.runner_owner == "cisco-open"
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.job_retry.enabled
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.job_retry.delay_in_seconds == 120
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.job_retry.delay_backoff == 3
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.job_retry.max_attempts == 2
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.job_retry.lambda.memory_size == 512
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.job_retry.lambda.reserved_concurrent_executions == 3
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.job_retry.lambda.timeout == 45
     )
     error_message = "The v2 configuration must preserve the pool and job-retry blocks."
   }
 
   assert {
-    condition     = !can(local.multi_runner_config.ec2.orchestration.webhook.lambda.artifact)
+    condition     = !can(local.multi_runner_config.ec2.orchestration_provider.webhook.lambda.artifact)
     error_message = "Runner-control artifacts must be configured globally, not in a per-runner webhook Lambda block."
   }
 
@@ -570,14 +570,14 @@ run "ec2_v2_input_plan" {
 
   assert {
     condition = (
-      length(local.multi_runner_config.ec2.orchestration.webhook.matcherConfig.labelMatchers) == 2
-      && tolist(local.multi_runner_config.ec2.orchestration.webhook.matcherConfig.labelMatchers[0]) == tolist(["self-hosted", "ec2"])
-      && tolist(local.multi_runner_config.ec2.orchestration.webhook.matcherConfig.labelMatchers[1]) == tolist(["self-hosted", "gpu"])
-      && local.multi_runner_config.ec2.orchestration.webhook.matcherConfig.exactMatch
-      && local.multi_runner_config.ec2.orchestration.webhook.matcherConfig.bidirectionalLabelMatch
-      && local.multi_runner_config.ec2.orchestration.webhook.matcherConfig.priority == 5
-      && local.multi_runner_config.ec2.orchestration.webhook.matcherConfig.enableDynamicLabels
-      && tolist(local.multi_runner_config.ec2.orchestration.webhook.matcherConfig.awsDynamicLabelsPolicy.blocked_keys) == tolist(["instance-type"])
+      length(local.multi_runner_config.ec2.orchestration_provider.webhook.matcherConfig.labelMatchers) == 2
+      && tolist(local.multi_runner_config.ec2.orchestration_provider.webhook.matcherConfig.labelMatchers[0]) == tolist(["self-hosted", "ec2"])
+      && tolist(local.multi_runner_config.ec2.orchestration_provider.webhook.matcherConfig.labelMatchers[1]) == tolist(["self-hosted", "gpu"])
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.matcherConfig.exactMatch
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.matcherConfig.bidirectionalLabelMatch
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.matcherConfig.priority == 5
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.matcherConfig.enableDynamicLabels
+      && tolist(local.multi_runner_config.ec2.orchestration_provider.webhook.matcherConfig.awsDynamicLabelsPolicy.blocked_keys) == tolist(["instance-type"])
     )
     error_message = "The v2 configuration must preserve matcher configuration."
   }
@@ -587,11 +587,11 @@ run "ec2_v2_input_plan" {
       local.multi_runner_config.ec2.tags.Scope == "entry"
       && local.multi_runner_config.ec2.runner.tags.Scope == "runner"
       && local.multi_runner_config.ec2.lambda.tags.Scope == "lambda"
-      && local.multi_runner_config.ec2.orchestration.webhook.queue.tags.Scope == "queue"
-      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale.up.tags.Scope == "scale-up"
-      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale.down.tags.Scope == "scale-down"
-      && local.multi_runner_config.ec2.orchestration.webhook.lambda.pool.tags.Scope == "pool"
-      && local.multi_runner_config.ec2.orchestration.webhook.job_retry.tags.Scope == "job-retry"
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.queue.tags.Scope == "queue"
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.lambda.scale.up.tags.Scope == "scale-up"
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.lambda.scale.down.tags.Scope == "scale-down"
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.lambda.pool.tags.Scope == "pool"
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.job_retry.tags.Scope == "job-retry"
       && local.multi_runner_config.ec2.ssm.tags.Scope == "ssm"
       && local.multi_runner_config.ec2.ssm.parameters.tags.Scope == "ssm-parameters"
       && local.multi_runner_config.ec2.ssm.housekeeper.tags.Scope == "ssm-housekeeper"
@@ -659,11 +659,11 @@ run "ec2_v2_input_plan" {
     condition = (
       local.experimental_config.github.app.id == "12345"
       && local.experimental_config.github.enterprise_server.url == null
-      && local.experimental_config.orchestration.webhook.eventbridge.enable
-      && local.experimental_config.orchestration.webhook.lambda.artifact.zip == "/private/tmp/forge-test-lambda-cache/runners.zip"
+      && local.experimental_config.orchestration_provider.webhook.eventbridge.enable
+      && local.experimental_config.orchestration_provider.webhook.lambda.artifact.zip == "/private/tmp/forge-test-lambda-cache/runners.zip"
       && tolist(local.experimental_config.lambda.subnet_ids) == tolist(["subnet-test"])
       && length(local.experimental_config.lambda.security_group_ids) == 1
-      && local.experimental_config.orchestration.webhook.lambda.webhook.artifact.zip == "/private/tmp/forge-test-lambda-cache/webhook.zip"
+      && local.experimental_config.orchestration_provider.webhook.lambda.webhook.artifact.zip == "/private/tmp/forge-test-lambda-cache/webhook.zip"
       && local.experimental_config.ssm.kms_key_id == "arn:aws:kms:eu-west-1:123456789012:key/00000000-0000-0000-0000-000000000000"
       && local.experimental_config.ssm.housekeeper.lambda.artifact.zip == "/private/tmp/forge-test-lambda-cache/runners.zip"
       && local.experimental_config.observability.logs.level == "info"
@@ -687,8 +687,8 @@ run "ec2_v2_input_plan" {
 
   assert {
     condition = (
-      local.experimental_config.orchestration.webhook.lambda.webhook.api_gateway_access_log_settings.destination_arn == aws_cloudwatch_log_group.webhook_api_gateway_access.arn
-      && local.experimental_config.orchestration.webhook.lambda.webhook.api_gateway_access_log_settings.format == local.webhook_api_gateway_access_log_format
+      local.experimental_config.orchestration_provider.webhook.lambda.webhook.api_gateway_access_log_settings.destination_arn == aws_cloudwatch_log_group.webhook_api_gateway_access.arn
+      && local.experimental_config.orchestration_provider.webhook.lambda.webhook.api_gateway_access_log_settings.format == local.webhook_api_gateway_access_log_format
     )
     error_message = "Forge webhook API Gateway access-log settings must be carried by the experimental webhook contract."
   }

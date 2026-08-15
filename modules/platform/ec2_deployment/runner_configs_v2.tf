@@ -91,7 +91,7 @@ locals {
   legacy_runner_labels = {
     for key, runner_config in local.ec2_runner_configs :
     key => concat(
-      try(runner_config.orchestration.webhook.matcherConfig.labelMatchers[0], []),
+      try(runner_config.orchestration_provider.webhook.matcherConfig.labelMatchers[0], []),
       coalesce(runner_config.runner.extra_labels, []),
     )
   }
@@ -105,7 +105,7 @@ locals {
       local.legacy_runner_labels[key],
       distinct([
         for label in flatten([
-          for matcher_index, labels in runner_config.orchestration.webhook.matcherConfig.labelMatchers : labels if matcher_index > 0
+          for matcher_index, labels in runner_config.orchestration_provider.webhook.matcherConfig.labelMatchers : labels if matcher_index > 0
         ]) : label
         if !contains(local.legacy_runner_labels[key], label)
       ]),
@@ -234,7 +234,7 @@ locals {
       tags               = local.terraform_aws_github_runner_tags
     }
 
-    orchestration = {
+    orchestration_provider = {
       webhook = {
         eventbridge = {
           enable = true

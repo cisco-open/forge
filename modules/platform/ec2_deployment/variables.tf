@@ -57,7 +57,7 @@ variable "runner_configs" {
         }), {})
       }), {})
 
-      orchestration = object({
+      orchestration_provider = object({
         webhook = optional(object({
           runner = object({
             boot_time_in_minutes = optional(number, null)
@@ -339,7 +339,7 @@ variable "runner_configs" {
     condition = alltrue([
       for runner_config in values(var.runner_configs.runner_specs) :
       length([
-        for provider_config in values(runner_config.orchestration) : provider_config
+        for provider_config in values(runner_config.orchestration_provider) : provider_config
         if provider_config != null
       ]) == 1
     ])
