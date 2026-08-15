@@ -29,7 +29,6 @@ variable "runner_configs" {
         name_prefix            = optional(string, null)
         run_as_root            = optional(bool, null)
         run_as                 = optional(string, null)
-        maximum_count          = number
         ephemeral              = optional(bool, null)
         jit_config_enabled     = optional(bool, null)
         auto_update_disabled   = optional(bool, null)
@@ -49,10 +48,6 @@ variable "runner_configs" {
         }), {})
       })
 
-      github = optional(object({
-        organization_runners = optional(bool, false)
-      }), {})
-
       lambda = optional(object({
         runtime            = optional(string, null)
         architecture       = optional(string, null)
@@ -63,68 +58,99 @@ variable "runner_configs" {
           path                 = optional(string, null)
           permissions_boundary = optional(string, null)
         }), {})
-        scale_up = optional(object({
-          memory_size                    = optional(number, null)
-          timeout                        = optional(number, null)
-          reserved_concurrent_executions = optional(number, null)
-          job_queued_check_enabled       = optional(bool, null)
-          event_source_mapping = optional(object({
-            batch_size                         = optional(number, null)
-            maximum_batching_window_in_seconds = optional(number, null)
+      }), {})
+
+      orchestration = object({
+        webhook = optional(object({
+          runner = object({
+            maximum_count = number
+          })
+
+          github = optional(object({
+            organization_runners = optional(bool, false)
           }), {})
-          tags = optional(map(string), {})
-        }), {})
-        scale_down = optional(object({
-          memory_size                     = optional(number, null)
-          timeout                         = optional(number, null)
-          schedule_expression             = optional(string, null)
-          minimum_running_time_in_minutes = optional(number, null)
-          idle_config = optional(list(object({
-            cron             = string
-            timeZone         = string
-            idleCount        = number
-            evictionStrategy = optional(string, "oldest_first")
-          })), null)
-          tags = optional(map(string), {})
-        }), {})
-        pool = optional(object({
-          memory_size                    = optional(number, null)
-          timeout                        = optional(number, null)
-          reserved_concurrent_executions = optional(number, null)
-          config = optional(list(object({
-            schedule_expression          = string
-            schedule_expression_timezone = optional(string)
-            size                         = number
-          })), null)
-          include_busy_runners = optional(bool, null)
-          runner_owner         = optional(string, null)
-          tags                 = optional(map(string), {})
-        }), {})
-      }), {})
 
-      queue = optional(object({
-        delay_webhook_event            = optional(number, null)
-        job_queue_retention_in_seconds = optional(number, null)
-        visibility_timeout_seconds     = optional(number, null)
-        redrive_build_queue = optional(object({
-          enabled         = optional(bool, null)
-          maxReceiveCount = optional(number, null)
+          matcherConfig = object({
+            labelMatchers           = list(list(string))
+            exactMatch              = optional(bool, false)
+            bidirectionalLabelMatch = optional(bool, false)
+            priority                = optional(number, 999)
+            enableDynamicLabels     = optional(bool, false)
+            awsDynamicLabelsPolicy = optional(object({
+              blocked_keys = optional(list(string), [])
+              restricted_keys = optional(map(object({
+                allowed = optional(list(string), [])
+                denied  = optional(list(string), [])
+                max     = optional(string, null)
+              })), {})
+            }), null)
+          })
+
+          queue = optional(object({
+            delay_webhook_event            = optional(number, null)
+            job_queue_retention_in_seconds = optional(number, null)
+            visibility_timeout_seconds     = optional(number, null)
+            redrive_build_queue = optional(object({
+              enabled         = optional(bool, null)
+              maxReceiveCount = optional(number, null)
+            }), null)
+            tags = optional(map(string), {})
+          }), {})
+
+          lambda = optional(object({
+            scale_up = optional(object({
+              memory_size                    = optional(number, null)
+              timeout                        = optional(number, null)
+              reserved_concurrent_executions = optional(number, null)
+              job_queued_check_enabled       = optional(bool, null)
+              event_source_mapping = optional(object({
+                batch_size                         = optional(number, null)
+                maximum_batching_window_in_seconds = optional(number, null)
+              }), {})
+              tags = optional(map(string), {})
+            }), {})
+            scale_down = optional(object({
+              memory_size                     = optional(number, null)
+              timeout                         = optional(number, null)
+              schedule_expression             = optional(string, null)
+              minimum_running_time_in_minutes = optional(number, null)
+              idle_config = optional(list(object({
+                cron             = string
+                timeZone         = string
+                idleCount        = number
+                evictionStrategy = optional(string, "oldest_first")
+              })), null)
+              tags = optional(map(string), {})
+            }), {})
+            pool = optional(object({
+              memory_size                    = optional(number, null)
+              timeout                        = optional(number, null)
+              reserved_concurrent_executions = optional(number, null)
+              config = optional(list(object({
+                schedule_expression          = string
+                schedule_expression_timezone = optional(string)
+                size                         = number
+              })), null)
+              include_busy_runners = optional(bool, null)
+              runner_owner         = optional(string, null)
+              tags                 = optional(map(string), {})
+            }), {})
+          }), {})
+
+          job_retry = optional(object({
+            enabled          = optional(bool, false)
+            delay_in_seconds = optional(number, 300)
+            delay_backoff    = optional(number, 2)
+            max_attempts     = optional(number, 1)
+            tags             = optional(map(string), {})
+            lambda = optional(object({
+              memory_size                    = optional(number, 256)
+              reserved_concurrent_executions = optional(number, 1)
+              timeout                        = optional(number, 30)
+            }), {})
+          }), {})
         }), null)
-        tags = optional(map(string), {})
-      }), {})
-
-      job_retry = optional(object({
-        enabled          = optional(bool, false)
-        delay_in_seconds = optional(number, 300)
-        delay_backoff    = optional(number, 2)
-        max_attempts     = optional(number, 1)
-        tags             = optional(map(string), {})
-        lambda = optional(object({
-          memory_size                    = optional(number, 256)
-          reserved_concurrent_executions = optional(number, 1)
-          timeout                        = optional(number, 30)
-        }), {})
-      }), {})
+      })
 
       ssm = optional(object({
         paths = optional(object({
@@ -141,6 +167,13 @@ variable "runner_configs" {
           state               = optional(string, null)
           tags                = optional(map(string), {})
           lambda = optional(object({
+            artifact = optional(object({
+              zip = optional(string, null)
+              s3 = optional(object({
+                key            = string
+                object_version = optional(string, null)
+              }), null)
+            }), {})
             memory_size = optional(number, null)
             timeout     = optional(number, null)
           }), {})
@@ -297,23 +330,19 @@ variable "runner_configs" {
         }), null)
       })
 
-      matcherConfig = object({
-        labelMatchers           = list(list(string))
-        exactMatch              = optional(bool, false)
-        bidirectionalLabelMatch = optional(bool, false)
-        priority                = optional(number, 999)
-        enableDynamicLabels     = optional(bool, false)
-        awsDynamicLabelsPolicy = optional(object({
-          blocked_keys = optional(list(string), [])
-          restricted_keys = optional(map(object({
-            allowed = optional(list(string), [])
-            denied  = optional(list(string), [])
-            max     = optional(string, null)
-          })), {})
-        }), null)
-      })
     }))
   })
+
+  validation {
+    condition = alltrue([
+      for runner_config in values(var.runner_configs.runner_specs) :
+      length([
+        for provider_config in values(runner_config.orchestration) : provider_config
+        if provider_config != null
+      ]) == 1
+    ])
+    error_message = "Each Forge runner configuration must select exactly one non-null orchestration provider."
+  }
 
   validation {
     condition = alltrue([

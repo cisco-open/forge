@@ -27,7 +27,6 @@ variable "ec2_deployment_specs" {
         name_prefix            = optional(string, null)
         run_as_root            = optional(bool, null)
         run_as                 = optional(string, null)
-        maximum_count          = number
         ephemeral              = optional(bool, null)
         jit_config_enabled     = optional(bool, null)
         auto_update_disabled   = optional(bool, null)
@@ -47,10 +46,6 @@ variable "ec2_deployment_specs" {
         }), {})
       })
 
-      github = optional(object({
-        organization_runners = optional(bool, false)
-      }), {})
-
       lambda = optional(object({
         runtime            = optional(string, null)
         architecture       = optional(string, null)
@@ -61,68 +56,99 @@ variable "ec2_deployment_specs" {
           path                 = optional(string, null)
           permissions_boundary = optional(string, null)
         }), {})
-        scale_up = optional(object({
-          memory_size                    = optional(number, null)
-          timeout                        = optional(number, null)
-          reserved_concurrent_executions = optional(number, null)
-          job_queued_check_enabled       = optional(bool, null)
-          event_source_mapping = optional(object({
-            batch_size                         = optional(number, null)
-            maximum_batching_window_in_seconds = optional(number, null)
+      }), {})
+
+      orchestration = object({
+        webhook = optional(object({
+          runner = object({
+            maximum_count = number
+          })
+
+          github = optional(object({
+            organization_runners = optional(bool, false)
           }), {})
-          tags = optional(map(string), {})
-        }), {})
-        scale_down = optional(object({
-          memory_size                     = optional(number, null)
-          timeout                         = optional(number, null)
-          schedule_expression             = optional(string, null)
-          minimum_running_time_in_minutes = optional(number, null)
-          idle_config = optional(list(object({
-            cron             = string
-            timeZone         = string
-            idleCount        = number
-            evictionStrategy = optional(string, "oldest_first")
-          })), null)
-          tags = optional(map(string), {})
-        }), {})
-        pool = optional(object({
-          memory_size                    = optional(number, null)
-          timeout                        = optional(number, null)
-          reserved_concurrent_executions = optional(number, null)
-          config = optional(list(object({
-            schedule_expression          = string
-            schedule_expression_timezone = optional(string)
-            size                         = number
-          })), null)
-          include_busy_runners = optional(bool, null)
-          runner_owner         = optional(string, null)
-          tags                 = optional(map(string), {})
-        }), {})
-      }), {})
 
-      queue = optional(object({
-        delay_webhook_event            = optional(number, null)
-        job_queue_retention_in_seconds = optional(number, null)
-        visibility_timeout_seconds     = optional(number, null)
-        redrive_build_queue = optional(object({
-          enabled         = optional(bool, null)
-          maxReceiveCount = optional(number, null)
+          matcherConfig = object({
+            labelMatchers           = list(list(string))
+            exactMatch              = optional(bool, false)
+            bidirectionalLabelMatch = optional(bool, false)
+            priority                = optional(number, 999)
+            enableDynamicLabels     = optional(bool, false)
+            awsDynamicLabelsPolicy = optional(object({
+              blocked_keys = optional(list(string), [])
+              restricted_keys = optional(map(object({
+                allowed = optional(list(string), [])
+                denied  = optional(list(string), [])
+                max     = optional(string, null)
+              })), {})
+            }), null)
+          })
+
+          queue = optional(object({
+            delay_webhook_event            = optional(number, null)
+            job_queue_retention_in_seconds = optional(number, null)
+            visibility_timeout_seconds     = optional(number, null)
+            redrive_build_queue = optional(object({
+              enabled         = optional(bool, null)
+              maxReceiveCount = optional(number, null)
+            }), null)
+            tags = optional(map(string), {})
+          }), {})
+
+          lambda = optional(object({
+            scale_up = optional(object({
+              memory_size                    = optional(number, null)
+              timeout                        = optional(number, null)
+              reserved_concurrent_executions = optional(number, null)
+              job_queued_check_enabled       = optional(bool, null)
+              event_source_mapping = optional(object({
+                batch_size                         = optional(number, null)
+                maximum_batching_window_in_seconds = optional(number, null)
+              }), {})
+              tags = optional(map(string), {})
+            }), {})
+            scale_down = optional(object({
+              memory_size                     = optional(number, null)
+              timeout                         = optional(number, null)
+              schedule_expression             = optional(string, null)
+              minimum_running_time_in_minutes = optional(number, null)
+              idle_config = optional(list(object({
+                cron             = string
+                timeZone         = string
+                idleCount        = number
+                evictionStrategy = optional(string, "oldest_first")
+              })), null)
+              tags = optional(map(string), {})
+            }), {})
+            pool = optional(object({
+              memory_size                    = optional(number, null)
+              timeout                        = optional(number, null)
+              reserved_concurrent_executions = optional(number, null)
+              config = optional(list(object({
+                schedule_expression          = string
+                schedule_expression_timezone = optional(string)
+                size                         = number
+              })), null)
+              include_busy_runners = optional(bool, null)
+              runner_owner         = optional(string, null)
+              tags                 = optional(map(string), {})
+            }), {})
+          }), {})
+
+          job_retry = optional(object({
+            enabled          = optional(bool, false)
+            delay_in_seconds = optional(number, 300)
+            delay_backoff    = optional(number, 2)
+            max_attempts     = optional(number, 1)
+            tags             = optional(map(string), {})
+            lambda = optional(object({
+              memory_size                    = optional(number, 256)
+              reserved_concurrent_executions = optional(number, 1)
+              timeout                        = optional(number, 30)
+            }), {})
+          }), {})
         }), null)
-        tags = optional(map(string), {})
-      }), {})
-
-      job_retry = optional(object({
-        enabled          = optional(bool, false)
-        delay_in_seconds = optional(number, 300)
-        delay_backoff    = optional(number, 2)
-        max_attempts     = optional(number, 1)
-        tags             = optional(map(string), {})
-        lambda = optional(object({
-          memory_size                    = optional(number, 256)
-          reserved_concurrent_executions = optional(number, 1)
-          timeout                        = optional(number, 30)
-        }), {})
-      }), {})
+      })
 
       ssm = optional(object({
         paths = optional(object({
@@ -139,6 +165,13 @@ variable "ec2_deployment_specs" {
           state               = optional(string, null)
           tags                = optional(map(string), {})
           lambda = optional(object({
+            artifact = optional(object({
+              zip = optional(string, null)
+              s3 = optional(object({
+                key            = string
+                object_version = optional(string, null)
+              }), null)
+            }), {})
             memory_size = optional(number, null)
             timeout     = optional(number, null)
           }), {})
@@ -295,23 +328,19 @@ variable "ec2_deployment_specs" {
         }), null)
       })
 
-      matcherConfig = object({
-        labelMatchers           = list(list(string))
-        exactMatch              = optional(bool, false)
-        bidirectionalLabelMatch = optional(bool, false)
-        priority                = optional(number, 999)
-        enableDynamicLabels     = optional(bool, false)
-        awsDynamicLabelsPolicy = optional(object({
-          blocked_keys = optional(list(string), [])
-          restricted_keys = optional(map(object({
-            allowed = optional(list(string), [])
-            denied  = optional(list(string), [])
-            max     = optional(string, null)
-          })), {})
-        }), null)
-      })
     }))
   })
+
+  validation {
+    condition = alltrue([
+      for runner_config in values(var.ec2_deployment_specs.runner_specs) :
+      length([
+        for provider_config in values(runner_config.orchestration) : provider_config
+        if provider_config != null
+      ]) == 1
+    ])
+    error_message = "Each Forge runner configuration must select exactly one non-null orchestration provider."
+  }
 
   validation {
     condition = alltrue([
@@ -336,22 +365,21 @@ variable "ec2_deployment_specs" {
       These can be more permissive than the runner subnets.
     - subnet_ids       : Default subnets for EC2 runners.
     - vpc_id           : VPC that contains both runner and lambda subnets.
-    - runner_specs     : Map of EC2 runner lanes.
+    - runner_specs     : Map of EC2 runner configurations.
 
   runner_specs[*] object fields:
     - runner          : Provider-neutral OS, architecture, labels, registration,
-                        hooks, capacity, and IAM-policy configuration.
-    - github          : Organization-versus-repository runner registration.
-    - lambda          : Per-lane Lambda defaults, with scale_up, scale_down, and
-                        pool component configuration nested below it.
-    - queue           : Webhook delay, retention, visibility timeout, and DLQ
-                        redrive configuration.
-    - job_retry       : Retry timing, attempts, and Lambda sizing.
-    - ssm             : Per-lane paths, tags, parameter tags, and housekeeper.
-    - observability   : Per-lane logging, tracing, and metrics overrides.
-    - matcherConfig   : Static and dynamic GitHub label matching.
+                        hooks, and IAM-policy configuration.
+    - lambda          : Provider-neutral per-configuration Lambda runtime,
+                        network, role, and tag overrides.
+    - orchestration   : Exactly one demand-controller provider. The webhook
+                        provider owns runner capacity, GitHub scope, matching,
+                        queues, scaling, pools, and job retry.
+    - ssm             : Per-configuration paths, tags, parameter tags, and
+                        housekeeper settings, including its Lambda artifact.
+    - observability   : Per-configuration logging, tracing, and metrics overrides.
     - compute_provider: Nested v2 EC2 provider configuration.
-    - tags            : Per-lane resource tags.
+    - tags            : Per-configuration resource tags.
 
   compute_provider.ec2 fields:
     - ami             : Upstream-compatible EC2 AMI configuration.
@@ -361,7 +389,7 @@ variable "ec2_deployment_specs" {
     - block_device_mappings: EBS mappings for runner instances.
     - cloudwatch_agent/binaries_syncer/user_data: Runner bootstrap configuration.
     - instance_types and allocation fields: EC2 Fleet capacity configuration.
-    - vpc_id/subnet_ids/security-group fields: Per-lane networking.
+    - vpc_id/subnet_ids/security-group fields: Per-configuration networking.
     - cpu_options/placement/license_specifications: EC2 launch-template options.
     - instance_profile: Optional externally managed instance profile. It requires
                         an externally managed runner IAM role whose owner also
