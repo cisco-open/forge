@@ -54,7 +54,9 @@ run "platform_ec2_deployment_interface_contract" {
       "name_prefix            = optional(string, null)",
       "run_as_root            = optional(bool, null)",
       "run_as                 = optional(string, null)",
-      "maximum_count          = number",
+      "orchestration = object({",
+      "webhook = optional(object({",
+      "maximum_count = number",
       "ephemeral              = optional(bool, null)",
       "jit_config_enabled     = optional(bool, null)",
       "auto_update_disabled   = optional(bool, null)",
@@ -118,6 +120,9 @@ run "platform_ec2_deployment_interface_contract" {
       "config = optional(string, null)",
       "parameters = optional(object({",
       "housekeeper = optional(object({",
+      "artifact = optional(object({",
+      "zip = optional(string, null)",
+      "object_version = optional(string, null)",
       "state               = optional(string, null)",
       "tokenPath      = optional(string, null)",
       "minimumDaysOld = optional(number, null)",
@@ -227,6 +232,9 @@ run "platform_ec2_deployment_interface_contract" {
       "enableDynamicLabels     = optional(bool, false)",
       "awsDynamicLabelsPolicy = optional(object({",
       "for runner_config in values(var.runner_configs.runner_specs) :",
+      "for provider_config in values(runner_config.orchestration) : provider_config",
+      "if provider_config != null",
+      "error_message = \"Each Forge runner configuration must select exactly one non-null orchestration provider.\"",
       "variable \"tenant_configs\"",
       "ecr_registries = list(string)",
       "tags           = map(string)",
@@ -244,7 +252,8 @@ run "platform_ec2_deployment_interface_contract" {
       "error_message = \"Forge EC2 runner_specs must configure a module-managed ami block; ami = null and external ami.id_ssm_parameter ownership are not supported.\"",
       "active_ec2_subnet_ids = toset(flatten([",
       "legacy_runner_labels = {",
-      "matcher_index, labels in runner_config.matcherConfig.labelMatchers",
+      "runner_config.orchestration.webhook.matcherConfig.labelMatchers[0]",
+      "matcher_index, labels in runner_config.orchestration.webhook.matcherConfig.labelMatchers",
       "!contains(local.legacy_runner_labels[key], label)",
       "ec2_default_ami_filters = {",
       "windows = { name = [\"Windows_Server-2022-English-Full-ECS_Optimized-*\"] }",
@@ -279,6 +288,8 @@ run "platform_ec2_deployment_interface_contract" {
       "experimental        = local.experimental_config",
       "experimental_config = {",
       "app = var.runner_configs.github_app",
+      "enterprise_server = {",
+      "orchestration = {",
       "url = try(trimspace(var.runner_configs.ghes_url), \"\") == \"\" ? null : var.runner_configs.ghes_url",
       "artifact = {",
       "kms_key_id = aws_kms_key.github.arn",
@@ -330,7 +341,7 @@ run "platform_ec2_deployment_interface_contract" {
     condition = (
       output.expected_input_variable_count == 4
       && output.expected_output_value_count == 6
-      && output.expected_interface_literal_count == 276
+      && output.expected_interface_literal_count == 287
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

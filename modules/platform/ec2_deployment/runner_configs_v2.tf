@@ -45,7 +45,7 @@ locals {
 
   # Run caller hooks in a child shell so `exit` cannot bypass Forge's mandatory
   # lifecycle hook. Keep the empty-hook path byte-identical to the previous
-  # configuration to avoid state churn for migrated lanes.
+  # configuration to avoid state churn for migrated runner configurations.
   runner_hook_job_started = {
     for key, runner_config in local.ec2_runner_configs :
     key => local.effective_runner_hooks[key].job_started == "" ? local.forge_runner_hook_job_started[key] : join("\n", [
@@ -91,7 +91,7 @@ locals {
   legacy_runner_labels = {
     for key, runner_config in local.ec2_runner_configs :
     key => concat(
-      try(runner_config.matcherConfig.labelMatchers[0], []),
+      try(runner_config.orchestration.webhook.matcherConfig.labelMatchers[0], []),
       coalesce(runner_config.runner.extra_labels, []),
     )
   }
@@ -105,7 +105,7 @@ locals {
       local.legacy_runner_labels[key],
       distinct([
         for label in flatten([
-          for matcher_index, labels in runner_config.matcherConfig.labelMatchers : labels if matcher_index > 0
+          for matcher_index, labels in runner_config.orchestration.webhook.matcherConfig.labelMatchers : labels if matcher_index > 0
         ]) : label
         if !contains(local.legacy_runner_labels[key], label)
       ]),
@@ -223,34 +223,37 @@ locals {
 
     github = {
       app = var.runner_configs.github_app
-    }
-
-    enterprise_server = {
-      url = try(trimspace(var.runner_configs.ghes_url), "") == "" ? null : var.runner_configs.ghes_url
-    }
-
-    webhook = {
-      eventbridge = {
-        enable = true
+      enterprise_server = {
+        url = try(trimspace(var.runner_configs.ghes_url), "") == "" ? null : var.runner_configs.ghes_url
       }
     }
 
     lambda = {
-      scale = {
-        artifact = {
-          zip = "${data.external.download_lambdas.result.path}/runners.zip"
-        }
-      }
       subnet_ids         = var.network_configs.lambda_subnet_ids
       security_group_ids = [aws_security_group.gh_runner_lambda_egress.id]
       tags               = local.terraform_aws_github_runner_tags
+    }
+
+    orchestration = {
       webhook = {
-        artifact = {
-          zip = "${data.external.download_lambdas.result.path}/webhook.zip"
+        eventbridge = {
+          enable = true
         }
-        api_gateway_access_log_settings = {
-          destination_arn = aws_cloudwatch_log_group.webhook_api_gateway_access.arn
-          format          = local.webhook_api_gateway_access_log_format
+        lambda = {
+          scale = {
+            artifact = {
+              zip = "${data.external.download_lambdas.result.path}/runners.zip"
+            }
+          }
+          webhook = {
+            artifact = {
+              zip = "${data.external.download_lambdas.result.path}/webhook.zip"
+            }
+            api_gateway_access_log_settings = {
+              destination_arn = aws_cloudwatch_log_group.webhook_api_gateway_access.arn
+              format          = local.webhook_api_gateway_access_log_format
+            }
+          }
         }
       }
     }
@@ -259,6 +262,13 @@ locals {
       kms_key_id = aws_kms_key.github.arn
       parameters = {
         tags = local.terraform_aws_github_runner_tags
+      }
+      housekeeper = {
+        lambda = {
+          artifact = {
+            zip = "${data.external.download_lambdas.result.path}/runners.zip"
+          }
+        }
       }
     }
 

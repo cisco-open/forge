@@ -137,7 +137,6 @@ variables {
           name_prefix            = "forge-"
           run_as_root            = true
           run_as                 = "ec2-user"
-          maximum_count          = 2
           ephemeral              = true
           jit_config_enabled     = false
           auto_update_disabled   = true
@@ -155,9 +154,6 @@ variables {
             permissions_boundary         = "arn:aws:iam::123456789012:policy/boundary"
           }
         }
-        github = {
-          organization_runners = true
-        }
         lambda = {
           runtime            = "nodejs22.x"
           architecture       = "x86_64"
@@ -168,64 +164,87 @@ variables {
             path                 = "/lambda/"
             permissions_boundary = "arn:aws:iam::123456789012:policy/lambda-boundary"
           }
-          scale_up = {
-            memory_size                    = 768
-            timeout                        = 40
-            reserved_concurrent_executions = 2
-            job_queued_check_enabled       = false
-            event_source_mapping = {
-              batch_size                         = 5
-              maximum_batching_window_in_seconds = 1
+        }
+
+        orchestration = {
+          webhook = {
+            runner = {
+              maximum_count = 2
             }
-            tags = { Scope = "scale-up" }
-          }
-          scale_down = {
-            memory_size                     = 1024
-            timeout                         = 90
-            schedule_expression             = "rate(10 minutes)"
-            minimum_running_time_in_minutes = 5
-            idle_config = [{
-              cron             = "* * * * *"
-              timeZone         = "Europe/Warsaw"
-              idleCount        = 1
-              evictionStrategy = "newest_first"
-            }]
-            tags = { Scope = "scale-down" }
-          }
-          pool = {
-            memory_size                    = 512
-            timeout                        = 75
-            reserved_concurrent_executions = 2
-            config = [{
-              schedule_expression          = "cron(0 8 * * ? *)"
-              schedule_expression_timezone = "Europe/Warsaw"
-              size                         = 1
-            }]
-            include_busy_runners = false
-            runner_owner         = "cisco-open"
-            tags                 = { Scope = "pool" }
-          }
-        }
-        queue = {
-          delay_webhook_event            = 7
-          job_queue_retention_in_seconds = 90000
-          visibility_timeout_seconds     = 240
-          redrive_build_queue = {
-            enabled         = true
-            maxReceiveCount = 4
-          }
-          tags = { Scope = "queue" }
-        }
-        job_retry = {
-          enabled          = true
-          delay_in_seconds = 120
-          delay_backoff    = 3
-          max_attempts     = 2
-          tags             = { Scope = "job-retry" }
-          lambda = {
-            memory_size                    = 512
-            reserved_concurrent_executions = 3
-            timeout                        = 45
+            github = {
+              organization_runners = true
+            }
+            lambda = {
+              scale_up = {
+                memory_size                    = 768
+                timeout                        = 40
+                reserved_concurrent_executions = 2
+                job_queued_check_enabled       = false
+                event_source_mapping = {
+                  batch_size                         = 5
+                  maximum_batching_window_in_seconds = 1
+                }
+                tags = { Scope = "scale-up" }
+              }
+              scale_down = {
+                memory_size                     = 1024
+                timeout                         = 90
+                schedule_expression             = "rate(10 minutes)"
+                minimum_running_time_in_minutes = 5
+                idle_config = [{
+                  cron             = "* * * * *"
+                  timeZone         = "Europe/Warsaw"
+                  idleCount        = 1
+                  evictionStrategy = "newest_first"
+                }]
+                tags = { Scope = "scale-down" }
+              }
+              pool = {
+                memory_size                    = 512
+                timeout                        = 75
+                reserved_concurrent_executions = 2
+                config = [{
+                  schedule_expression          = "cron(0 8 * * ? *)"
+                  schedule_expression_timezone = "Europe/Warsaw"
+                  size                         = 1
+                }]
+                include_busy_runners = false
+                runner_owner         = "cisco-open"
+                tags                 = { Scope = "pool" }
+              }
+            }
+            queue = {
+              delay_webhook_event            = 7
+              job_queue_retention_in_seconds = 90000
+              visibility_timeout_seconds     = 240
+              redrive_build_queue = {
+                enabled         = true
+                maxReceiveCount = 4
+              }
+              tags = { Scope = "queue" }
+            }
+            job_retry = {
+              enabled          = true
+              delay_in_seconds = 120
+              delay_backoff    = 3
+              max_attempts     = 2
+              tags             = { Scope = "job-retry" }
+              lambda = {
+                memory_size                    = 512
+                reserved_concurrent_executions = 3
+                timeout                        = 45
+              }
+            }
+            matcherConfig = {
+              labelMatchers           = [["self-hosted", "ec2"], ["self-hosted", "gpu"]]
+              exactMatch              = true
+              bidirectionalLabelMatch = true
+              priority                = 5
+              enableDynamicLabels     = true
+              awsDynamicLabelsPolicy = {
+                blocked_keys = ["instance-type"]
+              }
+            }
           }
         }
         ssm = {
@@ -243,6 +262,9 @@ variables {
             state               = "DISABLED"
             tags                = { Scope = "ssm-housekeeper" }
             lambda = {
+              artifact = {
+                zip = "/private/tmp/forge-test-lambda-cache/ssm-housekeeper.zip"
+              }
               memory_size = 384
               timeout     = 70
             }
@@ -325,7 +347,7 @@ variables {
             scale_errors                  = ["InsufficientInstanceCapacity"]
             ssm_enabled                   = true
             subnet_ids                    = ["subnet-override"]
-            tags                          = { Lane = "ec2" }
+            tags                          = { Configuration = "ec2" }
             user_data = {
               enabled               = true
               pre_install           = "caller-pre"
@@ -345,22 +367,21 @@ variables {
             }]
           }
         }
-        matcherConfig = {
-          labelMatchers           = [["self-hosted", "ec2"], ["self-hosted", "gpu"]]
-          exactMatch              = true
-          bidirectionalLabelMatch = true
-          priority                = 5
-          enableDynamicLabels     = true
-          awsDynamicLabelsPolicy = {
-            blocked_keys = ["instance-type"]
-          }
-        }
       }
       default_path = {
         runner = {
-          os            = "linux"
-          architecture  = "x64"
-          maximum_count = 1
+          os           = "linux"
+          architecture = "x64"
+        }
+        orchestration = {
+          webhook = {
+            runner = {
+              maximum_count = 1
+            }
+            matcherConfig = {
+              labelMatchers = [["self-hosted", "default-path"]]
+            }
+          }
         }
         compute_provider = {
           ec2 = {
@@ -370,9 +391,6 @@ variables {
               enabled = false
             }
           }
-        }
-        matcherConfig = {
-          labelMatchers = [["self-hosted", "default-path"]]
         }
       }
     }
@@ -391,17 +409,28 @@ run "ec2_v2_input_plan" {
 
   assert {
     condition     = toset(keys(local.ec2_runner_configs)) == toset(["default_path", "ec2"])
-    error_message = "EC2 provider filtering must retain every EC2 lane."
+    error_message = "EC2 provider filtering must retain every EC2 runner configuration."
   }
 
   assert {
     condition     = toset(keys(local.multi_runner_config)) == toset(["default_path", "ec2"])
-    error_message = "The upstream v2 configuration must preserve every EC2 lane key."
+    error_message = "The upstream v2 configuration must preserve every EC2 runner-configuration key."
+  }
+
+  assert {
+    condition = alltrue([
+      for runner_config in values(local.multi_runner_config) :
+      length([
+        for provider_config in values(runner_config.orchestration) : provider_config
+        if provider_config != null
+      ]) == 1
+    ])
+    error_message = "Every normalized runner configuration must retain exactly one orchestration provider."
   }
 
   assert {
     condition     = local.active_ec2_subnet_ids == toset(["subnet-default", "subnet-override"])
-    error_message = "EC2 effective subnet resolution must preserve per-lane overrides."
+    error_message = "EC2 effective subnet resolution must preserve per-configuration overrides."
   }
 
   assert {
@@ -442,51 +471,51 @@ run "ec2_v2_input_plan" {
       && local.multi_runner_config.ec2.runner.name_prefix == "forge-"
       && local.multi_runner_config.ec2.runner.run_as_root
       && local.multi_runner_config.ec2.runner.run_as == "ec2-user"
-      && local.multi_runner_config.ec2.runner.maximum_count == 2
+      && local.multi_runner_config.ec2.orchestration.webhook.runner.maximum_count == 2
       && local.multi_runner_config.ec2.runner.ephemeral
       && !local.multi_runner_config.ec2.runner.jit_config_enabled
       && local.multi_runner_config.ec2.runner.auto_update_disabled
-      && local.multi_runner_config.ec2.github.organization_runners
+      && local.multi_runner_config.ec2.orchestration.webhook.github.organization_runners
     )
     error_message = "The v2 configuration must preserve the complete nested runner and GitHub blocks."
   }
 
   assert {
     condition = (
-      local.multi_runner_config.ec2.queue.delay_webhook_event == 7
-      && local.multi_runner_config.ec2.queue.job_queue_retention_in_seconds == 90000
-      && local.multi_runner_config.ec2.queue.visibility_timeout_seconds == 240
-      && local.multi_runner_config.ec2.lambda.scale_up.event_source_mapping.batch_size == 5
-      && local.multi_runner_config.ec2.lambda.scale_up.event_source_mapping.maximum_batching_window_in_seconds == 1
-      && local.multi_runner_config.ec2.lambda.scale_up.memory_size == 768
-      && local.multi_runner_config.ec2.lambda.scale_up.timeout == 40
-      && local.multi_runner_config.ec2.lambda.scale_up.reserved_concurrent_executions == 2
-      && !local.multi_runner_config.ec2.lambda.scale_up.job_queued_check_enabled
-      && local.multi_runner_config.ec2.lambda.scale_down.memory_size == 1024
-      && local.multi_runner_config.ec2.lambda.scale_down.timeout == 90
-      && local.multi_runner_config.ec2.lambda.scale_down.schedule_expression == "rate(10 minutes)"
-      && local.multi_runner_config.ec2.lambda.scale_down.minimum_running_time_in_minutes == 5
-      && local.multi_runner_config.ec2.lambda.scale_down.idle_config[0].idleCount == 1
-      && local.multi_runner_config.ec2.queue.redrive_build_queue.maxReceiveCount == 4
+      local.multi_runner_config.ec2.orchestration.webhook.queue.delay_webhook_event == 7
+      && local.multi_runner_config.ec2.orchestration.webhook.queue.job_queue_retention_in_seconds == 90000
+      && local.multi_runner_config.ec2.orchestration.webhook.queue.visibility_timeout_seconds == 240
+      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale_up.event_source_mapping.batch_size == 5
+      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale_up.event_source_mapping.maximum_batching_window_in_seconds == 1
+      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale_up.memory_size == 768
+      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale_up.timeout == 40
+      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale_up.reserved_concurrent_executions == 2
+      && !local.multi_runner_config.ec2.orchestration.webhook.lambda.scale_up.job_queued_check_enabled
+      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale_down.memory_size == 1024
+      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale_down.timeout == 90
+      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale_down.schedule_expression == "rate(10 minutes)"
+      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale_down.minimum_running_time_in_minutes == 5
+      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale_down.idle_config[0].idleCount == 1
+      && local.multi_runner_config.ec2.orchestration.webhook.queue.redrive_build_queue.maxReceiveCount == 4
     )
     error_message = "The v2 configuration must preserve the queue, scale-up, and scale-down blocks."
   }
 
   assert {
     condition = (
-      local.multi_runner_config.ec2.lambda.pool.config[0].size == 1
-      && local.multi_runner_config.ec2.lambda.pool.memory_size == 512
-      && local.multi_runner_config.ec2.lambda.pool.timeout == 75
-      && local.multi_runner_config.ec2.lambda.pool.reserved_concurrent_executions == 2
-      && !local.multi_runner_config.ec2.lambda.pool.include_busy_runners
-      && local.multi_runner_config.ec2.lambda.pool.runner_owner == "cisco-open"
-      && local.multi_runner_config.ec2.job_retry.enabled
-      && local.multi_runner_config.ec2.job_retry.delay_in_seconds == 120
-      && local.multi_runner_config.ec2.job_retry.delay_backoff == 3
-      && local.multi_runner_config.ec2.job_retry.max_attempts == 2
-      && local.multi_runner_config.ec2.job_retry.lambda.memory_size == 512
-      && local.multi_runner_config.ec2.job_retry.lambda.reserved_concurrent_executions == 3
-      && local.multi_runner_config.ec2.job_retry.lambda.timeout == 45
+      local.multi_runner_config.ec2.orchestration.webhook.lambda.pool.config[0].size == 1
+      && local.multi_runner_config.ec2.orchestration.webhook.lambda.pool.memory_size == 512
+      && local.multi_runner_config.ec2.orchestration.webhook.lambda.pool.timeout == 75
+      && local.multi_runner_config.ec2.orchestration.webhook.lambda.pool.reserved_concurrent_executions == 2
+      && !local.multi_runner_config.ec2.orchestration.webhook.lambda.pool.include_busy_runners
+      && local.multi_runner_config.ec2.orchestration.webhook.lambda.pool.runner_owner == "cisco-open"
+      && local.multi_runner_config.ec2.orchestration.webhook.job_retry.enabled
+      && local.multi_runner_config.ec2.orchestration.webhook.job_retry.delay_in_seconds == 120
+      && local.multi_runner_config.ec2.orchestration.webhook.job_retry.delay_backoff == 3
+      && local.multi_runner_config.ec2.orchestration.webhook.job_retry.max_attempts == 2
+      && local.multi_runner_config.ec2.orchestration.webhook.job_retry.lambda.memory_size == 512
+      && local.multi_runner_config.ec2.orchestration.webhook.job_retry.lambda.reserved_concurrent_executions == 3
+      && local.multi_runner_config.ec2.orchestration.webhook.job_retry.lambda.timeout == 45
     )
     error_message = "The v2 configuration must preserve the pool and job-retry blocks."
   }
@@ -501,7 +530,7 @@ run "ec2_v2_input_plan" {
       && length(local.multi_runner_config.ec2.compute_provider.ec2.log_files) == 4
       && local.multi_runner_config.ec2.compute_provider.ec2.log_files[3].file_path == "/root/hook.log"
       && local.multi_runner_config.ec2.compute_provider.ec2.tags.Environment == "test"
-      && local.multi_runner_config.ec2.compute_provider.ec2.tags.Lane == "ec2"
+      && local.multi_runner_config.ec2.compute_provider.ec2.tags.Configuration == "ec2"
     )
     error_message = "The v2 configuration must retain Forge user-data, logging, and tag overlays."
   }
@@ -534,14 +563,14 @@ run "ec2_v2_input_plan" {
 
   assert {
     condition = (
-      length(local.multi_runner_config.ec2.matcherConfig.labelMatchers) == 2
-      && tolist(local.multi_runner_config.ec2.matcherConfig.labelMatchers[0]) == tolist(["self-hosted", "ec2"])
-      && tolist(local.multi_runner_config.ec2.matcherConfig.labelMatchers[1]) == tolist(["self-hosted", "gpu"])
-      && local.multi_runner_config.ec2.matcherConfig.exactMatch
-      && local.multi_runner_config.ec2.matcherConfig.bidirectionalLabelMatch
-      && local.multi_runner_config.ec2.matcherConfig.priority == 5
-      && local.multi_runner_config.ec2.matcherConfig.enableDynamicLabels
-      && tolist(local.multi_runner_config.ec2.matcherConfig.awsDynamicLabelsPolicy.blocked_keys) == tolist(["instance-type"])
+      length(local.multi_runner_config.ec2.orchestration.webhook.matcherConfig.labelMatchers) == 2
+      && tolist(local.multi_runner_config.ec2.orchestration.webhook.matcherConfig.labelMatchers[0]) == tolist(["self-hosted", "ec2"])
+      && tolist(local.multi_runner_config.ec2.orchestration.webhook.matcherConfig.labelMatchers[1]) == tolist(["self-hosted", "gpu"])
+      && local.multi_runner_config.ec2.orchestration.webhook.matcherConfig.exactMatch
+      && local.multi_runner_config.ec2.orchestration.webhook.matcherConfig.bidirectionalLabelMatch
+      && local.multi_runner_config.ec2.orchestration.webhook.matcherConfig.priority == 5
+      && local.multi_runner_config.ec2.orchestration.webhook.matcherConfig.enableDynamicLabels
+      && tolist(local.multi_runner_config.ec2.orchestration.webhook.matcherConfig.awsDynamicLabelsPolicy.blocked_keys) == tolist(["instance-type"])
     )
     error_message = "The v2 configuration must preserve matcher configuration."
   }
@@ -551,11 +580,11 @@ run "ec2_v2_input_plan" {
       local.multi_runner_config.ec2.tags.Scope == "entry"
       && local.multi_runner_config.ec2.runner.tags.Scope == "runner"
       && local.multi_runner_config.ec2.lambda.tags.Scope == "lambda"
-      && local.multi_runner_config.ec2.queue.tags.Scope == "queue"
-      && local.multi_runner_config.ec2.lambda.scale_up.tags.Scope == "scale-up"
-      && local.multi_runner_config.ec2.lambda.scale_down.tags.Scope == "scale-down"
-      && local.multi_runner_config.ec2.lambda.pool.tags.Scope == "pool"
-      && local.multi_runner_config.ec2.job_retry.tags.Scope == "job-retry"
+      && local.multi_runner_config.ec2.orchestration.webhook.queue.tags.Scope == "queue"
+      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale_up.tags.Scope == "scale-up"
+      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale_down.tags.Scope == "scale-down"
+      && local.multi_runner_config.ec2.orchestration.webhook.lambda.pool.tags.Scope == "pool"
+      && local.multi_runner_config.ec2.orchestration.webhook.job_retry.tags.Scope == "job-retry"
       && local.multi_runner_config.ec2.ssm.tags.Scope == "ssm"
       && local.multi_runner_config.ec2.ssm.parameters.tags.Scope == "ssm-parameters"
       && local.multi_runner_config.ec2.ssm.housekeeper.tags.Scope == "ssm-housekeeper"
@@ -570,7 +599,7 @@ run "ec2_v2_input_plan" {
       && local.multi_runner_config.ec2.runner.iam.path == "/forge/"
       && local.multi_runner_config.ec2.runner.iam.permissions_boundary == "arn:aws:iam::123456789012:policy/boundary"
     )
-    error_message = "The v2 configuration must preserve lane IAM ownership settings."
+    error_message = "The v2 configuration must preserve runner-configuration IAM ownership settings."
   }
 
   assert {
@@ -582,7 +611,7 @@ run "ec2_v2_input_plan" {
       && local.multi_runner_config.ec2.lambda.role.path == "/lambda/"
       && local.multi_runner_config.ec2.lambda.role.permissions_boundary == "arn:aws:iam::123456789012:policy/lambda-boundary"
     )
-    error_message = "The v2 configuration must preserve lane Lambda runtime, network, and role overrides."
+    error_message = "The v2 configuration must preserve runner-configuration Lambda runtime, network, and role overrides."
   }
 
   assert {
@@ -592,13 +621,14 @@ run "ec2_v2_input_plan" {
       && local.multi_runner_config.ec2.ssm.paths.config == "custom-config"
       && local.multi_runner_config.ec2.ssm.housekeeper.schedule_expression == "rate(12 hours)"
       && local.multi_runner_config.ec2.ssm.housekeeper.state == "DISABLED"
+      && local.multi_runner_config.ec2.ssm.housekeeper.lambda.artifact.zip == "/private/tmp/forge-test-lambda-cache/ssm-housekeeper.zip"
       && local.multi_runner_config.ec2.ssm.housekeeper.lambda.memory_size == 384
       && local.multi_runner_config.ec2.ssm.housekeeper.lambda.timeout == 70
       && local.multi_runner_config.ec2.ssm.housekeeper.config.tokenPath == "custom-token-path"
       && local.multi_runner_config.ec2.ssm.housekeeper.config.minimumDaysOld == 2
       && local.multi_runner_config.ec2.ssm.housekeeper.config.dryRun
     )
-    error_message = "The v2 configuration must preserve lane SSM paths and housekeeper overrides."
+    error_message = "The v2 configuration must preserve runner-configuration SSM paths and housekeeper overrides."
   }
 
   assert {
@@ -615,19 +645,20 @@ run "ec2_v2_input_plan" {
       && !local.multi_runner_config.ec2.observability.metrics.metric.enable_github_app_rate_limit
       && local.multi_runner_config.ec2.observability.metrics.metric.enable_job_retry
     )
-    error_message = "The v2 configuration must preserve lane observability overrides."
+    error_message = "The v2 configuration must preserve runner-configuration observability overrides."
   }
 
   assert {
     condition = (
       local.experimental_config.github.app.id == "12345"
-      && local.experimental_config.enterprise_server.url == null
-      && local.experimental_config.webhook.eventbridge.enable
-      && local.experimental_config.lambda.scale.artifact.zip == "/private/tmp/forge-test-lambda-cache/runners.zip"
+      && local.experimental_config.github.enterprise_server.url == null
+      && local.experimental_config.orchestration.webhook.eventbridge.enable
+      && local.experimental_config.orchestration.webhook.lambda.scale.artifact.zip == "/private/tmp/forge-test-lambda-cache/runners.zip"
       && tolist(local.experimental_config.lambda.subnet_ids) == tolist(["subnet-test"])
       && length(local.experimental_config.lambda.security_group_ids) == 1
-      && local.experimental_config.lambda.webhook.artifact.zip == "/private/tmp/forge-test-lambda-cache/webhook.zip"
+      && local.experimental_config.orchestration.webhook.lambda.webhook.artifact.zip == "/private/tmp/forge-test-lambda-cache/webhook.zip"
       && local.experimental_config.ssm.kms_key_id == "arn:aws:kms:eu-west-1:123456789012:key/00000000-0000-0000-0000-000000000000"
+      && local.experimental_config.ssm.housekeeper.lambda.artifact.zip == "/private/tmp/forge-test-lambda-cache/runners.zip"
       && local.experimental_config.observability.logs.level == "info"
       && local.experimental_config.observability.logs.retention_in_days == 3
       && local.experimental_config.compute_provider.ec2.vpc_id == "vpc-test"
@@ -649,8 +680,8 @@ run "ec2_v2_input_plan" {
 
   assert {
     condition = (
-      local.experimental_config.lambda.webhook.api_gateway_access_log_settings.destination_arn == aws_cloudwatch_log_group.webhook_api_gateway_access.arn
-      && local.experimental_config.lambda.webhook.api_gateway_access_log_settings.format == local.webhook_api_gateway_access_log_format
+      local.experimental_config.orchestration.webhook.lambda.webhook.api_gateway_access_log_settings.destination_arn == aws_cloudwatch_log_group.webhook_api_gateway_access.arn
+      && local.experimental_config.orchestration.webhook.lambda.webhook.api_gateway_access_log_settings.format == local.webhook_api_gateway_access_log_format
     )
     error_message = "Forge webhook API Gateway access-log settings must be carried by the experimental webhook contract."
   }
