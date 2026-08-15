@@ -55,7 +55,7 @@ variable "ec2_deployment_specs" {
         }), {})
       }), {})
 
-      orchestration = object({
+      orchestration_provider = object({
         webhook = optional(object({
           runner = object({
             boot_time_in_minutes = optional(number, null)
@@ -337,7 +337,7 @@ variable "ec2_deployment_specs" {
     condition = alltrue([
       for runner_config in values(var.ec2_deployment_specs.runner_specs) :
       length([
-        for provider_config in values(runner_config.orchestration) : provider_config
+        for provider_config in values(runner_config.orchestration_provider) : provider_config
         if provider_config != null
       ]) == 1
     ])
@@ -370,19 +370,19 @@ variable "ec2_deployment_specs" {
     - runner_specs     : Map of EC2 runner configurations.
 
   runner_specs[*] object fields:
-    - runner          : Provider-neutral OS, architecture, labels, bootstrap,
-                        hooks, and IAM-policy configuration.
-    - lambda          : Provider-neutral per-configuration Lambda runtime,
-                        network, role, and tag overrides.
-    - orchestration   : Exactly one demand-controller provider. The webhook
-                        provider owns runner lifecycle, capacity, and startup
-                        timing, GitHub scope, matching, queues, scaling, pools,
-                        and job retry.
-    - ssm             : Per-configuration paths, tags, parameter tags, and
-                        housekeeper settings, including its Lambda artifact.
-    - observability   : Per-configuration logging, tracing, and metrics overrides.
-    - compute_provider: Nested v2 EC2 provider configuration.
-    - tags            : Per-configuration resource tags.
+    - runner                 : Provider-neutral OS, architecture, labels, bootstrap,
+                               hooks, and IAM-policy configuration.
+    - lambda                 : Provider-neutral per-configuration Lambda runtime,
+                               network, role, and tag overrides.
+    - orchestration_provider : Exactly one demand-controller provider. The webhook
+                               provider owns runner lifecycle, capacity, and startup
+                               timing, GitHub scope, matching, queues, scaling, pools,
+                               and job retry.
+    - ssm                    : Per-configuration paths, tags, parameter tags, and
+                               housekeeper settings, including its Lambda artifact.
+    - observability          : Per-configuration logging, tracing, and metrics overrides.
+    - compute_provider       : Nested v2 EC2 provider configuration.
+    - tags                   : Per-configuration resource tags.
 
   compute_provider.ec2 fields:
     - ami             : Upstream-compatible EC2 AMI configuration.

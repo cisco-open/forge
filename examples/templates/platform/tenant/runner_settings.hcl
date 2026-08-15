@@ -76,7 +76,7 @@ locals {
         group_name = local.runner_group_name
         run_as     = spec.runner_user
       }
-      orchestration = {
+      orchestration_provider = {
         webhook = {
           runner = {
             maximum_count = spec.max_instances
