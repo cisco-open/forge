@@ -398,7 +398,13 @@ def test_runner_webhook_enables_upstream_api_gateway_access_logs() -> None:
     deployment_tf = read_repo_file(
         'modules/platform/ec2_deployment/main.tf'
     )
+    runner_configs_tf = read_repo_file(
+        'modules/platform/ec2_deployment/runner_configs_v2.tf'
+    )
     runner_module = hcl_block(deployment_tf, 'module', 'runners')
+    experimental_config = assignment_map_block(
+        runner_configs_tf, 'experimental_config'
+    )
     log_group = hcl_block(
         deployment_tf,
         'resource',
@@ -418,10 +424,16 @@ def test_runner_webhook_enables_upstream_api_gateway_access_logs() -> None:
             'integrationErrorMessage = "$context.integrationErrorMessage"',
         ],
     )
-    assert_contains_all(
+    assert re.search(
+        r'^\s*experimental\s*=\s*local\.experimental_config$',
         runner_module,
+        re.MULTILINE,
+    )
+    assert_contains_all(
+        experimental_config,
         [
-            'webhook_lambda_apigateway_access_log_settings = {',
+            'orchestration_provider = {',
+            'api_gateway_access_log_settings = {',
             'destination_arn = aws_cloudwatch_log_group.webhook_api_gateway_access.arn',
             'format          = local.webhook_api_gateway_access_log_format',
         ],
