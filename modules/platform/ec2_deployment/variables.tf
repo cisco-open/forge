@@ -22,15 +22,12 @@ variable "runner_configs" {
       runner = object({
         os                     = string
         architecture           = string
-        boot_time_in_minutes   = optional(number, null)
         disable_default_labels = optional(bool, null)
         extra_labels           = optional(list(string), null)
         group_name             = optional(string, null)
         name_prefix            = optional(string, null)
         run_as_root            = optional(bool, null)
         run_as                 = optional(string, null)
-        ephemeral              = optional(bool, null)
-        jit_config_enabled     = optional(bool, null)
         auto_update_disabled   = optional(bool, null)
         tags                   = optional(map(string), {})
         hooks = optional(object({
@@ -63,7 +60,10 @@ variable "runner_configs" {
       orchestration = object({
         webhook = optional(object({
           runner = object({
-            maximum_count = number
+            boot_time_in_minutes = optional(number, null)
+            ephemeral            = optional(bool, null)
+            jit_config_enabled   = optional(bool, null)
+            maximum_count        = number
           })
 
           github = optional(object({
@@ -98,29 +98,31 @@ variable "runner_configs" {
           }), {})
 
           lambda = optional(object({
-            scale_up = optional(object({
-              memory_size                    = optional(number, null)
-              timeout                        = optional(number, null)
-              reserved_concurrent_executions = optional(number, null)
-              job_queued_check_enabled       = optional(bool, null)
-              event_source_mapping = optional(object({
-                batch_size                         = optional(number, null)
-                maximum_batching_window_in_seconds = optional(number, null)
+            scale = optional(object({
+              up = optional(object({
+                memory_size                    = optional(number, null)
+                timeout                        = optional(number, null)
+                reserved_concurrent_executions = optional(number, null)
+                job_queued_check_enabled       = optional(bool, null)
+                event_source_mapping = optional(object({
+                  batch_size                         = optional(number, null)
+                  maximum_batching_window_in_seconds = optional(number, null)
+                }), {})
+                tags = optional(map(string), {})
               }), {})
-              tags = optional(map(string), {})
-            }), {})
-            scale_down = optional(object({
-              memory_size                     = optional(number, null)
-              timeout                         = optional(number, null)
-              schedule_expression             = optional(string, null)
-              minimum_running_time_in_minutes = optional(number, null)
-              idle_config = optional(list(object({
-                cron             = string
-                timeZone         = string
-                idleCount        = number
-                evictionStrategy = optional(string, "oldest_first")
-              })), null)
-              tags = optional(map(string), {})
+              down = optional(object({
+                memory_size                     = optional(number, null)
+                timeout                         = optional(number, null)
+                schedule_expression             = optional(string, null)
+                minimum_running_time_in_minutes = optional(number, null)
+                idle_config = optional(list(object({
+                  cron             = string
+                  timeZone         = string
+                  idleCount        = number
+                  evictionStrategy = optional(string, "oldest_first")
+                })), null)
+                tags = optional(map(string), {})
+              }), {})
             }), {})
             pool = optional(object({
               memory_size                    = optional(number, null)

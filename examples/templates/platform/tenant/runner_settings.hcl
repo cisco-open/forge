@@ -75,26 +75,28 @@ locals {
         ]
         group_name = local.runner_group_name
         run_as     = spec.runner_user
-        ephemeral  = true
       }
       orchestration = {
         webhook = {
           runner = {
             maximum_count = spec.max_instances
+            ephemeral     = true
           }
           github = {
             organization_runners = true
           }
           lambda = {
-            scale_up = {
-              job_queued_check_enabled = false
-              event_source_mapping = {
-                batch_size                         = try(spec.lambda_event_source_mapping_batch_size, 10)
-                maximum_batching_window_in_seconds = try(spec.lambda_event_source_mapping_maximum_batching_window_in_seconds, 0)
+            scale = {
+              up = {
+                job_queued_check_enabled = false
+                event_source_mapping = {
+                  batch_size                         = try(spec.lambda_event_source_mapping_batch_size, 10)
+                  maximum_batching_window_in_seconds = try(spec.lambda_event_source_mapping_maximum_batching_window_in_seconds, 0)
+                }
               }
-            }
-            scale_down = {
-              minimum_running_time_in_minutes = 30
+              down = {
+                minimum_running_time_in_minutes = 30
+              }
             }
             pool = {
               config       = spec.pool_config

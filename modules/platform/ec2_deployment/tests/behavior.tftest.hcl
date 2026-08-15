@@ -130,15 +130,12 @@ variables {
         runner = {
           os                     = "linux"
           architecture           = "x64"
-          boot_time_in_minutes   = 7
           disable_default_labels = true
           extra_labels           = ["caller-extra"]
           group_name             = "Forge"
           name_prefix            = "forge-"
           run_as_root            = true
           run_as                 = "ec2-user"
-          ephemeral              = true
-          jit_config_enabled     = false
           auto_update_disabled   = true
           tags                   = { Scope = "runner" }
           hooks = {
@@ -169,35 +166,40 @@ variables {
         orchestration = {
           webhook = {
             runner = {
-              maximum_count = 2
+              boot_time_in_minutes = 7
+              ephemeral            = true
+              jit_config_enabled   = false
+              maximum_count        = 2
             }
             github = {
               organization_runners = true
             }
             lambda = {
-              scale_up = {
-                memory_size                    = 768
-                timeout                        = 40
-                reserved_concurrent_executions = 2
-                job_queued_check_enabled       = false
-                event_source_mapping = {
-                  batch_size                         = 5
-                  maximum_batching_window_in_seconds = 1
+              scale = {
+                up = {
+                  memory_size                    = 768
+                  timeout                        = 40
+                  reserved_concurrent_executions = 2
+                  job_queued_check_enabled       = false
+                  event_source_mapping = {
+                    batch_size                         = 5
+                    maximum_batching_window_in_seconds = 1
+                  }
+                  tags = { Scope = "scale-up" }
                 }
-                tags = { Scope = "scale-up" }
-              }
-              scale_down = {
-                memory_size                     = 1024
-                timeout                         = 90
-                schedule_expression             = "rate(10 minutes)"
-                minimum_running_time_in_minutes = 5
-                idle_config = [{
-                  cron             = "* * * * *"
-                  timeZone         = "Europe/Warsaw"
-                  idleCount        = 1
-                  evictionStrategy = "newest_first"
-                }]
-                tags = { Scope = "scale-down" }
+                down = {
+                  memory_size                     = 1024
+                  timeout                         = 90
+                  schedule_expression             = "rate(10 minutes)"
+                  minimum_running_time_in_minutes = 5
+                  idle_config = [{
+                    cron             = "* * * * *"
+                    timeZone         = "Europe/Warsaw"
+                    idleCount        = 1
+                    evictionStrategy = "newest_first"
+                  }]
+                  tags = { Scope = "scale-down" }
+                }
               }
               pool = {
                 memory_size                    = 512
@@ -464,20 +466,20 @@ run "ec2_v2_input_plan" {
 
   assert {
     condition = (
-      local.multi_runner_config.ec2.runner.boot_time_in_minutes == 7
-      && local.multi_runner_config.ec2.runner.disable_default_labels
+      local.multi_runner_config.ec2.runner.disable_default_labels
       && tolist(local.multi_runner_config.ec2.runner.extra_labels) == tolist(["caller-extra"])
       && local.multi_runner_config.ec2.runner.group_name == "Forge"
       && local.multi_runner_config.ec2.runner.name_prefix == "forge-"
       && local.multi_runner_config.ec2.runner.run_as_root
       && local.multi_runner_config.ec2.runner.run_as == "ec2-user"
+      && local.multi_runner_config.ec2.orchestration.webhook.runner.boot_time_in_minutes == 7
+      && local.multi_runner_config.ec2.orchestration.webhook.runner.ephemeral
+      && !local.multi_runner_config.ec2.orchestration.webhook.runner.jit_config_enabled
       && local.multi_runner_config.ec2.orchestration.webhook.runner.maximum_count == 2
-      && local.multi_runner_config.ec2.runner.ephemeral
-      && !local.multi_runner_config.ec2.runner.jit_config_enabled
       && local.multi_runner_config.ec2.runner.auto_update_disabled
       && local.multi_runner_config.ec2.orchestration.webhook.github.organization_runners
     )
-    error_message = "The v2 configuration must preserve the complete nested runner and GitHub blocks."
+    error_message = "The v2 configuration must preserve the common runner and webhook-owned runner and GitHub blocks."
   }
 
   assert {
@@ -485,17 +487,17 @@ run "ec2_v2_input_plan" {
       local.multi_runner_config.ec2.orchestration.webhook.queue.delay_webhook_event == 7
       && local.multi_runner_config.ec2.orchestration.webhook.queue.job_queue_retention_in_seconds == 90000
       && local.multi_runner_config.ec2.orchestration.webhook.queue.visibility_timeout_seconds == 240
-      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale_up.event_source_mapping.batch_size == 5
-      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale_up.event_source_mapping.maximum_batching_window_in_seconds == 1
-      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale_up.memory_size == 768
-      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale_up.timeout == 40
-      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale_up.reserved_concurrent_executions == 2
-      && !local.multi_runner_config.ec2.orchestration.webhook.lambda.scale_up.job_queued_check_enabled
-      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale_down.memory_size == 1024
-      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale_down.timeout == 90
-      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale_down.schedule_expression == "rate(10 minutes)"
-      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale_down.minimum_running_time_in_minutes == 5
-      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale_down.idle_config[0].idleCount == 1
+      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale.up.event_source_mapping.batch_size == 5
+      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale.up.event_source_mapping.maximum_batching_window_in_seconds == 1
+      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale.up.memory_size == 768
+      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale.up.timeout == 40
+      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale.up.reserved_concurrent_executions == 2
+      && !local.multi_runner_config.ec2.orchestration.webhook.lambda.scale.up.job_queued_check_enabled
+      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale.down.memory_size == 1024
+      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale.down.timeout == 90
+      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale.down.schedule_expression == "rate(10 minutes)"
+      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale.down.minimum_running_time_in_minutes == 5
+      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale.down.idle_config[0].idleCount == 1
       && local.multi_runner_config.ec2.orchestration.webhook.queue.redrive_build_queue.maxReceiveCount == 4
     )
     error_message = "The v2 configuration must preserve the queue, scale-up, and scale-down blocks."
@@ -518,6 +520,11 @@ run "ec2_v2_input_plan" {
       && local.multi_runner_config.ec2.orchestration.webhook.job_retry.lambda.timeout == 45
     )
     error_message = "The v2 configuration must preserve the pool and job-retry blocks."
+  }
+
+  assert {
+    condition     = !can(local.multi_runner_config.ec2.orchestration.webhook.lambda.artifact)
+    error_message = "Runner-control artifacts must be configured globally, not in a per-runner webhook Lambda block."
   }
 
   assert {
@@ -581,8 +588,8 @@ run "ec2_v2_input_plan" {
       && local.multi_runner_config.ec2.runner.tags.Scope == "runner"
       && local.multi_runner_config.ec2.lambda.tags.Scope == "lambda"
       && local.multi_runner_config.ec2.orchestration.webhook.queue.tags.Scope == "queue"
-      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale_up.tags.Scope == "scale-up"
-      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale_down.tags.Scope == "scale-down"
+      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale.up.tags.Scope == "scale-up"
+      && local.multi_runner_config.ec2.orchestration.webhook.lambda.scale.down.tags.Scope == "scale-down"
       && local.multi_runner_config.ec2.orchestration.webhook.lambda.pool.tags.Scope == "pool"
       && local.multi_runner_config.ec2.orchestration.webhook.job_retry.tags.Scope == "job-retry"
       && local.multi_runner_config.ec2.ssm.tags.Scope == "ssm"
@@ -653,7 +660,7 @@ run "ec2_v2_input_plan" {
       local.experimental_config.github.app.id == "12345"
       && local.experimental_config.github.enterprise_server.url == null
       && local.experimental_config.orchestration.webhook.eventbridge.enable
-      && local.experimental_config.orchestration.webhook.lambda.scale.artifact.zip == "/private/tmp/forge-test-lambda-cache/runners.zip"
+      && local.experimental_config.orchestration.webhook.lambda.artifact.zip == "/private/tmp/forge-test-lambda-cache/runners.zip"
       && tolist(local.experimental_config.lambda.subnet_ids) == tolist(["subnet-test"])
       && length(local.experimental_config.lambda.security_group_ids) == 1
       && local.experimental_config.orchestration.webhook.lambda.webhook.artifact.zip == "/private/tmp/forge-test-lambda-cache/webhook.zip"
