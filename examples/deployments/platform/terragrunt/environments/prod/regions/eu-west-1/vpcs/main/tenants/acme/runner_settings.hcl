@@ -81,27 +81,30 @@ locals {
       github = {
         organization_runners = true
       }
+      lambda = {
+        scale_up = {
+          job_queued_check_enabled = false
+          event_source_mapping = {
+            batch_size                         = try(spec.lambda_event_source_mapping_batch_size, 10)
+            maximum_batching_window_in_seconds = try(spec.lambda_event_source_mapping_maximum_batching_window_in_seconds, 0)
+          }
+        }
+        scale_down = {
+          minimum_running_time_in_minutes = 30
+        }
+        pool = {
+          config       = spec.pool_config
+          runner_owner = local.config.gh_config.ghes_org
+        }
+      }
       queue = {
         delay_webhook_event            = 0
         job_queue_retention_in_seconds = 172800
-        event_source_mapping = {
-          batch_size                         = try(spec.lambda_event_source_mapping_batch_size, 10)
-          maximum_batching_window_in_seconds = try(spec.lambda_event_source_mapping_maximum_batching_window_in_seconds, 0)
-        }
+        visibility_timeout_seconds     = 180
         redrive_build_queue = {
           enabled         = try(spec.redrive_build_queue.enabled, true)
           maxReceiveCount = try(spec.redrive_build_queue.maxReceiveCount, 10)
         }
-      }
-      scale_up = {
-        job_queued_check_enabled = false
-      }
-      scale_down = {
-        minimum_running_time_in_minutes = 30
-      }
-      pool = {
-        config       = spec.pool_config
-        runner_owner = local.config.gh_config.ghes_org
       }
       compute_provider = {
         ec2 = {

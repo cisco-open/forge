@@ -22,27 +22,27 @@ variable "runner_configs" {
       runner = object({
         os                     = string
         architecture           = string
-        boot_time_in_minutes   = optional(number, 5)
-        disable_default_labels = optional(bool, false)
-        extra_labels           = optional(list(string), [])
-        group_name             = optional(string, "Default")
-        name_prefix            = optional(string, "")
-        run_as_root            = optional(bool, false)
-        run_as                 = optional(string, "ec2-user")
+        boot_time_in_minutes   = optional(number, null)
+        disable_default_labels = optional(bool, null)
+        extra_labels           = optional(list(string), null)
+        group_name             = optional(string, null)
+        name_prefix            = optional(string, null)
+        run_as_root            = optional(bool, null)
+        run_as                 = optional(string, null)
         maximum_count          = number
-        ephemeral              = optional(bool, false)
+        ephemeral              = optional(bool, null)
         jit_config_enabled     = optional(bool, null)
-        auto_update_disabled   = optional(bool, false)
+        auto_update_disabled   = optional(bool, null)
         tags                   = optional(map(string), {})
         hooks = optional(object({
-          job_started   = optional(string, "")
-          job_completed = optional(string, "")
+          job_started   = optional(string, null)
+          job_completed = optional(string, null)
         }), {})
         iam = optional(object({
           role = optional(object({
             arn = string
           }), null)
-          managed_policy_arns          = optional(map(string), {})
+          managed_policy_arns          = optional(map(string), null)
           additional_trust_policy_json = optional(string, null)
           path                         = optional(string, null)
           permissions_boundary         = optional(string, null)
@@ -54,52 +54,63 @@ variable "runner_configs" {
       }), {})
 
       lambda = optional(object({
-        tags = optional(map(string), {})
+        runtime            = optional(string, null)
+        architecture       = optional(string, null)
+        subnet_ids         = optional(list(string), null)
+        security_group_ids = optional(list(string), null)
+        tags               = optional(map(string), {})
+        role = optional(object({
+          path                 = optional(string, null)
+          permissions_boundary = optional(string, null)
+        }), {})
+        scale_up = optional(object({
+          memory_size                    = optional(number, null)
+          timeout                        = optional(number, null)
+          reserved_concurrent_executions = optional(number, null)
+          job_queued_check_enabled       = optional(bool, null)
+          event_source_mapping = optional(object({
+            batch_size                         = optional(number, null)
+            maximum_batching_window_in_seconds = optional(number, null)
+          }), {})
+          tags = optional(map(string), {})
+        }), {})
+        scale_down = optional(object({
+          memory_size                     = optional(number, null)
+          timeout                         = optional(number, null)
+          schedule_expression             = optional(string, null)
+          minimum_running_time_in_minutes = optional(number, null)
+          idle_config = optional(list(object({
+            cron             = string
+            timeZone         = string
+            idleCount        = number
+            evictionStrategy = optional(string, "oldest_first")
+          })), null)
+          tags = optional(map(string), {})
+        }), {})
+        pool = optional(object({
+          memory_size                    = optional(number, null)
+          timeout                        = optional(number, null)
+          reserved_concurrent_executions = optional(number, null)
+          config = optional(list(object({
+            schedule_expression          = string
+            schedule_expression_timezone = optional(string)
+            size                         = number
+          })), null)
+          include_busy_runners = optional(bool, null)
+          runner_owner         = optional(string, null)
+          tags                 = optional(map(string), {})
+        }), {})
       }), {})
 
       queue = optional(object({
-        delay_webhook_event            = optional(number, 30)
-        job_queue_retention_in_seconds = optional(number, 86400)
-        event_source_mapping = optional(object({
-          batch_size                         = optional(number, null)
-          maximum_batching_window_in_seconds = optional(number, null)
-        }), {})
+        delay_webhook_event            = optional(number, null)
+        job_queue_retention_in_seconds = optional(number, null)
+        visibility_timeout_seconds     = optional(number, null)
         redrive_build_queue = optional(object({
-          enabled         = bool
-          maxReceiveCount = number
-          }), {
-          enabled         = false
-          maxReceiveCount = null
-        })
+          enabled         = optional(bool, null)
+          maxReceiveCount = optional(number, null)
+        }), null)
         tags = optional(map(string), {})
-      }), {})
-
-      scale_up = optional(object({
-        reserved_concurrent_executions = optional(number, 1)
-        job_queued_check_enabled       = optional(bool, null)
-        tags                           = optional(map(string), {})
-      }), {})
-
-      scale_down = optional(object({
-        schedule_expression             = optional(string, "cron(*/5 * * * ? *)")
-        minimum_running_time_in_minutes = optional(number, null)
-        tags                            = optional(map(string), {})
-        idle_config = optional(list(object({
-          cron             = string
-          timeZone         = string
-          idleCount        = number
-          evictionStrategy = optional(string, "oldest_first")
-        })), [])
-      }), {})
-
-      pool = optional(object({
-        config = optional(list(object({
-          schedule_expression          = string
-          schedule_expression_timezone = optional(string)
-          size                         = number
-        })), [])
-        runner_owner = optional(string, null)
-        tags         = optional(map(string), {})
       }), {})
 
       job_retry = optional(object({
@@ -116,21 +127,51 @@ variable "runner_configs" {
       }), {})
 
       ssm = optional(object({
+        paths = optional(object({
+          root   = optional(string, null)
+          tokens = optional(string, null)
+          config = optional(string, null)
+        }), {})
         tags = optional(map(string), {})
-        kms_key = optional(object({
-          arn = string
-        }), null)
         parameters = optional(object({
           tags = optional(map(string), {})
         }), {})
         housekeeper = optional(object({
-          tags = optional(map(string), {})
+          schedule_expression = optional(string, null)
+          state               = optional(string, null)
+          tags                = optional(map(string), {})
+          lambda = optional(object({
+            memory_size = optional(number, null)
+            timeout     = optional(number, null)
+          }), {})
+          config = optional(object({
+            tokenPath      = optional(string, null)
+            minimumDaysOld = optional(number, null)
+            dryRun         = optional(bool, null)
+          }), {})
         }), {})
       }), {})
 
       observability = optional(object({
         logs = optional(object({
-          tags = optional(map(string), {})
+          level             = optional(string, null)
+          retention_in_days = optional(number, null)
+          kms_key_id        = optional(string, null)
+          class             = optional(string, null)
+          tags              = optional(map(string), {})
+        }), {})
+        tracing = optional(object({
+          mode                  = optional(string, null)
+          capture_http_requests = optional(bool, null)
+          capture_error         = optional(bool, null)
+        }), {})
+        metrics = optional(object({
+          enable    = optional(bool, null)
+          namespace = optional(string, null)
+          metric = optional(object({
+            enable_github_app_rate_limit = optional(bool, null)
+            enable_job_retry             = optional(bool, null)
+          }), {})
         }), {})
       }), {})
 
@@ -174,7 +215,7 @@ variable "runner_configs" {
             config  = optional(string, null)
           }), {})
           binaries_syncer = optional(object({
-            enabled = optional(bool, true)
+            enabled = optional(bool, null)
           }), {})
           detailed_monitoring_enabled = optional(bool, false)
           ssm_enabled                 = optional(bool, false)
@@ -186,12 +227,27 @@ variable "runner_configs" {
             post_install          = optional(string, "")
             debug_logging_enabled = optional(bool, false)
           }), {})
-          instance_allocation_strategy  = optional(string, "lowest-price")
-          instance_max_spot_price       = optional(string, null)
-          instance_target_capacity_type = optional(string, "spot")
-          instance_type_priorities      = optional(map(number), null)
-          instance_types                = list(string)
-          additional_security_group_ids = optional(list(string), [])
+          instance_allocation_strategy   = optional(string, "lowest-price")
+          instance_max_spot_price        = optional(string, null)
+          instance_target_capacity_type  = optional(string, "spot")
+          instance_type_priorities       = optional(map(number), null)
+          instance_types                 = list(string)
+          additional_security_group_ids  = optional(list(string), null)
+          managed_security_group_enabled = optional(bool, null)
+          egress_rules = optional(list(object({
+            cidr_blocks      = list(string)
+            ipv6_cidr_blocks = list(string)
+            prefix_list_ids  = list(string)
+            from_port        = number
+            protocol         = string
+            security_groups  = list(string)
+            self             = bool
+            to_port          = number
+            description      = string
+          })), null)
+          instance_profile_path         = optional(string, null)
+          key_name                      = optional(string, null)
+          associate_public_ipv4_address = optional(bool, null)
           instance_profile = optional(object({
             name = string
           }), null)
