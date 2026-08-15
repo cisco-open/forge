@@ -47,19 +47,19 @@ run "platform_ec2_deployment_interface_contract" {
       "runner = object({",
       "os                     = string",
       "architecture           = string",
-      "boot_time_in_minutes   = optional(number, null)",
       "disable_default_labels = optional(bool, null)",
       "extra_labels           = optional(list(string), null)",
       "group_name             = optional(string, null)",
       "name_prefix            = optional(string, null)",
       "run_as_root            = optional(bool, null)",
       "run_as                 = optional(string, null)",
+      "auto_update_disabled   = optional(bool, null)",
       "orchestration = object({",
       "webhook = optional(object({",
-      "maximum_count = number",
-      "ephemeral              = optional(bool, null)",
-      "jit_config_enabled     = optional(bool, null)",
-      "auto_update_disabled   = optional(bool, null)",
+      "boot_time_in_minutes = optional(number, null)",
+      "ephemeral            = optional(bool, null)",
+      "jit_config_enabled   = optional(bool, null)",
+      "maximum_count        = number",
       "hooks = optional(object({",
       "job_started   = optional(string, null)",
       "job_completed = optional(string, null)",
@@ -88,10 +88,11 @@ run "platform_ec2_deployment_interface_contract" {
       "redrive_build_queue = optional(object({",
       "enabled         = optional(bool, null)",
       "maxReceiveCount = optional(number, null)",
-      "scale_up = optional(object({",
+      "scale = optional(object({",
+      "up = optional(object({",
       "reserved_concurrent_executions = optional(number, null)",
       "job_queued_check_enabled       = optional(bool, null)",
-      "scale_down = optional(object({",
+      "down = optional(object({",
       "schedule_expression             = optional(string, null)",
       "minimum_running_time_in_minutes = optional(number, null)",
       "idle_config = optional(list(object({",
@@ -341,7 +342,7 @@ run "platform_ec2_deployment_interface_contract" {
     condition = (
       output.expected_input_variable_count == 4
       && output.expected_output_value_count == 6
-      && output.expected_interface_literal_count == 287
+      && output.expected_interface_literal_count == 288
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

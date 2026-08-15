@@ -240,10 +240,8 @@ locals {
           enable = true
         }
         lambda = {
-          scale = {
-            artifact = {
-              zip = "${data.external.download_lambdas.result.path}/runners.zip"
-            }
+          artifact = {
+            zip = "${data.external.download_lambdas.result.path}/runners.zip"
           }
           webhook = {
             artifact = {
