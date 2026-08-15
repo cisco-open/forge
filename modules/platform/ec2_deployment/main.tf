@@ -130,43 +130,10 @@ module "runners" {
 
   aws_region = var.aws_region
 
-  vpc_id                    = var.network_configs.vpc_id
-  subnet_ids                = var.network_configs.subnet_ids
-  lambda_subnet_ids         = var.network_configs.lambda_subnet_ids
-  lambda_security_group_ids = [aws_security_group.gh_runner_lambda_egress.id]
-  kms_key_arn               = aws_kms_key.github.arn
-  ghes_url                  = var.runner_configs.ghes_url
-  prefix                    = var.runner_configs.prefix
-
-  # For authenticating against the GitHub App we created.
-  github_app = var.runner_configs.github_app
-
-  eventbridge = {
-    enable = true
-  }
-
-  lambda_tags          = local.terraform_aws_github_runner_tags
-  tags                 = local.terraform_aws_github_runner_tags
-  parameter_store_tags = local.terraform_aws_github_runner_tags
-
-  # Verbose logging.
-  log_level = var.runner_configs.log_level
-
-  # Retention period for the logs in days.
-  logging_retention_in_days = var.runner_configs.logging_retention_in_days
-
-  webhook_lambda_zip = "${data.external.download_lambdas.result.path}/webhook.zip"
-  webhook_lambda_apigateway_access_log_settings = {
-    destination_arn = aws_cloudwatch_log_group.webhook_api_gateway_access.arn
-    format          = local.webhook_api_gateway_access_log_format
-  }
-  runner_binaries_syncer_lambda_zip = "${data.external.download_lambdas.result.path}/runner-binaries-syncer.zip"
-  runners_lambda_zip                = "${data.external.download_lambdas.result.path}/runners.zip"
+  prefix = var.runner_configs.prefix
 
   multi_runner_config = {}
-  experimental = {
-    multi_runner_config = local.multi_runner_config
-  }
+  experimental        = local.experimental_config
 
   depends_on = [
     data.external.download_lambdas,
