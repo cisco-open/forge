@@ -22,20 +22,35 @@ In Forge, the Kubernetes lane turns GitHub Actions jobs into ephemeral pods. Thi
 - The controller and scale-set listeners expose `/metrics` on port `8080` with Prometheus discovery annotations.
 - Listener metrics retain repository, job, event, result, and workflow dimensions. The managed Prometheus chart and Splunk OTel Prometheus autodiscovery can scrape the same endpoints independently; do not add Prometheus remote write to the collector unless direct collector scraping is disabled.
 
-## Karpenter Node Maintenance
+## ARC Node Maintenance
 
 `maintenance=true:NoSchedule` prevents new Forge pods from scheduling on a
 node. It does not evict pods that are already running, and an existing idle
 runner can still accept a job. Quiesce the affected scale sets before draining
-the node.
+the node. This procedure applies to both Karpenter nodes and the fixed-capacity
+self-managed node group backed by an EC2 Auto Scaling group (ASG).
 
-First confirm that Karpenter owns the node. The output must include a NodePool
-name and the `karpenter.sh/termination` finalizer:
+First identify the owner. Configure the AWS CLI for the cluster account and
+Region, then inspect the Karpenter metadata and ASG membership:
 
 ```bash
+provider_id="$(kubectl get node "$node" -o jsonpath='{.spec.providerID}')"
+instance_id="${provider_id##*/}"
+asg_name="$(aws autoscaling describe-auto-scaling-instances \
+  --instance-ids "$instance_id" \
+  --query 'AutoScalingInstances[0].AutoScalingGroupName' \
+  --output text)"
+
 kubectl get node "$node" \
   -o jsonpath='{.metadata.labels.karpenter\.sh/nodepool}{"\n"}{.metadata.finalizers}{"\n"}'
+printf 'instance_id=%s\nasg_name=%s\n' "$instance_id" "$asg_name"
 ```
+
+A Karpenter node must have a NodePool label and the
+`karpenter.sh/termination` finalizer, with no ASG membership. An ASG-backed node
+must resolve to the expected cluster ASG and must not have Karpenter ownership
+metadata. Stop if the provider ID is empty, ownership is ambiguous, or the ASG
+name is `None` for a node believed to be ASG-backed.
 
 Taint the node:
 
@@ -62,7 +77,7 @@ node has no runner or job pods. Checking the pod list before queue-drain mode
 has an assignment race: an existing idle runner could accept a job after the
 check.
 
-Then inspect, drain, and delete the node:
+Then inspect and drain the node:
 
 ```bash
 kubectl get pods --all-namespaces \
@@ -73,21 +88,114 @@ kubectl get pods --all-namespaces \
 kubectl drain "$node" \
   --ignore-daemonsets \
   --delete-emptydir-data
+```
 
+Do not bypass PodDisruptionBudgets with `--disable-eviction` or unmanaged-pod
+checks with `--force` without investigating the blocker. After drain succeeds,
+use exactly one of the following ownership-specific paths.
+
+### Delete a Karpenter Node
+
+Reconfirm the NodePool label and `karpenter.sh/termination` finalizer, then
+delete the Node object:
+
+```bash
 kubectl delete node "$node" --wait=false
 kubectl wait --for=delete "node/$node" --timeout=10m
 ```
 
 Karpenter's termination finalizer terminates the backing instance before it
-allows the Node object to disappear. If the NodePool label or finalizer is
-missing, stop: deleting a self-managed or ASG-backed Node object does not
-terminate its EC2 instance. Use the owning node-group workflow instead. Do not
-bypass PodDisruptionBudgets with `--disable-eviction` or unmanaged-pod checks
-with `--force` without investigating the blocker.
+allows the Node object to disappear. Stop if either ownership marker is
+missing; deleting a self-managed or ASG-backed Node object does not terminate
+its EC2 instance, and its kubelet can register again.
 
-After node deletion is confirmed, restore the original runner bounds through
-the normal tenant deployment workflow. Wait for the required runner capacity
-to become ready before resuming job submissions.
+### Replace an ASG-backed Node
+
+Reconfirm that the instance belongs to the expected cluster ASG. Inspect its
+cluster ownership tag, desired capacity, suspended processes, instance
+protection, and lifecycle hooks:
+
+```bash
+aws autoscaling describe-auto-scaling-groups \
+  --auto-scaling-group-names "$asg_name" \
+  --query 'AutoScalingGroups[0].{
+    Desired:DesiredCapacity,
+    Min:MinSize,
+    Max:MaxSize,
+    SuspendedProcesses:SuspendedProcesses[].ProcessName,
+    ClusterTags:Tags[?starts_with(Key, `kubernetes.io/cluster/`)].{Key:Key,Value:Value},
+    Instances:Instances[].{
+      Id:InstanceId,
+      State:LifecycleState,
+      Health:HealthStatus,
+      Protected:ProtectedFromScaleIn
+    }
+  }'
+
+aws autoscaling describe-lifecycle-hooks \
+  --auto-scaling-group-name "$asg_name"
+
+previous_instance_ids="$(aws autoscaling describe-auto-scaling-groups \
+  --auto-scaling-group-names "$asg_name" \
+  --query 'AutoScalingGroups[0].Instances[].InstanceId' \
+  --output text)"
+printf 'previous_instance_ids=%s\n' "$previous_instance_ids"
+```
+
+The output must contain the expected
+`kubernetes.io/cluster/<cluster-name>=owned` tag and must not list `Launch` or
+`Terminate` as suspended. Account for any lifecycle hooks before continuing.
+An explicit termination request bypasses `ProtectedFromScaleIn`; if it is
+`true`, reconfirm that this is the intended instance.
+
+Terminate the instance through Auto Scaling while preserving desired capacity.
+The [`--no-should-decrement-desired-capacity`](https://docs.aws.amazon.com/cli/latest/reference/autoscaling/terminate-instance-in-auto-scaling-group.html)
+option causes the ASG to launch a replacement:
+
+```bash
+aws autoscaling terminate-instance-in-auto-scaling-group \
+  --instance-id "$instance_id" \
+  --no-should-decrement-desired-capacity
+
+aws ec2 wait instance-terminated --instance-ids "$instance_id"
+kubectl delete node "$node" --ignore-not-found --wait=false
+kubectl wait --for=delete "node/$node" --timeout=10m
+```
+
+Do not use `kubectl delete node` as the ASG termination mechanism. Do not use
+`--should-decrement-desired-capacity` for a replacement. A permanent capacity
+change is a separate operation through the owning capacity workflow and must
+not be combined with node maintenance. If the waiter times out, inspect the ASG
+scaling activity and lifecycle hooks instead of submitting another termination
+request.
+
+Repeat the ASG query until it again has its desired number of healthy
+`InService` instances. Compare the IDs with `previous_instance_ids` and stop
+if there is not exactly one new replacement ID:
+
+```bash
+aws autoscaling describe-auto-scaling-groups \
+  --auto-scaling-group-names "$asg_name" \
+  --query 'AutoScalingGroups[0].{Desired:DesiredCapacity,Instances:Instances[].{Id:InstanceId,State:LifecycleState,Health:HealthStatus}}'
+
+kubectl get nodes \
+  -o 'custom-columns=NAME:.metadata.name,READY:.status.conditions[?(@.type=="Ready")].status,PROVIDER_ID:.spec.providerID'
+```
+
+Set `replacement_node` to the Node whose provider ID ends with the new
+replacement instance ID, then wait for Kubernetes readiness:
+
+```bash
+kubectl wait \
+  --for=condition=Ready \
+  "node/$replacement_node" \
+  --timeout=10m
+```
+
+After Karpenter deletion is confirmed, or after the ASG replacement Node is
+`Ready`, restore the original runner bounds through the normal tenant
+deployment workflow. Wait for the required runner capacity to become ready
+before resuming job submissions.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
