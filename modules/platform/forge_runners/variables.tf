@@ -14,6 +14,10 @@ variable "ec2_deployment_specs" {
     subnet_ids        = list(string)
     lambda_vpc_id     = string
     vpc_id            = string
+    lambda_artifacts = optional(object({
+      control_plane_zip = optional(string, null)
+      webhook_zip       = optional(string, null)
+    }), {})
     runner_specs = map(object({
       tags = optional(map(string), {})
 
@@ -343,6 +347,34 @@ variable "ec2_deployment_specs" {
             })), null)
             tags = optional(map(string), {})
           }), null)
+          microvm = optional(object({
+            image_arn                  = optional(string, null)
+            image_version              = optional(string, null)
+            ingress_network_connectors = optional(list(string), null)
+            egress_network_connectors  = optional(list(string), null)
+            logging = optional(object({
+              log_group = optional(string, null)
+            }), null)
+            maximum_duration_in_seconds = optional(number, null)
+            environment_variables       = optional(map(string), {})
+            iam = optional(object({
+              resource_arns = optional(object({
+                images   = optional(list(string), null)
+                microvms = optional(list(string), null)
+              }), {})
+              additional_policy_json = optional(object({
+                scale_up = optional(string, null)
+              }), {})
+              managed_policies = optional(object({
+                scale_up = optional(object({
+                  arn = string
+                }), null)
+                pool = optional(object({
+                  arn = string
+                }), null)
+              }), {})
+            }), {})
+          }), null)
         }), {})
       })
 
@@ -363,9 +395,22 @@ variable "ec2_deployment_specs" {
   validation {
     condition = alltrue([
       for runner_config in values(var.ec2_deployment_specs.runner_specs) :
-      try(
-        length(runner_config.compute_provider.aws.ec2[*]) == 1
-        && length(runner_config.compute_provider.aws.ec2.ami[*]) == 1
+      length(flatten([
+        for provider_namespace, provider_configs in runner_config.compute_provider : [
+          for provider_type, provider_config in provider_configs :
+          "${provider_namespace}.${provider_type}"
+          if provider_config != null
+        ]
+      ])) == 1
+    ])
+    error_message = "Each Forge runner configuration must select exactly one non-null compute-provider block. Supported compute-provider blocks: aws.ec2, aws.microvm."
+  }
+
+  validation {
+    condition = alltrue([
+      for runner_config in values(var.ec2_deployment_specs.runner_specs) :
+      runner_config.compute_provider.aws.ec2 == null ? true : try(
+        length(runner_config.compute_provider.aws.ec2.ami[*]) == 1
         && length(runner_config.compute_provider.aws.ec2.ami.id_ssm_parameter[*]) == 0,
         false,
       )
@@ -373,17 +418,72 @@ variable "ec2_deployment_specs" {
     error_message = "Forge EC2 runner_specs must configure a module-managed ami block; ami = null and external ami.id_ssm_parameter ownership are not supported."
   }
 
+  validation {
+    condition = alltrue([
+      for runner_config in values(var.ec2_deployment_specs.runner_specs) :
+      runner_config.compute_provider.aws.microvm == null ? true : (
+        runner_config.runner.os == "linux" && runner_config.runner.architecture == "arm64"
+      )
+    ])
+    error_message = "Forge Lambda MicroVM runner_specs require runner.os = linux and runner.architecture = arm64."
+  }
+
+  validation {
+    condition = alltrue([
+      for runner_config in values(var.ec2_deployment_specs.runner_specs) :
+      runner_config.compute_provider.aws.microvm == null ? true : try(
+        runner_config.orchestration_provider.webhook != null
+        && coalesce(runner_config.orchestration_provider.webhook.runner.ephemeral, false)
+        && coalesce(
+          runner_config.orchestration_provider.webhook.runner.jit_config_enabled,
+          runner_config.orchestration_provider.webhook.runner.ephemeral,
+          false,
+        ),
+        false,
+      )
+    ])
+    error_message = "Forge Lambda MicroVM runner_specs require webhook orchestration with ephemeral and JIT runner configuration enabled."
+  }
+
+  validation {
+    condition = alltrue([
+      for runner_config in values(var.ec2_deployment_specs.runner_specs) :
+      runner_config.compute_provider.aws.microvm == null ? true : try(
+        can(regex(
+          "^arn:[^:]+:lambda:[^:]+:[0-9]{12}:microvm-image:.+$",
+          runner_config.compute_provider.aws.microvm.image_arn,
+        )),
+        false,
+      )
+    ])
+    error_message = "Forge Lambda MicroVM runner_specs must configure a valid compute_provider.aws.microvm.image_arn."
+  }
+
+  validation {
+    condition = !anytrue([
+      for runner_config in values(var.ec2_deployment_specs.runner_specs) :
+      runner_config.compute_provider.aws.microvm != null
+      ]) || (
+      try(trimspace(var.ec2_deployment_specs.lambda_artifacts.control_plane_zip), "") != ""
+      && try(trimspace(var.ec2_deployment_specs.lambda_artifacts.webhook_zip), "") != ""
+    )
+    error_message = "Forge Lambda MicroVM runner_specs require lambda_artifacts.control_plane_zip and lambda_artifacts.webhook_zip built from the selected upstream MicroVM branch."
+  }
+
   description = <<-EOT
-  EC2 deployment configuration for GitHub Actions runners. The public runner
-  shape follows the nested experimental multi_runner_config EC2 contract and
-  is passed directly to the upstream provider-oriented runner stack.
+  Runner deployment configuration for GitHub Actions runners. The public runner
+  shape follows the nested experimental multi_runner_config contract and is
+  passed directly to the upstream provider-oriented runner configuration.
 
   Top-level fields:
     - lambda_subnet_ids: Subnets where runner-related lambdas execute.
       These can be more permissive than the runner subnets.
     - subnet_ids       : Default subnets for EC2 runners.
     - vpc_id           : VPC that contains both runner and lambda subnets.
-    - runner_specs     : Map of EC2 runner configurations.
+    - lambda_artifacts : Optional control-plane and webhook Lambda ZIPs.
+                         MicroVM lanes require both ZIPs to be built from the
+                         selected upstream MicroVM branch.
+    - runner_specs     : Map of runner configurations.
 
   runner_specs[*] object fields:
     - runner                 : Provider-neutral OS, architecture, labels, bootstrap,
@@ -397,7 +497,7 @@ variable "ec2_deployment_specs" {
     - ssm                    : Per-configuration paths, tags, parameter tags, and
                                housekeeper settings, including its Lambda artifact.
     - observability          : Per-configuration logging, tracing, and metrics overrides.
-    - compute_provider       : Nested v2 EC2 provider configuration.
+    - compute_provider       : Nested v2 compute-provider configuration.
     - tags                   : Per-configuration resource tags.
 
   compute_provider.aws.ec2 fields:
@@ -414,6 +514,15 @@ variable "ec2_deployment_specs" {
                         an externally managed runner IAM role whose owner also
                         supplies Forge's EC2-tag and hook-SSM permissions.
     - log_files/tags  : EC2 logging and resource tags.
+
+  compute_provider.aws.microvm fields:
+    - image_arn/image_version: Lambda MicroVM image and optional version.
+    - ingress_network_connectors/egress_network_connectors: Up to 10 Lambda
+      network-connector ARNs in each direction.
+    - logging.log_group: Optional CloudWatch Logs group for MicroVM runtime logs.
+    - maximum_duration_in_seconds: Optional integer lifetime from 1 through 28,800 seconds.
+    - environment_variables: Provider-specific environment variables.
+    - iam: Image and MicroVM resource ARNs plus optional scale-up and pool policies.
   EOT
 }
 

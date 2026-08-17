@@ -16,6 +16,10 @@ variable "runner_configs" {
       webhook_secret = string
     })
     runner_iam_role_managed_policy_arns = list(string)
+    lambda_artifacts = optional(object({
+      control_plane_zip = optional(string, null)
+      webhook_zip       = optional(string, null)
+    }), {})
     runner_specs = map(object({
       tags = optional(map(string), {})
 
@@ -345,6 +349,34 @@ variable "runner_configs" {
             })), null)
             tags = optional(map(string), {})
           }), null)
+          microvm = optional(object({
+            image_arn                  = optional(string, null)
+            image_version              = optional(string, null)
+            ingress_network_connectors = optional(list(string), null)
+            egress_network_connectors  = optional(list(string), null)
+            logging = optional(object({
+              log_group = optional(string, null)
+            }), null)
+            maximum_duration_in_seconds = optional(number, null)
+            environment_variables       = optional(map(string), {})
+            iam = optional(object({
+              resource_arns = optional(object({
+                images   = optional(list(string), null)
+                microvms = optional(list(string), null)
+              }), {})
+              additional_policy_json = optional(object({
+                scale_up = optional(string, null)
+              }), {})
+              managed_policies = optional(object({
+                scale_up = optional(object({
+                  arn = string
+                }), null)
+                pool = optional(object({
+                  arn = string
+                }), null)
+              }), {})
+            }), {})
+          }), null)
         }), {})
       })
 
@@ -365,9 +397,22 @@ variable "runner_configs" {
   validation {
     condition = alltrue([
       for runner_config in values(var.runner_configs.runner_specs) :
-      try(
-        length(runner_config.compute_provider.aws.ec2[*]) == 1
-        && length(runner_config.compute_provider.aws.ec2.ami[*]) == 1
+      length(flatten([
+        for provider_namespace, provider_configs in runner_config.compute_provider : [
+          for provider_type, provider_config in provider_configs :
+          "${provider_namespace}.${provider_type}"
+          if provider_config != null
+        ]
+      ])) == 1
+    ])
+    error_message = "Each Forge runner configuration must select exactly one non-null compute-provider block. Supported compute-provider blocks: aws.ec2, aws.microvm."
+  }
+
+  validation {
+    condition = alltrue([
+      for runner_config in values(var.runner_configs.runner_specs) :
+      runner_config.compute_provider.aws.ec2 == null ? true : try(
+        length(runner_config.compute_provider.aws.ec2.ami[*]) == 1
         && length(runner_config.compute_provider.aws.ec2.ami.id_ssm_parameter[*]) == 0,
         false,
       )
@@ -375,6 +420,63 @@ variable "runner_configs" {
     error_message = "Forge EC2 runner_specs must configure a module-managed ami block; ami = null and external ami.id_ssm_parameter ownership are not supported."
   }
 
+  validation {
+    condition = alltrue([
+      for runner_config in values(var.runner_configs.runner_specs) :
+      runner_config.compute_provider.aws.microvm == null ? true : (
+        runner_config.runner.os == "linux" && runner_config.runner.architecture == "arm64"
+      )
+    ])
+    error_message = "Forge Lambda MicroVM runner_specs require runner.os = linux and runner.architecture = arm64."
+  }
+
+  validation {
+    condition = alltrue([
+      for runner_config in values(var.runner_configs.runner_specs) :
+      runner_config.compute_provider.aws.microvm == null ? true : try(
+        runner_config.orchestration_provider.webhook != null
+        && coalesce(runner_config.orchestration_provider.webhook.runner.ephemeral, false)
+        && coalesce(
+          runner_config.orchestration_provider.webhook.runner.jit_config_enabled,
+          runner_config.orchestration_provider.webhook.runner.ephemeral,
+          false,
+        ),
+        false,
+      )
+    ])
+    error_message = "Forge Lambda MicroVM runner_specs require webhook orchestration with ephemeral and JIT runner configuration enabled."
+  }
+
+  validation {
+    condition = alltrue([
+      for runner_config in values(var.runner_configs.runner_specs) :
+      runner_config.compute_provider.aws.microvm == null ? true : try(
+        can(regex(
+          "^arn:[^:]+:lambda:[^:]+:[0-9]{12}:microvm-image:.+$",
+          runner_config.compute_provider.aws.microvm.image_arn,
+        )),
+        false,
+      )
+    ])
+    error_message = "Forge Lambda MicroVM runner_specs must configure a valid compute_provider.aws.microvm.image_arn."
+  }
+
+  validation {
+    condition = !anytrue([
+      for runner_config in values(var.runner_configs.runner_specs) :
+      runner_config.compute_provider.aws.microvm != null
+      ]) || (
+      try(trimspace(var.runner_configs.lambda_artifacts.control_plane_zip), "") != ""
+      && try(trimspace(var.runner_configs.lambda_artifacts.webhook_zip), "") != ""
+    )
+    error_message = "Forge Lambda MicroVM runner_specs require lambda_artifacts.control_plane_zip and lambda_artifacts.webhook_zip built from the selected upstream MicroVM branch."
+  }
+
+  description = <<-EOT
+  Forge runner deployment configuration. lambda_artifacts.control_plane_zip and
+  lambda_artifacts.webhook_zip select local Lambda archives; MicroVM lanes require
+  both archives to be built from the selected upstream MicroVM branch.
+  EOT
 }
 
 variable "network_configs" {

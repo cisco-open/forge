@@ -76,6 +76,18 @@ mock_provider "aws" {
       url = "https://sqs.eu-west-1.amazonaws.com/123456789012/mock"
     }
   }
+
+  mock_resource "aws_lambda_function" {
+    defaults = {
+      arn = "arn:aws:lambda:eu-west-1:123456789012:function:mock"
+    }
+  }
+
+  mock_resource "aws_cloudwatch_event_rule" {
+    defaults = {
+      arn = "arn:aws:events:eu-west-1:123456789012:rule/mock"
+    }
+  }
 }
 
 mock_provider "external" {
@@ -124,6 +136,10 @@ variables {
       webhook_secret = "test"
     }
     runner_iam_role_managed_policy_arns = []
+    lambda_artifacts = {
+      control_plane_zip = "README.md"
+      webhook_zip       = "README.md"
+    }
     runner_specs = {
       ec2 = {
         tags = { Scope = "entry" }
@@ -265,7 +281,7 @@ variables {
             tags                = { Scope = "ssm-housekeeper" }
             lambda = {
               artifact = {
-                zip = "/private/tmp/forge-test-lambda-cache/ssm-housekeeper.zip"
+                zip = "README.md"
               }
               memory_size = 384
               timeout     = 70
@@ -399,6 +415,72 @@ variables {
           }
         }
       }
+      microvm = {
+        tags = { Scope = "microvm-entry" }
+        runner = {
+          os           = "linux"
+          architecture = "arm64"
+          extra_labels = ["arm64-extra"]
+          hooks = {
+            job_started   = "echo microvm-started"
+            job_completed = "echo microvm-completed"
+          }
+          iam = {
+            managed_policy_arns = {
+              caller = "arn:aws:iam::123456789012:policy/microvm-caller"
+            }
+          }
+        }
+        orchestration_provider = {
+          webhook = {
+            runner = {
+              ephemeral          = true
+              jit_config_enabled = true
+              maximum_count      = 3
+            }
+            matcherConfig = {
+              labelMatchers = [
+                ["self-hosted", "microvm"],
+                ["self-hosted", "lambda-microvm"],
+              ]
+            }
+          }
+        }
+        compute_provider = {
+          aws = {
+            microvm = {
+              image_arn                  = "arn:aws:lambda:eu-west-1:123456789012:microvm-image:forge-linux-arm64"
+              image_version              = "3"
+              ingress_network_connectors = ["arn:aws:lambda:eu-west-1:123456789012:network-connector:ingress"]
+              egress_network_connectors  = ["arn:aws:lambda:eu-west-1:123456789012:network-connector:egress"]
+              logging = {
+                log_group = "/forge/test/microvm"
+              }
+              maximum_duration_in_seconds = 3600
+              environment_variables = {
+                FORGE_MICROVM = "true"
+              }
+              iam = {
+                resource_arns = {
+                  images   = ["arn:aws:lambda:eu-west-1:123456789012:microvm-image:forge-linux-arm64"]
+                  microvms = ["arn:aws:lambda:eu-west-1:123456789012:microvm:*"]
+                }
+                additional_policy_json = {
+                  scale_up = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
+                }
+                managed_policies = {
+                  scale_up = {
+                    arn = "arn:aws:iam::123456789012:policy/microvm-scale-up"
+                  }
+                  pool = {
+                    arn = "arn:aws:iam::123456789012:policy/microvm-pool"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
@@ -414,21 +496,29 @@ run "ec2_v2_input_plan" {
   }
 
   assert {
-    condition     = toset(keys(local.ec2_runner_configs)) == toset(["default_path", "ec2"])
-    error_message = "EC2 provider filtering must retain every EC2 runner configuration."
+    condition = (
+      length(local.ec2_runner_configs) == 2
+      && can(local.ec2_runner_configs.default_path)
+      && can(local.ec2_runner_configs.ec2)
+      && !can(local.ec2_runner_configs.microvm)
+    )
+    error_message = "EC2 provider filtering must retain EC2 lanes and exclude the Lambda MicroVM lane."
   }
 
   assert {
-    condition     = toset(keys(local.multi_runner_config)) == toset(["default_path", "ec2"])
-    error_message = "The upstream v2 configuration must preserve every EC2 runner-configuration key."
+    condition     = toset(keys(local.multi_runner_config)) == toset(["default_path", "ec2", "microvm"])
+    error_message = "The provider-neutral upstream v2 configuration must preserve every runner-configuration key."
   }
 
   assert {
     condition = (
       toset(keys(local.multi_runner_config.ec2.compute_provider)) == toset(["aws"])
-      && toset(keys(local.multi_runner_config.ec2.compute_provider.aws)) == toset(["ec2"])
+      && local.multi_runner_config.ec2.compute_provider.aws.ec2 != null
+      && local.multi_runner_config.ec2.compute_provider.aws.microvm == null
+      && local.multi_runner_config.microvm.compute_provider.aws.ec2 == null
+      && local.multi_runner_config.microvm.compute_provider.aws.microvm != null
     )
-    error_message = "Forge must preserve the AWS namespace while keeping ec2 as the runtime compute-provider type."
+    error_message = "Forge must preserve the AWS namespace and each lane's selected EC2 or Lambda MicroVM provider."
   }
 
   assert {
@@ -444,7 +534,54 @@ run "ec2_v2_input_plan" {
 
   assert {
     condition     = local.active_ec2_subnet_ids == toset(["subnet-default", "subnet-override"])
-    error_message = "EC2 effective subnet resolution must preserve per-configuration overrides."
+    error_message = "EC2 effective subnet resolution must preserve per-configuration overrides and exclude Lambda MicroVM lanes."
+  }
+
+  assert {
+    condition = (
+      length(local.ec2_default_ami_filters) == 2
+      && length(local.ec2_compute_provider) == 2
+      && length(local.effective_runner_users) == 2
+      && length(local.runner_hook_job_started) == 2
+      && !can(local.ec2_default_ami_filters.microvm)
+      && !can(local.ec2_compute_provider.microvm)
+      && !can(local.effective_runner_users.microvm)
+      && !can(local.runner_hook_job_started.microvm)
+    )
+    error_message = "AMI defaults, normalized EC2 providers, runner users, and Forge lifecycle hooks must remain EC2-only."
+  }
+
+  assert {
+    condition = (
+      local.multi_runner_config.microvm.runner.os == "linux"
+      && local.multi_runner_config.microvm.runner.architecture == "arm64"
+      && local.multi_runner_config.microvm.runner.hooks.job_started == "echo microvm-started"
+      && local.multi_runner_config.microvm.runner.hooks.job_completed == "echo microvm-completed"
+      && tolist(local.multi_runner_config.microvm.runner.extra_labels) == tolist(["arm64-extra"])
+      && tolist(local.multi_runner_config.microvm.orchestration_provider.webhook.matcherConfig.labelMatchers[0]) == tolist(["self-hosted", "microvm"])
+      && tolist(local.multi_runner_config.microvm.orchestration_provider.webhook.matcherConfig.labelMatchers[1]) == tolist(["self-hosted", "lambda-microvm"])
+      && local.multi_runner_config.microvm.runner.iam.managed_policy_arns.caller == "arn:aws:iam::123456789012:policy/microvm-caller"
+      && !contains(keys(local.multi_runner_config.microvm.runner.iam.managed_policy_arns), "forge_ec2_tags")
+      && !contains(keys(local.multi_runner_config.microvm.runner.iam.managed_policy_arns), "forge_runner_hooks_ssm_read")
+    )
+    error_message = "Lambda MicroVM lanes must preserve caller hooks and policies without receiving Forge's EC2-only overlays."
+  }
+
+  assert {
+    condition = (
+      local.multi_runner_config.microvm.orchestration_provider.webhook.runner.ephemeral
+      && local.multi_runner_config.microvm.orchestration_provider.webhook.runner.jit_config_enabled
+      && local.multi_runner_config.microvm.compute_provider.aws.microvm.image_arn == "arn:aws:lambda:eu-west-1:123456789012:microvm-image:forge-linux-arm64"
+      && local.multi_runner_config.microvm.compute_provider.aws.microvm.image_version == "3"
+      && local.multi_runner_config.microvm.compute_provider.aws.microvm.ingress_network_connectors[0] == "arn:aws:lambda:eu-west-1:123456789012:network-connector:ingress"
+      && local.multi_runner_config.microvm.compute_provider.aws.microvm.egress_network_connectors[0] == "arn:aws:lambda:eu-west-1:123456789012:network-connector:egress"
+      && local.multi_runner_config.microvm.compute_provider.aws.microvm.logging.log_group == "/forge/test/microvm"
+      && local.multi_runner_config.microvm.compute_provider.aws.microvm.maximum_duration_in_seconds == 3600
+      && local.multi_runner_config.microvm.compute_provider.aws.microvm.environment_variables.FORGE_MICROVM == "true"
+      && local.multi_runner_config.microvm.compute_provider.aws.microvm.iam.managed_policies.scale_up.arn == "arn:aws:iam::123456789012:policy/microvm-scale-up"
+      && local.multi_runner_config.microvm.compute_provider.aws.microvm.iam.managed_policies.pool.arn == "arn:aws:iam::123456789012:policy/microvm-pool"
+    )
+    error_message = "The normalized map must preserve the complete Lambda MicroVM provider contract."
   }
 
   assert {
@@ -641,7 +778,7 @@ run "ec2_v2_input_plan" {
       && local.multi_runner_config.ec2.ssm.paths.config == "custom-config"
       && local.multi_runner_config.ec2.ssm.housekeeper.schedule_expression == "rate(12 hours)"
       && local.multi_runner_config.ec2.ssm.housekeeper.state == "DISABLED"
-      && local.multi_runner_config.ec2.ssm.housekeeper.lambda.artifact.zip == "/private/tmp/forge-test-lambda-cache/ssm-housekeeper.zip"
+      && local.multi_runner_config.ec2.ssm.housekeeper.lambda.artifact.zip == "README.md"
       && local.multi_runner_config.ec2.ssm.housekeeper.lambda.memory_size == 384
       && local.multi_runner_config.ec2.ssm.housekeeper.lambda.timeout == 70
       && local.multi_runner_config.ec2.ssm.housekeeper.config.tokenPath == "custom-token-path"
@@ -675,13 +812,13 @@ run "ec2_v2_input_plan" {
     condition = (
       local.experimental_config.github.app.id == "12345"
       && local.experimental_config.github.enterprise_server.url == null
-      && local.experimental_config.orchestration_provider.webhook.eventbridge.enabled
-      && local.experimental_config.orchestration_provider.webhook.lambda.artifact.zip == "/private/tmp/forge-test-lambda-cache/runners.zip"
+      && local.experimental_config.orchestration_provider.webhook.eventbridge.enable
+      && local.experimental_config.orchestration_provider.webhook.lambda.artifact.zip == "README.md"
       && tolist(local.experimental_config.lambda.subnet_ids) == tolist(["subnet-test"])
       && length(local.experimental_config.lambda.security_group_ids) == 1
-      && local.experimental_config.orchestration_provider.webhook.lambda.webhook.artifact.zip == "/private/tmp/forge-test-lambda-cache/webhook.zip"
+      && local.experimental_config.orchestration_provider.webhook.lambda.webhook.artifact.zip == "README.md"
       && local.experimental_config.ssm.kms_key_id == "arn:aws:kms:eu-west-1:123456789012:key/00000000-0000-0000-0000-000000000000"
-      && local.experimental_config.ssm.housekeeper.lambda.artifact.zip == "/private/tmp/forge-test-lambda-cache/runners.zip"
+      && local.experimental_config.ssm.housekeeper.lambda.artifact.zip == "README.md"
       && local.experimental_config.observability.logs.level == "info"
       && local.experimental_config.observability.logs.retention_in_days == 3
       && local.experimental_config.compute_provider.aws.ec2.vpc_id == "vpc-test"
@@ -709,4 +846,180 @@ run "ec2_v2_input_plan" {
     error_message = "Forge webhook API Gateway access-log settings must be carried by the experimental webhook contract."
   }
 
+}
+
+run "mixed_provider_outputs" {
+  command = plan
+
+  plan_options {
+    target = [
+      module.runners.module.runner_configs,
+    ]
+  }
+
+  assert {
+    condition = (
+      length(local.microvm_runner_configs) == 1
+      && can(local.microvm_runner_configs.microvm)
+      && output.microvm_runners_arn_map.microvm == "arn:aws:iam::123456789012:role/mock-runner"
+      && output.runners_arn_map.microvm == output.microvm_runners_arn_map.microvm
+      && output.microvm_runners_map.microvm.image_arn == "arn:aws:lambda:eu-west-1:123456789012:microvm-image:forge-linux-arm64"
+    )
+    error_message = "Provider-neutral and Lambda MicroVM outputs must expose the resolved role, labels, and provider resources."
+  }
+}
+
+run "microvm_only_plan" {
+  command = plan
+
+  variables {
+    runner_configs = {
+      env                       = "test"
+      prefix                    = "forge-test-microvm-only"
+      ghes_url                  = ""
+      log_level                 = "info"
+      logging_retention_in_days = "3"
+      github_app = {
+        key_base64     = "dGVzdA=="
+        id             = "12345"
+        webhook_secret = "test"
+      }
+      runner_iam_role_managed_policy_arns = []
+      lambda_artifacts = {
+        control_plane_zip = "README.md"
+        webhook_zip       = "README.md"
+      }
+      runner_specs = {
+        microvm_only = {
+          runner = {
+            os           = "linux"
+            architecture = "arm64"
+            extra_labels = ["microvm-only"]
+          }
+          orchestration_provider = {
+            webhook = {
+              runner = {
+                ephemeral          = true
+                jit_config_enabled = true
+                maximum_count      = 1
+              }
+              matcherConfig = {
+                labelMatchers = [["self-hosted", "microvm-only"]]
+              }
+            }
+          }
+          compute_provider = {
+            aws = {
+              microvm = {
+                image_arn = "arn:aws:lambda:eu-west-1:123456789012:microvm-image:forge-microvm-only"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  plan_options {
+    target = [
+      aws_iam_policy.ec2_tags,
+      aws_iam_policy.runner_hooks_ssm_read,
+      data.aws_iam_policy_document.runner_hooks_ssm_read,
+      data.external.download_lambdas,
+      module.ec2_update_runner_ssm_ami,
+      module.runners.module.runner_configs,
+    ]
+  }
+
+  assert {
+    condition = (
+      length(local.ec2_runner_configs) == 0
+      && length(local.microvm_runner_configs) == 1
+      && can(local.microvm_runner_configs.microvm_only)
+      && length(local.ec2_compute_provider) == 0
+      && length(local.ec2_update_runner_ami_map) == 0
+      && length(local.runner_ssm_paths) == 0
+    )
+    error_message = "A Lambda MicroVM-only deployment must leave every EC2-owned configuration and AMI helper input empty."
+  }
+
+  assert {
+    condition = (
+      length(module.ec2_update_runner_ssm_ami) == 0
+      && length(module.ec2_update_runner_tags) == 0
+      && length(aws_iam_policy.ec2_tags) == 0
+      && length(aws_iam_policy.runner_hooks_ssm_read) == 0
+      && length(data.aws_iam_policy_document.runner_hooks_ssm_read) == 0
+      && length(data.aws_subnet.runner_subnet) == 0
+      && length(data.aws_ami.runner_ami) == 0
+      && length(data.aws_ssm_parameter.ami_id) == 0
+      && length(data.external.download_lambdas) == 0
+      && length(aws_ssm_parameter.hook_job_started) == 0
+      && length(aws_ssm_parameter.hook_job_completed) == 0
+    )
+    error_message = "A Lambda MicroVM-only deployment must not create EC2 policies, hooks, subnet or AMI lookups, or helper Lambdas."
+  }
+
+  assert {
+    condition = (
+      toset(keys(local.multi_runner_config)) == toset(["microvm_only"])
+      && local.multi_runner_config.microvm_only.compute_provider.aws.ec2 == null
+      && local.multi_runner_config.microvm_only.compute_provider.aws.microvm.image_arn == "arn:aws:lambda:eu-west-1:123456789012:microvm-image:forge-microvm-only"
+      && local.multi_runner_config.microvm_only.orchestration_provider.webhook.runner.ephemeral
+      && local.multi_runner_config.microvm_only.orchestration_provider.webhook.runner.jit_config_enabled
+      && local.multi_runner_config.microvm_only.runner.hooks.job_started == null
+      && local.multi_runner_config.microvm_only.runner.hooks.job_completed == null
+      && !contains(keys(local.multi_runner_config.microvm_only.runner.iam.managed_policy_arns), "forge_ec2_tags")
+      && !contains(keys(local.multi_runner_config.microvm_only.runner.iam.managed_policy_arns), "forge_runner_hooks_ssm_read")
+    )
+    error_message = "A Lambda MicroVM-only lane must remain valid in the canonical map without EC2 hooks or policies."
+  }
+}
+
+run "empty_runner_specs_use_release_artifact_fallback" {
+  command = plan
+
+  variables {
+    runner_configs = {
+      env                       = "test"
+      prefix                    = "forge-test-empty"
+      ghes_url                  = ""
+      log_level                 = "info"
+      logging_retention_in_days = "3"
+      github_app = {
+        key_base64     = "dGVzdA=="
+        id             = "12345"
+        webhook_secret = "test"
+      }
+      runner_iam_role_managed_policy_arns = []
+      runner_specs                        = {}
+    }
+  }
+
+  plan_options {
+    target = [
+      data.external.download_lambdas,
+    ]
+  }
+
+  assert {
+    condition = (
+      length(local.runner_configs) == 0
+      && length(local.ec2_runner_configs) == 0
+      && length(data.external.download_lambdas) == 1
+      && length(module.ec2_update_runner_ssm_ami) == 0
+      && length(module.ec2_update_runner_tags) == 0
+    )
+    error_message = "An empty runner map must skip provider-owned helpers while retaining the release-artifact fallback."
+  }
+
+  assert {
+    condition = (
+      data.external.download_lambdas[0].result.path == "/private/tmp/forge-test-lambda-cache"
+      && "${data.external.download_lambdas[0].result.path}/runners.zip" == "/private/tmp/forge-test-lambda-cache/runners.zip"
+      && "${data.external.download_lambdas[0].result.path}/webhook.zip" == "/private/tmp/forge-test-lambda-cache/webhook.zip"
+      && "${data.external.download_lambdas[0].result.path}/runner-binaries-syncer.zip" == "/private/tmp/forge-test-lambda-cache/runner-binaries-syncer.zip"
+    )
+    error_message = "With no runner lanes or caller artifacts, Forge must preserve the v7.10.1 control-plane, webhook, and syncer fallback paths."
+  }
 }
