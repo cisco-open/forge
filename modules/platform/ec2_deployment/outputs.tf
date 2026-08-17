@@ -64,7 +64,7 @@ output "microvm_runners_map" {
     for runner_key in keys(local.microvm_runner_configs) :
     runner_key => module.runners.runners_map_v2[runner_key].provider.aws.microvm
   }
-  description = "Map of Lambda MicroVM runner keys to their provider-owned image and execution-role outputs."
+  description = "Map of Lambda MicroVM runner keys to their provider-owned image, execution-role, and runtime log-group outputs."
 }
 
 output "subnet_cidr_blocks" {

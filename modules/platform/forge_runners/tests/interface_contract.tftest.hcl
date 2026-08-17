@@ -332,11 +332,10 @@ run "platform_forge_runners_interface_contract" {
       "log_class        = optional(string, \"STANDARD\")",
       "tags = optional(map(string), {})",
       "microvm = optional(object({",
-      "image_arn                  = optional(string, null)",
-      "image_version              = optional(string, null)",
-      "ingress_network_connectors = optional(list(string), null)",
-      "egress_network_connectors  = optional(list(string), null)",
-      "log_group = optional(string, null)",
+      "image_arn                   = optional(string, null)",
+      "image_version               = optional(string, null)",
+      "ingress_network_connectors  = optional(list(string), null)",
+      "egress_network_connectors   = optional(list(string), null)",
       "maximum_duration_in_seconds = optional(number, null)",
       "environment_variables       = optional(map(string), {})",
       "resource_arns = optional(object({",
@@ -386,6 +385,10 @@ run "platform_forge_runners_interface_contract" {
       "hooks, and IAM-policy configuration.",
       "shape follows the nested experimental multi_runner_config contract and is",
       "passed directly to the upstream provider-oriented runner configuration.",
+      "Runner map keys, selected compute-provider wrapper presence, runner.os,",
+      "runner.architecture, compute_provider.aws.ec2.binaries_syncer.enabled, and",
+      "provider-scoped subnet IDs must be known during planning because they determine",
+      "module and resource topology.",
       "- lambda                 : Provider-neutral per-configuration Lambda runtime,",
       "network, role, and tag overrides.",
       "- orchestration_provider : Exactly one demand-controller provider. The webhook",
@@ -405,7 +408,8 @@ run "platform_forge_runners_interface_contract" {
       "- image_arn/image_version: Lambda MicroVM image and optional version.",
       "- ingress_network_connectors/egress_network_connectors: Up to 10 Lambda",
       "network-connector ARNs in each direction.",
-      "- logging.log_group: Optional CloudWatch Logs group for MicroVM runtime logs.",
+      "- runtime logs: The upstream MicroVM provider creates and manages a log group",
+      "for each runner configuration from the common observability settings.",
       "- maximum_duration_in_seconds: Optional integer lifetime from 1 through 28,800 seconds.",
       "- environment_variables: Provider-specific environment variables.",
       "- iam: Image and MicroVM resource ARNs plus optional scale-up and pool policies.",
@@ -499,7 +503,7 @@ run "platform_forge_runners_interface_contract" {
     condition = (
       output.expected_input_variable_count == 10
       && output.expected_output_value_count == 5
-      && output.expected_interface_literal_count == 433
+      && output.expected_interface_literal_count == 437
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

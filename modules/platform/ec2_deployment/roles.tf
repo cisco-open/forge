@@ -34,6 +34,7 @@ data "aws_iam_policy_document" "ec2_tags" {
 resource "aws_iam_policy" "ec2_tags" {
   count       = length(local.ec2_runner_configs) > 0 ? 1 : 0
   name        = "${var.runner_configs.prefix}-policy-for-ec2-tags"
+  path        = "/"
   description = "Policy that allows EC2 instances to create tags on themselves."
   policy      = data.aws_iam_policy_document.ec2_tags.json
 

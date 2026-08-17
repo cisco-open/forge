@@ -348,13 +348,10 @@ variable "ec2_deployment_specs" {
             tags = optional(map(string), {})
           }), null)
           microvm = optional(object({
-            image_arn                  = optional(string, null)
-            image_version              = optional(string, null)
-            ingress_network_connectors = optional(list(string), null)
-            egress_network_connectors  = optional(list(string), null)
-            logging = optional(object({
-              log_group = optional(string, null)
-            }), null)
+            image_arn                   = optional(string, null)
+            image_version               = optional(string, null)
+            ingress_network_connectors  = optional(list(string), null)
+            egress_network_connectors   = optional(list(string), null)
             maximum_duration_in_seconds = optional(number, null)
             environment_variables       = optional(map(string), {})
             iam = optional(object({
@@ -475,6 +472,11 @@ variable "ec2_deployment_specs" {
   shape follows the nested experimental multi_runner_config contract and is
   passed directly to the upstream provider-oriented runner configuration.
 
+  Runner map keys, selected compute-provider wrapper presence, runner.os,
+  runner.architecture, compute_provider.aws.ec2.binaries_syncer.enabled, and
+  provider-scoped subnet IDs must be known during planning because they determine
+  module and resource topology.
+
   Top-level fields:
     - lambda_subnet_ids: Subnets where runner-related lambdas execute.
       These can be more permissive than the runner subnets.
@@ -519,7 +521,8 @@ variable "ec2_deployment_specs" {
     - image_arn/image_version: Lambda MicroVM image and optional version.
     - ingress_network_connectors/egress_network_connectors: Up to 10 Lambda
       network-connector ARNs in each direction.
-    - logging.log_group: Optional CloudWatch Logs group for MicroVM runtime logs.
+    - runtime logs: The upstream MicroVM provider creates and manages a log group
+      for each runner configuration from the common observability settings.
     - maximum_duration_in_seconds: Optional integer lifetime from 1 through 28,800 seconds.
     - environment_variables: Provider-specific environment variables.
     - iam: Image and MicroVM resource ARNs plus optional scale-up and pool policies.

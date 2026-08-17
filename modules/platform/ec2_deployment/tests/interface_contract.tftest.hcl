@@ -235,11 +235,10 @@ run "platform_ec2_deployment_interface_contract" {
       "log_class        = optional(string, \"STANDARD\")",
       "tags = optional(map(string), {})",
       "microvm = optional(object({",
-      "image_arn                  = optional(string, null)",
-      "image_version              = optional(string, null)",
-      "ingress_network_connectors = optional(list(string), null)",
-      "egress_network_connectors  = optional(list(string), null)",
-      "log_group = optional(string, null)",
+      "image_arn                   = optional(string, null)",
+      "image_version               = optional(string, null)",
+      "ingress_network_connectors  = optional(list(string), null)",
+      "egress_network_connectors   = optional(list(string), null)",
       "maximum_duration_in_seconds = optional(number, null)",
       "environment_variables       = optional(map(string), {})",
       "resource_arns = optional(object({",
@@ -273,10 +272,14 @@ run "platform_ec2_deployment_interface_contract" {
       "try(trimspace(var.runner_configs.lambda_artifacts.control_plane_zip), \"\") != \"\"",
       "&& try(trimspace(var.runner_configs.lambda_artifacts.webhook_zip), \"\") != \"\"",
       "error_message = \"Forge Lambda MicroVM runner_specs require lambda_artifacts.control_plane_zip and lambda_artifacts.webhook_zip built from the selected upstream MicroVM branch.\"",
+      "Runner map keys, selected compute-provider wrapper presence, runner.os,",
+      "runner.architecture, compute_provider.aws.ec2.binaries_syncer.enabled, and",
+      "provider-scoped subnet IDs must be known during planning because they determine",
+      "module and resource topology.",
       "variable \"tenant_configs\"",
       "ecr_registries = list(string)",
       "tags           = map(string)",
-      "runner_configs = var.runner_configs.runner_specs",
+      "runner_configs                  = var.runner_configs.runner_specs",
       "ec2_runner_configs = {",
       "microvm_runner_configs = {",
       "if length(try(runner_config.compute_provider.aws.ec2[*], [])) == 1",
@@ -311,15 +314,16 @@ run "platform_ec2_deployment_interface_contract" {
       "key => merge(",
       "runner_config.compute_provider.aws.ec2,",
       "log_files = coalesce(runner_config.compute_provider.aws.ec2.log_files, local.forge_ec2_log_files[key])",
-      "tags      = merge(var.tenant_configs.tags, runner_config.compute_provider.aws.ec2.tags)",
+      "tags      = runner_config.compute_provider.aws.ec2.tags",
       "multi_runner_config = {",
       "key => merge(runner_config, {",
       "runner = merge(runner_config.runner, {",
       "iam = merge(runner_config.runner.iam, {",
       "managed_policy_arns = merge(",
       "\"forge-config-$${policy_index}\" => policy_arn",
-      "forge_ec2_tags              = aws_iam_policy.ec2_tags[0].arn",
-      "forge_runner_hooks_ssm_read = aws_iam_policy.runner_hooks_ssm_read[0].arn",
+      "runner_iam_policy_arn_prefix    = \"arn:$${data.aws_partition.current.partition}:iam::$${data.aws_caller_identity.current.account_id}:policy\"",
+      "forge_ec2_tags              = \"$${local.runner_iam_policy_arn_prefix}$${aws_iam_policy.ec2_tags[0].path}$${aws_iam_policy.ec2_tags[0].name}\"",
+      "forge_runner_hooks_ssm_read = \"$${local.runner_iam_policy_arn_prefix}$${aws_iam_policy.runner_hooks_ssm_read[0].path}$${aws_iam_policy.runner_hooks_ssm_read[0].name}\"",
       "count       = length(local.ec2_runner_configs) > 0 ? 1 : 0",
       "aws = merge(runner_config.compute_provider.aws, {",
       "ec2 = try(local.ec2_compute_provider[key], null)",
@@ -417,7 +421,7 @@ run "platform_ec2_deployment_interface_contract" {
     condition = (
       output.expected_input_variable_count == 4
       && output.expected_output_value_count == 11
-      && output.expected_interface_literal_count == 347
+      && output.expected_interface_literal_count == 351
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

@@ -127,6 +127,7 @@ data "aws_iam_policy_document" "runner_hooks_ssm_read" {
 resource "aws_iam_policy" "runner_hooks_ssm_read" {
   count       = length(local.ec2_runner_configs) > 0 ? 1 : 0
   name        = "${var.runner_configs.prefix}-runner-hooks-ssm-read"
+  path        = "/"
   description = "Allow runners to read their gzip'd job-hook scripts from SSM."
   policy      = data.aws_iam_policy_document.runner_hooks_ssm_read[0].json
   tags        = var.tenant_configs.tags

@@ -350,13 +350,10 @@ variable "runner_configs" {
             tags = optional(map(string), {})
           }), null)
           microvm = optional(object({
-            image_arn                  = optional(string, null)
-            image_version              = optional(string, null)
-            ingress_network_connectors = optional(list(string), null)
-            egress_network_connectors  = optional(list(string), null)
-            logging = optional(object({
-              log_group = optional(string, null)
-            }), null)
+            image_arn                   = optional(string, null)
+            image_version               = optional(string, null)
+            ingress_network_connectors  = optional(list(string), null)
+            egress_network_connectors   = optional(list(string), null)
             maximum_duration_in_seconds = optional(number, null)
             environment_variables       = optional(map(string), {})
             iam = optional(object({
@@ -475,7 +472,14 @@ variable "runner_configs" {
   description = <<-EOT
   Forge runner deployment configuration. lambda_artifacts.control_plane_zip and
   lambda_artifacts.webhook_zip select local Lambda archives; MicroVM lanes require
-  both archives to be built from the selected upstream MicroVM branch.
+  both archives to be built from the selected upstream MicroVM branch. The upstream
+  provider creates each MicroVM runtime log group from the common observability
+  settings, so callers do not select a log-group name.
+
+  Runner map keys, selected compute-provider wrapper presence, runner.os,
+  runner.architecture, compute_provider.aws.ec2.binaries_syncer.enabled, and
+  provider-scoped subnet IDs must be known during planning because they determine
+  module and resource topology.
   EOT
 }
 
