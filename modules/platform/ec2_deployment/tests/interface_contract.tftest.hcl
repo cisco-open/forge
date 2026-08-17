@@ -145,6 +145,7 @@ run "platform_ec2_deployment_interface_contract" {
       "denied  = optional(list(string), [])",
       "max     = optional(string, null)",
       "compute_provider = object({",
+      "aws = optional(object({",
       "ec2 = optional(object({",
       "metadata_options = optional(object({",
       "instance_metadata_tags      = optional(string, \"enabled\")",
@@ -247,9 +248,9 @@ run "platform_ec2_deployment_interface_contract" {
       "effective_runner_hooks = {",
       "textencodebase64(local.effective_runner_hooks[key].job_started, \"UTF-16LE\")",
       "base64encode(local.effective_runner_hooks[key].job_started)",
-      "length(runner_config.compute_provider.ec2[*]) == 1",
-      "length(runner_config.compute_provider.ec2.ami[*]) == 1",
-      "&& length(runner_config.compute_provider.ec2.ami.id_ssm_parameter[*]) == 0,",
+      "length(runner_config.compute_provider.aws.ec2[*]) == 1",
+      "length(runner_config.compute_provider.aws.ec2.ami[*]) == 1",
+      "&& length(runner_config.compute_provider.aws.ec2.ami.id_ssm_parameter[*]) == 0,",
       "error_message = \"Forge EC2 runner_specs must configure a module-managed ami block; ami = null and external ami.id_ssm_parameter ownership are not supported.\"",
       "active_ec2_subnet_ids = toset(flatten([",
       "legacy_runner_labels = {",
@@ -262,15 +263,15 @@ run "platform_ec2_deployment_interface_contract" {
       "osx     = runner_config.runner.architecture == \"arm64\" ? { name = [\"amzn-ec2-macos-15.*-arm64\"] } : { name = [\"amzn-ec2-macos-15.*\"] }",
       "ec2_update_runner_ami_map = {",
       "local.ec2_default_ami_filters[key],",
-      "ami = runner_config.compute_provider.ec2.ami == null ? null : merge(",
-      "runner_config.compute_provider.ec2.ami.filter,",
+      "ami = runner_config.compute_provider.aws.ec2.ami == null ? null : merge(",
+      "runner_config.compute_provider.aws.ec2.ami.filter,",
       "ami_filter      = local.ec2_compute_provider[key].ami.filter",
       "ami_owners      = local.ec2_compute_provider[key].ami.owners",
       "runner_ami_map = local.ec2_update_runner_ami_map",
       "key => merge(",
-      "runner_config.compute_provider.ec2,",
-      "log_files = coalesce(runner_config.compute_provider.ec2.log_files, local.forge_ec2_log_files[key])",
-      "tags      = merge(var.tenant_configs.tags, runner_config.compute_provider.ec2.tags)",
+      "runner_config.compute_provider.aws.ec2,",
+      "log_files = coalesce(runner_config.compute_provider.aws.ec2.log_files, local.forge_ec2_log_files[key])",
+      "tags      = merge(var.tenant_configs.tags, runner_config.compute_provider.aws.ec2.tags)",
       "multi_runner_config = {",
       "key => merge(runner_config, {",
       "runner = merge(runner_config.runner, {",
@@ -342,7 +343,7 @@ run "platform_ec2_deployment_interface_contract" {
     condition = (
       output.expected_input_variable_count == 4
       && output.expected_output_value_count == 6
-      && output.expected_interface_literal_count == 288
+      && output.expected_interface_literal_count == 289
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

@@ -146,55 +146,57 @@ locals {
         }
       }
       compute_provider = {
-        ec2 = {
-          metadata_options = {
-            http_endpoint               = "enabled"
-            http_put_response_hop_limit = 2
-            http_tokens                 = "optional"
-            instance_metadata_tags      = "enabled"
-          }
-          ami = {
-            filter = {
-              name  = [spec.ami_name]
-              state = ["available"]
+        aws = {
+          ec2 = {
+            metadata_options = {
+              http_endpoint               = "enabled"
+              http_put_response_hop_limit = 2
+              http_tokens                 = "optional"
+              instance_metadata_tags      = "enabled"
             }
-            owners = [spec.ami_owner]
-            kms_key = trimspace(spec.ami_kms_key_arn) == "" ? null : {
-              arn = spec.ami_kms_key_arn
+            ami = {
+              filter = {
+                name  = [spec.ami_name]
+                state = ["available"]
+              }
+              owners = [spec.ami_owner]
+              kms_key = trimspace(spec.ami_kms_key_arn) == "" ? null : {
+                arn = spec.ami_kms_key_arn
+              }
             }
+            create_service_linked_role_spot = true
+            cloudwatch_agent = {
+              enabled = true
+            }
+            binaries_syncer = {
+              enabled = false
+            }
+            detailed_monitoring_enabled = true
+            ssm_enabled                 = true
+            user_data = {
+              enabled     = true
+              pre_install = "# No pre-install steps."
+            }
+            instance_target_capacity_type = "on-demand"
+            instance_types                = spec.instance_types
+            placement                     = try(spec.placement, null)
+            license_specifications        = try(spec.license_specifications, null)
+            use_dedicated_host            = try(spec.use_dedicated_host, false)
+            vpc_id                        = try(spec.vpc_id, null)
+            subnet_ids                    = try(spec.subnet_ids, null)
+            scale_errors                  = try(spec.scale_errors, null)
+            block_device_mappings = [{
+              delete_on_termination = true
+              device_name           = spec.volume.device_name
+              encrypted             = true
+              iops                  = spec.volume.iops
+              kms_key_id            = null
+              snapshot_id           = null
+              throughput            = spec.volume.throughput
+              volume_size           = spec.volume.size
+              volume_type           = spec.volume.type
+            }]
           }
-          create_service_linked_role_spot = true
-          cloudwatch_agent = {
-            enabled = true
-          }
-          binaries_syncer = {
-            enabled = false
-          }
-          detailed_monitoring_enabled = true
-          ssm_enabled                 = true
-          user_data = {
-            enabled     = true
-            pre_install = "# No pre-install steps."
-          }
-          instance_target_capacity_type = "on-demand"
-          instance_types                = spec.instance_types
-          placement                     = try(spec.placement, null)
-          license_specifications        = try(spec.license_specifications, null)
-          use_dedicated_host            = try(spec.use_dedicated_host, false)
-          vpc_id                        = try(spec.vpc_id, null)
-          subnet_ids                    = try(spec.subnet_ids, null)
-          scale_errors                  = try(spec.scale_errors, null)
-          block_device_mappings = [{
-            delete_on_termination = true
-            device_name           = spec.volume.device_name
-            encrypted             = true
-            iops                  = spec.volume.iops
-            kms_key_id            = null
-            snapshot_id           = null
-            throughput            = spec.volume.throughput
-            volume_size           = spec.volume.size
-            volume_type           = spec.volume.type
-          }]
         }
       }
     }
