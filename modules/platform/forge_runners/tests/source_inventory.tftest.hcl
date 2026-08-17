@@ -36,6 +36,7 @@ run "platform_forge_runners_contract" {
       "job_retry = optional(object({",
       "artifact = optional(object({",
       "compute_provider = object({",
+      "aws = optional(object({",
       "ec2 = optional(object({",
       "matcherConfig = object({",
       "scale_errors = optional(list(string), [",

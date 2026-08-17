@@ -73,7 +73,7 @@ locals {
 
   active_ec2_subnet_ids = toset(flatten([
     for runner_config in values(local.ec2_runner_configs) :
-    runner_config.compute_provider.ec2.subnet_ids == null ? var.network_configs.subnet_ids : runner_config.compute_provider.ec2.subnet_ids
+    runner_config.compute_provider.aws.ec2.subnet_ids == null ? var.network_configs.subnet_ids : runner_config.compute_provider.aws.ec2.subnet_ids
   ]))
 
   # This is the upstream EC2 provider's default AMI selection. Normalize it
@@ -149,26 +149,26 @@ locals {
   ec2_compute_provider = {
     for key, runner_config in local.ec2_runner_configs :
     key => merge(
-      runner_config.compute_provider.ec2,
+      runner_config.compute_provider.aws.ec2,
       {
-        ami = runner_config.compute_provider.ec2.ami == null ? null : merge(
-          runner_config.compute_provider.ec2.ami,
+        ami = runner_config.compute_provider.aws.ec2.ami == null ? null : merge(
+          runner_config.compute_provider.aws.ec2.ami,
           {
             filter = merge(
               local.ec2_default_ami_filters[key],
-              runner_config.compute_provider.ec2.ami.filter,
+              runner_config.compute_provider.aws.ec2.ami.filter,
             )
           }
         )
         user_data = merge(
-          runner_config.compute_provider.ec2.user_data,
+          runner_config.compute_provider.aws.ec2.user_data,
           {
             template = (
-              runner_config.compute_provider.ec2.user_data.content == null
-              && runner_config.compute_provider.ec2.user_data.template == null
-            ) ? "${local.user_data_prefix}/user_data_${runner_config.runner.os}.tftpl" : runner_config.compute_provider.ec2.user_data.template
+              runner_config.compute_provider.aws.ec2.user_data.content == null
+              && runner_config.compute_provider.aws.ec2.user_data.template == null
+            ) ? "${local.user_data_prefix}/user_data_${runner_config.runner.os}.tftpl" : runner_config.compute_provider.aws.ec2.user_data.template
             post_install = join("\n", compact([
-              runner_config.compute_provider.ec2.user_data.post_install,
+              runner_config.compute_provider.aws.ec2.user_data.post_install,
               templatefile(
                 local.userdata_template_post_install,
                 {
@@ -180,8 +180,8 @@ locals {
             ]))
           }
         )
-        log_files = coalesce(runner_config.compute_provider.ec2.log_files, local.forge_ec2_log_files[key])
-        tags      = merge(var.tenant_configs.tags, runner_config.compute_provider.ec2.tags)
+        log_files = coalesce(runner_config.compute_provider.aws.ec2.log_files, local.forge_ec2_log_files[key])
+        tags      = merge(var.tenant_configs.tags, runner_config.compute_provider.aws.ec2.tags)
       }
     )
   }
@@ -213,7 +213,9 @@ locals {
         })
       })
       compute_provider = {
-        ec2 = local.ec2_compute_provider[key]
+        aws = {
+          ec2 = local.ec2_compute_provider[key]
+        }
       }
     })
   }
@@ -278,13 +280,15 @@ locals {
     }
 
     compute_provider = {
-      ec2 = {
-        vpc_id     = var.network_configs.vpc_id
-        subnet_ids = var.network_configs.subnet_ids
-        runner_binaries = {
-          syncer = {
-            artifact = {
-              zip = "${data.external.download_lambdas.result.path}/runner-binaries-syncer.zip"
+      aws = {
+        ec2 = {
+          vpc_id     = var.network_configs.vpc_id
+          subnet_ids = var.network_configs.subnet_ids
+          runner_binaries = {
+            syncer = {
+              artifact = {
+                zip = "${data.external.download_lambdas.result.path}/runner-binaries-syncer.zip"
+              }
             }
           }
         }

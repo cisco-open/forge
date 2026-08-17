@@ -19,6 +19,8 @@ run "platform_ec2_deployment_contract" {
       "app = var.runner_configs.github_app",
       "enterprise_server = {",
       "orchestration_provider = {",
+      "runner_config.compute_provider.aws.ec2,",
+      "ec2 = local.ec2_compute_provider[key]",
       "boot_time_in_minutes = optional(number, null)",
       "ephemeral            = optional(bool, null)",
       "jit_config_enabled   = optional(bool, null)",

@@ -300,73 +300,75 @@ variables {
           }
         }
         compute_provider = {
-          ec2 = {
-            metadata_options = {
-              http_endpoint               = "enabled"
-              http_put_response_hop_limit = 2
-              http_tokens                 = "optional"
-              instance_metadata_tags      = "enabled"
-            }
-            ami = {
-              filter = {
-                name  = ["forge-*"]
-                state = ["available"]
+          aws = {
+            ec2 = {
+              metadata_options = {
+                http_endpoint               = "enabled"
+                http_put_response_hop_limit = 2
+                http_tokens                 = "optional"
+                instance_metadata_tags      = "enabled"
               }
-              owners = ["123456789012"]
-              kms_key = {
-                arn = "arn:aws:kms:eu-west-1:123456789012:key/11111111-1111-1111-1111-111111111111"
+              ami = {
+                filter = {
+                  name  = ["forge-*"]
+                  state = ["available"]
+                }
+                owners = ["123456789012"]
+                kms_key = {
+                  arn = "arn:aws:kms:eu-west-1:123456789012:key/11111111-1111-1111-1111-111111111111"
+                }
               }
+              cloudwatch_agent = {
+                enabled = true
+                config  = "{\"agent\":{}}"
+              }
+              binaries_syncer = {
+                enabled = false
+              }
+              detailed_monitoring_enabled    = true
+              ebs_optimized                  = true
+              instance_allocation_strategy   = "prioritized"
+              instance_type_priorities       = { "m7i.large" = 1 }
+              instance_types                 = ["m7i.large"]
+              instance_target_capacity_type  = "on-demand"
+              additional_security_group_ids  = ["sg-runner"]
+              managed_security_group_enabled = false
+              egress_rules = [{
+                cidr_blocks      = ["10.0.0.0/8"]
+                ipv6_cidr_blocks = []
+                prefix_list_ids  = []
+                from_port        = 443
+                protocol         = "tcp"
+                security_groups  = []
+                self             = false
+                to_port          = 443
+                description      = "HTTPS"
+              }]
+              instance_profile_path         = "/runner/"
+              key_name                      = "forge-test"
+              associate_public_ipv4_address = false
+              scale_errors                  = ["InsufficientInstanceCapacity"]
+              ssm_enabled                   = true
+              subnet_ids                    = ["subnet-override"]
+              tags                          = { Configuration = "ec2" }
+              user_data = {
+                enabled               = true
+                pre_install           = "caller-pre"
+                post_install          = "caller-post"
+                debug_logging_enabled = true
+              }
+              block_device_mappings = [{
+                delete_on_termination = true
+                device_name           = "/dev/xvda"
+                encrypted             = true
+                iops                  = 3000
+                kms_key_id            = null
+                snapshot_id           = null
+                throughput            = 125
+                volume_size           = 30
+                volume_type           = "gp3"
+              }]
             }
-            cloudwatch_agent = {
-              enabled = true
-              config  = "{\"agent\":{}}"
-            }
-            binaries_syncer = {
-              enabled = false
-            }
-            detailed_monitoring_enabled    = true
-            ebs_optimized                  = true
-            instance_allocation_strategy   = "prioritized"
-            instance_type_priorities       = { "m7i.large" = 1 }
-            instance_types                 = ["m7i.large"]
-            instance_target_capacity_type  = "on-demand"
-            additional_security_group_ids  = ["sg-runner"]
-            managed_security_group_enabled = false
-            egress_rules = [{
-              cidr_blocks      = ["10.0.0.0/8"]
-              ipv6_cidr_blocks = []
-              prefix_list_ids  = []
-              from_port        = 443
-              protocol         = "tcp"
-              security_groups  = []
-              self             = false
-              to_port          = 443
-              description      = "HTTPS"
-            }]
-            instance_profile_path         = "/runner/"
-            key_name                      = "forge-test"
-            associate_public_ipv4_address = false
-            scale_errors                  = ["InsufficientInstanceCapacity"]
-            ssm_enabled                   = true
-            subnet_ids                    = ["subnet-override"]
-            tags                          = { Configuration = "ec2" }
-            user_data = {
-              enabled               = true
-              pre_install           = "caller-pre"
-              post_install          = "caller-post"
-              debug_logging_enabled = true
-            }
-            block_device_mappings = [{
-              delete_on_termination = true
-              device_name           = "/dev/xvda"
-              encrypted             = true
-              iops                  = 3000
-              kms_key_id            = null
-              snapshot_id           = null
-              throughput            = 125
-              volume_size           = 30
-              volume_type           = "gp3"
-            }]
           }
         }
       }
@@ -386,11 +388,13 @@ variables {
           }
         }
         compute_provider = {
-          ec2 = {
-            ami            = {}
-            instance_types = ["m7i.large"]
-            binaries_syncer = {
-              enabled = false
+          aws = {
+            ec2 = {
+              ami            = {}
+              instance_types = ["m7i.large"]
+              binaries_syncer = {
+                enabled = false
+              }
             }
           }
         }
@@ -420,6 +424,14 @@ run "ec2_v2_input_plan" {
   }
 
   assert {
+    condition = (
+      toset(keys(local.multi_runner_config.ec2.compute_provider)) == toset(["aws"])
+      && toset(keys(local.multi_runner_config.ec2.compute_provider.aws)) == toset(["ec2"])
+    )
+    error_message = "Forge must preserve the AWS namespace while keeping ec2 as the runtime compute-provider type."
+  }
+
+  assert {
     condition = alltrue([
       for runner_config in values(local.multi_runner_config) :
       length([
@@ -437,29 +449,29 @@ run "ec2_v2_input_plan" {
 
   assert {
     condition = (
-      tolist(local.multi_runner_config.ec2.compute_provider.ec2.ami.filter.name) == tolist(["forge-*"])
-      && local.multi_runner_config.ec2.compute_provider.ec2.ami.id_ssm_parameter == null
-      && local.multi_runner_config.ec2.compute_provider.ec2.ami.kms_key.arn == "arn:aws:kms:eu-west-1:123456789012:key/11111111-1111-1111-1111-111111111111"
-      && local.multi_runner_config.ec2.compute_provider.ec2.ebs_optimized
+      tolist(local.multi_runner_config.ec2.compute_provider.aws.ec2.ami.filter.name) == tolist(["forge-*"])
+      && local.multi_runner_config.ec2.compute_provider.aws.ec2.ami.id_ssm_parameter == null
+      && local.multi_runner_config.ec2.compute_provider.aws.ec2.ami.kms_key.arn == "arn:aws:kms:eu-west-1:123456789012:key/11111111-1111-1111-1111-111111111111"
+      && local.multi_runner_config.ec2.compute_provider.aws.ec2.ebs_optimized
     )
     error_message = "The v2 configuration must preserve nested EC2 AMI and fleet configuration."
   }
 
   assert {
     condition = (
-      local.multi_runner_config.ec2.compute_provider.ec2.metadata_options.http_tokens == "optional"
-      && local.multi_runner_config.ec2.compute_provider.ec2.metadata_options.http_put_response_hop_limit == 2
-      && local.multi_runner_config.ec2.compute_provider.ec2.cloudwatch_agent.enabled
-      && local.multi_runner_config.ec2.compute_provider.ec2.cloudwatch_agent.config == "{\"agent\":{}}"
-      && !local.multi_runner_config.ec2.compute_provider.ec2.binaries_syncer.enabled
-      && local.multi_runner_config.ec2.compute_provider.ec2.detailed_monitoring_enabled
-      && local.multi_runner_config.ec2.compute_provider.ec2.ssm_enabled
-      && tolist(local.multi_runner_config.ec2.compute_provider.ec2.additional_security_group_ids) == tolist(["sg-runner"])
-      && !local.multi_runner_config.ec2.compute_provider.ec2.managed_security_group_enabled
-      && local.multi_runner_config.ec2.compute_provider.ec2.egress_rules[0].description == "HTTPS"
-      && local.multi_runner_config.ec2.compute_provider.ec2.instance_profile_path == "/runner/"
-      && local.multi_runner_config.ec2.compute_provider.ec2.key_name == "forge-test"
-      && !local.multi_runner_config.ec2.compute_provider.ec2.associate_public_ipv4_address
+      local.multi_runner_config.ec2.compute_provider.aws.ec2.metadata_options.http_tokens == "optional"
+      && local.multi_runner_config.ec2.compute_provider.aws.ec2.metadata_options.http_put_response_hop_limit == 2
+      && local.multi_runner_config.ec2.compute_provider.aws.ec2.cloudwatch_agent.enabled
+      && local.multi_runner_config.ec2.compute_provider.aws.ec2.cloudwatch_agent.config == "{\"agent\":{}}"
+      && !local.multi_runner_config.ec2.compute_provider.aws.ec2.binaries_syncer.enabled
+      && local.multi_runner_config.ec2.compute_provider.aws.ec2.detailed_monitoring_enabled
+      && local.multi_runner_config.ec2.compute_provider.aws.ec2.ssm_enabled
+      && tolist(local.multi_runner_config.ec2.compute_provider.aws.ec2.additional_security_group_ids) == tolist(["sg-runner"])
+      && !local.multi_runner_config.ec2.compute_provider.aws.ec2.managed_security_group_enabled
+      && local.multi_runner_config.ec2.compute_provider.aws.ec2.egress_rules[0].description == "HTTPS"
+      && local.multi_runner_config.ec2.compute_provider.aws.ec2.instance_profile_path == "/runner/"
+      && local.multi_runner_config.ec2.compute_provider.aws.ec2.key_name == "forge-test"
+      && !local.multi_runner_config.ec2.compute_provider.aws.ec2.associate_public_ipv4_address
     )
     error_message = "The v2 configuration must preserve nested EC2 bootstrap, metadata, and networking settings."
   }
@@ -529,15 +541,15 @@ run "ec2_v2_input_plan" {
 
   assert {
     condition = (
-      local.multi_runner_config.ec2.compute_provider.ec2.user_data.pre_install == "caller-pre"
-      && startswith(local.multi_runner_config.ec2.compute_provider.ec2.user_data.post_install, "caller-post\n")
-      && strcontains(local.multi_runner_config.ec2.compute_provider.ec2.user_data.post_install, "su -l root -c")
-      && strcontains(local.multi_runner_config.ec2.compute_provider.ec2.user_data.post_install, "--config /root/.docker")
-      && local.multi_runner_config.ec2.compute_provider.ec2.user_data.debug_logging_enabled
-      && length(local.multi_runner_config.ec2.compute_provider.ec2.log_files) == 4
-      && local.multi_runner_config.ec2.compute_provider.ec2.log_files[3].file_path == "/root/hook.log"
-      && local.multi_runner_config.ec2.compute_provider.ec2.tags.Environment == "test"
-      && local.multi_runner_config.ec2.compute_provider.ec2.tags.Configuration == "ec2"
+      local.multi_runner_config.ec2.compute_provider.aws.ec2.user_data.pre_install == "caller-pre"
+      && startswith(local.multi_runner_config.ec2.compute_provider.aws.ec2.user_data.post_install, "caller-post\n")
+      && strcontains(local.multi_runner_config.ec2.compute_provider.aws.ec2.user_data.post_install, "su -l root -c")
+      && strcontains(local.multi_runner_config.ec2.compute_provider.aws.ec2.user_data.post_install, "--config /root/.docker")
+      && local.multi_runner_config.ec2.compute_provider.aws.ec2.user_data.debug_logging_enabled
+      && length(local.multi_runner_config.ec2.compute_provider.aws.ec2.log_files) == 4
+      && local.multi_runner_config.ec2.compute_provider.aws.ec2.log_files[3].file_path == "/root/hook.log"
+      && local.multi_runner_config.ec2.compute_provider.aws.ec2.tags.Environment == "test"
+      && local.multi_runner_config.ec2.compute_provider.aws.ec2.tags.Configuration == "ec2"
     )
     error_message = "The v2 configuration must retain Forge user-data, logging, and tag overlays."
   }
@@ -668,9 +680,9 @@ run "ec2_v2_input_plan" {
       && local.experimental_config.ssm.housekeeper.lambda.artifact.zip == "/private/tmp/forge-test-lambda-cache/runners.zip"
       && local.experimental_config.observability.logs.level == "info"
       && local.experimental_config.observability.logs.retention_in_days == 3
-      && local.experimental_config.compute_provider.ec2.vpc_id == "vpc-test"
-      && tolist(local.experimental_config.compute_provider.ec2.subnet_ids) == tolist(["subnet-default"])
-      && local.experimental_config.compute_provider.ec2.runner_binaries.syncer.artifact.zip == "/private/tmp/forge-test-lambda-cache/runner-binaries-syncer.zip"
+      && local.experimental_config.compute_provider.aws.ec2.vpc_id == "vpc-test"
+      && tolist(local.experimental_config.compute_provider.aws.ec2.subnet_ids) == tolist(["subnet-default"])
+      && local.experimental_config.compute_provider.aws.ec2.runner_binaries.syncer.artifact.zip == "/private/tmp/forge-test-lambda-cache/runner-binaries-syncer.zip"
       && local.experimental_config.multi_runner_config == local.multi_runner_config
     )
     error_message = "Forge must populate the authoritative global experimental contract."

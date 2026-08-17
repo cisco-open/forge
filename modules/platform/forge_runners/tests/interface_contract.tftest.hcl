@@ -247,6 +247,7 @@ run "platform_forge_runners_interface_contract" {
       "denied  = optional(list(string), [])",
       "max     = optional(string, null)",
       "compute_provider = object({",
+      "aws = optional(object({",
       "ec2 = optional(object({",
       "metadata_options = optional(object({",
       "instance_metadata_tags      = optional(string, \"enabled\")",
@@ -338,9 +339,9 @@ run "platform_forge_runners_interface_contract" {
       "for provider_config in values(runner_config.orchestration_provider) : provider_config",
       "if provider_config != null",
       "error_message = \"Each Forge runner configuration must select exactly one non-null orchestration provider.\"",
-      "length(runner_config.compute_provider.ec2[*]) == 1",
-      "length(runner_config.compute_provider.ec2.ami[*]) == 1",
-      "&& length(runner_config.compute_provider.ec2.ami.id_ssm_parameter[*]) == 0,",
+      "length(runner_config.compute_provider.aws.ec2[*]) == 1",
+      "length(runner_config.compute_provider.aws.ec2.ami[*]) == 1",
+      "&& length(runner_config.compute_provider.aws.ec2.ami.id_ssm_parameter[*]) == 0,",
       "error_message = \"Forge EC2 runner_specs must configure a module-managed ami block; ami = null and external ami.id_ssm_parameter ownership are not supported.\"",
       "EC2 deployment configuration for GitHub Actions runners. The public runner",
       "- lambda_subnet_ids: Subnets where runner-related lambdas execute.",
@@ -363,7 +364,7 @@ run "platform_forge_runners_interface_contract" {
       "- observability          : Per-configuration logging, tracing, and metrics overrides.",
       "- compute_provider       : Nested v2 EC2 provider configuration.",
       "- tags                   : Per-configuration resource tags.",
-      "compute_provider.ec2 fields:",
+      "compute_provider.aws.ec2 fields:",
       "- ami             : Upstream-compatible EC2 AMI configuration.",
       "- instance_profile: Optional externally managed instance profile. It requires",
       "supplies Forge's EC2-tag and hook-SSM permissions.",
@@ -453,7 +454,7 @@ run "platform_forge_runners_interface_contract" {
     condition = (
       output.expected_input_variable_count == 10
       && output.expected_output_value_count == 5
-      && output.expected_interface_literal_count == 388
+      && output.expected_interface_literal_count == 389
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

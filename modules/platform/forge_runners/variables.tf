@@ -209,125 +209,127 @@ variable "ec2_deployment_specs" {
       }), {})
 
       compute_provider = object({
-        ec2 = optional(object({
-          metadata_options = optional(object({
-            instance_metadata_tags      = optional(string, "enabled")
-            http_endpoint               = optional(string, "enabled")
-            http_tokens                 = optional(string, "required")
-            http_put_response_hop_limit = optional(number, 1)
-          }), {})
-          ami = optional(object({
-            filter = optional(map(list(string)), { state = ["available"] })
-            owners = optional(list(string), ["amazon"])
-            id_ssm_parameter = optional(object({
-              arn = string
+        aws = optional(object({
+          ec2 = optional(object({
+            metadata_options = optional(object({
+              instance_metadata_tags      = optional(string, "enabled")
+              http_endpoint               = optional(string, "enabled")
+              http_tokens                 = optional(string, "required")
+              http_put_response_hop_limit = optional(number, 1)
+            }), {})
+            ami = optional(object({
+              filter = optional(map(list(string)), { state = ["available"] })
+              owners = optional(list(string), ["amazon"])
+              id_ssm_parameter = optional(object({
+                arn = string
+              }), null)
+              kms_key = optional(object({
+                arn = string
+              }), null)
             }), null)
-            kms_key = optional(object({
-              arn = string
+            block_device_mappings = optional(list(object({
+              delete_on_termination      = optional(bool, true)
+              device_name                = optional(string, "/dev/xvda")
+              encrypted                  = optional(bool, true)
+              iops                       = optional(number)
+              kms_key_id                 = optional(string)
+              snapshot_id                = optional(string)
+              throughput                 = optional(number)
+              volume_initialization_rate = optional(number)
+              volume_size                = number
+              volume_type                = optional(string, "gp3")
+              })), [{
+              volume_size = 30
+            }])
+            create_service_linked_role_spot = optional(bool, false)
+            credit_specification            = optional(string, null)
+            ebs_optimized                   = optional(bool, false)
+            cloudwatch_agent = optional(object({
+              enabled = optional(bool, true)
+              config  = optional(string, null)
+            }), {})
+            binaries_syncer = optional(object({
+              enabled = optional(bool, null)
+            }), {})
+            detailed_monitoring_enabled = optional(bool, false)
+            ssm_enabled                 = optional(bool, false)
+            user_data = optional(object({
+              enabled               = optional(bool, true)
+              template              = optional(string, null)
+              content               = optional(string, null)
+              pre_install           = optional(string, "")
+              post_install          = optional(string, "")
+              debug_logging_enabled = optional(bool, false)
+            }), {})
+            instance_allocation_strategy   = optional(string, "lowest-price")
+            instance_max_spot_price        = optional(string, null)
+            instance_target_capacity_type  = optional(string, "spot")
+            instance_type_priorities       = optional(map(number), null)
+            instance_types                 = list(string)
+            additional_security_group_ids  = optional(list(string), null)
+            managed_security_group_enabled = optional(bool, null)
+            egress_rules = optional(list(object({
+              cidr_blocks      = list(string)
+              ipv6_cidr_blocks = list(string)
+              prefix_list_ids  = list(string)
+              from_port        = number
+              protocol         = string
+              security_groups  = list(string)
+              self             = bool
+              to_port          = number
+              description      = string
+            })), null)
+            instance_profile_path         = optional(string, null)
+            key_name                      = optional(string, null)
+            associate_public_ipv4_address = optional(bool, null)
+            instance_profile = optional(object({
+              name = string
             }), null)
+            enable_on_demand_failover_for_errors = optional(list(string), [])
+            scale_errors = optional(list(string), [
+              "UnfulfillableCapacity",
+              "MaxSpotInstanceCountExceeded",
+              "TargetCapacityLimitExceededException",
+              "RequestLimitExceeded",
+              "ResourceLimitExceeded",
+              "MaxSpotInstanceCountExceeded",
+              "MaxSpotFleetRequestCountExceeded",
+              "InsufficientInstanceCapacity",
+              "InsufficientCapacityOnHost",
+            ])
+            subnet_ids = optional(list(string), null)
+            vpc_id     = optional(string, null)
+            cpu_options = optional(object({
+              core_count            = optional(number)
+              threads_per_core      = optional(number)
+              amd_sev_snp           = optional(string)
+              nested_virtualization = optional(string)
+            }), null)
+            placement = optional(object({
+              affinity                = optional(string)
+              availability_zone       = optional(string)
+              group_id                = optional(string)
+              group_name              = optional(string)
+              host_id                 = optional(string)
+              host_resource_group_arn = optional(string)
+              spread_domain           = optional(string)
+              tenancy                 = optional(string)
+              partition_number        = optional(number)
+            }), null)
+            license_specifications = optional(list(object({
+              license_configuration_arn = string
+            })), [])
+            use_dedicated_host = optional(bool, false)
+            log_files = optional(list(object({
+              log_group_name   = string
+              prefix_log_group = bool
+              file_path        = string
+              log_stream_name  = string
+              log_class        = optional(string, "STANDARD")
+            })), null)
+            tags = optional(map(string), {})
           }), null)
-          block_device_mappings = optional(list(object({
-            delete_on_termination      = optional(bool, true)
-            device_name                = optional(string, "/dev/xvda")
-            encrypted                  = optional(bool, true)
-            iops                       = optional(number)
-            kms_key_id                 = optional(string)
-            snapshot_id                = optional(string)
-            throughput                 = optional(number)
-            volume_initialization_rate = optional(number)
-            volume_size                = number
-            volume_type                = optional(string, "gp3")
-            })), [{
-            volume_size = 30
-          }])
-          create_service_linked_role_spot = optional(bool, false)
-          credit_specification            = optional(string, null)
-          ebs_optimized                   = optional(bool, false)
-          cloudwatch_agent = optional(object({
-            enabled = optional(bool, true)
-            config  = optional(string, null)
-          }), {})
-          binaries_syncer = optional(object({
-            enabled = optional(bool, null)
-          }), {})
-          detailed_monitoring_enabled = optional(bool, false)
-          ssm_enabled                 = optional(bool, false)
-          user_data = optional(object({
-            enabled               = optional(bool, true)
-            template              = optional(string, null)
-            content               = optional(string, null)
-            pre_install           = optional(string, "")
-            post_install          = optional(string, "")
-            debug_logging_enabled = optional(bool, false)
-          }), {})
-          instance_allocation_strategy   = optional(string, "lowest-price")
-          instance_max_spot_price        = optional(string, null)
-          instance_target_capacity_type  = optional(string, "spot")
-          instance_type_priorities       = optional(map(number), null)
-          instance_types                 = list(string)
-          additional_security_group_ids  = optional(list(string), null)
-          managed_security_group_enabled = optional(bool, null)
-          egress_rules = optional(list(object({
-            cidr_blocks      = list(string)
-            ipv6_cidr_blocks = list(string)
-            prefix_list_ids  = list(string)
-            from_port        = number
-            protocol         = string
-            security_groups  = list(string)
-            self             = bool
-            to_port          = number
-            description      = string
-          })), null)
-          instance_profile_path         = optional(string, null)
-          key_name                      = optional(string, null)
-          associate_public_ipv4_address = optional(bool, null)
-          instance_profile = optional(object({
-            name = string
-          }), null)
-          enable_on_demand_failover_for_errors = optional(list(string), [])
-          scale_errors = optional(list(string), [
-            "UnfulfillableCapacity",
-            "MaxSpotInstanceCountExceeded",
-            "TargetCapacityLimitExceededException",
-            "RequestLimitExceeded",
-            "ResourceLimitExceeded",
-            "MaxSpotInstanceCountExceeded",
-            "MaxSpotFleetRequestCountExceeded",
-            "InsufficientInstanceCapacity",
-            "InsufficientCapacityOnHost",
-          ])
-          subnet_ids = optional(list(string), null)
-          vpc_id     = optional(string, null)
-          cpu_options = optional(object({
-            core_count            = optional(number)
-            threads_per_core      = optional(number)
-            amd_sev_snp           = optional(string)
-            nested_virtualization = optional(string)
-          }), null)
-          placement = optional(object({
-            affinity                = optional(string)
-            availability_zone       = optional(string)
-            group_id                = optional(string)
-            group_name              = optional(string)
-            host_id                 = optional(string)
-            host_resource_group_arn = optional(string)
-            spread_domain           = optional(string)
-            tenancy                 = optional(string)
-            partition_number        = optional(number)
-          }), null)
-          license_specifications = optional(list(object({
-            license_configuration_arn = string
-          })), [])
-          use_dedicated_host = optional(bool, false)
-          log_files = optional(list(object({
-            log_group_name   = string
-            prefix_log_group = bool
-            file_path        = string
-            log_stream_name  = string
-            log_class        = optional(string, "STANDARD")
-          })), null)
-          tags = optional(map(string), {})
-        }), null)
+        }), {})
       })
 
     }))
@@ -348,9 +350,9 @@ variable "ec2_deployment_specs" {
     condition = alltrue([
       for runner_config in values(var.ec2_deployment_specs.runner_specs) :
       try(
-        length(runner_config.compute_provider.ec2[*]) == 1
-        && length(runner_config.compute_provider.ec2.ami[*]) == 1
-        && length(runner_config.compute_provider.ec2.ami.id_ssm_parameter[*]) == 0,
+        length(runner_config.compute_provider.aws.ec2[*]) == 1
+        && length(runner_config.compute_provider.aws.ec2.ami[*]) == 1
+        && length(runner_config.compute_provider.aws.ec2.ami.id_ssm_parameter[*]) == 0,
         false,
       )
     ])
@@ -384,7 +386,7 @@ variable "ec2_deployment_specs" {
     - compute_provider       : Nested v2 EC2 provider configuration.
     - tags                   : Per-configuration resource tags.
 
-  compute_provider.ec2 fields:
+  compute_provider.aws.ec2 fields:
     - ami             : Upstream-compatible EC2 AMI configuration.
                         Forge requires a module-managed AMI block; null and
                         external AMI parameter ownership are unsupported.
