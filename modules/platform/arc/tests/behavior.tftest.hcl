@@ -168,8 +168,16 @@ run "arc_single_runner_contract" {
       null_resource.apply_ec2_node_class.triggers.migrate_arc_cluster == "false"
       && null_resource.apply_node_pool.triggers.migrate_arc_cluster == "false"
       && length(null_resource.apply_node_pool.triggers.manifest_hash) == 64
+      && length(yamldecode(local.node_pool_manifest).spec.template.spec.taints) == 2
+      && toset([
+        for taint in yamldecode(local.node_pool_manifest).spec.template.spec.taints :
+        taint.key
+        ]) == toset([
+        "forge.local/scale_set_type",
+        "forge.local/tenant",
+      ])
     )
-    error_message = "ARC root module must record non-migration Karpenter trigger values."
+    error_message = "ARC root module must record non-migration Karpenter trigger values and keep NodePool taints limited to tenant isolation."
   }
 }
 

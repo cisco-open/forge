@@ -36,6 +36,8 @@
           group: karpenter.k8s.aws
           kind: EC2NodeClass
           name: karpenter-${tenant}
+        # Node-specific maintenance taints are applied by operators. Declaring
+        # one here would make every node in the tenant pool unschedulable.
         taints:
           - key: forge.local/scale_set_type
             value: dind

@@ -5,6 +5,8 @@ listenerTemplate:
       prometheus.io/path: "/metrics"
       prometheus.io/port: "8080"
   spec:
+    # Keep maintenance=true:NoSchedule unmatched while a node is prepared for drain.
+    tolerations: []
     containers:
       - name: listener
 

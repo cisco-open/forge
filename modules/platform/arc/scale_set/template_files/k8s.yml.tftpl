@@ -32,6 +32,8 @@ template:
       fsGroup: 123
     serviceAccountName: ${service_account}
     automountServiceAccountToken: true
+    # Keep maintenance=true:NoSchedule unmatched while a node is prepared for drain.
+    tolerations: []
     containers:
       - name: runner
         image: ${container_images.actions_runner}

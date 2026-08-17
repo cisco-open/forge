@@ -19,6 +19,8 @@ run "infra_eks_contract" {
       "resource \"null_resource\" \"patch_calico_installation\"",
       "resource \"null_resource\" \"wait_for_cluster\"",
       "resource \"null_resource\" \"karpenter\"",
+      "--set 'tolerations[0].key'=CriticalAddonsOnly",
+      "--set 'tolerations[1].key'=karpenter.sh/controller",
       "resource \"null_resource\" \"apply_ec2_node_class\"",
       "resource \"null_resource\" \"apply_node_pool\"",
       "data \"aws_eks_addon_version\" \"aws_ebs_csi_driver\"",

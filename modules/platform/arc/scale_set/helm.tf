@@ -15,6 +15,8 @@ resource "kubernetes_config_map_v1" "hook_extension" {
       spec:
         automountServiceAccountToken: true
         serviceAccountName: "${var.service_account}"
+        # Keep maintenance=true:NoSchedule unmatched while a node is prepared for drain.
+        tolerations: []
         securityContext:
           fsGroup: 123 # Group used by GitHub default agent image
         containers:

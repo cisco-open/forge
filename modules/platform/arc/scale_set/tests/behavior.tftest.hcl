@@ -80,10 +80,11 @@ run "scale_set_contract" {
       kubernetes_config_map_v1.hook_extension[0].metadata[0].name == "hook-extension-tenant-a-linux"
       && kubernetes_config_map_v1.hook_extension[0].metadata[0].namespace == "tenant-a"
       && strcontains(kubernetes_config_map_v1.hook_extension[0].data["container-podspec.yaml"], "serviceAccountName: \"runner\"")
+      && length(yamldecode(kubernetes_config_map_v1.hook_extension[0].data["container-podspec.yaml"]).spec.tolerations) == 0
       && kubernetes_service_account_v1.runner_sa[0].metadata[0].name == "runner"
       && kubernetes_service_account_v1.runner_sa[0].metadata[0].namespace == "tenant-a"
     )
-    error_message = "ARC scale set must keep hook extension and runner service account scoped to the tenant namespace."
+    error_message = "ARC scale set must keep hook extension and runner service account scoped to the tenant namespace without tolerating maintenance nodes."
   }
 
   assert {
@@ -99,8 +100,10 @@ run "scale_set_contract" {
       && strcontains(helm_release.gha_runner_scale_set[0].values[0], "prometheus.io/scrape: \"true\"")
       && strcontains(helm_release.gha_runner_scale_set[0].values[0], "gha_job_startup_duration_seconds")
       && strcontains(helm_release.gha_runner_scale_set[0].values[0], "job_workflow_target")
+      && length(yamldecode(helm_release.gha_runner_scale_set[0].values[0]).template.spec.tolerations) == 0
+      && length(yamldecode(helm_release.gha_runner_scale_set[0].values[0]).listenerTemplate.spec.tolerations) == 0
     )
-    error_message = "ARC scale set Helm release must render runner configuration and annotated high-cardinality listener metrics."
+    error_message = "ARC scale set Helm release must render runner configuration and annotated high-cardinality listener metrics without tolerating maintenance nodes."
   }
 
   assert {
@@ -137,8 +140,21 @@ run "scale_set_dind_contract" {
       && strcontains(helm_release.gha_runner_scale_set[0].values[0], "pod-identity-token-custom")
       && strcontains(helm_release.gha_runner_scale_set[0].values[0], "gha_completed_jobs_total")
       && strcontains(helm_release.gha_runner_scale_set[0].values[0], "job_workflow_name")
+      && length(yamldecode(helm_release.gha_runner_scale_set[0].values[0]).template.spec.tolerations) == 2
+      && toset([
+        for toleration in yamldecode(helm_release.gha_runner_scale_set[0].values[0]).template.spec.tolerations :
+        toleration.key
+        ]) == toset([
+        "forge.local/scale_set_type",
+        "forge.local/tenant",
+      ])
+      && alltrue([
+        for toleration in yamldecode(helm_release.gha_runner_scale_set[0].values[0]).template.spec.tolerations :
+        toleration.operator == "Equal" && toleration.effect == "NoSchedule"
+      ])
+      && length(yamldecode(helm_release.gha_runner_scale_set[0].values[0]).listenerTemplate.spec.tolerations) == 0
     )
-    error_message = "DinD scale sets must keep tenant isolation, Pod Identity wiring, GHES/DinD values, and high-cardinality listener metrics."
+    error_message = "DinD scale sets must keep exact tenant tolerations, Pod Identity wiring, GHES/DinD values, and high-cardinality listener metrics without tolerating maintenance nodes."
   }
 }
 

@@ -257,7 +257,7 @@ template:
                 audience: sts.amazonaws.com
 
     tolerations:
-      # tenant tolerations
+      # Only tenant taints are tolerated; maintenance=true:NoSchedule remains unmatched.
       - key: "forge.local/scale_set_type"
         operator: "Equal"
         value: "dind"

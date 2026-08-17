@@ -22,6 +22,73 @@ In Forge, the Kubernetes lane turns GitHub Actions jobs into ephemeral pods. Thi
 - The controller and scale-set listeners expose `/metrics` on port `8080` with Prometheus discovery annotations.
 - Listener metrics retain repository, job, event, result, and workflow dimensions. The managed Prometheus chart and Splunk OTel Prometheus autodiscovery can scrape the same endpoints independently; do not add Prometheus remote write to the collector unless direct collector scraping is disabled.
 
+## Karpenter Node Maintenance
+
+`maintenance=true:NoSchedule` prevents new Forge pods from scheduling on a
+node. It does not evict pods that are already running, and an existing idle
+runner can still accept a job. Quiesce the affected scale sets before draining
+the node.
+
+First confirm that Karpenter owns the node. The output must include a NodePool
+name and the `karpenter.sh/termination` finalizer:
+
+```bash
+kubectl get node "$node" \
+  -o jsonpath='{.metadata.labels.karpenter\.sh/nodepool}{"\n"}{.metadata.finalizers}{"\n"}'
+```
+
+Taint the node:
+
+```bash
+kubectl taint node "$node" maintenance=true:NoSchedule --overwrite
+```
+
+Pause new job submissions or route them to another runner lane, then wait until
+the affected scale sets report `gha_assigned_jobs = 0` and
+`gha_running_jobs = 0`. Use the normal tenant deployment workflow to set both
+runner bounds to zero for every affected scale set. This is ARC's supported
+[jobs queue draining](https://docs.github.com/en/actions/how-tos/manage-runners/use-actions-runner-controller/deploy-runner-scale-sets#example-jobs-queue-draining)
+configuration:
+
+```hcl
+runner_size = {
+  max_runners = 0
+  min_runners = 0
+}
+```
+
+Record the original bounds before applying the change. Wait until the target
+node has no runner or job pods. Checking the pod list before queue-drain mode
+has an assignment race: an existing idle runner could accept a job after the
+check.
+
+Then inspect, drain, and delete the node:
+
+```bash
+kubectl get pods --all-namespaces \
+  --field-selector "spec.nodeName=$node" \
+  -o wide
+
+# Run only after active runner and job pods have completed.
+kubectl drain "$node" \
+  --ignore-daemonsets \
+  --delete-emptydir-data
+
+kubectl delete node "$node" --wait=false
+kubectl wait --for=delete "node/$node" --timeout=10m
+```
+
+Karpenter's termination finalizer terminates the backing instance before it
+allows the Node object to disappear. If the NodePool label or finalizer is
+missing, stop: deleting a self-managed or ASG-backed Node object does not
+terminate its EC2 instance. Use the owning node-group workflow instead. Do not
+bypass PodDisruptionBudgets with `--disable-eviction` or unmanaged-pod checks
+with `--force` without investigating the blocker.
+
+After node deletion is confirmed, restore the original runner bounds through
+the normal tenant deployment workflow. Wait for the required runner capacity
+to become ready before resuming job submissions.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 

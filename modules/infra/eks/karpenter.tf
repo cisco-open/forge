@@ -47,6 +47,8 @@ metadata:
   name: karpenter
 EOF2
 
+# Keep tolerations key-scoped so maintenance=true:NoSchedule remains
+# unmatched while a node is prepared for drain.
 helm --kube-context ${self.triggers.kube_context} upgrade \
   --install karpenter oci://public.ecr.aws/karpenter/karpenter \
   --namespace karpenter \
