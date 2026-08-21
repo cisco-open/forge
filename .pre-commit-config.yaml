@@ -198,7 +198,7 @@ repos:
   # JSON Schema Hooks
   # ---------------------
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 1a4bb160cab6417b3045e1b37b6b72449243e658  # frozen: 0.37.4
+    rev: 12e63946db2c5cfcc9030fac21c3883ba88c6ed8  # frozen: 0.38.0
     hooks:
       - id: check-github-workflows
         name: JSON Schema · GitHub workflows
@@ -302,7 +302,7 @@ repos:
   # Ansible Hooks
   # ---------------------
   - repo: https://github.com/ansible-community/ansible-lint.git
-    rev: 262624cd0ab22a4221293216856c59671ce7aa5e  # frozen: v26.6.0
+    rev: 665d9e07a1943254d2910faffc106adaf7ea7294  # frozen: v26.8.0
     hooks:
       - id: ansible-lint
         name: Ansible · Linter
