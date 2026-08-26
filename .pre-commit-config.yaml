@@ -83,7 +83,7 @@ repos:
   # Commit Message Hooks
   # ---------------------
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: a82e8fbf4e85beff4d585bb9d3d354d1296d0445  # frozen: v4.17.1
+    rev: d910b66e2686a3ef6c3f438dec0f63ba3cf8d7ee  # frozen: v4.18.0
     hooks:
       - id: commitizen
         name: Git · Validate commit message
@@ -187,7 +187,7 @@ repos:
         always_run: true
 
   - repo: https://github.com/abravalheri/validate-pyproject
-    rev: 4b2e70d08cb2ccd26d1fba73588de41c7a5d50b7  # frozen: v0.25
+    rev: 17e12779811926f000bdfa1795f9e3735dd71ac3  # frozen: 0.26
     hooks:
       - id: validate-pyproject
         name: Python · Validate pyproject.toml
