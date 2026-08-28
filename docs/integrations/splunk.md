@@ -114,6 +114,30 @@ Splunk contract.
 
 The full secret list is in [Splunk Secrets](splunk-secrets.md).
 
+## AWS Config Custom S3 Input
+
+The `aws_config_recording` helper creates an AWS-side producer compatible with
+the Data Manager `s3-custom-logs` fields. Apply it and inspect the handoff
+values:
+
+```bash
+cd examples/deployments/helpers/terragrunt/environments/prod/regions/eu-west-1/aws_config_recording
+terragrunt apply
+terragrunt output -json splunk_s3_logs
+terragrunt output -json splunk_s3_logs | jq -r '.sqs.url'
+terragrunt output -json splunk_s3_logs | jq -r '.bucket_arn'
+```
+
+Copy the SQS URL and bucket ARN into the disabled `forge-aws-config-prod`
+custom-log item, leave `kms_key_arns` empty because the bucket uses SSE-S3,
+and confirm Data Manager runs in the same AWS account. The example source type
+is `forgecicd:aws:config:s3`.
+
+This is producer compatibility, not proof of successful ingestion. Configure
+the source type's parser for the AWS Config `configurationItems` envelope,
+then validate a real `.json.gz` object from S3 notification through queue
+consumption to the expected indexed events before enabling production use.
+
 ## Apply Secrets First
 
 ```bash
