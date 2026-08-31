@@ -171,6 +171,15 @@ run "arc_single_runner_contract" {
     )
     error_message = "ARC root module must record non-migration Karpenter trigger values."
   }
+
+  assert {
+    condition = (
+      strcontains(file("${path.module}/templates/node_pool.yaml.tpl"), "startupTaints:")
+      && strcontains(file("${path.module}/templates/node_pool.yaml.tpl"), "ebs.csi.aws.com/agent-not-ready")
+      && strcontains(file("${path.module}/templates/node_pool.yaml.tpl"), "effect: NoExecute")
+    )
+    error_message = "Each tenant Karpenter NodePool must declare the EBS CSI bootstrap taint as a startup taint."
+  }
 }
 
 run "arc_migration_contract" {
