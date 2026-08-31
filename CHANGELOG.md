@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.15.0](https://github.com/cisco-open/forge/compare/v4.14.0...v4.15.0) (2026-08-31)
+
+
+### Features
+
+* **arc:** allow Karpenter NodePool overrides ([#685](https://github.com/cisco-open/forge/issues/685)) ([9b58c7d](https://github.com/cisco-open/forge/commit/9b58c7d2f6eb1b8d7d9537a63924a3803f0af624))
+* **eks:** allow Karpenter NodePool overrides ([#684](https://github.com/cisco-open/forge/issues/684)) ([1d9db8f](https://github.com/cisco-open/forge/commit/1d9db8f0d2ed92bf418970d4acae8e1bced8b27d))
+
 ## [4.14.0](https://github.com/cisco-open/forge/compare/v4.13.2...v4.14.0) (2026-08-13)
 
 
