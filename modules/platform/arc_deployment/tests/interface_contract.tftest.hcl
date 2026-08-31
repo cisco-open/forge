@@ -39,6 +39,12 @@ run "platform_arc_deployment_interface_contract" {
       "runner_iam_role_managed_policy_arns = list(string)",
       "runner_group_name                   = string",
       "log_level                           = optional(string, \"INFO\")",
+      "karpenter_node_pool = optional(object({",
+      "requirements = optional(list(object({",
+      "min_values = optional(number)",
+      "cpu_limit            = optional(number, 100)",
+      "consolidation_policy = optional(string, \"WhenEmptyOrUnderutilized\")",
+      "consolidate_after    = optional(string, \"1m\")",
       "runner_specs = map(object({",
       "runner_size = object({",
       "max_runners = number",
@@ -107,7 +113,7 @@ run "platform_arc_deployment_interface_contract" {
     condition = (
       output.expected_input_variable_count == 4
       && output.expected_output_value_count == 4
-      && output.expected_interface_literal_count == 55
+      && output.expected_interface_literal_count == 61
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

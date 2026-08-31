@@ -25,8 +25,9 @@ module "arc_runners" {
       id              = var.deployment_config.github_app.id
       installation_id = var.deployment_config.github_app.installation_id
     }
-    runner_group_name = var.deployment_config.github.runner_group_name
-    runner_specs      = var.arc_deployment_specs.runner_specs
-    log_level         = var.log_level
+    runner_group_name   = var.deployment_config.github.runner_group_name
+    runner_specs        = var.arc_deployment_specs.runner_specs
+    log_level           = var.log_level
+    karpenter_node_pool = var.arc_deployment_specs.karpenter_node_pool
   }
 }

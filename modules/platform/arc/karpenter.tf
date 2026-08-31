@@ -1,6 +1,21 @@
 locals {
+  node_pool_requirements = [
+    for requirement in var.karpenter_node_pool.requirements : merge(
+      {
+        key      = requirement.key
+        operator = requirement.operator
+        values   = requirement.values
+      },
+      try(requirement.min_values, null) == null ? {} : { minValues = requirement.min_values },
+    )
+  ]
+
   node_pool_manifest = templatefile("${path.module}/templates/node_pool.yaml.tpl", {
-    tenant = var.controller_config.namespace
+    tenant               = var.controller_config.namespace
+    requirements         = local.node_pool_requirements
+    cpu_limit            = var.karpenter_node_pool.cpu_limit
+    consolidation_policy = var.karpenter_node_pool.consolidation_policy
+    consolidate_after    = var.karpenter_node_pool.consolidate_after
   })
 
   kubeconfig_path = "${path.cwd}/.kube/${var.eks_cluster_name}-${var.aws_profile}-${var.aws_region}-${var.controller_config.namespace}.kubeconfig"

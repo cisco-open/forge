@@ -31,6 +31,12 @@ run "platform_forge_runners_interface_contract" {
       "type = object({",
       "cluster_name    = string",
       "migrate_cluster = optional(bool, false)",
+      "karpenter_node_pool = optional(object({",
+      "requirements = optional(list(object({",
+      "min_values = optional(number)",
+      "cpu_limit            = optional(number, 100)",
+      "consolidation_policy = optional(string, \"WhenEmptyOrUnderutilized\")",
+      "consolidate_after    = optional(string, \"1m\")",
       "runner_specs = map(object({",
       "runner_size = object({",
       "max_runners = number",
@@ -411,7 +417,7 @@ run "platform_forge_runners_interface_contract" {
     condition = (
       output.expected_input_variable_count == 10
       && output.expected_output_value_count == 5
-      && output.expected_interface_literal_count == 352
+      && output.expected_interface_literal_count == 358
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

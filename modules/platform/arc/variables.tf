@@ -37,6 +37,55 @@ variable "eks_cluster_name" {
   type        = string
 }
 
+variable "karpenter_node_pool" {
+  description = "Configuration for the Karpenter NodePool. Forge manages tenant-specific names, labels, and taints."
+  type = object({
+    requirements = optional(list(object({
+      key        = string
+      operator   = string
+      values     = list(string)
+      min_values = optional(number)
+      })), [
+      {
+        key        = "karpenter.k8s.aws/instance-category"
+        operator   = "In"
+        values     = ["c", "m", "r"]
+        min_values = 2
+      },
+      {
+        key        = "karpenter.k8s.aws/instance-family"
+        operator   = "In"
+        values     = ["m5", "m5d", "c5", "c5d", "c4", "r4"]
+        min_values = 3
+      },
+      {
+        key      = "kubernetes.io/arch"
+        operator = "In"
+        values   = ["amd64"]
+      },
+      {
+        key      = "kubernetes.io/os"
+        operator = "In"
+        values   = ["linux"]
+      },
+      {
+        key      = "karpenter.sh/capacity-type"
+        operator = "In"
+        values   = ["on-demand"]
+      },
+      {
+        key      = "karpenter.k8s.aws/instance-category"
+        operator = "In"
+        values   = ["c", "m", "r"]
+      },
+    ])
+    cpu_limit            = optional(number, 100)
+    consolidation_policy = optional(string, "WhenEmptyOrUnderutilized")
+    consolidate_after    = optional(string, "1m")
+  })
+  default = {}
+}
+
 variable "log_level" {
   type        = string
   description = "Log level for ARC controller and runner pod commands (e.g., INFO, DEBUG, WARN, ERROR). When set to DEBUG, runner template shell commands and dockerd run in verbose mode."
