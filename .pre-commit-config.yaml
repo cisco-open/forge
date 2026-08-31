@@ -83,7 +83,7 @@ repos:
   # Commit Message Hooks
   # ---------------------
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: d910b66e2686a3ef6c3f438dec0f63ba3cf8d7ee  # frozen: v4.18.0
+    rev: a82e8fbf4e85beff4d585bb9d3d354d1296d0445  # frozen: v4.17.1
     hooks:
       - id: commitizen
         name: Git · Validate commit message
@@ -161,13 +161,13 @@ repos:
         name: Python · autopep8
 
   - repo: https://github.com/PyCQA/isort
-    rev: a333737ed43df02b18e6c95477ea1b285b3de15a  # frozen: 8.0.1
+    rev: 131f4adcd5582bfc53928ab0d740eceb8b506b6c  # frozen: 9.0.1
     hooks:
       - id: isort
         name: Python · Import sorter
 
   - repo: https://github.com/PyCQA/autoflake
-    rev: 2d3853a9f31d97783fb2e181d41cd82a6babd666  # frozen: v2.3.3
+    rev: 6d9dd2716540ab776f29c7b896cd3052ef4619b2  # frozen: v2.4.0
     hooks:
       - id: autoflake
         name: Python · Remove unused imports
@@ -187,7 +187,7 @@ repos:
         always_run: true
 
   - repo: https://github.com/abravalheri/validate-pyproject
-    rev: 17e12779811926f000bdfa1795f9e3735dd71ac3  # frozen: 0.26
+    rev: 4b2e70d08cb2ccd26d1fba73588de41c7a5d50b7  # frozen: v0.25
     hooks:
       - id: validate-pyproject
         name: Python · Validate pyproject.toml
@@ -233,7 +233,7 @@ repos:
         exclude: (docs/operations/repo-blueprints/)
 
   - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: 581213484f4262600d17c71e272176d4eb6724a5  # frozen: v1.109.0
+    rev: bf9dd9c695ddaf238af36f179049202358ec22b7  # frozen: v1.108.1
     hooks:
       - id: terraform_fmt
         name: Terraform · Formatter
