@@ -144,7 +144,7 @@ repos:
   # ---------------------
   # Makefile Hooks
   # ---------------------
-  - repo: https://github.com/mrtazz/checkmake.git
+  - repo: https://github.com/checkmake/checkmake
     rev: 446732014beed209cff787b0c397a3d9f905424e  # frozen: v0.3.0
     hooks:
       - id: checkmake
