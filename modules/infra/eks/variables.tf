@@ -40,6 +40,20 @@ variable "cluster_size" {
   })
 }
 
+variable "karpenter_node_pool" {
+  description = "Configuration for the Karpenter NodePool."
+  type = object({
+    instance_families    = optional(list(string), ["m6i", "m5", "c6i", "c5", "r6i", "r5"])
+    architectures        = optional(list(string), ["amd64"])
+    operating_systems    = optional(list(string), ["linux"])
+    capacity_types       = optional(list(string), ["on-demand"])
+    cpu_limit            = optional(number, 1000)
+    consolidation_policy = optional(string, "WhenEmptyOrUnderutilized")
+    consolidate_after    = optional(string, "1m")
+  })
+  default = {}
+}
+
 variable "cluster_volume" {
   description = "The volume config of the EKS cluster"
   type = object({

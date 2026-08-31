@@ -21,6 +21,7 @@ run "infra_eks_interface_contract" {
       "cluster_volume",
       "default_tags",
       "external_access_cidr_blocks",
+      "karpenter_node_pool",
       "subnet_ids",
       "tags",
       "vpc_id",
@@ -57,6 +58,16 @@ run "infra_eks_interface_contract" {
       "min_size      = number",
       "max_size      = number",
       "desired_size  = number",
+      "variable \"karpenter_node_pool\"",
+      "description = \"Configuration for the Karpenter NodePool.\"",
+      "instance_families    = optional(list(string), [\"m6i\", \"m5\", \"c6i\", \"c5\", \"r6i\", \"r5\"])",
+      "architectures        = optional(list(string), [\"amd64\"])",
+      "operating_systems    = optional(list(string), [\"linux\"])",
+      "capacity_types       = optional(list(string), [\"on-demand\"])",
+      "cpu_limit            = optional(number, 1000)",
+      "consolidation_policy = optional(string, \"WhenEmptyOrUnderutilized\")",
+      "consolidate_after    = optional(string, \"1m\")",
+      "default = {}",
       "variable \"cluster_tags\"",
       "type        = map(string)",
       "description = \"Cluster tags\"",
@@ -119,9 +130,9 @@ run "infra_eks_interface_contract" {
 
   assert {
     condition = (
-      output.expected_input_variable_count == 16
+      output.expected_input_variable_count == 17
       && output.expected_output_value_count == 4
-      && output.expected_interface_literal_count == 57
+      && output.expected_interface_literal_count == 67
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }
