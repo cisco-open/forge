@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.15.1](https://github.com/cisco-open/forge/compare/v4.15.0...v4.15.1) (2026-08-31)
+
+
+### Bug Fixes
+
+* **karpenter:** add EBS CSI startup taints ([#688](https://github.com/cisco-open/forge/issues/688)) ([8cc83ac](https://github.com/cisco-open/forge/commit/8cc83ac75ac6a86d032ea0e2d6fb2eb26314bee6))
+
 ## [4.15.0](https://github.com/cisco-open/forge/compare/v4.14.0...v4.15.0) (2026-08-31)
 
 
