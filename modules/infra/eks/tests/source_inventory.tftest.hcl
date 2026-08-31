@@ -21,6 +21,7 @@ run "infra_eks_contract" {
       "resource \"null_resource\" \"karpenter\"",
       "resource \"null_resource\" \"apply_ec2_node_class\"",
       "resource \"null_resource\" \"apply_node_pool\"",
+      "manifest_hash = sha256(local.node_pool_manifest)",
       "data \"aws_eks_addon_version\" \"aws_ebs_csi_driver\"",
       "data \"aws_eks_addon_version\" \"eks_pod_identity_agent\"",
       "data \"aws_eks_addon_version\" \"coredns\"",

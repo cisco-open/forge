@@ -103,7 +103,13 @@ locals {
   })
 
   node_pool_manifest = templatefile("${path.module}/templates/node_pool.yaml.tpl", {
-    instance_type = var.cluster_size.instance_type
+    instance_families    = var.karpenter_node_pool.instance_families
+    architectures        = var.karpenter_node_pool.architectures
+    operating_systems    = var.karpenter_node_pool.operating_systems
+    capacity_types       = var.karpenter_node_pool.capacity_types
+    cpu_limit            = var.karpenter_node_pool.cpu_limit
+    consolidation_policy = var.karpenter_node_pool.consolidation_policy
+    consolidate_after    = var.karpenter_node_pool.consolidate_after
   })
 }
 
@@ -137,7 +143,7 @@ EOF
   }
 
   triggers = {
-    manifest_hash = sha256("${path.module}/templates/node_pool.yaml.tpl")
+    manifest_hash = sha256(local.node_pool_manifest)
   }
 
   depends_on = [
