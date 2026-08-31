@@ -12,6 +12,8 @@ run "platform_arc_contract" {
       "module \"scale_sets\"",
       "resource \"null_resource\" \"apply_ec2_node_class\"",
       "resource \"null_resource\" \"apply_node_pool\"",
+      "node_pool_requirements = [",
+      "requirements         = local.node_pool_requirements",
       "resource \"kubernetes_manifest\" \"storage_class\"",
       "data \"aws_eks_cluster\" \"cluster\"",
       "data \"aws_eks_cluster_auth\" \"cluster\"",

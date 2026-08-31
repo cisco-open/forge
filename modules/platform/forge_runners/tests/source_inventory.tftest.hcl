@@ -18,6 +18,7 @@ run "platform_forge_runners_contract" {
       "module \"redrive_deadletter\"",
       "resource \"random_id\" \"random\"",
       "runner_specs = var.ec2_deployment_specs.runner_specs",
+      "karpenter_node_pool = var.arc_deployment_specs.karpenter_node_pool",
       "runner = object({",
       "queue = optional(object({",
       "scale_up = optional(object({",

@@ -15,6 +15,7 @@ run "platform_arc_interface_contract" {
       "ghes_org",
       "ghes_url",
       "github_app",
+      "karpenter_node_pool",
       "log_level",
       "migrate_arc_cluster",
       "multi_runner_config",
@@ -48,6 +49,14 @@ run "platform_arc_interface_contract" {
       "EOT",
       "variable \"eks_cluster_name\"",
       "description = \"Name of the EKS cluster\"",
+      "variable \"karpenter_node_pool\"",
+      "description = \"Configuration for the Karpenter NodePool. Forge manages tenant-specific names, labels, and taints.\"",
+      "requirements = optional(list(object({",
+      "min_values = optional(number)",
+      "cpu_limit            = optional(number, 100)",
+      "consolidation_policy = optional(string, \"WhenEmptyOrUnderutilized\")",
+      "consolidate_after    = optional(string, \"1m\")",
+      "default = {}",
       "variable \"ghes_org\"",
       "description = \"GitHub organization.\"",
       "variable \"ghes_url\"",
@@ -145,9 +154,9 @@ run "platform_arc_interface_contract" {
 
   assert {
     condition = (
-      output.expected_input_variable_count == 12
+      output.expected_input_variable_count == 13
       && output.expected_output_value_count == 2
-      && output.expected_interface_literal_count == 89
+      && output.expected_interface_literal_count == 97
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

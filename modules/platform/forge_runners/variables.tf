@@ -446,6 +446,50 @@ variable "arc_deployment_specs" {
   type = object({
     cluster_name    = string
     migrate_cluster = optional(bool, false)
+    karpenter_node_pool = optional(object({
+      requirements = optional(list(object({
+        key        = string
+        operator   = string
+        values     = list(string)
+        min_values = optional(number)
+        })), [
+        {
+          key        = "karpenter.k8s.aws/instance-category"
+          operator   = "In"
+          values     = ["c", "m", "r"]
+          min_values = 2
+        },
+        {
+          key        = "karpenter.k8s.aws/instance-family"
+          operator   = "In"
+          values     = ["m5", "m5d", "c5", "c5d", "c4", "r4"]
+          min_values = 3
+        },
+        {
+          key      = "kubernetes.io/arch"
+          operator = "In"
+          values   = ["amd64"]
+        },
+        {
+          key      = "kubernetes.io/os"
+          operator = "In"
+          values   = ["linux"]
+        },
+        {
+          key      = "karpenter.sh/capacity-type"
+          operator = "In"
+          values   = ["on-demand"]
+        },
+        {
+          key      = "karpenter.k8s.aws/instance-category"
+          operator = "In"
+          values   = ["c", "m", "r"]
+        },
+      ])
+      cpu_limit            = optional(number, 100)
+      consolidation_policy = optional(string, "WhenEmptyOrUnderutilized")
+      consolidate_after    = optional(string, "1m")
+    }), {})
     runner_specs = map(object({
       runner_size = object({
         max_runners = number

@@ -58,6 +58,7 @@ module "arc" {
   github_app = var.runner_configs.github_app
 
   migrate_arc_cluster = var.runner_configs.migrate_arc_cluster
+  karpenter_node_pool = var.runner_configs.karpenter_node_pool
 
   log_level = var.runner_configs.log_level
 }

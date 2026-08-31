@@ -9,6 +9,7 @@ run "platform_arc_deployment_contract" {
     module_path = "."
     expected_literals = [
       "module \"arc\"",
+      "karpenter_node_pool = var.runner_configs.karpenter_node_pool",
       "output \"arc_runners_arn_map\"",
       "output \"arc_runners_labels_map\"",
       "output \"subnet_cidr_blocks\"",
