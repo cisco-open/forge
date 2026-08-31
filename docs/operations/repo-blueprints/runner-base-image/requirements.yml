@@ -1,8 +1,8 @@
 ---
 collections:
   - name: ansible.windows
-    version: 3.7.0
+    version: 3.8.0
   - name: community.general
-    version: 13.2.0
+    version: 13.3.0
   - name: community.windows
     version: 3.3.0

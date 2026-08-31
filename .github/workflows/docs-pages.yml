@@ -55,7 +55,7 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
-          version: 0.12.2
+          version: 0.12.7
 
       - name: Build documentation
         run: uv run --locked --only-group docs mkdocs build --strict --clean --site-dir site
@@ -86,7 +86,7 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
-          version: 0.12.2
+          version: 0.12.7
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
