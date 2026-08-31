@@ -5,6 +5,12 @@ metadata:
 spec:
   template:
     spec:
+      # The EBS CSI node plugin removes this taint after it is ready. Marking
+      # it as a startup taint prevents Karpenter from provisioning duplicate
+      # nodes while the plugin is still initializing.
+      startupTaints:
+        - key: ebs.csi.aws.com/agent-not-ready
+          effect: NoExecute
       requirements:
         - key: karpenter.k8s.aws/instance-family
           operator: In
