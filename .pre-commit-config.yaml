@@ -83,7 +83,7 @@ repos:
   # Commit Message Hooks
   # ---------------------
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: a82e8fbf4e85beff4d585bb9d3d354d1296d0445  # frozen: v4.17.1
+    rev: 3d7386012109c403d56375314125c20e102e75c0  # frozen: v4.18.0
     hooks:
       - id: commitizen
         name: Git · Validate commit message
@@ -145,7 +145,7 @@ repos:
   # Makefile Hooks
   # ---------------------
   - repo: https://github.com/mrtazz/checkmake.git
-    rev: 59931d556f8f5cf4fbacf2c8390a8122ef7a881d  # frozen: v0.3.2
+    rev: 446732014beed209cff787b0c397a3d9f905424e  # frozen: v0.3.0
     hooks:
       - id: checkmake
         name: Makefile · Lint Makefile
@@ -187,7 +187,7 @@ repos:
         always_run: true
 
   - repo: https://github.com/abravalheri/validate-pyproject
-    rev: 4b2e70d08cb2ccd26d1fba73588de41c7a5d50b7  # frozen: v0.25
+    rev: 17e12779811926f000bdfa1795f9e3735dd71ac3  # frozen: 0.26
     hooks:
       - id: validate-pyproject
         name: Python · Validate pyproject.toml
@@ -198,7 +198,7 @@ repos:
   # JSON Schema Hooks
   # ---------------------
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 12e63946db2c5cfcc9030fac21c3883ba88c6ed8  # frozen: 0.38.0
+    rev: c4654a7e007c9619a5eb63c39a456572a0fa1851  # frozen: 0.38.0
     hooks:
       - id: check-github-workflows
         name: JSON Schema · GitHub workflows
@@ -233,7 +233,7 @@ repos:
         exclude: (docs/operations/repo-blueprints/)
 
   - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: bf9dd9c695ddaf238af36f179049202358ec22b7  # frozen: v1.108.1
+    rev: 581213484f4262600d17c71e272176d4eb6724a5  # frozen: v1.109.0
     hooks:
       - id: terraform_fmt
         name: Terraform · Formatter
@@ -260,7 +260,7 @@ repos:
   # Security Hooks
   # ---------------------
   - repo: https://github.com/gitleaks/gitleaks
-    rev: 83d9cd684c87d95d656c1458ef04895a7f1cbd8e  # frozen: v8.30.1
+    rev: 2ca41cc1372d1e939a6a879f18cdc19fc1cac1ce  # frozen: v8.30.0
     hooks:
       - id: gitleaks
         name: Security · Gitleaks
