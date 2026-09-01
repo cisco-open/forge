@@ -21,7 +21,7 @@ resource "null_resource" "karpenter" {
   depends_on = [module.eks]
 
   triggers = {
-    chart_version      = "1.12.0"
+    chart_version      = "1.14.0"
     service_account    = module.karpenter.service_account
     cluster_name       = module.eks.cluster_name
     cluster_endpoint   = module.eks.cluster_endpoint
