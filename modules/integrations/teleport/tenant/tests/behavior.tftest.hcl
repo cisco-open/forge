@@ -23,12 +23,14 @@ run "teleport_tenant_rbac_contract" {
       kubernetes_cluster_role_v1.pods.metadata[0].name == "teleport-forge-tenant-pods"
       && contains(kubernetes_cluster_role_v1.pods.rule[0].resources, "pods")
       && contains(kubernetes_cluster_role_v1.pods.rule[0].resources, "pods/log")
-      && contains(kubernetes_cluster_role_v1.pods.rule[0].resources, "pods/exec")
       && contains(kubernetes_cluster_role_v1.pods.rule[0].verbs, "get")
       && contains(kubernetes_cluster_role_v1.pods.rule[0].verbs, "watch")
       && contains(kubernetes_cluster_role_v1.pods.rule[0].verbs, "list")
+      && contains(kubernetes_cluster_role_v1.pods.rule[1].resources, "pods/exec")
+      && contains(kubernetes_cluster_role_v1.pods.rule[1].verbs, "get")
+      && contains(kubernetes_cluster_role_v1.pods.rule[1].verbs, "create")
     )
-    error_message = "Teleport tenant RBAC must preserve pod, log, and exec read access."
+    error_message = "Teleport tenant RBAC must preserve pod and log read access and allow pod exec."
   }
 
   assert {
