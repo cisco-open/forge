@@ -23,8 +23,15 @@ resource "kubernetes_cluster_role_v1" "pods" {
 
   rule {
     api_groups = [""]
-    resources  = ["pods", "pods/log", "pods/exec"]
+    resources  = ["pods", "pods/log"]
     verbs      = ["get", "watch", "list"]
+  }
+
+  # Keep exec write access isolated from pod and pod-log read access.
+  rule {
+    api_groups = [""]
+    resources  = ["pods/exec"]
+    verbs      = ["get", "create"]
   }
 
 }
