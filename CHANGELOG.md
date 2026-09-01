@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.16.1](https://github.com/cisco-open/forge/compare/v4.16.0...v4.16.1) (2026-09-01)
+
+
+### Bug Fixes
+
+* **teleport:** allow tenant pod exec ([#695](https://github.com/cisco-open/forge/issues/695)) ([b510b97](https://github.com/cisco-open/forge/commit/b510b97a10c1126daeb118f082f1a82695a356a0))
+
 ## [4.16.0](https://github.com/cisco-open/forge/compare/v4.15.1...v4.16.0) (2026-09-01)
 
 
