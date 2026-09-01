@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.16.0](https://github.com/cisco-open/forge/compare/v4.15.1...v4.16.0) (2026-09-01)
+
+
+### Features
+
+* **eks:** update Calico to 3.32.2 ([#693](https://github.com/cisco-open/forge/issues/693)) ([cb4a13b](https://github.com/cisco-open/forge/commit/cb4a13b4942bd5d02f475328301c76b4f0a70f38))
+* **eks:** update Karpenter chart to 1.14.0 ([#692](https://github.com/cisco-open/forge/issues/692)) ([8eefab1](https://github.com/cisco-open/forge/commit/8eefab11952ddc351ded0c8d53cc3eb11b136ac3))
+
 ## [4.15.1](https://github.com/cisco-open/forge/compare/v4.15.0...v4.15.1) (2026-08-31)
 
 
