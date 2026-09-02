@@ -1694,9 +1694,9 @@ resource "signalfx_dashboard" "runner_ec2" {
     property               = "aws_tag_TenantName"
     alias                  = "ForgeCICD Tenant Name"
     description            = ""
-    values                 = sort(distinct(var.tenant_names))
+    values                 = []
     value_required         = false
-    values_suggested       = sort(distinct(var.tenant_names))
+    values_suggested       = sort(var.tenant_names)
     restricted_suggestions = true
   }
 

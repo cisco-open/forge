@@ -110,7 +110,7 @@ run "runner_ec2_dashboard_wiring_contract" {
     condition = (
       signalfx_dashboard.runner_ec2.name == "Forge Tenant - EC2 Runners"
       && signalfx_dashboard.runner_ec2.dashboard_group == "forge-dashboard-group"
-      && signalfx_dashboard.runner_ec2.variable[0].values == toset(["tenant-a", "tenant-b"])
+      && length(signalfx_dashboard.runner_ec2.variable[0].values) == 0
       && !signalfx_dashboard.runner_ec2.variable[0].value_required
       && signalfx_dashboard.runner_ec2.variable[0].values_suggested == toset(["tenant-a", "tenant-b"])
       && signalfx_dashboard.runner_ec2.variable[0].restricted_suggestions
