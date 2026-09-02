@@ -26,6 +26,12 @@ run "runner_k8s_dashboard_contract" {
   assert {
     condition = (
       signalfx_single_value_chart.k8s_active_pods.name == "# Active pods"
+      && signalfx_single_value_chart.k8s_active_pods.description == "Includes runner, listener, and controller pods."
+      && signalfx_list_chart.k8s_pods_by_phase.description == "Runner, listener, and controller pod counts by phase."
+      && signalfx_single_value_chart.k8s_available_pods_by_deployments.name == "# Available ARC controllers"
+      && signalfx_single_value_chart.k8s_desired_pods_by_deployments.name == "# Desired ARC controllers"
+      && strcontains(signalfx_single_value_chart.k8s_available_pods_by_deployments.program_text, "filter('k8s.deployment.name', '*-gha-rs-controller')")
+      && strcontains(signalfx_single_value_chart.k8s_desired_pods_by_deployments.program_text, "filter('k8s.deployment.name', '*-gha-rs-controller')")
       && strcontains(signalfx_single_value_chart.k8s_active_pods.program_text, "k8s.pod.phase")
       && signalfx_list_chart.k8s_top_10_cpu_usage_per_pod.sort_by == "-value"
       && signalfx_time_chart.k8s_memory_usage_pct.name == "Memory usage (%)"
@@ -39,7 +45,7 @@ run "runner_k8s_dashboard_contract" {
         !contains([for field in signalfx_time_chart.k8s_memory_usage_bytes.legend_options_fields : field.property if field.enabled], property)
       ])
     )
-    error_message = "K8S runner charts must keep active pod, top CPU, memory percentage, and tenant pod status behavior."
+    error_message = "K8S runner charts must keep ARC controller availability, active pod, top CPU, memory percentage, and tenant pod status behavior."
   }
 
   assert {
