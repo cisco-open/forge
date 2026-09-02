@@ -30,14 +30,23 @@ run "lambda_dashboard_contract" {
         !field.enabled
       ])
       && signalfx_single_value_chart.total_errors.name == "Total errors"
-      && strcontains(signalfx_single_value_chart.total_errors.program_text, ".sum(over='30m')")
-      && strcontains(signalfx_single_value_chart.total_throttles.program_text, ".sum(over='30m')")
-      && strcontains(signalfx_single_value_chart.total_invocations.program_text, ".sum(over='30m')")
+      && signalfx_single_value_chart.avg_invocation_duration.description == "Average over selected window."
+      && alltrue([
+        for program_text in [
+          signalfx_single_value_chart.total_errors.program_text,
+          signalfx_single_value_chart.total_throttles.program_text,
+          signalfx_single_value_chart.total_invocations.program_text,
+          ] : (
+          strcontains(program_text, ".sum(over='1h')")
+          && strcontains(program_text, "filter('aws_tag_TenantName', '*')")
+          && strcontains(program_text, "filter('aws_tag_ForgeModuleRef', '*')")
+        )
+      ])
       && strcontains(signalfx_time_chart.errors_by_version.program_text, "Errors")
       && strcontains(signalfx_time_chart.errors_by_version.program_text, ".sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_tag_ForgeModuleRef'])")
       && strcontains(signalfx_list_chart.avg_duration_by_version.program_text, ".mean(by=['aws_tag_TenantName', 'aws_function_name', 'aws_tag_ForgeModuleRef'])")
     )
-    error_message = "Lambda charts must keep one-hour visibility and ingestion-delay-safe invocation, error, and throttle behavior."
+    error_message = "Lambda charts and totals must use one-hour tenant-tagged invocation, error, and throttle behavior."
   }
 
   assert {

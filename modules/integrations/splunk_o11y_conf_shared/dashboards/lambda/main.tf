@@ -134,17 +134,17 @@ EOF
 
 resource "signalfx_single_value_chart" "total_throttles" {
   name        = "Total throttles"
-  description = "Over 30m"
+  description = "Last hour."
   unit_prefix = "Metric"
   color_by    = "Dimension"
 
   program_text = <<-EOF
-A = data('Throttles', filter=(${var.lambda_dimension_filter}) and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='30m').sum().publish(label='A')
+A = data('Throttles', filter=(${var.lambda_dimension_filter}) and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum', extrapolation='zero').sum(over='1h').sum().publish(label='A')
 EOF
 
   viz_options {
     color        = "yellow"
-    display_name = "Throttles - sum(30m) - sum"
+    display_name = "Throttles - sum(1h) - sum"
     label        = "A"
   }
 }
@@ -214,6 +214,7 @@ EOF
 
 resource "signalfx_single_value_chart" "avg_invocation_duration" {
   name        = "Average invocation duration"
+  description = "Average over selected window."
   unit_prefix = "Metric"
   color_by    = "Metric"
 
@@ -433,12 +434,12 @@ EOF
 
 resource "signalfx_single_value_chart" "total_errors" {
   name        = "Total errors"
-  description = "Over 30m"
+  description = "Last hour."
   unit_prefix = "Metric"
   color_by    = "Dimension"
 
   program_text = <<-EOF
-A = data('Errors', filter=(${var.lambda_dimension_filter}) and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='30m').sum().publish(label='A')
+A = data('Errors', filter=(${var.lambda_dimension_filter}) and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum', extrapolation='zero').sum(over='1h').sum().publish(label='A')
 EOF
 
   viz_options {
@@ -450,17 +451,17 @@ EOF
 
 resource "signalfx_single_value_chart" "total_invocations" {
   name        = "Total invocations"
-  description = "Over 30m"
+  description = "Last hour."
   unit_prefix = "Metric"
   color_by    = "Dimension"
 
   program_text = <<-EOF
-A = data('Invocations', filter=(${var.lambda_dimension_filter}) and filter('stat', 'sum'), rollup='sum').sum(over='30m').sum().publish(label='A')
+A = data('Invocations', filter=(${var.lambda_dimension_filter}) and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum').sum(over='1h').sum().publish(label='A')
 EOF
 
   viz_options {
     color        = "chartreuse"
-    display_name = "Invocations - sum(30m) - sum"
+    display_name = "Invocations - sum(1h) - sum"
     label        = "A"
   }
 }
