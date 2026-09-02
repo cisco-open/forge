@@ -21,6 +21,7 @@ module "dispatcher" {
   source_path = [{
     path = "${path.module}/lambda"
   }]
+  hash_extra = "dispatcher"
 
   logging_log_group                 = aws_cloudwatch_log_group.dispatcher.name
   use_existing_cloudwatch_log_group = true
@@ -87,6 +88,7 @@ module "worker" {
   source_path = [{
     path = "${path.module}/lambda"
   }]
+  hash_extra = "worker"
 
   layers = [
     "arn:aws:lambda:${data.aws_region.current.region}:770693421928:layer:Klayers-p312-cryptography:26",

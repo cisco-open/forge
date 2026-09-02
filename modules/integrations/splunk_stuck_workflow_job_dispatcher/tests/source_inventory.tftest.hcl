@@ -10,6 +10,8 @@ run "integrations_splunk_stuck_workflow_job_dispatcher_contract" {
     expected_literals = [
       "module \"dispatcher\"",
       "module \"worker\"",
+      "hash_extra = \"dispatcher\"",
+      "hash_extra = \"worker\"",
       "resource \"random_password\" \"webhook_token\"",
       "resource \"aws_apigatewayv2_api\" \"splunk\"",
       "resource \"aws_apigatewayv2_integration\" \"dispatcher\"",
