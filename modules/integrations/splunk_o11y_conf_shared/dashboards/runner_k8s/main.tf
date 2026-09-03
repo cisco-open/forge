@@ -17,7 +17,7 @@ resource "signalfx_single_value_chart" "k8s_available_pods_by_deployments" {
   name        = "# Available ARC controllers"
   description = "Available ARC controller instances."
 
-  program_text = "A = data('k8s.deployment.available', filter=(${local.k8s_tenant_filter}) and filter('k8s.deployment.name', '*-gha-rs-controller'), rollup='latest').sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.deployment.name']).sum().publish(label='A')"
+  program_text = "A = data('k8s.deployment.available', filter=(${local.k8s_tenant_filter}), rollup='latest').sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.deployment.name']).sum().publish(label='A')"
 
   color_by         = "Dimension"
   refresh_interval = 5
@@ -126,7 +126,7 @@ resource "signalfx_single_value_chart" "k8s_desired_pods_by_deployments" {
   name        = "# Desired ARC controllers"
   description = "Desired ARC controller instances."
 
-  program_text = "A = data('k8s.deployment.desired', filter=(${local.k8s_tenant_filter}) and filter('k8s.deployment.name', '*-gha-rs-controller'), rollup='latest').sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.deployment.name']).sum().publish(label='A')"
+  program_text = "A = data('k8s.deployment.desired', filter=(${local.k8s_tenant_filter}), rollup='latest').sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.deployment.name']).sum().publish(label='A')"
 
   color_by         = "Dimension"
   refresh_interval = 5
