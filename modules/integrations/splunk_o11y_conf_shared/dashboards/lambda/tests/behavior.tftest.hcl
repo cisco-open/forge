@@ -36,17 +36,13 @@ run "lambda_dashboard_contract" {
           signalfx_single_value_chart.total_errors.program_text,
           signalfx_single_value_chart.total_throttles.program_text,
           signalfx_single_value_chart.total_invocations.program_text,
-          ] : (
-          strcontains(program_text, ".sum(over='1h')")
-          && strcontains(program_text, "filter('aws_tag_TenantName', '*')")
-          && strcontains(program_text, "filter('aws_tag_ForgeModuleRef', '*')")
-        )
+        ] : strcontains(program_text, ".sum(over='1h')")
       ])
       && strcontains(signalfx_time_chart.errors_by_version.program_text, "Errors")
       && strcontains(signalfx_time_chart.errors_by_version.program_text, ".sum(by=['aws_tag_TenantName', 'aws_function_name', 'aws_tag_ForgeModuleRef'])")
       && strcontains(signalfx_list_chart.avg_duration_by_version.program_text, ".mean(by=['aws_tag_TenantName', 'aws_function_name', 'aws_tag_ForgeModuleRef'])")
     )
-    error_message = "Lambda charts and totals must use one-hour tenant-tagged invocation, error, and throttle behavior."
+    error_message = "Lambda charts and totals must use one-hour invocation, error, and throttle behavior."
   }
 
   assert {

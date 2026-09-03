@@ -139,7 +139,7 @@ resource "signalfx_single_value_chart" "total_throttles" {
   color_by    = "Dimension"
 
   program_text = <<-EOF
-A = data('Throttles', filter=(${var.lambda_dimension_filter}) and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum', extrapolation='zero').sum(over='1h').sum().publish(label='A')
+A = data('Throttles', filter=(${var.lambda_dimension_filter}) and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='1h').sum().publish(label='A')
 EOF
 
   viz_options {
@@ -439,7 +439,7 @@ resource "signalfx_single_value_chart" "total_errors" {
   color_by    = "Dimension"
 
   program_text = <<-EOF
-A = data('Errors', filter=(${var.lambda_dimension_filter}) and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum', extrapolation='zero').sum(over='1h').sum().publish(label='A')
+A = data('Errors', filter=(${var.lambda_dimension_filter}) and filter('stat', 'sum'), rollup='sum', extrapolation='zero').sum(over='1h').sum().publish(label='A')
 EOF
 
   viz_options {
@@ -456,7 +456,7 @@ resource "signalfx_single_value_chart" "total_invocations" {
   color_by    = "Dimension"
 
   program_text = <<-EOF
-A = data('Invocations', filter=(${var.lambda_dimension_filter}) and filter('stat', 'sum') and filter('aws_tag_TenantName', '*') and filter('aws_tag_ForgeModuleRef', '*'), rollup='sum').sum(over='1h').sum().publish(label='A')
+A = data('Invocations', filter=(${var.lambda_dimension_filter}) and filter('stat', 'sum'), rollup='sum').sum(over='1h').sum().publish(label='A')
 EOF
 
   viz_options {
