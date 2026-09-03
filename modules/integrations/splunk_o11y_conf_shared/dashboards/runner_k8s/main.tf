@@ -14,8 +14,8 @@ locals {
 }
 
 resource "signalfx_single_value_chart" "k8s_available_pods_by_deployments" {
-  name        = "# Available pods by deployments"
-  description = "Number of pods ready by deployments"
+  name        = "# Available ARC controllers"
+  description = "Available ARC controller instances."
 
   program_text = "A = data('k8s.deployment.available', filter=(${local.k8s_tenant_filter}), rollup='latest').sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.deployment.name']).sum().publish(label='A')"
 
@@ -23,7 +23,7 @@ resource "signalfx_single_value_chart" "k8s_available_pods_by_deployments" {
   refresh_interval = 5
 
   viz_options {
-    display_name = "Available pods"
+    display_name = "Available ARC controllers"
     label        = "A"
   }
 }
@@ -123,8 +123,8 @@ resource "signalfx_time_chart" "k8s_network_bytes_per_sec" {
 }
 
 resource "signalfx_single_value_chart" "k8s_desired_pods_by_deployments" {
-  name        = "# Desired pods by deployments"
-  description = "Number of pods that should be created by deployments"
+  name        = "# Desired ARC controllers"
+  description = "Desired ARC controller instances."
 
   program_text = "A = data('k8s.deployment.desired', filter=(${local.k8s_tenant_filter}), rollup='latest').sum(by=['k8s.cluster.name', 'k8s.namespace.name', 'k8s.deployment.name']).sum().publish(label='A')"
 
@@ -132,7 +132,7 @@ resource "signalfx_single_value_chart" "k8s_desired_pods_by_deployments" {
   refresh_interval = 5
 
   viz_options {
-    display_name = "Desired pods by deployments"
+    display_name = "Desired ARC controllers"
     label        = "A"
   }
 }
@@ -260,7 +260,7 @@ EOF
 
 resource "signalfx_single_value_chart" "k8s_active_pods" {
   name        = "# Active pods"
-  description = "This may include \"pause\" containers used internally by k8s"
+  description = "Includes runner, listener, and controller pods."
 
   program_text = "A = data('k8s.pod.phase', filter=(${local.k8s_tenant_filter}), rollup='latest').between(1.5, 2.5, low_inclusive=True, high_inclusive=True).count().publish(label='A')"
 
@@ -326,7 +326,7 @@ resource "signalfx_list_chart" "k8s_top_10_pods_by_avg_memory_usage" {
 
 resource "signalfx_list_chart" "k8s_pods_by_phase" {
   name        = "# Pods by phase"
-  description = ""
+  description = "Runner, listener, and controller pod counts by phase."
 
   program_text = <<-EOF
 B = data('k8s.pod.phase', filter=(${local.k8s_tenant_filter}), rollup='latest').between(1.5, 2.5, low_inclusive=True, high_inclusive=True).count(by=['k8s.namespace.name']).publish(label='B')

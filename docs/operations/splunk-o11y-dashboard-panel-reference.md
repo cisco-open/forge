@@ -125,10 +125,10 @@ high or low job execution is not enough to change a runner class.
 
 | Chart                                       | Operational question                                                      |
 | ------------------------------------------- | ------------------------------------------------------------------------- |
-| # Available pods by deployments             | How many deployment pods are available?                                   |
+| # Available ARC controllers                 | How many tenant ARC controllers are available?                            |
 | Top 10 CPU usage per pod (CPU units)        | Which tenant pods use the most CPU?                                       |
 | Network bytes / sec                         | What is pod network throughput?                                           |
-| # Desired pods by deployments               | How many deployment pods are requested?                                   |
+| # Desired ARC controllers                   | How many tenant ARC controllers are desired?                              |
 | Network errors / sec                        | Which pods or nodes report network errors?                                |
 | Memory usage (%)                            | Which containers approach their memory limits?                            |
 | # Active pods                               | How many tenant pods are running?                                         |

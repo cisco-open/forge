@@ -142,13 +142,13 @@ then validate the change against job duration and failure rate.
 
 ### Forge Tenant - K8S Runners
 
-Purpose: inspect tenant ARC runner pods, deployment availability, pod phases,
+Purpose: inspect tenant ARC controllers, runner pods, pod phases,
 CPU, memory, network, restarts, and termination reasons.
 
-Normal: desired and available pods converge, running pods follow demand,
+Normal: desired and available ARC controllers converge, running pods follow demand,
 pending/failed/unknown phases remain low, and restarts do not grow repeatedly.
 
-Problem: desired capacity exceeds available capacity, pods stay pending,
+Problem: desired ARC controllers exceed available controllers, pods stay pending,
 containers restart, memory approaches limits, or network errors increase.
 
 Apocalypse: tenant runner pods fail across several namespaces or clusters.
