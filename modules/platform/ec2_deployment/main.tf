@@ -125,47 +125,29 @@ resource "aws_iam_policy" "runner_hooks_ssm_read" {
 
 
 module "runners" {
-  #checkov:skip=CKV_TF_1:Module source uses Renovate-managed version tags; commit SHA pinning is an accepted policy tradeoff.
-  source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=v7.11.0"
+  #checkov:skip=CKV_TF_1:Temporary upstream ref is required to validate multi-runner v2 compatibility before a release tag exists.
+  source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=fix-multi-runner-v2-routing"
 
   aws_region = var.aws_region
+  vpc_id     = var.network_configs.vpc_id
+  subnet_ids = var.network_configs.subnet_ids
 
-  vpc_id                    = var.network_configs.vpc_id
-  subnet_ids                = var.network_configs.subnet_ids
-  lambda_subnet_ids         = var.network_configs.lambda_subnet_ids
-  lambda_security_group_ids = [aws_security_group.gh_runner_lambda_egress.id]
-  kms_key_arn               = aws_kms_key.github.arn
-  ghes_url                  = var.runner_configs.ghes_url
-  prefix                    = var.runner_configs.prefix
+  prefix = var.runner_configs.prefix
 
-  # For authenticating against the GitHub App we created.
   github_app = var.runner_configs.github_app
 
-  eventbridge = {
-    enable = true
+  multi_runner_config = {}
+
+  experimental_global_config = {
+    tags = local.experimental_config.tags
   }
-
-  lambda_tags          = local.terraform_aws_github_runner_tags
-  tags                 = local.terraform_aws_github_runner_tags
-  parameter_store_tags = local.terraform_aws_github_runner_tags
-
-  # Verbose logging.
-  log_level = var.runner_configs.log_level
-
-  # Retention period for the logs in days.
-  logging_retention_in_days = var.runner_configs.logging_retention_in_days
-
-  webhook_lambda_zip = "${data.external.download_lambdas.result.path}/webhook.zip"
-  webhook_lambda_apigateway_access_log_settings = {
-    destination_arn = aws_cloudwatch_log_group.webhook_api_gateway_access.arn
-    format          = local.webhook_api_gateway_access_log_format
-  }
-  runner_binaries_syncer_lambda_zip = "${data.external.download_lambdas.result.path}/runner-binaries-syncer.zip"
-  runners_lambda_zip                = "${data.external.download_lambdas.result.path}/runners.zip"
-
-  # Temporary compatibility boundary: Forge accepts the nested v2 EC2 input
-  # shape, then translates it to the released upstream v1 contract.
-  multi_runner_config = local.multi_runner_config_v1
+  experimental_global_config_github                 = local.experimental_config.github
+  experimental_global_config_lambda                 = local.experimental_config.lambda
+  experimental_global_config_orchestration_provider = local.experimental_config.orchestration_provider
+  experimental_global_config_ssm                    = local.experimental_config.ssm
+  experimental_global_config_observability          = local.experimental_config.observability
+  experimental_global_config_compute_provider       = local.experimental_config.compute_provider
+  experimental_multi_runner_config                  = local.multi_runner_config
 
   depends_on = [
     data.external.download_lambdas,

@@ -3,14 +3,22 @@ locals {
 
   effective_runner_users = {
     for key, runner_config in local.ec2_runner_configs :
-    key => runner_config.runner.run_as_root ? "root" : runner_config.runner.run_as
+    key => coalesce(runner_config.runner.run_as_root, false) ? "root" : coalesce(runner_config.runner.run_as, "ec2-user")
   }
 
   effective_runner_home_directories = {
     for key, runner_config in local.ec2_runner_configs :
     key => runner_config.runner.os == "windows" ? "C:/Users/Administrator" : (
-      runner_config.runner.run_as_root ? (runner_config.runner.os == "osx" ? "/var/root" : "/root") : "/home/${runner_config.runner.run_as}"
+      coalesce(runner_config.runner.run_as_root, false) ? (runner_config.runner.os == "osx" ? "/var/root" : "/root") : "/home/${coalesce(runner_config.runner.run_as, "ec2-user")}"
     )
+  }
+
+  effective_runner_hooks = {
+    for key, runner_config in local.ec2_runner_configs :
+    key => {
+      job_started   = runner_config.runner.hooks.job_started == null ? "" : runner_config.runner.hooks.job_started
+      job_completed = runner_config.runner.hooks.job_completed == null ? "" : runner_config.runner.hooks.job_completed
+    }
   }
 
   forge_runner_hook_job_started = {
@@ -37,23 +45,23 @@ locals {
 
   # Run caller hooks in a child shell so `exit` cannot bypass Forge's mandatory
   # lifecycle hook. Keep the empty-hook path byte-identical to the previous
-  # configuration to avoid state churn for migrated lanes.
+  # configuration to avoid state churn for migrated runner configurations.
   runner_hook_job_started = {
     for key, runner_config in local.ec2_runner_configs :
-    key => runner_config.runner.hooks.job_started == "" ? local.forge_runner_hook_job_started[key] : join("\n", [
+    key => local.effective_runner_hooks[key].job_started == "" ? local.forge_runner_hook_job_started[key] : join("\n", [
       runner_config.runner.os == "windows" ?
-      "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand ${textencodebase64(runner_config.runner.hooks.job_started, "UTF-16LE")}" :
-      "printf '%s' '${base64encode(runner_config.runner.hooks.job_started)}' | base64 --decode | bash",
+      "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand ${textencodebase64(local.effective_runner_hooks[key].job_started, "UTF-16LE")}" :
+      "printf '%s' '${base64encode(local.effective_runner_hooks[key].job_started)}' | base64 --decode | bash",
       local.forge_runner_hook_job_started[key],
     ])
   }
 
   runner_hook_job_completed = {
     for key, runner_config in local.ec2_runner_configs :
-    key => runner_config.runner.hooks.job_completed == "" ? local.forge_runner_hook_job_completed[key] : join("\n", [
+    key => local.effective_runner_hooks[key].job_completed == "" ? local.forge_runner_hook_job_completed[key] : join("\n", [
       runner_config.runner.os == "windows" ?
-      "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand ${textencodebase64(runner_config.runner.hooks.job_completed, "UTF-16LE")}" :
-      "printf '%s' '${base64encode(runner_config.runner.hooks.job_completed)}' | base64 --decode | bash",
+      "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand ${textencodebase64(local.effective_runner_hooks[key].job_completed, "UTF-16LE")}" :
+      "printf '%s' '${base64encode(local.effective_runner_hooks[key].job_completed)}' | base64 --decode | bash",
       local.forge_runner_hook_job_completed[key],
     ])
   }
@@ -65,7 +73,7 @@ locals {
 
   active_ec2_subnet_ids = toset(flatten([
     for runner_config in values(local.ec2_runner_configs) :
-    runner_config.compute_provider.ec2.subnet_ids == null ? var.network_configs.subnet_ids : runner_config.compute_provider.ec2.subnet_ids
+    runner_config.compute_provider.aws.ec2.subnet_ids == null ? var.network_configs.subnet_ids : runner_config.compute_provider.aws.ec2.subnet_ids
   ]))
 
   # This is the upstream EC2 provider's default AMI selection. Normalize it
@@ -83,8 +91,8 @@ locals {
   legacy_runner_labels = {
     for key, runner_config in local.ec2_runner_configs :
     key => concat(
-      try(runner_config.matcherConfig.labelMatchers[0], []),
-      runner_config.runner.extra_labels,
+      try(runner_config.orchestration_provider.webhook.matcherConfig.labelMatchers[0], []),
+      coalesce(runner_config.runner.extra_labels, []),
     )
   }
 
@@ -97,7 +105,7 @@ locals {
       local.legacy_runner_labels[key],
       distinct([
         for label in flatten([
-          for matcher_index, labels in runner_config.matcherConfig.labelMatchers : labels if matcher_index > 0
+          for matcher_index, labels in runner_config.orchestration_provider.webhook.matcherConfig.labelMatchers : labels if matcher_index > 0
         ]) : label
         if !contains(local.legacy_runner_labels[key], label)
       ]),
@@ -141,26 +149,26 @@ locals {
   ec2_compute_provider = {
     for key, runner_config in local.ec2_runner_configs :
     key => merge(
-      runner_config.compute_provider.ec2,
+      runner_config.compute_provider.aws.ec2,
       {
-        ami = runner_config.compute_provider.ec2.ami == null ? null : merge(
-          runner_config.compute_provider.ec2.ami,
+        ami = runner_config.compute_provider.aws.ec2.ami == null ? null : merge(
+          runner_config.compute_provider.aws.ec2.ami,
           {
             filter = merge(
               local.ec2_default_ami_filters[key],
-              runner_config.compute_provider.ec2.ami.filter,
+              runner_config.compute_provider.aws.ec2.ami.filter,
             )
           }
         )
         user_data = merge(
-          runner_config.compute_provider.ec2.user_data,
+          runner_config.compute_provider.aws.ec2.user_data,
           {
             template = (
-              runner_config.compute_provider.ec2.user_data.content == null
-              && runner_config.compute_provider.ec2.user_data.template == null
-            ) ? "${local.user_data_prefix}/user_data_${runner_config.runner.os}.tftpl" : runner_config.compute_provider.ec2.user_data.template
+              runner_config.compute_provider.aws.ec2.user_data.content == null
+              && runner_config.compute_provider.aws.ec2.user_data.template == null
+            ) ? "${local.user_data_prefix}/user_data_${runner_config.runner.os}.tftpl" : runner_config.compute_provider.aws.ec2.user_data.template
             post_install = join("\n", compact([
-              runner_config.compute_provider.ec2.user_data.post_install,
+              runner_config.compute_provider.aws.ec2.user_data.post_install,
               templatefile(
                 local.userdata_template_post_install,
                 {
@@ -172,110 +180,160 @@ locals {
             ]))
           }
         )
-        log_files = coalesce(runner_config.compute_provider.ec2.log_files, local.forge_ec2_log_files[key])
-        tags      = merge(var.tenant_configs.tags, runner_config.compute_provider.ec2.tags)
+        log_files = coalesce(runner_config.compute_provider.aws.ec2.log_files, local.forge_ec2_log_files[key])
+        tags      = merge(var.tenant_configs.tags, runner_config.compute_provider.aws.ec2.tags)
       }
     )
   }
 
-  # Keep Forge's public input aligned with the nested v2 EC2 contract while
-  # the upstream module remains on its stable v1 multi_runner_config path.
-  multi_runner_config_v1 = {
+  # Preserve Forge-managed runner hooks, policies, bootstrap content, logging,
+  # and tags while passing the public nested contract directly to upstream v2.
+  multi_runner_config = {
     for key, runner_config in local.ec2_runner_configs :
-    key => {
-      runner_config = {
-        runner_os                     = runner_config.runner.os
-        runner_architecture           = runner_config.runner.architecture
-        runner_metadata_options       = local.ec2_compute_provider[key].metadata_options
-        runner_boot_time_in_minutes   = runner_config.runner.boot_time_in_minutes
-        runner_disable_default_labels = runner_config.runner.disable_default_labels
-        runner_extra_labels           = runner_config.runner.extra_labels
-        runner_group_name             = runner_config.runner.group_name
-        runner_name_prefix            = runner_config.runner.name_prefix
-        runner_as_root                = runner_config.runner.run_as_root
-        runner_run_as                 = runner_config.runner.run_as
-        runners_maximum_count         = runner_config.runner.maximum_count
-        enable_ephemeral_runners      = runner_config.runner.ephemeral
-        enable_jit_config             = runner_config.runner.jit_config_enabled
-        disable_runner_autoupdate     = runner_config.runner.auto_update_disabled
-        enable_organization_runners   = runner_config.github.organization_runners
-
-        ami = {
-          filter               = local.ec2_compute_provider[key].ami.filter
-          owners               = local.ec2_compute_provider[key].ami.owners
-          id_ssm_parameter_arn = try(local.ec2_compute_provider[key].ami.id_ssm_parameter.arn, null)
-          kms_key_arn          = try(local.ec2_compute_provider[key].ami.kms_key.arn, null)
+    key => merge(runner_config, {
+      observability = merge(runner_config.observability, {
+        metrics = merge(runner_config.observability.metrics, {
+          enabled = try(coalesce(
+            try(runner_config.observability.metrics.enabled, null),
+            try(runner_config.observability.metrics.enable, null),
+          ), null)
+          metric = merge(runner_config.observability.metrics.metric, {
+            github_app_rate_limit = merge(runner_config.observability.metrics.metric.github_app_rate_limit, {
+              enabled = try(coalesce(
+                try(runner_config.observability.metrics.metric.github_app_rate_limit.enabled, null),
+                try(runner_config.observability.metrics.metric.enable_github_app_rate_limit, null),
+              ), null)
+            })
+            job_retry = merge(runner_config.observability.metrics.metric.job_retry, {
+              enabled = try(coalesce(
+                try(runner_config.observability.metrics.metric.job_retry.enabled, null),
+                try(runner_config.observability.metrics.metric.enable_job_retry, null),
+              ), null)
+            })
+          })
+        })
+      })
+      runner = merge(runner_config.runner, {
+        hooks = {
+          job_started   = local.runner_hook_job_started[key]
+          job_completed = local.runner_hook_job_completed[key]
         }
-
-        block_device_mappings                = local.ec2_compute_provider[key].block_device_mappings
-        create_service_linked_role_spot      = local.ec2_compute_provider[key].create_service_linked_role_spot
-        credit_specification                 = local.ec2_compute_provider[key].credit_specification
-        ebs_optimized                        = local.ec2_compute_provider[key].ebs_optimized
-        enable_cloudwatch_agent              = local.ec2_compute_provider[key].cloudwatch_agent.enabled
-        cloudwatch_config                    = local.ec2_compute_provider[key].cloudwatch_agent.config
-        enable_runner_binaries_syncer        = local.ec2_compute_provider[key].binaries_syncer.enabled
-        enable_runner_detailed_monitoring    = local.ec2_compute_provider[key].detailed_monitoring_enabled
-        enable_ssm_on_runners                = local.ec2_compute_provider[key].ssm_enabled
-        enable_userdata                      = local.ec2_compute_provider[key].user_data.enabled
-        userdata_template                    = local.ec2_compute_provider[key].user_data.template
-        userdata_content                     = local.ec2_compute_provider[key].user_data.content
-        userdata_pre_install                 = local.ec2_compute_provider[key].user_data.pre_install
-        userdata_post_install                = local.ec2_compute_provider[key].user_data.post_install
-        instance_allocation_strategy         = local.ec2_compute_provider[key].instance_allocation_strategy
-        instance_max_spot_price              = local.ec2_compute_provider[key].instance_max_spot_price
-        instance_target_capacity_type        = local.ec2_compute_provider[key].instance_target_capacity_type
-        instance_type_priorities             = local.ec2_compute_provider[key].instance_type_priorities
-        instance_types                       = local.ec2_compute_provider[key].instance_types
-        runner_additional_security_group_ids = local.ec2_compute_provider[key].additional_security_group_ids
-        enable_on_demand_failover_for_errors = local.ec2_compute_provider[key].enable_on_demand_failover_for_errors
-        scale_errors                         = local.ec2_compute_provider[key].scale_errors
-        subnet_ids                           = local.ec2_compute_provider[key].subnet_ids
-        vpc_id                               = local.ec2_compute_provider[key].vpc_id
-        cpu_options                          = local.ec2_compute_provider[key].cpu_options
-        placement                            = local.ec2_compute_provider[key].placement
-        license_specifications               = local.ec2_compute_provider[key].license_specifications
-        use_dedicated_host                   = local.ec2_compute_provider[key].use_dedicated_host
-        runner_log_files                     = local.ec2_compute_provider[key].log_files
-        runner_ec2_tags                      = local.ec2_compute_provider[key].tags
-
-        delay_webhook_event                                            = runner_config.queue.delay_webhook_event
-        job_queue_retention_in_seconds                                 = runner_config.queue.job_queue_retention_in_seconds
-        lambda_event_source_mapping_batch_size                         = runner_config.queue.event_source_mapping.batch_size
-        lambda_event_source_mapping_maximum_batching_window_in_seconds = runner_config.queue.event_source_mapping.maximum_batching_window_in_seconds
-        scale_up_reserved_concurrent_executions                        = runner_config.scale_up.reserved_concurrent_executions
-        enable_job_queued_check                                        = runner_config.scale_up.job_queued_check_enabled
-        scale_down_schedule_expression                                 = runner_config.scale_down.schedule_expression
-        minimum_running_time_in_minutes                                = runner_config.scale_down.minimum_running_time_in_minutes
-        idle_config                                                    = runner_config.scale_down.idle_config
-        pool_config                                                    = runner_config.pool.config
-        pool_runner_owner                                              = runner_config.pool.runner_owner
-        job_retry = {
-          enable             = runner_config.job_retry.enabled
-          delay_in_seconds   = runner_config.job_retry.delay_in_seconds
-          delay_backoff      = runner_config.job_retry.delay_backoff
-          lambda_memory_size = runner_config.job_retry.lambda.memory_size
-          lambda_timeout     = runner_config.job_retry.lambda.timeout
-          max_attempts       = runner_config.job_retry.max_attempts
-        }
-
-        runner_hook_job_started   = local.runner_hook_job_started[key]
-        runner_hook_job_completed = local.runner_hook_job_completed[key]
-        runner_iam_role_managed_policy_arns = concat(
-          var.runner_configs.runner_iam_role_managed_policy_arns,
-          [
-            aws_iam_policy.ec2_tags.arn,
-            aws_iam_policy.runner_hooks_ssm_read.arn,
-          ],
-          [
-            for policy_name in sort(keys(runner_config.runner.iam.managed_policy_arns)) :
-            runner_config.runner.iam.managed_policy_arns[policy_name]
-          ],
-        )
+        iam = merge(runner_config.runner.iam, {
+          managed_policy_arns = merge(
+            coalesce(runner_config.runner.iam.managed_policy_arns, {}),
+            runner_config.runner.iam.role == null ? merge(
+              {
+                for policy_index, policy_arn in var.runner_configs.runner_iam_role_managed_policy_arns :
+                "forge-config-${policy_index}" => policy_arn
+              },
+              {
+                forge_ec2_tags              = aws_iam_policy.ec2_tags.arn
+                forge_runner_hooks_ssm_read = aws_iam_policy.runner_hooks_ssm_read.arn
+              },
+            ) : {},
+          )
+        })
+      })
+      orchestration_provider = {
+        webhook = runner_config.orchestration_provider.webhook == null ? null : merge(runner_config.orchestration_provider.webhook, {
+          matcherConfig = merge(runner_config.orchestration_provider.webhook.matcherConfig, {
+            dynamic_labels_enabled = coalesce(
+              try(runner_config.orchestration_provider.webhook.matcherConfig.dynamic_labels_enabled, null),
+              try(runner_config.orchestration_provider.webhook.matcherConfig.enableDynamicLabels, null),
+              false,
+            )
+          })
+        })
       }
+      compute_provider = {
+        aws = {
+          ec2 = merge(local.ec2_compute_provider[key], {
+            on_demand_failover_for_errors = coalesce(
+              try(runner_config.compute_provider.aws.ec2.on_demand_failover_for_errors, null),
+              try(runner_config.compute_provider.aws.ec2.enable_on_demand_failover_for_errors, null),
+              [],
+            )
+          })
+        }
+      }
+    })
+  }
 
-      matcherConfig = runner_config.matcherConfig
+  experimental_config = {
+    tags = local.terraform_aws_github_runner_tags
 
-      redrive_build_queue = runner_config.queue.redrive_build_queue
+    github = {
+      app = var.runner_configs.github_app
+      enterprise_server = {
+        url = try(trimspace(var.runner_configs.ghes_url), "") == "" ? null : var.runner_configs.ghes_url
+      }
     }
+
+    lambda = {
+      subnet_ids         = var.network_configs.lambda_subnet_ids
+      security_group_ids = [aws_security_group.gh_runner_lambda_egress.id]
+      tags               = local.terraform_aws_github_runner_tags
+    }
+
+    orchestration_provider = {
+      webhook = {
+        eventbridge = {
+          enabled = true
+        }
+        lambda = {
+          artifact = {
+            zip = "${data.external.download_lambdas.result.path}/runners.zip"
+          }
+          webhook = {
+            artifact = {
+              zip = "${data.external.download_lambdas.result.path}/webhook.zip"
+            }
+            api_gateway_access_log_settings = {
+              destination_arn = aws_cloudwatch_log_group.webhook_api_gateway_access.arn
+              format          = local.webhook_api_gateway_access_log_format
+            }
+          }
+        }
+      }
+    }
+
+    ssm = {
+      kms_key_id = aws_kms_key.github.arn
+      parameters = {
+        tags = local.terraform_aws_github_runner_tags
+      }
+      housekeeper = {
+        lambda = {
+          artifact = {
+            zip = "${data.external.download_lambdas.result.path}/runners.zip"
+          }
+        }
+      }
+    }
+
+    observability = {
+      logs = {
+        level             = lower(var.runner_configs.log_level)
+        retention_in_days = tonumber(var.runner_configs.logging_retention_in_days)
+      }
+    }
+
+    compute_provider = {
+      aws = {
+        ec2 = {
+          vpc_id     = var.network_configs.vpc_id
+          subnet_ids = var.network_configs.subnet_ids
+          runner_binaries = {
+            syncer = {
+              artifact = {
+                zip = "${data.external.download_lambdas.result.path}/runner-binaries-syncer.zip"
+              }
+            }
+          }
+        }
+      }
+    }
+
+    multi_runner_config = local.multi_runner_config
   }
 }
