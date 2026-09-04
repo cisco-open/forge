@@ -1,5 +1,39 @@
 locals {
-  ec2_runner_configs = var.runner_configs.runner_specs
+  runner_configs                  = var.runner_configs.runner_specs
+  runner_binaries_default_enabled = true
+  runner_iam_policy_arn_prefix    = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:policy"
+  runner_binaries_targets = {
+    for target in distinct([
+      for runner_config in values(var.runner_configs.runner_specs) : {
+        os           = runner_config.runner.os
+        architecture = runner_config.runner.architecture
+      }
+      if(
+        length(try(runner_config.compute_provider.aws.ec2[*], [])) == 1
+        && coalesce(
+          try(runner_config.compute_provider.aws.ec2.binaries_syncer.enabled, null),
+          local.runner_binaries_default_enabled,
+        )
+      )
+    ]) : "${target.os}_${target.architecture}" => target
+  }
+  compute_provider_selections = {
+    for runner_key, runner_config in var.runner_configs.runner_specs : runner_key => {
+      namespace = "aws"
+      type = (
+        length(try(runner_config.compute_provider.aws.ec2[*], [])) == 1 ? "ec2" :
+        length(try(runner_config.compute_provider.aws.microvm[*], [])) == 1 ? "microvm" : null
+      )
+    }
+  }
+  ec2_runner_configs = {
+    for key, runner_config in local.runner_configs : key => runner_config
+    if length(try(runner_config.compute_provider.aws.ec2[*], [])) == 1
+  }
+  microvm_runner_configs = {
+    for key, runner_config in local.runner_configs : key => runner_config
+    if length(try(runner_config.compute_provider.aws.microvm[*], [])) == 1
+  }
 
   effective_runner_users = {
     for key, runner_config in local.ec2_runner_configs :
@@ -89,7 +123,7 @@ locals {
   }
 
   legacy_runner_labels = {
-    for key, runner_config in local.ec2_runner_configs :
+    for key, runner_config in local.runner_configs :
     key => concat(
       try(runner_config.orchestration_provider.webhook.matcherConfig.labelMatchers[0], []),
       coalesce(runner_config.runner.extra_labels, []),
@@ -100,7 +134,7 @@ locals {
   # only new labels introduced by additional v2 matchers. The upstream v1 module
   # separately sorts the corresponding set before registering runners.
   runner_labels = {
-    for key, runner_config in local.ec2_runner_configs :
+    for key, runner_config in local.runner_configs :
     key => concat(
       local.legacy_runner_labels[key],
       distinct([
@@ -181,15 +215,15 @@ locals {
           }
         )
         log_files = coalesce(runner_config.compute_provider.aws.ec2.log_files, local.forge_ec2_log_files[key])
-        tags      = merge(var.tenant_configs.tags, runner_config.compute_provider.aws.ec2.tags)
+        tags      = runner_config.compute_provider.aws.ec2.tags
       }
     )
   }
 
-  # Preserve Forge-managed runner hooks, policies, bootstrap content, logging,
-  # and tags while passing the public nested contract directly to upstream v2.
+  # Preserve the provider-neutral lane contract while applying Forge's EC2
+  # bootstrap, lifecycle-hook, and policy overlays only to EC2 lanes.
   multi_runner_config = {
-    for key, runner_config in local.ec2_runner_configs :
+    for key, runner_config in local.runner_configs :
     key => merge(runner_config, {
       observability = merge(runner_config.observability, {
         metrics = merge(runner_config.observability.metrics, {
@@ -214,10 +248,10 @@ locals {
         })
       })
       runner = merge(runner_config.runner, {
-        hooks = {
+        hooks = contains(keys(local.ec2_runner_configs), key) ? {
           job_started   = local.runner_hook_job_started[key]
           job_completed = local.runner_hook_job_completed[key]
-        }
+        } : runner_config.runner.hooks
         iam = merge(runner_config.runner.iam, {
           managed_policy_arns = merge(
             coalesce(runner_config.runner.iam.managed_policy_arns, {}),
@@ -226,38 +260,30 @@ locals {
                 for policy_index, policy_arn in var.runner_configs.runner_iam_role_managed_policy_arns :
                 "forge-config-${policy_index}" => policy_arn
               },
-              {
-                forge_ec2_tags              = aws_iam_policy.ec2_tags.arn
-                forge_runner_hooks_ssm_read = aws_iam_policy.runner_hooks_ssm_read.arn
-              },
+              contains(keys(local.ec2_runner_configs), key) ? {
+                forge_ec2_tags              = "${local.runner_iam_policy_arn_prefix}${aws_iam_policy.ec2_tags[0].path}${aws_iam_policy.ec2_tags[0].name}"
+                forge_runner_hooks_ssm_read = "${local.runner_iam_policy_arn_prefix}${aws_iam_policy.runner_hooks_ssm_read[0].path}${aws_iam_policy.runner_hooks_ssm_read[0].name}"
+              } : {},
             ) : {},
           )
         })
       })
-      orchestration_provider = {
-        webhook = runner_config.orchestration_provider.webhook == null ? null : merge(runner_config.orchestration_provider.webhook, {
-          matcherConfig = merge(runner_config.orchestration_provider.webhook.matcherConfig, {
-            dynamic_labels_enabled = coalesce(
-              try(runner_config.orchestration_provider.webhook.matcherConfig.dynamic_labels_enabled, null),
-              try(runner_config.orchestration_provider.webhook.matcherConfig.enableDynamicLabels, null),
-              false,
-            )
-          })
+      compute_provider = merge(runner_config.compute_provider, {
+        aws = merge(runner_config.compute_provider.aws, {
+          ec2 = try(local.ec2_compute_provider[key], null)
         })
-      }
-      compute_provider = {
-        aws = {
-          ec2 = merge(local.ec2_compute_provider[key], {
-            on_demand_failover_for_errors = coalesce(
-              try(runner_config.compute_provider.aws.ec2.on_demand_failover_for_errors, null),
-              try(runner_config.compute_provider.aws.ec2.enable_on_demand_failover_for_errors, null),
-              [],
-            )
-          })
-        }
-      }
+      })
     })
   }
+
+  control_plane_lambda_zip = try(coalesce(
+    try(var.runner_configs.lambda_artifacts.control_plane_zip, null),
+    try("${data.external.download_lambdas[0].result.path}/runners.zip", null),
+  ), null)
+  webhook_lambda_zip = try(coalesce(
+    try(var.runner_configs.lambda_artifacts.webhook_zip, null),
+    try("${data.external.download_lambdas[0].result.path}/webhook.zip", null),
+  ), null)
 
   experimental_config = {
     tags = local.terraform_aws_github_runner_tags
@@ -282,11 +308,11 @@ locals {
         }
         lambda = {
           artifact = {
-            zip = "${data.external.download_lambdas.result.path}/runners.zip"
+            zip = local.control_plane_lambda_zip
           }
           webhook = {
             artifact = {
-              zip = "${data.external.download_lambdas.result.path}/webhook.zip"
+              zip = local.webhook_lambda_zip
             }
             api_gateway_access_log_settings = {
               destination_arn = aws_cloudwatch_log_group.webhook_api_gateway_access.arn
@@ -305,7 +331,7 @@ locals {
       housekeeper = {
         lambda = {
           artifact = {
-            zip = "${data.external.download_lambdas.result.path}/runners.zip"
+            zip = local.control_plane_lambda_zip
           }
         }
       }
@@ -319,14 +345,17 @@ locals {
     }
 
     compute_provider = {
+      selections = local.compute_provider_selections
       aws = {
         ec2 = {
           vpc_id     = var.network_configs.vpc_id
           subnet_ids = var.network_configs.subnet_ids
           runner_binaries = {
+            enabled = local.runner_binaries_default_enabled
+            targets = local.runner_binaries_targets
             syncer = {
               artifact = {
-                zip = "${data.external.download_lambdas.result.path}/runner-binaries-syncer.zip"
+                zip = try("${data.external.download_lambdas[0].result.path}/runner-binaries-syncer.zip", null)
               }
             }
           }

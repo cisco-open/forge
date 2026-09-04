@@ -15,10 +15,13 @@ run "platform_forge_runners_github_global_lock_contract" {
       "resource \"aws_cloudwatch_event_rule\" \"clean_global_lock_lambda\"",
       "resource \"aws_cloudwatch_event_target\" \"clean_global_lock_lambda\"",
       "resource \"aws_lambda_permission\" \"clean_global_lock_lambda\"",
+      "data \"aws_caller_identity\" \"current\"",
+      "data \"aws_partition\" \"current\"",
       "data \"aws_region\" \"current\"",
       "data \"aws_iam_policy_document\" \"dynamodb_policy_document\"",
       "data \"aws_iam_policy_document\" \"clean_global_lock_lambda\"",
       "output \"dynamodb_policy_arn\"",
+      "value       = \"arn:$${data.aws_partition.current.partition}:iam::$${data.aws_caller_identity.current.account_id}:policy$${aws_iam_policy.dynamodb_policy.path}$${aws_iam_policy.dynamodb_policy.name}\"",
     ]
   }
 

@@ -5,12 +5,23 @@ output "webhook_endpoint" {
 
 output "ec2_runners_arn_map" {
   value = {
-    for runner_key, runner in module.runners.runners_map_v2 : runner_key => coalesce(
-      try(runner.runner.role.arn, null),
+    for runner_key in keys(local.ec2_runner_configs) : runner_key => coalesce(
+      try(module.runners.runners_map_v2[runner_key].runner.role.arn, null),
       try(local.ec2_runner_configs[runner_key].runner.iam.role.arn, null),
     )
   }
   description = "Map of EC2 runner keys to their IAM role ARNs."
+}
+
+output "runners_arn_map" {
+  value = {
+    for runner_key, runner in module.runners.runners_map_v2 : runner_key => coalesce(
+      try(runner.runner.role.arn, null),
+      try(runner.provider.aws.microvm.execution_role_arn, null),
+      try(local.runner_configs[runner_key].runner.iam.role.arn, null),
+    )
+  }
+  description = "Map of runner keys to their resolved EC2 or Lambda MicroVM execution-role ARNs."
 }
 
 output "ec2_runners_ami_name_map" {
@@ -25,6 +36,35 @@ output "ec2_runners_labels_map" {
     for runner_key in keys(local.ec2_runner_configs) : runner_key => local.runner_labels[runner_key]
   }
   description = "Map of EC2 runner keys to their base and extra GitHub labels."
+}
+
+output "runners_labels_map" {
+  value       = local.runner_labels
+  description = "Map of runner keys to their base and extra GitHub labels."
+}
+
+output "microvm_runners_arn_map" {
+  value = {
+    for runner_key in keys(local.microvm_runner_configs) :
+    runner_key => module.runners.runners_map_v2[runner_key].provider.aws.microvm.execution_role_arn
+  }
+  description = "Map of Lambda MicroVM runner keys to their execution-role ARNs."
+}
+
+output "microvm_runners_labels_map" {
+  value = {
+    for runner_key in keys(local.microvm_runner_configs) :
+    runner_key => local.runner_labels[runner_key]
+  }
+  description = "Map of Lambda MicroVM runner keys to their base and extra GitHub labels."
+}
+
+output "microvm_runners_map" {
+  value = {
+    for runner_key in keys(local.microvm_runner_configs) :
+    runner_key => module.runners.runners_map_v2[runner_key].provider.aws.microvm
+  }
+  description = "Map of Lambda MicroVM runner keys to their provider-owned image, execution-role, and runtime log-group outputs."
 }
 
 output "subnet_cidr_blocks" {
