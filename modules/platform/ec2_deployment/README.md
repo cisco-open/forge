@@ -50,7 +50,7 @@ connector, logging, duration, environment, and provider-IAM settings.
 - Lambda MicroVM lanes require
   `runner_configs.lambda_artifacts.control_plane_zip` and
   `runner_configs.lambda_artifacts.webhook_zip`. Build both archives from the
-  same `microvm-multi-runner-terraform` revision; the upstream branch does not
+  same `fix-multi-runner-v2-routing` revision; the upstream branch does not
   publish deployable archives. The expected build outputs are
   `lambdas/functions/control-plane/runners.zip` and
   `lambdas/functions/webhook/webhook.zip`.
@@ -83,7 +83,7 @@ connector, logging, duration, environment, and provider-IAM settings.
   existing state explicitly and inspect plans for unexpected replacement or
   naming collisions before rollout.
 - The upstream Terraform ref is the mutable
-  `microvm-multi-runner-terraform` branch. Keep Terraform and Lambda artifacts
+  `fix-multi-runner-v2-routing` branch. Keep Terraform and Lambda artifacts
   pinned to the same reviewed revision for rollout.
 - Label sets are the API contract with tenant workflows, so exact matching matters.
 - Use warm pools only where startup latency justifies the idle cost.
@@ -112,7 +112,7 @@ connector, logging, duration, environment, and provider-IAM settings.
 | ---- | ------ | ------- |
 | <a name="module_ec2_update_runner_ssm_ami"></a> [ec2\_update\_runner\_ssm\_ami](#module\_ec2\_update\_runner\_ssm\_ami) | ./ec2_update_runner_ssm_ami | n/a |
 | <a name="module_ec2_update_runner_tags"></a> [ec2\_update\_runner\_tags](#module\_ec2\_update\_runner\_tags) | ./ec2_update_runner_tags | n/a |
-| <a name="module_runners"></a> [runners](#module\_runners) | git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner | microvm-multi-runner-terraform |
+| <a name="module_runners"></a> [runners](#module\_runners) | git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner | fix-multi-runner-v2-routing |
 
 ## Resources
 

@@ -42,7 +42,7 @@ Forge is a multi-tenant CI platform built around ephemeral runners, short-lived 
 - Lambda MicroVM lanes require both
   `ec2_deployment_specs.lambda_artifacts.control_plane_zip` and
   `ec2_deployment_specs.lambda_artifacts.webhook_zip`, built from the same
-  reviewed `microvm-multi-runner-terraform` revision as the Terraform source.
+  reviewed `fix-multi-runner-v2-routing` revision as the Terraform source.
   EC2-only deployments retain the v7.10.1 release-artifact fallback.
 - `forge_runners.ec2` remains unchanged for existing consumers.
   `forge_runners.microvm` exposes MicroVM execution-role ARNs, provider-owned
