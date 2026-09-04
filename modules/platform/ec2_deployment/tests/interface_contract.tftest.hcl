@@ -59,7 +59,7 @@ run "platform_ec2_deployment_interface_contract" {
       "boot_time_in_minutes = optional(number, null)",
       "ephemeral            = optional(bool, null)",
       "jit_config_enabled   = optional(bool, null)",
-      "maximum_count        = number",
+      "maximum_count        = optional(number, null)",
       "hooks = optional(object({",
       "job_started   = optional(string, null)",
       "job_completed = optional(string, null)",
@@ -231,7 +231,8 @@ run "platform_ec2_deployment_interface_contract" {
       "exactMatch              = optional(bool, false)",
       "bidirectionalLabelMatch = optional(bool, false)",
       "priority                = optional(number, 999)",
-      "enableDynamicLabels     = optional(bool, false)",
+      "dynamic_labels_enabled  = optional(bool, null)",
+      "enableDynamicLabels = optional(bool, false)",
       "awsDynamicLabelsPolicy = optional(object({",
       "for runner_config in values(var.runner_configs.runner_specs) :",
       "for provider_config in values(runner_config.orchestration_provider) : provider_config",
@@ -280,14 +281,24 @@ run "platform_ec2_deployment_interface_contract" {
       "\"forge-config-$${policy_index}\" => policy_arn",
       "forge_ec2_tags              = aws_iam_policy.ec2_tags.arn",
       "forge_runner_hooks_ssm_read = aws_iam_policy.runner_hooks_ssm_read.arn",
-      "ec2 = local.ec2_compute_provider[key]",
+      "ec2 = merge(local.ec2_compute_provider[key], {",
       "runner_home    = local.effective_runner_home_directories[key]",
       "job_started   = local.runner_hook_job_started[key]",
       "runner_ssm_paths = {",
       "runner_ami_ssm_parameter_names = {",
       "root = \"$${trimsuffix(coalesce(runner_config.ssm.paths.root, \"/github-action-runners/$${var.runner_configs.prefix}\"), \"/\")}/$${key}\"",
       "multi_runner_config = {}",
-      "experimental        = local.experimental_config",
+      "vpc_id     = var.network_configs.vpc_id",
+      "subnet_ids = var.network_configs.subnet_ids",
+      "github_app = var.runner_configs.github_app",
+      "experimental_global_config = {",
+      "experimental_global_config_github                 = local.experimental_config.github",
+      "experimental_global_config_lambda                 = local.experimental_config.lambda",
+      "experimental_global_config_orchestration_provider = local.experimental_config.orchestration_provider",
+      "experimental_global_config_ssm                    = local.experimental_config.ssm",
+      "experimental_global_config_observability          = local.experimental_config.observability",
+      "experimental_global_config_compute_provider       = local.experimental_config.compute_provider",
+      "experimental_multi_runner_config                  = local.multi_runner_config",
       "experimental_config = {",
       "app = var.runner_configs.github_app",
       "enterprise_server = {",
@@ -343,7 +354,7 @@ run "platform_ec2_deployment_interface_contract" {
     condition = (
       output.expected_input_variable_count == 4
       && output.expected_output_value_count == 6
-      && output.expected_interface_literal_count == 289
+      && output.expected_interface_literal_count == 300
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

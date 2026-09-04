@@ -25,7 +25,7 @@ run "platform_forge_runners_contract" {
       "boot_time_in_minutes = optional(number, null)",
       "ephemeral            = optional(bool, null)",
       "jit_config_enabled   = optional(bool, null)",
-      "maximum_count        = number",
+      "maximum_count        = optional(number, null)",
       "lambda = optional(object({",
       "queue = optional(object({",
       "visibility_timeout_seconds     = optional(number, null)",
