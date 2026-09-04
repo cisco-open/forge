@@ -161,7 +161,7 @@ run "platform_forge_runners_interface_contract" {
       "boot_time_in_minutes = optional(number, null)",
       "ephemeral            = optional(bool, null)",
       "jit_config_enabled   = optional(bool, null)",
-      "maximum_count        = number",
+      "maximum_count        = optional(number, null)",
       "hooks = optional(object({",
       "job_started   = optional(string, null)",
       "job_completed = optional(string, null)",
@@ -333,7 +333,8 @@ run "platform_forge_runners_interface_contract" {
       "exactMatch              = optional(bool, false)",
       "bidirectionalLabelMatch = optional(bool, false)",
       "priority                = optional(number, 999)",
-      "enableDynamicLabels     = optional(bool, false)",
+      "dynamic_labels_enabled  = optional(bool, null)",
+      "enableDynamicLabels = optional(bool, false)",
       "awsDynamicLabelsPolicy = optional(object({",
       "for runner_config in values(var.ec2_deployment_specs.runner_specs) :",
       "for provider_config in values(runner_config.orchestration_provider) : provider_config",
@@ -454,7 +455,7 @@ run "platform_forge_runners_interface_contract" {
     condition = (
       output.expected_input_variable_count == 10
       && output.expected_output_value_count == 5
-      && output.expected_interface_literal_count == 389
+      && output.expected_interface_literal_count == 396
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

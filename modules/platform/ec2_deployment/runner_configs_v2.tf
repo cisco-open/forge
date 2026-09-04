@@ -191,6 +191,28 @@ locals {
   multi_runner_config = {
     for key, runner_config in local.ec2_runner_configs :
     key => merge(runner_config, {
+      observability = merge(runner_config.observability, {
+        metrics = merge(runner_config.observability.metrics, {
+          enabled = try(coalesce(
+            try(runner_config.observability.metrics.enabled, null),
+            try(runner_config.observability.metrics.enable, null),
+          ), null)
+          metric = merge(runner_config.observability.metrics.metric, {
+            github_app_rate_limit = merge(runner_config.observability.metrics.metric.github_app_rate_limit, {
+              enabled = try(coalesce(
+                try(runner_config.observability.metrics.metric.github_app_rate_limit.enabled, null),
+                try(runner_config.observability.metrics.metric.enable_github_app_rate_limit, null),
+              ), null)
+            })
+            job_retry = merge(runner_config.observability.metrics.metric.job_retry, {
+              enabled = try(coalesce(
+                try(runner_config.observability.metrics.metric.job_retry.enabled, null),
+                try(runner_config.observability.metrics.metric.enable_job_retry, null),
+              ), null)
+            })
+          })
+        })
+      })
       runner = merge(runner_config.runner, {
         hooks = {
           job_started   = local.runner_hook_job_started[key]
@@ -212,9 +234,26 @@ locals {
           )
         })
       })
+      orchestration_provider = {
+        webhook = runner_config.orchestration_provider.webhook == null ? null : merge(runner_config.orchestration_provider.webhook, {
+          matcherConfig = merge(runner_config.orchestration_provider.webhook.matcherConfig, {
+            dynamic_labels_enabled = coalesce(
+              try(runner_config.orchestration_provider.webhook.matcherConfig.dynamic_labels_enabled, null),
+              try(runner_config.orchestration_provider.webhook.matcherConfig.enableDynamicLabels, null),
+              false,
+            )
+          })
+        })
+      }
       compute_provider = {
         aws = {
-          ec2 = local.ec2_compute_provider[key]
+          ec2 = merge(local.ec2_compute_provider[key], {
+            on_demand_failover_for_errors = coalesce(
+              try(runner_config.compute_provider.aws.ec2.on_demand_failover_for_errors, null),
+              try(runner_config.compute_provider.aws.ec2.enable_on_demand_failover_for_errors, null),
+              [],
+            )
+          })
         }
       }
     })
@@ -239,7 +278,7 @@ locals {
     orchestration_provider = {
       webhook = {
         eventbridge = {
-          enable = true
+          enabled = true
         }
         lambda = {
           artifact = {

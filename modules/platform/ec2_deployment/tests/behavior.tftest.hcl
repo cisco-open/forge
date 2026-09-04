@@ -589,6 +589,7 @@ run "ec2_v2_input_plan" {
       && local.multi_runner_config.ec2.orchestration_provider.webhook.matcherConfig.bidirectionalLabelMatch
       && local.multi_runner_config.ec2.orchestration_provider.webhook.matcherConfig.priority == 5
       && local.multi_runner_config.ec2.orchestration_provider.webhook.matcherConfig.enableDynamicLabels
+      && local.multi_runner_config.ec2.orchestration_provider.webhook.matcherConfig.dynamic_labels_enabled
       && tolist(local.multi_runner_config.ec2.orchestration_provider.webhook.matcherConfig.awsDynamicLabelsPolicy.blocked_keys) == tolist(["instance-type"])
     )
     error_message = "The v2 configuration must preserve matcher configuration."
@@ -660,9 +661,12 @@ run "ec2_v2_input_plan" {
       && !local.multi_runner_config.ec2.observability.tracing.capture_http_requests
       && !local.multi_runner_config.ec2.observability.tracing.capture_error
       && !local.multi_runner_config.ec2.observability.metrics.enable
+      && !local.multi_runner_config.ec2.observability.metrics.enabled
       && local.multi_runner_config.ec2.observability.metrics.namespace == "Forge/Test"
       && !local.multi_runner_config.ec2.observability.metrics.metric.enable_github_app_rate_limit
+      && !local.multi_runner_config.ec2.observability.metrics.metric.github_app_rate_limit.enabled
       && local.multi_runner_config.ec2.observability.metrics.metric.enable_job_retry
+      && local.multi_runner_config.ec2.observability.metrics.metric.job_retry.enabled
     )
     error_message = "The v2 configuration must preserve runner-configuration observability overrides."
   }
@@ -671,7 +675,7 @@ run "ec2_v2_input_plan" {
     condition = (
       local.experimental_config.github.app.id == "12345"
       && local.experimental_config.github.enterprise_server.url == null
-      && local.experimental_config.orchestration_provider.webhook.eventbridge.enable
+      && local.experimental_config.orchestration_provider.webhook.eventbridge.enabled
       && local.experimental_config.orchestration_provider.webhook.lambda.artifact.zip == "/private/tmp/forge-test-lambda-cache/runners.zip"
       && tolist(local.experimental_config.lambda.subnet_ids) == tolist(["subnet-test"])
       && length(local.experimental_config.lambda.security_group_ids) == 1
