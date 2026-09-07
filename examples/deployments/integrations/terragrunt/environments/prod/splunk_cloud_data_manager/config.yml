@@ -32,6 +32,17 @@ s3_logs_config:
       sqs_urls: []
       s3_bucket_patterns: []
       kms_key_arns: []
+    - enabled: false
+      name: forge-aws-config-prod
+      iam_region: eu-west-1
+      index: forge-prod-index
+      source_type: forgecicd:aws:config:s3
+      # Copy splunk_s3_logs.sqs.url from the aws_config_recording output.
+      sqs_urls: []
+      # Copy splunk_s3_logs.bucket_arn from the aws_config_recording output.
+      s3_bucket_patterns: []
+      # splunk_s3_logs.bucket_kms_key_arn is null because the bucket uses SSE-S3.
+      kms_key_arns: []
   ct-logs: []
   s3-access-logs: []
   elb-access-logs: []
