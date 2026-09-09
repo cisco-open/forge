@@ -5,7 +5,7 @@ locals {
   terraform_aws_github_runner_tags = merge(
     var.tenant_configs.tags,
     {
-      terraform-aws-github-runner-ref = "v7.11.0"
+      terraform-aws-github-runner-ref = "fix-multi-runner-v2-routing"
     }
   )
   webhook_api_gateway_access_log_format = jsonencode({
@@ -67,7 +67,13 @@ data "aws_subnet" "runner_subnet" {
 }
 
 data "external" "download_lambdas" {
-  program = ["bash", "${path.module}/scripts/download_lambdas.sh", "/tmp/${var.runner_configs.prefix}/", "v7.11.0", "github-aws-runners/terraform-aws-github-runner"]
+  count = (
+    length(local.ec2_runner_configs) > 0
+    || try(var.runner_configs.lambda_artifacts.control_plane_zip, null) == null
+    || try(var.runner_configs.lambda_artifacts.webhook_zip, null) == null
+  ) ? 1 : 0
+
+  program = ["bash", "${path.module}/scripts/download_lambdas.sh", "/tmp/${var.runner_configs.prefix}/v7.10.1/", "v7.10.1", "github-aws-runners/terraform-aws-github-runner"]
 }
 
 # ---------------------------------------------------------------------------
@@ -105,6 +111,8 @@ resource "aws_ssm_parameter" "hook_job_completed" {
 }
 
 data "aws_iam_policy_document" "runner_hooks_ssm_read" {
+  count = length(local.ec2_runner_configs) > 0 ? 1 : 0
+
   statement {
     sid     = "ReadRunnerHookParameters"
     effect  = "Allow"
@@ -117,9 +125,11 @@ data "aws_iam_policy_document" "runner_hooks_ssm_read" {
 }
 
 resource "aws_iam_policy" "runner_hooks_ssm_read" {
+  count       = length(local.ec2_runner_configs) > 0 ? 1 : 0
   name        = "${var.runner_configs.prefix}-runner-hooks-ssm-read"
+  path        = "/"
   description = "Allow runners to read their gzip'd job-hook scripts from SSM."
-  policy      = data.aws_iam_policy_document.runner_hooks_ssm_read.json
+  policy      = data.aws_iam_policy_document.runner_hooks_ssm_read[0].json
   tags        = var.tenant_configs.tags
 }
 
@@ -136,18 +146,18 @@ module "runners" {
 
   github_app = var.runner_configs.github_app
 
-  multi_runner_config = {}
+  experimental_features = ["multi-runner-v2"]
 
-  experimental_global_config = {
-    tags = local.experimental_config.tags
+  global_config = {
+    tags = local.global_config.tags
   }
-  experimental_global_config_github                 = local.experimental_config.github
-  experimental_global_config_lambda                 = local.experimental_config.lambda
-  experimental_global_config_orchestration_provider = local.experimental_config.orchestration_provider
-  experimental_global_config_ssm                    = local.experimental_config.ssm
-  experimental_global_config_observability          = local.experimental_config.observability
-  experimental_global_config_compute_provider       = local.experimental_config.compute_provider
-  experimental_multi_runner_config                  = local.multi_runner_config
+  global_config_github                 = local.global_config.github
+  global_config_lambda                 = local.global_config.lambda
+  global_config_orchestration_provider = local.global_config.orchestration_provider
+  global_config_ssm                    = local.global_config.ssm
+  global_config_observability          = local.global_config.observability
+  global_config_compute_provider       = local.global_config.compute_provider
+  multi_runner_config                  = local.multi_runner_config
 
   depends_on = [
     data.external.download_lambdas,
