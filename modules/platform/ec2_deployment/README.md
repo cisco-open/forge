@@ -5,21 +5,21 @@ This module deploys Forge runner pools through the upstream
 
 ## Why This Module Exists
 
-The experimental input lets each runner configuration select a typed
+The multi-runner input lets each runner configuration select a typed
 orchestration provider and a typed compute provider. Webhook orchestration owns
 runner lifecycle, capacity, startup timing, GitHub scope, label matching,
 queues, scale-up, scale-down, pool, and retry settings. The common Lambda block
 remains provider-neutral and owns only runtime, architecture, networking, role,
 and tag overrides. Forge enriches each configuration with its required hooks, IAM
 policies, bootstrap content, logging, and tags, then passes the canonical map
-through `experimental.multi_runner_config`.
+through `multi_runner_config`.
 
 Each lane selects exactly one AWS compute provider. EC2 lanes receive Forge's
 instance bootstrap, lifecycle hooks, tag permissions, AMI refresh, and helper
 Lambdas. Lambda MicroVM lanes keep their caller-provided hooks and provider
 configuration and do not receive those EC2-only overlays.
 
-Global experimental settings own the GitHub App and API client, common Lambda
+Global settings own the GitHub App and API client, common Lambda
 substrate, webhook orchestration defaults and artifacts, the SSM housekeeper
 artifact and KMS key, logging defaults, and EC2 network defaults. EC2 supports
 custom AMIs, macOS/Windows, dedicated hosts, and larger hardware profiles.

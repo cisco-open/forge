@@ -268,6 +268,17 @@ locals {
           )
         })
       })
+      orchestration_provider = {
+        webhook = runner_config.orchestration_provider.webhook == null ? null : merge(runner_config.orchestration_provider.webhook, {
+          matcherConfig = merge(runner_config.orchestration_provider.webhook.matcherConfig, {
+            dynamic_labels_enabled = coalesce(
+              try(runner_config.orchestration_provider.webhook.matcherConfig.dynamic_labels_enabled, null),
+              try(runner_config.orchestration_provider.webhook.matcherConfig.enableDynamicLabels, null),
+              false,
+            )
+          })
+        })
+      }
       compute_provider = merge(runner_config.compute_provider, {
         aws = merge(runner_config.compute_provider.aws, {
           ec2 = try(local.ec2_compute_provider[key], null)
@@ -285,7 +296,7 @@ locals {
     try("${data.external.download_lambdas[0].result.path}/webhook.zip", null),
   ), null)
 
-  experimental_config = {
+  global_config = {
     tags = local.terraform_aws_github_runner_tags
 
     github = {
