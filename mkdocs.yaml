@@ -77,6 +77,7 @@ nav:
       - Secrets: operations/secrets.md
       - Upgrades: operations/upgrades.md
       - Troubleshooting: operations/troubleshooting.md
+      - ARC Stale Runner Reaper: operations/arc-runner-reaper.md
       - Terraform/Terragrunt Stuck Runbook: operations/terraform-terragrunt-stuck-runbook.md
       - Troubleshooting Without Splunk: operations/troubleshooting-without-splunk.md
       - Splunk Dashboard Runbook: operations/splunk-dashboard-runbook.md

@@ -41,6 +41,7 @@ Forge runs fast, container-native jobs through Actions Runner Controller on EKS.
 | ---- | ------- |
 | <a name="provider_aws"></a> [aws](#provider\_aws) | 6.57.1 |
 | <a name="provider_external"></a> [external](#provider\_external) | 2.4.0 |
+| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | 3.2.1 |
 | <a name="provider_null"></a> [null](#provider\_null) | 3.3.0 |
 
 ## Modules
@@ -60,6 +61,12 @@ Forge runs fast, container-native jobs through Actions Runner Controller on EKS.
 | [aws_eks_addon.coredns](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_addon) | resource |
 | [aws_eks_addon.eks_pod_identity_agent](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_addon) | resource |
 | [aws_servicecatalogappregistry_application.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/servicecatalogappregistry_application) | resource |
+| [kubernetes_cluster_role_binding_v1.runner_reaper](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/cluster_role_binding_v1) | resource |
+| [kubernetes_cluster_role_v1.runner_reaper](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/cluster_role_v1) | resource |
+| [kubernetes_config_map_v1.runner_reaper](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/config_map_v1) | resource |
+| [kubernetes_cron_job_v1.runner_reaper](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/cron_job_v1) | resource |
+| [kubernetes_namespace_v1.runner_reaper](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/namespace_v1) | resource |
+| [kubernetes_service_account_v1.runner_reaper](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service_account_v1) | resource |
 | [null_resource.apply_ec2_node_class](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [null_resource.apply_node_pool](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [null_resource.karpenter](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
@@ -92,6 +99,7 @@ Forge runs fast, container-native jobs through Actions Runner Controller on EKS.
 | <a name="input_default_tags"></a> [default\_tags](#input\_default\_tags) | A map of tags to apply to resources. | `map(string)` | n/a | yes |
 | <a name="input_external_access_cidr_blocks"></a> [external\_access\_cidr\_blocks](#input\_external\_access\_cidr\_blocks) | External CIDR Blocks to access k8s api | `list(string)` | `[]` | no |
 | <a name="input_karpenter_node_pool"></a> [karpenter\_node\_pool](#input\_karpenter\_node\_pool) | Configuration for the Karpenter NodePool. | <pre>object({<br/>    instance_families    = optional(list(string), ["m6i", "m5", "c6i", "c5", "r6i", "r5"])<br/>    architectures        = optional(list(string), ["amd64"])<br/>    operating_systems    = optional(list(string), ["linux"])<br/>    capacity_types       = optional(list(string), ["on-demand"])<br/>    cpu_limit            = optional(number, 1000)<br/>    consolidation_policy = optional(string, "WhenEmptyOrUnderutilized")<br/>    consolidate_after    = optional(string, "1m")<br/>  })</pre> | `{}` | no |
+| <a name="input_runner_reaper"></a> [runner\_reaper](#input\_runner\_reaper) | Cluster-wide remediation for ARC runners that are stuck after accepting a job. When enabled, it discovers and covers every ARC tenant by default. Dry-run remains the default and active deletion requires a digest-pinned image. | <pre>object({<br/>    enabled                     = optional(bool, false)<br/>    dry_run                     = optional(bool, true)<br/>    namespace                   = optional(string, "forge-system")<br/>    schedule                    = optional(string, "*/15 * * * *")<br/>    stale_after_seconds         = optional(number, 900)<br/>    confirmation_delay_seconds  = optional(number, 60)<br/>    max_probes_per_namespace    = optional(number, 50)<br/>    max_probes_per_run          = optional(number, 500)<br/>    max_deletions_per_namespace = optional(number, 1)<br/>    max_deletions_per_run       = optional(number, 20)<br/>    image                       = optional(string)<br/>  })</pre> | `{}` | no |
 | <a name="input_subnet_ids"></a> [subnet\_ids](#input\_subnet\_ids) | A list of private subnet IDs for worker nodes | `list(string)` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to apply to resources. | `map(string)` | n/a | yes |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | The ID of the VPC | `string` | n/a | yes |

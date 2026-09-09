@@ -22,6 +22,7 @@ run "infra_eks_interface_contract" {
       "default_tags",
       "external_access_cidr_blocks",
       "karpenter_node_pool",
+      "runner_reaper",
       "subnet_ids",
       "tags",
       "vpc_id",
@@ -68,6 +69,21 @@ run "infra_eks_interface_contract" {
       "consolidation_policy = optional(string, \"WhenEmptyOrUnderutilized\")",
       "consolidate_after    = optional(string, \"1m\")",
       "default = {}",
+      "variable \"runner_reaper\"",
+      "description = \"Cluster-wide remediation for ARC runners that are stuck after accepting a job. When enabled, it discovers and covers every ARC tenant by default. Dry-run remains the default and active deletion requires a digest-pinned image.\"",
+      "enabled                     = optional(bool, false)",
+      "dry_run                     = optional(bool, true)",
+      "namespace                   = optional(string, \"forge-system\")",
+      "schedule                    = optional(string, \"*/15 * * * *\")",
+      "stale_after_seconds         = optional(number, 900)",
+      "confirmation_delay_seconds  = optional(number, 60)",
+      "max_probes_per_namespace    = optional(number, 50)",
+      "max_probes_per_run          = optional(number, 500)",
+      "max_deletions_per_namespace = optional(number, 1)",
+      "max_deletions_per_run       = optional(number, 20)",
+      "image                       = optional(string)",
+      "Enabled runner reaping requires a shell-capable kubectl image.",
+      "Active runner reaping requires runner_reaper.image to be pinned by sha256 digest.",
       "variable \"cluster_tags\"",
       "type        = map(string)",
       "description = \"Cluster tags\"",
@@ -130,9 +146,9 @@ run "infra_eks_interface_contract" {
 
   assert {
     condition = (
-      output.expected_input_variable_count == 17
+      output.expected_input_variable_count == 18
       && output.expected_output_value_count == 4
-      && output.expected_interface_literal_count == 67
+      && output.expected_interface_literal_count == 82
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }
