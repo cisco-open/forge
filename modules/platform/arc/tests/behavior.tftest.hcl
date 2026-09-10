@@ -194,9 +194,9 @@ run "arc_migration_contract" {
       output.runners_map.tenant_a.runner_role_arn == "arn:aws:iam::123456789012:role/tenant-a-arc-runner-role"
       && null_resource.apply_ec2_node_class.triggers.migrate_arc_cluster == "true"
       && null_resource.apply_node_pool.triggers.migrate_arc_cluster == "true"
-      && kubernetes_manifest.storage_class["tenant-a-gp3"].manifest.parameters.type == "gp3"
+      && length(kubernetes_manifest.storage_class) == 0
     )
-    error_message = "ARC migration mode must keep runner outputs and storage classes while flipping Karpenter migration triggers."
+    error_message = "ARC migration mode must keep runner outputs while suppressing storage classes and flipping Karpenter migration triggers."
   }
 }
 

@@ -1,5 +1,5 @@
 locals {
-  storage_classes = distinct([
+  storage_classes = var.migrate_arc_cluster ? [] : distinct([
     for runner in values(var.multi_runner_config) : {
       name = "${runner.runner_set_configs.namespace}-${runner.runner_config.volume_requests_storage_type}"
       type = runner.runner_config.volume_requests_storage_type
