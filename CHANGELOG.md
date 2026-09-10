@@ -1,5 +1,14 @@
 # Changelog
 
+## [4.16.2](https://github.com/cisco-open/forge/compare/v4.16.1...v4.16.2) (2026-09-10)
+
+
+### Bug Fixes
+
+* **arc:** suppress storage classes during migration ([#710](https://github.com/cisco-open/forge/issues/710)) ([b20706e](https://github.com/cisco-open/forge/commit/b20706e646284db83a0f6665550fca1f54cdd24a))
+* **observability:** improve the Dashboards a little bit ([#701](https://github.com/cisco-open/forge/issues/701)) ([ad8ca7c](https://github.com/cisco-open/forge/commit/ad8ca7c393441ff9266ac2540a58cf02b1f4610b))
+* **splunk:** isolate dispatcher Lambda packages ([#697](https://github.com/cisco-open/forge/issues/697)) ([49d43c1](https://github.com/cisco-open/forge/commit/49d43c10b156dabd067fae8a610a5e011b9132f8))
+
 ## [4.16.1](https://github.com/cisco-open/forge/compare/v4.16.0...v4.16.1) (2026-09-01)
 
 
