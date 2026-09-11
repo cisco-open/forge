@@ -99,16 +99,16 @@ wheels = [
 
 [[package]]
 name = "boto3"
-version = "1.43.87"
+version = "1.43.88"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "botocore" },
     { name = "jmespath" },
     { name = "s3transfer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5c/0c/b14374e9458030076cd22ff9381cf86d170f31b648fd901db1d88011094b/boto3-1.43.87.tar.gz", hash = "sha256:8d9521c7c292194b8ce9fb61043d52e45cdba29b5f690981f3eb5e75103ba57d", size = 112691, upload-time = "2026-09-02T19:23:13.603Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/71/a4/d7b6ca0c2c21722c12b6ecc942ff3e2304c40f00724182500236616c4236/boto3-1.43.88.tar.gz", hash = "sha256:b3d03fba8ace049de27e3a6ed69b25a55d752f49d563394985e805ed5f0a0a74", size = 112730, upload-time = "2026-09-03T19:24:05.814Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9c/a9/7dd7cc1a2387f3c78f66e49682957b7e7d590706dc6552d108b48125022d/boto3-1.43.87-py3-none-any.whl", hash = "sha256:671cf88a353f887774603980898bc34249d05a994e1c5e24aba4f4e1bbef0951", size = 140026, upload-time = "2026-09-02T19:23:12.044Z" },
+    { url = "https://files.pythonhosted.org/packages/fc/04/b024d6c8ba2ae18ebaf6597981069a6f51d97ab64d769d466936f1454954/boto3-1.43.88-py3-none-any.whl", hash = "sha256:62efee681fefc9b14244d66ab66ead11dd4a32fec0a54ac9f23106003ef210ca", size = 140024, upload-time = "2026-09-03T19:24:04.27Z" },
 ]
 
 [[package]]
@@ -681,7 +681,7 @@ forge-github-app-register = [
     { name = "uv", specifier = "==0.12.9" },
 ]
 lambda-tests = [
-    { name = "boto3", specifier = "==1.43.87" },
+    { name = "boto3", specifier = "==1.43.88" },
     { name = "cryptography", specifier = "==50.0.1" },
     { name = "hypothesis", specifier = "==6.167.1" },
     { name = "moto", extras = ["all"], specifier = "==5.2.3" },
@@ -698,7 +698,7 @@ pre-commit-image = [
     { name = "uv", specifier = "==0.12.9" },
 ]
 smoke-tests = [
-    { name = "boto3", specifier = "==1.43.87" },
+    { name = "boto3", specifier = "==1.43.88" },
     { name = "pytest", specifier = "==9.1.1" },
 ]
 
