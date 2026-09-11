@@ -398,7 +398,13 @@ def test_runner_webhook_enables_upstream_api_gateway_access_logs() -> None:
     deployment_tf = read_repo_file(
         'modules/platform/ec2_deployment/main.tf'
     )
+    runner_configs_tf = read_repo_file(
+        'modules/platform/ec2_deployment/runner_configs_v2.tf'
+    )
     runner_module = hcl_block(deployment_tf, 'module', 'runners')
+    global_config = assignment_map_block(
+        runner_configs_tf, 'global_config'
+    )
     log_group = hcl_block(
         deployment_tf,
         'resource',
@@ -421,7 +427,25 @@ def test_runner_webhook_enables_upstream_api_gateway_access_logs() -> None:
     assert_contains_all(
         runner_module,
         [
-            'webhook_lambda_apigateway_access_log_settings = {',
+            'github_app = var.runner_configs.github_app',
+            'global_config = {',
+            'global_config_github                 = local.global_config.github',
+            'global_config_lambda                 = local.global_config.lambda',
+            'global_config_orchestration_provider = local.global_config.orchestration_provider',
+            'global_config_ssm                    = local.global_config.ssm',
+            'global_config_observability          = local.global_config.observability',
+            'global_config_compute_provider = merge(local.global_config.compute_provider, {',
+            'ec2 = merge(local.global_config.compute_provider.aws.ec2, {',
+            'vpc_id     = var.network_configs.vpc_id',
+            'subnet_ids = var.network_configs.subnet_ids',
+            'multi_runner_config = local.multi_runner_config',
+        ],
+    )
+    assert_contains_all(
+        global_config,
+        [
+            'orchestration_provider = {',
+            'api_gateway_access_log_settings = {',
             'destination_arn = aws_cloudwatch_log_group.webhook_api_gateway_access.arn',
             'format          = local.webhook_api_gateway_access_log_format',
         ],
