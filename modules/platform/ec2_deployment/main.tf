@@ -129,8 +129,6 @@ module "runners" {
   source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=main"
 
   aws_region = var.aws_region
-  vpc_id     = var.network_configs.vpc_id
-  subnet_ids = var.network_configs.subnet_ids
 
   prefix = var.runner_configs.prefix
 
@@ -146,8 +144,15 @@ module "runners" {
   global_config_orchestration_provider = local.global_config.orchestration_provider
   global_config_ssm                    = local.global_config.ssm
   global_config_observability          = local.global_config.observability
-  global_config_compute_provider       = local.global_config.compute_provider
-  multi_runner_config                  = local.multi_runner_config
+  global_config_compute_provider = merge(local.global_config.compute_provider, {
+    aws = merge(local.global_config.compute_provider.aws, {
+      ec2 = merge(local.global_config.compute_provider.aws.ec2, {
+        vpc_id     = var.network_configs.vpc_id
+        subnet_ids = var.network_configs.subnet_ids
+      })
+    })
+  })
+  multi_runner_config = local.multi_runner_config
 
   depends_on = [
     data.external.download_lambdas,

@@ -287,8 +287,6 @@ run "platform_ec2_deployment_interface_contract" {
       "runner_ssm_paths = {",
       "runner_ami_ssm_parameter_names = {",
       "root = \"$${trimsuffix(coalesce(runner_config.ssm.paths.root, \"/github-action-runners/$${var.runner_configs.prefix}\"), \"/\")}/$${key}\"",
-      "vpc_id     = var.network_configs.vpc_id",
-      "subnet_ids = var.network_configs.subnet_ids",
       "github_app = var.runner_configs.github_app",
       "experimental_features = [\"multi-runner-v2\"]",
       "global_config = {",
@@ -297,8 +295,11 @@ run "platform_ec2_deployment_interface_contract" {
       "global_config_orchestration_provider = local.global_config.orchestration_provider",
       "global_config_ssm                    = local.global_config.ssm",
       "global_config_observability          = local.global_config.observability",
-      "global_config_compute_provider       = local.global_config.compute_provider",
-      "multi_runner_config                  = local.multi_runner_config",
+      "global_config_compute_provider = merge(local.global_config.compute_provider, {",
+      "ec2 = merge(local.global_config.compute_provider.aws.ec2, {",
+      "vpc_id     = var.network_configs.vpc_id",
+      "subnet_ids = var.network_configs.subnet_ids",
+      "multi_runner_config = local.multi_runner_config",
       "app = var.runner_configs.github_app",
       "enterprise_server = {",
       "orchestration_provider = {",
@@ -353,7 +354,7 @@ run "platform_ec2_deployment_interface_contract" {
     condition = (
       output.expected_input_variable_count == 4
       && output.expected_output_value_count == 6
-      && output.expected_interface_literal_count == 299
+      && output.expected_interface_literal_count == 300
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }
