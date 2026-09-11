@@ -259,7 +259,7 @@ locals {
     })
   }
 
-  experimental_config = {
+  global_config = {
     tags = local.terraform_aws_github_runner_tags
 
     github = {

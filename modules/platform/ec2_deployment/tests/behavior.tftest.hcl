@@ -673,40 +673,40 @@ run "ec2_v2_input_plan" {
 
   assert {
     condition = (
-      local.experimental_config.github.app.id == "12345"
-      && local.experimental_config.github.enterprise_server.url == null
-      && local.experimental_config.orchestration_provider.webhook.eventbridge.enabled
-      && local.experimental_config.orchestration_provider.webhook.lambda.artifact.zip == "/private/tmp/forge-test-lambda-cache/runners.zip"
-      && tolist(local.experimental_config.lambda.subnet_ids) == tolist(["subnet-test"])
-      && length(local.experimental_config.lambda.security_group_ids) == 1
-      && local.experimental_config.orchestration_provider.webhook.lambda.webhook.artifact.zip == "/private/tmp/forge-test-lambda-cache/webhook.zip"
-      && local.experimental_config.ssm.kms_key_id == "arn:aws:kms:eu-west-1:123456789012:key/00000000-0000-0000-0000-000000000000"
-      && local.experimental_config.ssm.housekeeper.lambda.artifact.zip == "/private/tmp/forge-test-lambda-cache/runners.zip"
-      && local.experimental_config.observability.logs.level == "info"
-      && local.experimental_config.observability.logs.retention_in_days == 3
-      && local.experimental_config.compute_provider.aws.ec2.vpc_id == "vpc-test"
-      && tolist(local.experimental_config.compute_provider.aws.ec2.subnet_ids) == tolist(["subnet-default"])
-      && local.experimental_config.compute_provider.aws.ec2.runner_binaries.syncer.artifact.zip == "/private/tmp/forge-test-lambda-cache/runner-binaries-syncer.zip"
-      && local.experimental_config.multi_runner_config == local.multi_runner_config
+      local.global_config.github.app.id == "12345"
+      && local.global_config.github.enterprise_server.url == null
+      && local.global_config.orchestration_provider.webhook.eventbridge.enabled
+      && local.global_config.orchestration_provider.webhook.lambda.artifact.zip == "/private/tmp/forge-test-lambda-cache/runners.zip"
+      && tolist(local.global_config.lambda.subnet_ids) == tolist(["subnet-test"])
+      && length(local.global_config.lambda.security_group_ids) == 1
+      && local.global_config.orchestration_provider.webhook.lambda.webhook.artifact.zip == "/private/tmp/forge-test-lambda-cache/webhook.zip"
+      && local.global_config.ssm.kms_key_id == "arn:aws:kms:eu-west-1:123456789012:key/00000000-0000-0000-0000-000000000000"
+      && local.global_config.ssm.housekeeper.lambda.artifact.zip == "/private/tmp/forge-test-lambda-cache/runners.zip"
+      && local.global_config.observability.logs.level == "info"
+      && local.global_config.observability.logs.retention_in_days == 3
+      && local.global_config.compute_provider.aws.ec2.vpc_id == "vpc-test"
+      && tolist(local.global_config.compute_provider.aws.ec2.subnet_ids) == tolist(["subnet-default"])
+      && local.global_config.compute_provider.aws.ec2.runner_binaries.syncer.artifact.zip == "/private/tmp/forge-test-lambda-cache/runner-binaries-syncer.zip"
+      && local.global_config.multi_runner_config == local.multi_runner_config
     )
-    error_message = "Forge must populate the authoritative global experimental contract."
+    error_message = "Forge must populate the authoritative global contract."
   }
 
   assert {
     condition = (
-      local.experimental_config.tags == local.terraform_aws_github_runner_tags
-      && local.experimental_config.lambda.tags == local.terraform_aws_github_runner_tags
-      && local.experimental_config.ssm.parameters.tags == local.terraform_aws_github_runner_tags
+      local.global_config.tags == local.terraform_aws_github_runner_tags
+      && local.global_config.lambda.tags == local.terraform_aws_github_runner_tags
+      && local.global_config.ssm.parameters.tags == local.terraform_aws_github_runner_tags
     )
-    error_message = "Forge resource tags must be carried by the experimental global, Lambda, and Parameter Store tag maps."
+    error_message = "Forge resource tags must be carried by the global, Lambda, and Parameter Store tag maps."
   }
 
   assert {
     condition = (
-      local.experimental_config.orchestration_provider.webhook.lambda.webhook.api_gateway_access_log_settings.destination_arn == aws_cloudwatch_log_group.webhook_api_gateway_access.arn
-      && local.experimental_config.orchestration_provider.webhook.lambda.webhook.api_gateway_access_log_settings.format == local.webhook_api_gateway_access_log_format
+      local.global_config.orchestration_provider.webhook.lambda.webhook.api_gateway_access_log_settings.destination_arn == aws_cloudwatch_log_group.webhook_api_gateway_access.arn
+      && local.global_config.orchestration_provider.webhook.lambda.webhook.api_gateway_access_log_settings.format == local.webhook_api_gateway_access_log_format
     )
-    error_message = "Forge webhook API Gateway access-log settings must be carried by the experimental webhook contract."
+    error_message = "Forge webhook API Gateway access-log settings must be carried by the global webhook contract."
   }
 
 }

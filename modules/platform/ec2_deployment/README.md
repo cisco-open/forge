@@ -5,16 +5,16 @@ This module deploys Forge EC2 runner pools through the upstream
 
 ## Why This Module Exists
 
-The experimental input lets each runner configuration select a typed
+The multi-runner input lets each runner configuration select a typed
 orchestration provider and a typed compute provider. Webhook orchestration owns
 runner lifecycle, capacity, startup timing, GitHub scope, label matching,
 queues, scale-up, scale-down, pool, and retry settings. The common Lambda block
 remains provider-neutral and owns only runtime, architecture, networking, role,
 and tag overrides. Forge enriches each configuration with its required hooks, IAM
 policies, bootstrap content, logging, and tags, then passes the canonical map
-through `experimental.multi_runner_config`.
+through `multi_runner_config`.
 
-Global experimental settings own the GitHub App and API client, common Lambda
+Global settings own the GitHub App and API client, common Lambda
 substrate, webhook orchestration defaults and artifacts, the SSM housekeeper
 artifact and KMS key, logging defaults, and EC2 network defaults. EC2 supports
 custom AMIs, macOS/Windows, dedicated hosts, and larger hardware profiles.
@@ -76,7 +76,7 @@ custom AMIs, macOS/Windows, dedicated hosts, and larger hardware profiles.
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.63.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.64.0 |
 | <a name="provider_external"></a> [external](#provider\_external) | 2.4.1 |
 
 ## Modules
@@ -85,7 +85,7 @@ custom AMIs, macOS/Windows, dedicated hosts, and larger hardware profiles.
 | ---- | ------ | ------- |
 | <a name="module_ec2_update_runner_ssm_ami"></a> [ec2\_update\_runner\_ssm\_ami](#module\_ec2\_update\_runner\_ssm\_ami) | ./ec2_update_runner_ssm_ami | n/a |
 | <a name="module_ec2_update_runner_tags"></a> [ec2\_update\_runner\_tags](#module\_ec2\_update\_runner\_tags) | ./ec2_update_runner_tags | n/a |
-| <a name="module_runners"></a> [runners](#module\_runners) | git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner | fix-multi-runner-v2-routing |
+| <a name="module_runners"></a> [runners](#module\_runners) | git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner | main |
 
 ## Resources
 

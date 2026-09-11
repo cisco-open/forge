@@ -126,7 +126,7 @@ resource "aws_iam_policy" "runner_hooks_ssm_read" {
 
 module "runners" {
   #checkov:skip=CKV_TF_1:Temporary upstream ref is required to validate multi-runner v2 compatibility before a release tag exists.
-  source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=fix-multi-runner-v2-routing"
+  source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=main"
 
   aws_region = var.aws_region
   vpc_id     = var.network_configs.vpc_id
@@ -136,18 +136,18 @@ module "runners" {
 
   github_app = var.runner_configs.github_app
 
-  multi_runner_config = {}
+  experimental_features = ["multi-runner-v2"]
 
-  experimental_global_config = {
-    tags = local.experimental_config.tags
+  global_config = {
+    tags = local.global_config.tags
   }
-  experimental_global_config_github                 = local.experimental_config.github
-  experimental_global_config_lambda                 = local.experimental_config.lambda
-  experimental_global_config_orchestration_provider = local.experimental_config.orchestration_provider
-  experimental_global_config_ssm                    = local.experimental_config.ssm
-  experimental_global_config_observability          = local.experimental_config.observability
-  experimental_global_config_compute_provider       = local.experimental_config.compute_provider
-  experimental_multi_runner_config                  = local.multi_runner_config
+  global_config_github                 = local.global_config.github
+  global_config_lambda                 = local.global_config.lambda
+  global_config_orchestration_provider = local.global_config.orchestration_provider
+  global_config_ssm                    = local.global_config.ssm
+  global_config_observability          = local.global_config.observability
+  global_config_compute_provider       = local.global_config.compute_provider
+  multi_runner_config                  = local.multi_runner_config
 
   depends_on = [
     data.external.download_lambdas,
