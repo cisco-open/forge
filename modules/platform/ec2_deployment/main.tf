@@ -5,7 +5,7 @@ locals {
   terraform_aws_github_runner_tags = merge(
     var.tenant_configs.tags,
     {
-      terraform-aws-github-runner-ref = "v7.11.0"
+      terraform-aws-github-runner-ref = "fix-multi-runner-v2-routing"
     }
   )
   webhook_api_gateway_access_log_format = jsonencode({
