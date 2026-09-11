@@ -352,7 +352,7 @@ run "platform_forge_runners_interface_contract" {
       "- runner_specs     : Map of EC2 runner configurations.",
       "- runner                 : Provider-neutral OS, architecture, labels, bootstrap,",
       "hooks, and IAM-policy configuration.",
-      "shape follows the nested experimental multi_runner_config EC2 contract and",
+      "shape follows the nested multi_runner_config EC2 contract and",
       "is passed directly to the upstream provider-oriented runner stack.",
       "- lambda                 : Provider-neutral per-configuration Lambda runtime,",
       "network, role, and tag overrides.",

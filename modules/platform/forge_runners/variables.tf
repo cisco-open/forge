@@ -375,7 +375,7 @@ variable "ec2_deployment_specs" {
 
   description = <<-EOT
   EC2 deployment configuration for GitHub Actions runners. The public runner
-  shape follows the nested experimental multi_runner_config EC2 contract and
+  shape follows the nested multi_runner_config EC2 contract and
   is passed directly to the upstream provider-oriented runner stack.
 
   Top-level fields:
