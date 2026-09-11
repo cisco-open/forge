@@ -12,7 +12,7 @@ run "platform_ec2_deployment_contract" {
       "module \"ec2_update_runner_tags\"",
       "count  = length(local.ec2_runner_configs) > 0 ? 1 : 0",
       "module \"runners\"",
-      "source = \"git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=fix-multi-runner-v2-routing\"",
+      "source = \"git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=feat-scale-set-example-followup\"",
       "vpc_id     = var.network_configs.vpc_id",
       "subnet_ids = var.network_configs.subnet_ids",
       "github_app = var.runner_configs.github_app",
