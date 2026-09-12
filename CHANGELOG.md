@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.16.3](https://github.com/cisco-open/forge/compare/v4.16.2...v4.16.3) (2026-09-12)
+
+
+### Bug Fixes
+
+* **eks:** wait for cluster admin access before Calico ([#709](https://github.com/cisco-open/forge/issues/709)) ([f178f29](https://github.com/cisco-open/forge/commit/f178f298086cc05b489293b4459e5c1f9725ab45))
+
 ## [4.16.2](https://github.com/cisco-open/forge/compare/v4.16.1...v4.16.2) (2026-09-10)
 
 
