@@ -20,7 +20,8 @@ Forge is a multi-tenant CI platform built around ephemeral runners, short-lived 
 - The tenant `deployment_config` defines the GitHub App, runner group, repository selection, and IAM bridge.
 - EC2, Lambda MicroVM, and ARC runner configurations can be enabled for the same tenant; workflows choose by labels.
 - `ec2_deployment_specs.runner_specs` uses the full nested v2 shape; every entry
-  must configure `runner`, `orchestration_provider.webhook`, and exactly one of
+  must configure `runner`, exactly one of `orchestration_provider.webhook` or
+  `orchestration_provider.scale_set`, and exactly one of
   `compute_provider.aws.ec2` or `compute_provider.aws.microvm`. The
   `ec2_deployment_specs` name remains for compatibility while the contained map
   is provider-aware.
@@ -36,6 +37,10 @@ Forge is a multi-tenant CI platform built around ephemeral runners, short-lived 
   queue, scale-up, scale-down, pool, and retry settings are nested below
   `orchestration_provider.webhook`; the common per-configuration `lambda` block remains
   orchestration-provider-neutral.
+- Scale-set runner lifecycle and GitHub registration settings are nested below
+  `orchestration_provider.scale_set`; the shared controller image, ECS, network,
+  config-store, logging, and grouping settings are configured at
+  `ec2_deployment_specs.scale_set`.
 - The shared runner-control archive is selected globally at
   `orchestration_provider.webhook.lambda.artifact`; per-runner webhook Lambda blocks do
   not select deployment artifacts.

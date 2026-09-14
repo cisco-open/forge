@@ -40,7 +40,8 @@ should provide an approved image digest.
 ## Operational Notes
 
 - This is a breaking input migration: every `runner_specs` entry uses the full
-  nested v2 shape and must contain `runner`, `orchestration_provider.webhook`, and
+  nested v2 shape and must contain `runner`, exactly one of
+  `orchestration_provider.webhook` or `orchestration_provider.scale_set`, and
   exactly one of `compute_provider.aws.ec2` or
   `compute_provider.aws.microvm`. The `orchestration_provider.webhook.runner` block owns the
   `ephemeral` and `jit_config_enabled` lifecycle modes, `maximum_count` capacity
@@ -50,6 +51,9 @@ should provide an approved image digest.
 - The runner-control archive is selected once at
   `orchestration_provider.webhook.lambda.artifact`. Per-runner webhook Lambda blocks own
   only scale and pool runtime settings and cannot select an artifact.
+- Scale-set controller settings are selected globally under
+  `runner_configs.scale_set`; each scale-set lane supplies its name, GitHub
+  registration scope, and runner capacity under `orchestration_provider.scale_set`.
 - Lambda MicroVM lanes require
   `runner_configs.lambda_artifacts.control_plane_zip` and
   `runner_configs.lambda_artifacts.webhook_zip`. Build both archives from the

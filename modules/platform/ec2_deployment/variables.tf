@@ -164,6 +164,27 @@ variable "runner_configs" {
             }), {})
           }), {})
         }), null)
+        scale_set = optional(object({
+          github = object({
+            config_url = string
+            installation_id_ssm = object({
+              name        = string
+              arn         = string
+              kms_key_arn = optional(string, null)
+            })
+            runner_owner              = optional(string, null)
+            runner_registration_level = optional(string, "enterprise")
+            force_ghes                = optional(bool, null)
+          })
+          name                 = string
+          id                   = number
+          runner_group_id      = optional(number, null)
+          min_runners          = optional(number, 0)
+          max_runners          = optional(number, 10)
+          boot_time_in_minutes = optional(number, 10)
+          session_owner        = optional(string, null)
+          work_folder          = optional(string, null)
+        }), null)
       })
 
       ssm = optional(object({
@@ -475,7 +496,8 @@ variable "runner_configs" {
   }
 
   description = <<-EOT
-  Forge runner deployment configuration. lambda_artifacts.control_plane_zip and
+  Forge runner deployment configuration. scale_set contains shared controller
+  settings, including its caller-selected container image. lambda_artifacts.control_plane_zip and
   lambda_artifacts.webhook_zip select local Lambda archives; MicroVM lanes require
   both archives to be built from the selected upstream MicroVM branch. The upstream
   provider creates each MicroVM runtime log group from the common observability

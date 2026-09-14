@@ -162,6 +162,27 @@ variable "ec2_deployment_specs" {
             }), {})
           }), {})
         }), null)
+        scale_set = optional(object({
+          github = object({
+            config_url = string
+            installation_id_ssm = object({
+              name        = string
+              arn         = string
+              kms_key_arn = optional(string, null)
+            })
+            runner_owner              = optional(string, null)
+            runner_registration_level = optional(string, "enterprise")
+            force_ghes                = optional(bool, null)
+          })
+          name                 = string
+          id                   = number
+          runner_group_id      = optional(number, null)
+          min_runners          = optional(number, 0)
+          max_runners          = optional(number, 10)
+          boot_time_in_minutes = optional(number, 10)
+          session_owner        = optional(string, null)
+          work_folder          = optional(string, null)
+        }), null)
       })
 
       ssm = optional(object({
@@ -490,6 +511,8 @@ variable "ec2_deployment_specs" {
     - lambda_artifacts : Optional control-plane and webhook Lambda ZIPs.
                          MicroVM lanes require both ZIPs to be built from the
                          selected upstream MicroVM branch.
+    - scale_set        : Optional shared scale-set controller settings,
+                         including its caller-selected container image.
     - runner_specs     : Map of runner configurations.
 
   runner_specs[*] object fields:

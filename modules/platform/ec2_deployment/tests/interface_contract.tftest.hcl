@@ -50,6 +50,7 @@ run "platform_ec2_deployment_interface_contract" {
       "lambda_artifacts = optional(object({",
       "control_plane_zip = optional(string, null)",
       "webhook_zip       = optional(string, null)",
+      "scale_set = optional(object({",
       "runner_specs = map(object({",
       "tags = optional(map(string), {})",
       "runner = object({",
@@ -63,6 +64,7 @@ run "platform_ec2_deployment_interface_contract" {
       "run_as                 = optional(string, null)",
       "auto_update_disabled   = optional(bool, null)",
       "orchestration_provider = object({",
+      "scale_set = optional(object({",
       "webhook = optional(object({",
       "boot_time_in_minutes = optional(number, null)",
       "ephemeral            = optional(bool, null)",
@@ -297,7 +299,7 @@ run "platform_ec2_deployment_interface_contract" {
       "active_ec2_subnet_ids = toset(flatten([",
       "legacy_runner_labels = {",
       "runner_config.orchestration_provider.webhook.matcherConfig.labelMatchers[0]",
-      "matcher_index, labels in runner_config.orchestration_provider.webhook.matcherConfig.labelMatchers",
+      "matcher_index, labels in try(runner_config.orchestration_provider.webhook.matcherConfig.labelMatchers, [])",
       "!contains(local.legacy_runner_labels[key], label)",
       "ec2_default_ami_filters = {",
       "windows = { name = [\"Windows_Server-2022-English-Full-ECS_Optimized-*\"] }",
@@ -420,7 +422,7 @@ run "platform_ec2_deployment_interface_contract" {
     condition = (
       output.expected_input_variable_count == 4
       && output.expected_output_value_count == 11
-      && output.expected_interface_literal_count == 361
+      && output.expected_interface_literal_count == 363
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

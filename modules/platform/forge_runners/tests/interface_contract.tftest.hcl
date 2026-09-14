@@ -147,6 +147,7 @@ run "platform_forge_runners_interface_contract" {
       "lambda_artifacts = optional(object({",
       "control_plane_zip = optional(string, null)",
       "webhook_zip       = optional(string, null)",
+      "scale_set = optional(object({",
       "runner_specs = map(object({",
       "tags = optional(map(string), {})",
       "runner = object({",
@@ -160,6 +161,7 @@ run "platform_forge_runners_interface_contract" {
       "run_as                 = optional(string, null)",
       "auto_update_disabled   = optional(bool, null)",
       "orchestration_provider = object({",
+      "scale_set = optional(object({",
       "webhook = optional(object({",
       "boot_time_in_minutes = optional(number, null)",
       "ephemeral            = optional(bool, null)",
@@ -503,7 +505,7 @@ run "platform_forge_runners_interface_contract" {
     condition = (
       output.expected_input_variable_count == 10
       && output.expected_output_value_count == 5
-      && output.expected_interface_literal_count == 444
+      && output.expected_interface_literal_count == 446
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

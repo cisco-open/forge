@@ -139,7 +139,7 @@ locals {
       local.legacy_runner_labels[key],
       distinct([
         for label in flatten([
-          for matcher_index, labels in runner_config.orchestration_provider.webhook.matcherConfig.labelMatchers : labels if matcher_index > 0
+          for matcher_index, labels in try(runner_config.orchestration_provider.webhook.matcherConfig.labelMatchers, []) : labels if matcher_index > 0
         ]) : label
         if !contains(local.legacy_runner_labels[key], label)
       ]),
@@ -278,6 +278,7 @@ locals {
             )
           })
         })
+        scale_set = runner_config.orchestration_provider.scale_set
       }
       compute_provider = merge(runner_config.compute_provider, {
         aws = merge(runner_config.compute_provider.aws, {
@@ -334,6 +335,10 @@ locals {
       }
       scale_set = {
         container = var.runner_configs.scale_set.container
+        network = {
+          vpc_id     = var.network_configs.vpc_id
+          subnet_ids = toset(var.network_configs.subnet_ids)
+        }
       }
     }
 
