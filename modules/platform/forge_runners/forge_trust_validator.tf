@@ -13,7 +13,7 @@ module "forge_trust_validator" {
 
   forge_iam_roles = {
     for idx, arn in values(merge(
-      try(module.ec2_runners[0].ec2_runners_arn_map, {}),
+      try(module.ec2_runners[0].runners_arn_map, {}),
       try(module.arc_runners.arc_runners_arn_map, {}),
     )) :
     idx => arn

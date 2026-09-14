@@ -398,7 +398,13 @@ def test_runner_webhook_enables_upstream_api_gateway_access_logs() -> None:
     deployment_tf = read_repo_file(
         'modules/platform/ec2_deployment/main.tf'
     )
+    runner_configs_tf = read_repo_file(
+        'modules/platform/ec2_deployment/runner_configs_v2.tf'
+    )
     runner_module = hcl_block(deployment_tf, 'module', 'runners')
+    experimental_config = assignment_map_block(
+        runner_configs_tf, 'experimental_config'
+    )
     log_group = hcl_block(
         deployment_tf,
         'resource',
@@ -421,7 +427,24 @@ def test_runner_webhook_enables_upstream_api_gateway_access_logs() -> None:
     assert_contains_all(
         runner_module,
         [
-            'webhook_lambda_apigateway_access_log_settings = {',
+            'vpc_id     = var.network_configs.vpc_id',
+            'subnet_ids = var.network_configs.subnet_ids',
+            'github_app = var.runner_configs.github_app',
+            'experimental_global_config = {',
+            'experimental_global_config_github                 = local.experimental_config.github',
+            'experimental_global_config_lambda                 = local.experimental_config.lambda',
+            'experimental_global_config_orchestration_provider = local.experimental_config.orchestration_provider',
+            'experimental_global_config_ssm                    = local.experimental_config.ssm',
+            'experimental_global_config_observability          = local.experimental_config.observability',
+            'experimental_global_config_compute_provider       = local.experimental_config.compute_provider',
+            'experimental_multi_runner_config                  = local.multi_runner_config',
+        ],
+    )
+    assert_contains_all(
+        experimental_config,
+        [
+            'orchestration_provider = {',
+            'api_gateway_access_log_settings = {',
             'destination_arn = aws_cloudwatch_log_group.webhook_api_gateway_access.arn',
             'format          = local.webhook_api_gateway_access_log_format',
         ],
