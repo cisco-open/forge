@@ -166,12 +166,7 @@ variable "runner_configs" {
         }), null)
         scale_set = optional(object({
           github = object({
-            config_url = string
-            installation_id_ssm = object({
-              name        = string
-              arn         = string
-              kms_key_arn = optional(string, null)
-            })
+            config_url                = string
             runner_owner              = optional(string, null)
             runner_registration_level = optional(string, "enterprise")
             force_ghes                = optional(bool, null)

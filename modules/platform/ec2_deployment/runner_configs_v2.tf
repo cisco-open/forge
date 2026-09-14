@@ -301,7 +301,12 @@ locals {
     tags = local.terraform_aws_github_runner_tags
 
     github = {
-      app = var.runner_configs.github_app
+      app = merge(var.runner_configs.github_app, {
+        installation_id_ssm = {
+          name = "/forge/${var.runner_configs.prefix}/github_app_installation_id"
+          arn  = "arn:${data.aws_partition.current.partition}:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/forge/${var.runner_configs.prefix}/github_app_installation_id"
+        }
+      })
       enterprise_server = {
         url = try(trimspace(var.runner_configs.ghes_url), "") == "" ? null : var.runner_configs.ghes_url
       }
