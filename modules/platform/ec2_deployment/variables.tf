@@ -8,6 +8,8 @@ variable "runner_configs" {
     env                       = string
     prefix                    = string
     ghes_url                  = string
+    runner_owner              = optional(string, null)
+    runner_registration_level = optional(string, "organization")
     log_level                 = string
     logging_retention_in_days = string
     github_app = object({

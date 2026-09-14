@@ -20,6 +20,8 @@ run "platform_forge_runners_contract" {
       "runner_specs = var.ec2_deployment_specs.runner_specs",
       "lambda_artifacts                    = var.ec2_deployment_specs.lambda_artifacts",
       "scale_set                           = var.ec2_deployment_specs.scale_set",
+      "runner_owner                        = var.deployment_config.github.ghes_org",
+      "runner_registration_level           = \"organization\"",
       "runner = object({",
       "orchestration_provider = object({",
       "webhook = optional(object({",

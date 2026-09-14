@@ -310,6 +310,8 @@ locals {
       enterprise_server = {
         url = try(trimspace(var.runner_configs.ghes_url), "") == "" ? null : var.runner_configs.ghes_url
       }
+      runner_owner              = var.runner_configs.runner_owner
+      runner_registration_level = var.runner_configs.runner_registration_level
     }
 
     lambda = {
