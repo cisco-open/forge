@@ -25,6 +25,9 @@ artifact and KMS key, logging defaults, and EC2 network defaults. EC2 supports
 custom AMIs, macOS/Windows, dedicated hosts, and larger hardware profiles.
 Lambda MicroVM supports Linux ARM64 ephemeral runners with image, network
 connector, logging, duration, environment, and provider-IAM settings.
+The optional `ec2_deployment_specs.scale_set.container.image` value is passed to
+the upstream v2 scale-set controller configuration; production deployments
+should provide an approved image digest.
 
 ## What It Manages
 

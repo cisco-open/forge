@@ -332,6 +332,9 @@ locals {
           }
         }
       }
+      scale_set = {
+        container = var.runner_configs.scale_set.container
+      }
     }
 
     ssm = {

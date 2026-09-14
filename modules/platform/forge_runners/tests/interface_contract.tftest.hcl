@@ -503,7 +503,7 @@ run "platform_forge_runners_interface_contract" {
     condition = (
       output.expected_input_variable_count == 10
       && output.expected_output_value_count == 5
-      && output.expected_interface_literal_count == 437
+      && output.expected_interface_literal_count == 444
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

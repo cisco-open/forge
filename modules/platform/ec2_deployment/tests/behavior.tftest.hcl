@@ -140,6 +140,11 @@ variables {
       control_plane_zip = "README.md"
       webhook_zip       = "README.md"
     }
+    scale_set = {
+      container = {
+        image = "ghcr.io/example/scale-set-controller@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      }
+    }
     runner_specs = {
       ec2 = {
         tags = { Scope = "entry" }
@@ -822,6 +827,7 @@ run "ec2_v2_input_plan" {
       local.global_config.github.app.id == "12345"
       && local.global_config.github.enterprise_server.url == null
       && local.global_config.orchestration_provider.webhook.eventbridge.enable
+      && local.global_config.orchestration_provider.scale_set.container.image == "ghcr.io/example/scale-set-controller@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
       && local.global_config.orchestration_provider.webhook.lambda.artifact.zip == "README.md"
       && tolist(local.global_config.lambda.subnet_ids) == tolist(["subnet-test"])
       && length(local.global_config.lambda.security_group_ids) == 1

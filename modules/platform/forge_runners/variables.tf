@@ -18,6 +18,11 @@ variable "ec2_deployment_specs" {
       control_plane_zip = optional(string, null)
       webhook_zip       = optional(string, null)
     }), {})
+    scale_set = optional(object({
+      container = optional(object({
+        image = optional(string, null)
+      }), {})
+    }), {})
     runner_specs = map(object({
       tags = optional(map(string), {})
 

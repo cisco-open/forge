@@ -39,6 +39,9 @@ Forge is a multi-tenant CI platform built around ephemeral runners, short-lived 
 - The shared runner-control archive is selected globally at
   `orchestration_provider.webhook.lambda.artifact`; per-runner webhook Lambda blocks do
   not select deployment artifacts.
+- The optional `ec2_deployment_specs.scale_set.container.image` value is passed
+  to the upstream v2 scale-set controller configuration. Production deployments
+  should provide an approved image digest.
 - Lambda MicroVM lanes require both
   `ec2_deployment_specs.lambda_artifacts.control_plane_zip` and
   `ec2_deployment_specs.lambda_artifacts.webhook_zip`, built from the same

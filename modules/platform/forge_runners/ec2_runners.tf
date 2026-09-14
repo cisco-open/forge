@@ -37,6 +37,7 @@ module "ec2_runners" {
     logging_retention_in_days           = var.logging_retention_in_days
     runner_iam_role_managed_policy_arns = local.runner_iam_role_managed_policy_arns
     lambda_artifacts                    = var.ec2_deployment_specs.lambda_artifacts
+    scale_set                           = var.ec2_deployment_specs.scale_set
     github_app = {
       key_base64     = data.aws_ssm_parameter.github_app_key.value
       id             = var.deployment_config.github_app.id
