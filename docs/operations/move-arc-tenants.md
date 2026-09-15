@@ -57,17 +57,20 @@ ______________________________________________________________________
 To simplify and standardize the cluster move, use:
 
 ```bash
-./scripts/migrate-tenant.sh --tf-dir /full/path/to/tenant_dir
+./scripts/migrate-tenant.sh \
+  --tf-dir /full/path/to/tenant_dir \
+  --from-cluster forge-euw1-prod-green \
+  --to-cluster forge-euw1-prod-blue \
+  --expected-account-id 123456789012
 ```
 
 The script performs these steps:
 
-- **Detects the current cluster** from the tenant configuration.
-- **Determines the target cluster** by toggling the blue/green suffix.
+- **Requires explicit source and destination clusters** and validates the
+  authenticated AWS account.
 - **Renders Terragrunt inputs** to find the AWS profile, region, and ARC
   cluster name.
-- **Updates kubeconfig** for the source cluster with an alias that includes the
-  cluster, profile, and region.
+- **Updates kubeconfig** for both clusters.
 - **Scales down runner sets** in the source cluster gracefully.
 - **Sets `migrate_arc_cluster: true`** and applies `module.arc_runners` against
   the source cluster to remove the tenant ARC footprint there.
@@ -76,18 +79,14 @@ The script performs these steps:
   the target side clean before enabling it.
 - **Sets `migrate_arc_cluster: false`** and applies `module.arc_runners` again
   to create the tenant ARC resources on the target cluster.
-- **Applies `module.forge_trust_validator`** so tenant trust checks are current
-  after the move.
+- **Verifies destination health** and source cleanup from the live clusters.
 - **Leaves the tenant config pointing at the target cluster** with
   `migrate_arc_cluster: false`.
 
 ### Usage Example
 
-Run the script by specifying the tenant Terraform directory:
-
-```bash
-./scripts/migrate-tenant.sh --tf-dir /full/path/to/tenant_dir
-```
+Use the command above with the tenant directory, source and destination
+clusters, and expected AWS account ID.
 
 After the script finishes, run a tenant ARC smoke workflow and verify:
 
@@ -108,11 +107,12 @@ instead of running every command locally. The reusable workflow should do this:
    cluster `config.yaml`.
 1. Fail if there is not exactly one active and one inactive cluster.
 1. Validate all tenants currently point at the active cluster.
-1. Destroy and recreate the inactive cluster by running
-   `scripts/reinstall-eks-with-deps.sh`.
+1. Run `validate-arc-cluster-clean.sh`, then
+   destroy and recreate it with `scripts/reinstall-eks-with-deps.sh`.
 1. Build a tenant matrix from the tenant directories.
 1. Move tenants with `scripts/migrate-tenant.sh`, using `max-parallel: 1`.
-1. Destroy and recreate the previous active cluster.
+1. Prove the previous active cluster is empty with
+   `validate-arc-cluster-clean.sh`, then destroy and recreate it.
 1. Optionally move tenants back to the final active cluster.
 1. Reapply cluster access integrations such as Teleport when used.
 
