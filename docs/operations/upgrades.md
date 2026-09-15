@@ -46,9 +46,13 @@ Before starting:
 1. Validate every ARC tenant in the target environment and region points at the
    active cluster.
 1. Confirm the scripts are available:
-   `scripts/reinstall-eks-with-deps.sh` and `scripts/migrate-tenant.sh`.
+   `scripts/reinstall-eks-with-deps.sh`, `scripts/migrate-tenant.sh`, and
+   `scripts/validate-arc-cluster-clean.sh`.
 
 Run the region in this order:
+
+Run `scripts/validate-arc-cluster-clean.sh --help` for the live guard arguments
+and execute it immediately before either cluster is destroyed.
 
 1. Destroy the inactive EKS cluster with dependents:
 
@@ -68,7 +72,10 @@ Run the region in this order:
 
    ```bash
    /path/to/forge/scripts/migrate-tenant.sh \
-     --tf-dir terraform/environments/prod/regions/eu-west-1/vpcs/main/tenants/acme
+     --tf-dir terraform/environments/prod/regions/eu-west-1/vpcs/main/tenants/acme \
+     --from-cluster forge-euw1-prod-green \
+     --to-cluster forge-euw1-prod-blue \
+     --expected-account-id 123456789012
    ```
 
 1. Run ARC smoke workflows for each moved tenant.
