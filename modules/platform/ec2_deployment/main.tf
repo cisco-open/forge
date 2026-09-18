@@ -5,7 +5,7 @@ locals {
   terraform_aws_github_runner_tags = merge(
     var.tenant_configs.tags,
     {
-      terraform-aws-github-runner-ref = "feat-scale-set-terraform-wiring"
+      terraform-aws-github-runner-ref = "feat-scale-set-typescript-docs-ci"
     }
   )
   webhook_api_gateway_access_log_format = jsonencode({
@@ -136,7 +136,7 @@ resource "aws_iam_policy" "runner_hooks_ssm_read" {
 
 module "runners" {
   #checkov:skip=CKV_TF_1:Temporary upstream ref is required to validate multi-runner v2 compatibility before a release tag exists.
-  source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=feat-scale-set-terraform-wiring"
+  source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=feat-scale-set-typescript-docs-ci"
 
   aws_region = var.aws_region
   vpc_id     = var.network_configs.vpc_id
