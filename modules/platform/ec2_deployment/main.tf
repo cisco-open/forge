@@ -136,7 +136,7 @@ resource "aws_iam_policy" "runner_hooks_ssm_read" {
 
 module "runners" {
   #checkov:skip=CKV_TF_1:Temporary upstream ref is required to validate multi-runner v2 compatibility before a release tag exists.
-  source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=feat-scale-set-typescript-docs-ci"
+  source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=feat-microvm-lifecycle-hooks"
 
   aws_region = var.aws_region
   vpc_id     = var.network_configs.vpc_id
