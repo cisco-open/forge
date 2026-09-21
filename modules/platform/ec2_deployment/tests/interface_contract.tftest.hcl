@@ -426,7 +426,7 @@ run "platform_ec2_deployment_interface_contract" {
     condition = (
       output.expected_input_variable_count == 4
       && output.expected_output_value_count == 11
-      && output.expected_interface_literal_count == 363
+      && output.expected_interface_literal_count == 367
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }
