@@ -12,7 +12,7 @@ work or recovery from a cluster-level issue.
 - `arc_cluster_name` ends in `-blue` or `-green`.
 - `migrate_arc_cluster` is `false` before the move starts.
 - The source and target EKS clusters exist in Terraform/Terragrunt config.
-- The operator or workflow can update kubeconfig for the source cluster.
+- The operator or workflow can update kubeconfig for both clusters.
 - The operator or workflow can run targeted Terragrunt applies for the tenant.
 - No normal promotion workflow is applying the same tenant at the same time.
 
@@ -29,7 +29,8 @@ work or recovery from a cluster-level issue.
 
 - List all runner sets defined under `arc_runner_specs`.
 - For each runner set, scale down both minimum and maximum runners to zero on
-  the source cluster to stop all active runner pods.
+  the source cluster to stop new jobs, then wait for running jobs and ARC runner
+  resources to drain.
 
 3. **Disable ARC on the Source Cluster**
 
@@ -40,15 +41,15 @@ work or recovery from a cluster-level issue.
 
 4. **Enable ARC on the Target Cluster**
 
-- Change `migrate_arc_cluster` back to false (`migrate_arc_cluster: false`).
-- Update the `arc_cluster_name` to the target cluster, for example from
-  `forge-euw1-prod-green` to `forge-euw1-prod-blue`.
-- Deploy ARC resources in the target cluster with these config changes.
+- Keep `migrate_arc_cluster: true`, point `arc_cluster_name` at the target, and
+  apply once to prove the target has no old ARC footprint.
+- Set `migrate_arc_cluster: false` and apply again to enable ARC on the target.
 
-5. **Wait for Runner Pods to Stabilize**
+5. **Verify the Handoff**
 
-- Verify that runner pods have fully terminated on the source cluster.
-- Confirm runner pods are healthy and running on the target cluster.
+- Verify that the tenant ARC footprint is absent from the source cluster.
+- Confirm the target controller, listeners, NodePool, and EC2NodeClass are
+  healthy.
 
 ______________________________________________________________________
 
@@ -57,18 +58,20 @@ ______________________________________________________________________
 To simplify and standardize the cluster move, use:
 
 ```bash
-./scripts/migrate-tenant.sh --tf-dir /full/path/to/tenant_dir
+./scripts/migrate-tenant.sh --tf-dir /full/path/to/tenant_dir \
+  --from-cluster forge-euw1-prod-green --to-cluster forge-euw1-prod-blue \
+  --expected-account-id 123456789012
 ```
 
 The script performs these steps:
 
-- **Detects the current cluster** from the tenant configuration.
-- **Determines the target cluster** by toggling the blue/green suffix.
+- **Requires explicit source and destination clusters** and validates the
+  authenticated AWS account.
 - **Renders Terragrunt inputs** to find the AWS profile, region, and ARC
   cluster name.
-- **Updates kubeconfig** for the source cluster with an alias that includes the
-  cluster, profile, and region.
-- **Scales down runner sets** in the source cluster gracefully.
+- **Updates kubeconfig** for both clusters.
+- **Validates the source runner-set inventory**, stops source scheduling, and
+  waits up to six hours per runner set for running jobs to finish.
 - **Sets `migrate_arc_cluster: true`** and applies `module.arc_runners` against
   the source cluster to remove the tenant ARC footprint there.
 - **Points `arc_cluster_name` at the target cluster** and applies
@@ -76,20 +79,23 @@ The script performs these steps:
   the target side clean before enabling it.
 - **Sets `migrate_arc_cluster: false`** and applies `module.arc_runners` again
   to create the tenant ARC resources on the target cluster.
-- **Applies `module.forge_trust_validator`** so tenant trust checks are current
-  after the move.
+- **Verifies destination health** and source cleanup from the live clusters.
 - **Leaves the tenant config pointing at the target cluster** with
   `migrate_arc_cluster: false`.
 
 ### Usage Example
 
-Run the script by specifying the tenant Terraform directory:
+Run the script with the tenant directory, source and destination clusters, and
+expected AWS account ID:
 
 ```bash
-./scripts/migrate-tenant.sh --tf-dir /full/path/to/tenant_dir
+./scripts/migrate-tenant.sh --tf-dir /full/path/to/tenant_dir \
+  --from-cluster forge-euw1-prod-green --to-cluster forge-euw1-prod-blue \
+  --expected-account-id 123456789012
 ```
 
-After the script finishes, run a tenant ARC smoke workflow and verify:
+After the script finishes, run a tenant ARC smoke workflow when one is
+available, and verify:
 
 ```bash
 kubectl get autoscalingrunnersets -n <tenant>
@@ -108,11 +114,12 @@ instead of running every command locally. The reusable workflow should do this:
    cluster `config.yaml`.
 1. Fail if there is not exactly one active and one inactive cluster.
 1. Validate all tenants currently point at the active cluster.
-1. Destroy and recreate the inactive cluster by running
-   `scripts/reinstall-eks-with-deps.sh`.
+1. Run `validate-arc-cluster-clean.sh`, then
+   destroy and recreate it with `scripts/reinstall-eks-with-deps.sh`.
 1. Build a tenant matrix from the tenant directories.
 1. Move tenants with `scripts/migrate-tenant.sh`, using `max-parallel: 1`.
-1. Destroy and recreate the previous active cluster.
+1. Prove the previous active cluster is empty with
+   `validate-arc-cluster-clean.sh`, then destroy and recreate it.
 1. Optionally move tenants back to the final active cluster.
 1. Reapply cluster access integrations such as Teleport when used.
 
@@ -132,8 +139,8 @@ progress.
 - Do not leave `migrate_arc_cluster: true` in a tenant config.
 - Do not move tenants in parallel until the process is proven for your cluster
   and runner capacity model.
-- Do not destroy the source cluster until moved tenants have completed smoke
-  workflows on the target cluster.
+- Do not destroy the source cluster until destination health verification
+  succeeds - run tenant smoke workflows first when one is available.
 - Do not run the normal tenant promotion workflow during the cluster move.
 - Keep the previous runner container image and EKS module refs available until
   the target cluster is proven.
