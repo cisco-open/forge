@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.16.4](https://github.com/cisco-open/forge/compare/v4.16.3...v4.16.4) (2026-09-21)
+
+
+### Bug Fixes
+
+* **arc:** harden tenant migration handoff ([#721](https://github.com/cisco-open/forge/issues/721)) ([8561999](https://github.com/cisco-open/forge/commit/8561999063354b83879fc3ae808580bc357ab407))
+
 ## [4.16.3](https://github.com/cisco-open/forge/compare/v4.16.2...v4.16.3) (2026-09-15)
 
 
