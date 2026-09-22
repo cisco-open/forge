@@ -9,6 +9,8 @@ AWS_REGION=""
 EXPECTED_ACCOUNT_ID=""
 ERRORS=0
 CLUSTER_EXISTS=true
+NODEPOOL_CRD_EXISTS=false
+EC2NODECLASS_CRD_EXISTS=false
 
 usage() {
     printf '%s\n' \
@@ -82,7 +84,7 @@ parse_args() {
 
 preflight() {
     PHASE="preflight"
-    local command_name actual_account cluster_lookup
+    local command_name actual_account cluster_lookup karpenter_crds
     for command_name in aws jq kubectl; do
         require_command "$command_name"
     done
@@ -113,6 +115,22 @@ preflight() {
         --profile "$AWS_PROFILE" >/dev/null
     kubectl --context "$KUBE_CONTEXT" get --raw=/readyz 2>/dev/null | grep -qx ok ||
         die "Kubernetes API is not ready: $CLUSTER"
+
+    karpenter_crds=$(kubectl --context "$KUBE_CONTEXT" get customresourcedefinition \
+        nodepools.karpenter.sh \
+        ec2nodeclasses.karpenter.k8s.aws \
+        --ignore-not-found \
+        -o name) || die "unable to inspect Karpenter CRDs on '$CLUSTER'"
+    if grep -Eq '(^|/)nodepools\.karpenter\.sh$' <<<"$karpenter_crds"; then
+        NODEPOOL_CRD_EXISTS=true
+    else
+        echo "NodePool CRD is absent; no NodePool resources can remain."
+    fi
+    if grep -Eq '(^|/)ec2nodeclasses\.karpenter\.k8s\.aws$' <<<"$karpenter_crds"; then
+        EC2NODECLASS_CRD_EXISTS=true
+    else
+        echo "EC2NodeClass CRD is absent; no EC2NodeClass resources can remain."
+    fi
     echo "Pre-destroy check: account=$EXPECTED_ACCOUNT_ID region=$AWS_REGION cluster=$CLUSTER"
 }
 
@@ -141,10 +159,14 @@ check_tenant() {
 
     check_absent "namespace '$tenant' on '$CLUSTER'" \
         kubectl --context "$KUBE_CONTEXT" get namespace "$tenant" --ignore-not-found -o name
-    check_absent "NodePool 'karpenter-${tenant}' on '$CLUSTER'" \
-        kubectl --context "$KUBE_CONTEXT" get nodepool.karpenter.sh "karpenter-${tenant}" --ignore-not-found -o name
-    check_absent "EC2NodeClass 'karpenter-${tenant}' on '$CLUSTER'" \
-        kubectl --context "$KUBE_CONTEXT" get ec2nodeclass.karpenter.k8s.aws "karpenter-${tenant}" --ignore-not-found -o name
+    if [[ "$NODEPOOL_CRD_EXISTS" == true ]]; then
+        check_absent "NodePool 'karpenter-${tenant}' on '$CLUSTER'" \
+            kubectl --context "$KUBE_CONTEXT" get nodepool.karpenter.sh "karpenter-${tenant}" --ignore-not-found -o name
+    fi
+    if [[ "$EC2NODECLASS_CRD_EXISTS" == true ]]; then
+        check_absent "EC2NodeClass 'karpenter-${tenant}' on '$CLUSTER'" \
+            kubectl --context "$KUBE_CONTEXT" get ec2nodeclass.karpenter.k8s.aws "karpenter-${tenant}" --ignore-not-found -o name
+    fi
 
     associations=$(aws eks list-pod-identity-associations \
         --cluster-name "$CLUSTER" \
