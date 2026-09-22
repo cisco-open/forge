@@ -8,6 +8,7 @@ AWS_PROFILE=""
 AWS_REGION=""
 EXPECTED_ACCOUNT_ID=""
 ERRORS=0
+CLUSTER_EXISTS=true
 
 usage() {
     printf '%s\n' \
@@ -81,7 +82,7 @@ parse_args() {
 
 preflight() {
     PHASE="preflight"
-    local command_name actual_account
+    local command_name actual_account cluster_lookup
     for command_name in aws jq kubectl; do
         require_command "$command_name"
     done
@@ -89,6 +90,20 @@ preflight() {
     actual_account=$(aws sts get-caller-identity --profile "$AWS_PROFILE" --query Account --output text)
     [[ "$actual_account" == "$EXPECTED_ACCOUNT_ID" ]] ||
         die "AWS account mismatch: expected $EXPECTED_ACCOUNT_ID, authenticated to $actual_account"
+
+    if ! cluster_lookup=$(aws eks describe-cluster \
+        --region "$AWS_REGION" \
+        --name "$CLUSTER" \
+        --profile "$AWS_PROFILE" \
+        --query cluster.status \
+        --output text 2>&1); then
+        if grep -q 'ResourceNotFoundException' <<<"$cluster_lookup"; then
+            CLUSTER_EXISTS=false
+            echo "Pre-destroy check: account=$EXPECTED_ACCOUNT_ID region=$AWS_REGION cluster=$CLUSTER is already absent"
+            return
+        fi
+        die "unable to inspect EKS cluster '$CLUSTER': $cluster_lookup"
+    fi
 
     KUBE_CONTEXT="${CLUSTER}-${AWS_PROFILE}-${AWS_REGION}-pre-destroy"
     aws eks update-kubeconfig \
@@ -148,6 +163,11 @@ check_tenant() {
 main() {
     parse_args "$@"
     preflight
+
+    if [[ "$CLUSTER_EXISTS" == false ]]; then
+        echo "Verified: cluster '$CLUSTER' is already absent; no live tenant ARC footprint can remain in its Kubernetes API."
+        exit 0
+    fi
 
     local tenant_dir found=false
     for tenant_dir in "$TENANTS_DIR"/*; do
