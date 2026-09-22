@@ -18,7 +18,10 @@ module "karpenter" {
 }
 
 resource "null_resource" "karpenter" {
-  depends_on = [module.eks]
+  depends_on = [
+    module.eks,
+    module.karpenter,
+  ]
 
   triggers = {
     chart_version      = "1.14.0"
@@ -76,13 +79,68 @@ echo "PATH=$PATH"
 command -v helm || { echo "helm not found"; exit 1; }
 command -v kubectl || { echo "kubectl not found"; exit 1; }
 
-echo "Uninstalling Karpenter..."
+kube_context='${self.triggers.kube_context}'
+expected_cluster_name='${self.triggers.cluster_name}'
+expected_cluster_endpoint='${self.triggers.cluster_endpoint}'
+actual_cluster_endpoint=$(kubectl config view \
+  --raw \
+  --minify \
+  --context "$kube_context" \
+  -o jsonpath='{.clusters[0].cluster.server}')
 
-# Try uninstall, but don't fail destroy if already gone
-helm --kube-context ${self.triggers.kube_context} uninstall karpenter -n karpenter || true
+if [[ "$actual_cluster_endpoint" != "$expected_cluster_endpoint" ]]; then
+  echo "Refusing Karpenter cleanup: context '$kube_context' does not resolve to expected cluster '$expected_cluster_name'." >&2
+  echo "Expected endpoint: $expected_cluster_endpoint" >&2
+  echo "Actual endpoint:   $actual_cluster_endpoint" >&2
+  exit 1
+fi
 
-# Optionally cleanup namespace (safe only if nothing else is inside)
-kubectl --context ${self.triggers.kube_context} delete namespace karpenter --ignore-not-found=true
+echo "Verified kube context '$kube_context' targets cluster '$expected_cluster_name'."
+echo "Deleting Karpenter NodePools and waiting for their NodeClaims to terminate..."
+kubectl --context "$kube_context" delete nodepools.karpenter.sh --all \
+  --cascade=foreground \
+  --wait=true \
+  --timeout=30m
+
+# Delete any orphaned NodeClaims that do not have a NodePool owner reference.
+# Waiting for their finalizers keeps the controller alive until the backing EC2
+# instances have terminated.
+kubectl --context "$kube_context" delete nodeclaims.karpenter.sh --all \
+  --cascade=foreground \
+  --wait=true \
+  --timeout=30m
+
+remaining_nodeclaims=$(kubectl --context "$kube_context" get nodeclaims.karpenter.sh -o name)
+if [[ -n "$remaining_nodeclaims" ]]; then
+  echo "Karpenter NodeClaims still exist after cleanup:" >&2
+  echo "$remaining_nodeclaims" >&2
+  exit 1
+fi
+
+echo "Deleting Karpenter EC2NodeClasses..."
+kubectl --context "$kube_context" delete ec2nodeclasses.karpenter.k8s.aws --all \
+  --cascade=foreground \
+  --wait=true \
+  --timeout=15m
+
+remaining_nodeclasses=$(kubectl --context "$kube_context" get ec2nodeclasses.karpenter.k8s.aws -o name)
+if [[ -n "$remaining_nodeclasses" ]]; then
+  echo "Karpenter EC2NodeClasses still exist after cleanup:" >&2
+  echo "$remaining_nodeclasses" >&2
+  exit 1
+fi
+
+echo "Karpenter nodes and node classes are gone; uninstalling the controller..."
+if helm --kube-context "$kube_context" status karpenter -n karpenter >/dev/null 2>&1; then
+  helm --kube-context "$kube_context" uninstall karpenter -n karpenter
+else
+  echo "Karpenter Helm release is already absent."
+fi
+
+kubectl --context "$kube_context" delete namespace karpenter \
+  --ignore-not-found=true \
+  --wait=true \
+  --timeout=10m
 EOF
   }
 }

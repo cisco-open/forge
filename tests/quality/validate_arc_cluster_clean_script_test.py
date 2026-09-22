@@ -34,6 +34,18 @@ def make_fixture(tmp_path: Path) -> tuple[Path, dict[str, str]]:
         args = sys.argv[1:]
         if args[:2] == ['sts', 'get-caller-identity']:
             print(os.environ.get('STUB_ACCOUNT', '123456789012'))
+        elif args[:2] == ['eks', 'describe-cluster']:
+            if os.environ.get('STUB_CLUSTER_MISSING') == '1':
+                print(
+                    'ResourceNotFoundException: No cluster found for name: '
+                    'forge-test-blue',
+                    file=sys.stderr,
+                )
+                raise SystemExit(254)
+            if os.environ.get('STUB_CLUSTER_ERROR') == '1':
+                print('AccessDeniedException: denied', file=sys.stderr)
+                raise SystemExit(254)
+            print('ACTIVE')
         elif args[:2] == ['eks', 'update-kubeconfig']:
             pass
         elif args[:2] == ['eks', 'list-pod-identity-associations']:
@@ -60,7 +72,20 @@ def make_fixture(tmp_path: Path) -> tuple[Path, dict[str, str]]:
             print('ok')
         elif 'get' in args:
             target = args[args.index('get') + 1]
-            if target == 'namespace':
+            if target == 'customresourcedefinition':
+                if os.environ.get('STUB_CRD_ERROR') == '1':
+                    print('unable to list CRDs', file=sys.stderr)
+                    raise SystemExit(1)
+                if os.environ.get('STUB_KARPENTER_CRDS_MISSING') != '1':
+                    print(
+                        'customresourcedefinition.apiextensions.k8s.io/'
+                        'nodepools.karpenter.sh'
+                    )
+                    print(
+                        'customresourcedefinition.apiextensions.k8s.io/'
+                        'ec2nodeclasses.karpenter.k8s.aws'
+                    )
+            elif target == 'namespace':
                 print(
                     'namespace/tenant-a'
                     if os.environ.get('STUB_NAMESPACE') == '1'
@@ -73,7 +98,11 @@ def make_fixture(tmp_path: Path) -> tuple[Path, dict[str, str]]:
                     else ''
                 )
             elif target.startswith('ec2nodeclass'):
-                print('')
+                print(
+                    'ec2nodeclass.karpenter.k8s.aws/karpenter-tenant-a'
+                    if os.environ.get('STUB_EC2_NODE_CLASS') == '1'
+                    else ''
+                )
             else:
                 raise SystemExit(f'unexpected kubectl target: {target}')
         else:
@@ -155,6 +184,57 @@ def test_wrong_account_stops_pre_destroy_inspection(tmp_path: Path) -> None:
 
     assert result.returncode != 0
     assert 'AWS account mismatch' in result.stderr
+
+
+def test_missing_cluster_is_already_clean(tmp_path: Path) -> None:
+    tenants_dir, env = make_fixture(tmp_path)
+    env['STUB_CLUSTER_MISSING'] = '1'
+    env['STUB_NAMESPACE'] = '1'
+
+    result = run_script(tenants_dir, env)
+
+    assert result.returncode == 0, result.stderr
+    assert "cluster 'forge-test-blue' is already absent" in result.stdout
+    assert "Checking tenant 'tenant-a'" not in result.stdout
+
+
+def test_cluster_lookup_error_stops_pre_destroy_inspection(
+    tmp_path: Path,
+) -> None:
+    tenants_dir, env = make_fixture(tmp_path)
+    env['STUB_CLUSTER_ERROR'] = '1'
+
+    result = run_script(tenants_dir, env)
+
+    assert result.returncode != 0
+    assert 'unable to inspect EKS cluster' in result.stderr
+    assert 'AccessDeniedException' in result.stderr
+
+
+def test_missing_karpenter_crds_are_already_clean(tmp_path: Path) -> None:
+    tenants_dir, env = make_fixture(tmp_path)
+    env.update({
+        'STUB_KARPENTER_CRDS_MISSING': '1',
+        'STUB_NODE_POOL': '1',
+        'STUB_EC2_NODE_CLASS': '1',
+    })
+
+    result = run_script(tenants_dir, env)
+
+    assert result.returncode == 0, result.stderr
+    assert 'NodePool CRD is absent' in result.stdout
+    assert 'EC2NodeClass CRD is absent' in result.stdout
+    assert 'has no live tenant ARC footprint' in result.stdout
+
+
+def test_karpenter_crd_lookup_error_stops_inspection(tmp_path: Path) -> None:
+    tenants_dir, env = make_fixture(tmp_path)
+    env['STUB_CRD_ERROR'] = '1'
+
+    result = run_script(tenants_dir, env)
+
+    assert result.returncode != 0
+    assert 'unable to inspect Karpenter CRDs' in result.stderr
 
 
 def test_tenant_without_scale_sets_is_still_checked(tmp_path: Path) -> None:

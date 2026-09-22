@@ -143,6 +143,42 @@ def assert_contains_all(text: str, expected: Iterable[str]) -> None:
     assert not missing, f'missing expected Terraform contract text: {missing}'
 
 
+def test_eks_destroy_cleans_karpenter_nodes_before_controller() -> None:
+    karpenter_tf = read_repo_file('modules/infra/eks/karpenter.tf')
+    resource = hcl_block(karpenter_tf, 'resource',
+                         'null_resource', 'karpenter')
+    destroy = resource[resource.index('# --- DESTROY ---'):]
+
+    assert_contains_all(
+        resource,
+        [
+            'module.eks,',
+            'module.karpenter,',
+        ],
+    )
+
+    ordered_cleanup = [
+        'actual_cluster_endpoint=$(kubectl config view',
+        'if [[ "$actual_cluster_endpoint" != "$expected_cluster_endpoint" ]]',
+        'delete nodepools.karpenter.sh --all',
+        'delete nodeclaims.karpenter.sh --all',
+        'get nodeclaims.karpenter.sh -o name',
+        'delete ec2nodeclasses.karpenter.k8s.aws --all',
+        'get ec2nodeclasses.karpenter.k8s.aws -o name',
+        'uninstall karpenter -n karpenter',
+        'delete namespace karpenter',
+    ]
+    positions = [destroy.index(command) for command in ordered_cleanup]
+
+    assert positions == sorted(positions)
+    assert '--cascade=foreground' in destroy
+    assert '--wait=true' in destroy
+    assert "expected_cluster_name='${self.triggers.cluster_name}'" in destroy
+    assert "expected_cluster_endpoint='${self.triggers.cluster_endpoint}'" in destroy
+    assert 'Refusing Karpenter cleanup' in destroy
+    assert 'uninstall karpenter -n karpenter || true' not in destroy
+
+
 @pytest.mark.parametrize(
     'filename',
     [
