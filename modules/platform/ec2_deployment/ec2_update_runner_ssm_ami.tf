@@ -3,9 +3,20 @@ data "aws_caller_identity" "current" {}
 data "aws_partition" "current" {}
 
 locals {
+  runner_ssm_paths = {
+    for key, runner_config in local.ec2_runner_configs :
+    key => {
+      root = "${trimsuffix(coalesce(runner_config.ssm.paths.root, "/github-action-runners/${var.runner_configs.prefix}"), "/")}/${key}"
+      config = coalesce(
+        runner_config.ssm.paths.config,
+        "runners/config",
+      )
+    }
+  }
+
   runner_ami_ssm_parameter_names = {
-    for key in keys(local.ec2_runner_configs) :
-    key => "/github-action-runners/${var.runner_configs.prefix}/${key}/runners/config/ami_id"
+    for key, paths in local.runner_ssm_paths :
+    key => "${paths.root}/${paths.config}/ami_id"
   }
 
   runner_ami_ssm_parameter_arns = {
@@ -25,6 +36,7 @@ locals {
 }
 
 module "ec2_update_runner_ssm_ami" {
+  count  = length(local.ec2_runner_configs) > 0 ? 1 : 0
   source = "./ec2_update_runner_ssm_ami"
 
   providers = {
