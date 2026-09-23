@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.16.5](https://github.com/cisco-open/forge/compare/v4.16.4...v4.16.5) (2026-09-23)
+
+
+### Bug Fixes
+
+* **eks:** make Karpenter teardown retry-safe ([#732](https://github.com/cisco-open/forge/issues/732)) ([5869f1e](https://github.com/cisco-open/forge/commit/5869f1e1031716606f8d1a66181d092e1f439f8d))
+
 ## [4.16.4](https://github.com/cisco-open/forge/compare/v4.16.3...v4.16.4) (2026-09-21)
 
 
