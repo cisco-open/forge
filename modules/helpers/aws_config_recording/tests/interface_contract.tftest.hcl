@@ -20,8 +20,11 @@ run "helpers_aws_config_recording_interface_contract" {
     ]
     expected_output_values = [
       "configuration_recorder_name",
+      "delivery_bucket_arn",
       "delivery_bucket_name",
       "recorded_resource_types",
+      "sqs",
+      "splunk_s3_logs",
     ]
     expected_interface_literals = [
       "variable \"delivery_bucket_name\"",
@@ -31,8 +34,11 @@ run "helpers_aws_config_recording_interface_contract" {
       "variable \"recorder_name\"",
       "variable \"delivery_channel_name\"",
       "output \"configuration_recorder_name\"",
+      "output \"delivery_bucket_arn\"",
       "output \"delivery_bucket_name\"",
       "output \"recorded_resource_types\"",
+      "output \"sqs\"",
+      "output \"splunk_s3_logs\"",
     ]
   }
 

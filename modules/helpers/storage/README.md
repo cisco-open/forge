@@ -10,7 +10,6 @@ Forge produces operational artifacts, logs, and temporary data across many tenan
 
 - Long-term and short-term S3 buckets.
 - Versioning, ownership controls, server-side encryption, and public access blocks.
-- An account-scoped bucket policy allowing AWS Config delivery to the long-term bucket.
 - Lifecycle configuration for the short-term bucket.
 - Bucket settings exported for downstream modules.
 
@@ -19,6 +18,15 @@ Forge produces operational artifacts, logs, and temporary data across many tenan
 - Use the short-term bucket for generated or transient artifacts, not compliance evidence.
 - Retention periods and encryption defaults should match the account data-classification policy.
 - Bucket names and outputs are often consumed by integration modules, so avoid renames without migration planning.
+- This module does not grant AWS Config delivery permissions. Use the managed
+  delivery bucket from `modules/helpers/aws_config_recording`, or manage an
+  external delivery bucket and its policy outside this module.
+- Upgrading from a release that managed `aws_s3_bucket_policy.config_delivery`
+  removes that long-term bucket policy. Move each recorder to its managed or
+  externally owned delivery bucket before applying this storage change.
+- Removing the policy does not delete the long-term bucket or historical
+  `AWSLogs/<account-id>/Config/` objects. Retain, migrate, or backfill those
+  objects separately according to the account retention policy.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -32,7 +40,7 @@ Forge produces operational artifacts, logs, and temporary data across many tenan
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.57.1 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.59.0 |
 
 ## Modules
 
@@ -47,7 +55,6 @@ No modules.
 | [aws_s3_bucket_lifecycle_configuration.s3_short_term](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_lifecycle_configuration) | resource |
 | [aws_s3_bucket_ownership_controls.s3_long_term](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_ownership_controls) | resource |
 | [aws_s3_bucket_ownership_controls.s3_short_term](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_ownership_controls) | resource |
-| [aws_s3_bucket_policy.config_delivery](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_policy) | resource |
 | [aws_s3_bucket_public_access_block.s3_long_term](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
 | [aws_s3_bucket_public_access_block.s3_short_term](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
 | [aws_s3_bucket_server_side_encryption_configuration.s3_long_term](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_server_side_encryption_configuration) | resource |
@@ -56,7 +63,6 @@ No modules.
 | [aws_s3_bucket_versioning.s3_short_term](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_versioning) | resource |
 | [aws_servicecatalogappregistry_application.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/servicecatalogappregistry_application) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
-| [aws_iam_policy_document.config_delivery](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 
 ## Inputs
 
