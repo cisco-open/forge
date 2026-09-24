@@ -143,7 +143,7 @@ def assert_contains_all(text: str, expected: Iterable[str]) -> None:
     assert not missing, f'missing expected Terraform contract text: {missing}'
 
 
-def test_eks_destroy_cleans_karpenter_nodes_before_controller() -> None:
+def test_eks_karpenter_lifecycle_keeps_controller_nodes_available() -> None:
     karpenter_tf = read_repo_file('modules/infra/eks/karpenter.tf')
     resource = hcl_block(karpenter_tf, 'resource',
                          'null_resource', 'karpenter')
@@ -154,6 +154,7 @@ def test_eks_destroy_cleans_karpenter_nodes_before_controller() -> None:
         [
             'module.eks,',
             'module.karpenter,',
+            'module.self_managed_node_group,',
         ],
     )
 

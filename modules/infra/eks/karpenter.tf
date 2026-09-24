@@ -21,6 +21,8 @@ resource "null_resource" "karpenter" {
   depends_on = [
     module.eks,
     module.karpenter,
+    # Keep the baseline nodes available while the Karpenter destroy hook runs.
+    module.self_managed_node_group,
   ]
 
   triggers = {
