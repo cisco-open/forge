@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.16.6](https://github.com/cisco-open/forge/compare/v4.16.5...v4.16.6) (2026-09-24)
+
+
+### Bug Fixes
+
+* **eks:** preserve Karpenter controller capacity on destroy ([#737](https://github.com/cisco-open/forge/issues/737)) ([4cb75a3](https://github.com/cisco-open/forge/commit/4cb75a3128e690f34649d6a8d9bbb7cbb3a0c9d6))
+
 ## [4.16.5](https://github.com/cisco-open/forge/compare/v4.16.4...v4.16.5) (2026-09-23)
 
 
