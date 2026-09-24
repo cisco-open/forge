@@ -627,13 +627,6 @@ destination_pod_snapshot() {
 verify_destination() {
     PHASE="verify destination cluster '$TO'"
     log_phase "Verify destination cluster '$TO'"
-    if ((RUNNER_COUNT == 0)); then
-        wait_for_clean_cluster "$TO_CTX" "$TO" destination
-        wait_for_clean_cluster "$FROM_CTX" "$FROM" source
-        log_ok "Verified: tenant '$TENANT' has no ARC runner sets configured."
-        return
-    fi
-
     log_wait "Waiting for destination controller '${DEPLOYMENT_PREFIX}-gha-rs-controller' to become available (timeout ${OPERATION_TIMEOUT_SECONDS}s)."
     kubectl --context "$TO_CTX" --namespace "$TENANT" wait \
         --for=condition=Available "deployment/${DEPLOYMENT_PREFIX}-gha-rs-controller" \
@@ -699,6 +692,15 @@ main() {
     log_info "Source: $FROM"
     log_info "Destination: $TO"
     log_info "Mode: $LIVE_MODE"
+    if ((RUNNER_COUNT == 0)); then
+        [[ "$LIVE_MODE" == resume-after-source-cleanup ]] ||
+            die "tenant '$TENANT' has no ARC runner sets but a live cluster footprint remains"
+        PHASE='complete'
+        log_phase 'Complete'
+        log_ok "Tenant '$TENANT' has no ARC runner sets; no cluster migration is required."
+        return
+    fi
+
     if [[ "$LIVE_MODE" == move ]]; then
         # The return leg starts from the committed active-cluster value, so put
         # the local configuration on the explicitly declared live source first.

@@ -1,4 +1,6 @@
 locals {
+  manage_tenant_karpenter_resources = length(var.multi_runner_config) > 0 && !var.migrate_arc_cluster
+
   node_pool_requirements = [
     for requirement in var.karpenter_node_pool.requirements : merge(
       {
@@ -93,8 +95,8 @@ while kubectl --context ${var.eks_cluster_name}-${var.aws_profile}-${var.aws_reg
   sleep 1
 done
 
-# Apply the new EC2NodeClass manifest only if not migrating
-if [ "${var.migrate_arc_cluster}" = "false" ]; then
+# Apply the tenant EC2NodeClass only when ARC runners are configured and active.
+if [ "${local.manage_tenant_karpenter_resources}" = "true" ]; then
   echo '${data.external.karpenter_ec2nodeclass.result.data}' \
     | yq eval -P - \
     | kubectl --context ${var.eks_cluster_name}-${var.aws_profile}-${var.aws_region} apply -f -
@@ -103,8 +105,10 @@ EOF
   }
 
   triggers = {
-    ec2nodeclass        = data.external.karpenter_ec2nodeclass.result.data
-    migrate_arc_cluster = var.migrate_arc_cluster
+    cluster_name                      = var.eks_cluster_name
+    ec2nodeclass                      = data.external.karpenter_ec2nodeclass.result.data
+    manage_tenant_karpenter_resources = tostring(local.manage_tenant_karpenter_resources)
+    migrate_arc_cluster               = var.migrate_arc_cluster
   }
 
   depends_on = [
@@ -116,7 +120,7 @@ resource "null_resource" "apply_node_pool" {
   provisioner "local-exec" {
     command = <<EOF
 export KUBECONFIG='${local.kubeconfig_path}'
-if [ "${var.migrate_arc_cluster}" = "false" ]; then
+if [ "${local.manage_tenant_karpenter_resources}" = "true" ]; then
   echo "${local.node_pool_manifest}" \
     | kubectl --context ${var.eks_cluster_name}-${var.aws_profile}-${var.aws_region} apply -f -
 else
@@ -127,8 +131,10 @@ EOF
   }
 
   triggers = {
-    manifest_hash       = sha256(local.node_pool_manifest)
-    migrate_arc_cluster = var.migrate_arc_cluster
+    cluster_name                      = var.eks_cluster_name
+    manage_tenant_karpenter_resources = tostring(local.manage_tenant_karpenter_resources)
+    manifest_hash                     = sha256(local.node_pool_manifest)
+    migrate_arc_cluster               = var.migrate_arc_cluster
   }
 
   depends_on = [

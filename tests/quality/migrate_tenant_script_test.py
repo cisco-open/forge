@@ -584,6 +584,29 @@ def test_clean_source_and_live_destination_reconciles_arc(
     ]
 
 
+def test_empty_runner_config_skips_cluster_changes(tmp_path: Path) -> None:
+    tenant_dir, env = make_fixture(tmp_path)
+    env['STUB_EMPTY_RUNNERS'] = '1'
+    runtime_path(env, 'live-blue').unlink()
+
+    result = run_script(tenant_dir, env)
+
+    assert result.returncode == 0, result.stderr
+    assert not runtime_path(env, 'applies').exists()
+    assert 'no ARC runner sets; no cluster migration is required' in result.stdout
+
+
+def test_empty_runner_config_rejects_live_footprint(tmp_path: Path) -> None:
+    tenant_dir, env = make_fixture(tmp_path)
+    env['STUB_EMPTY_RUNNERS'] = '1'
+
+    result = run_script(tenant_dir, env)
+
+    assert result.returncode != 0
+    assert 'no ARC runner sets but a live cluster footprint remains' in result.stderr
+    assert not runtime_path(env, 'applies').exists()
+
+
 def test_wrong_account_stops_before_cluster_changes(tmp_path: Path) -> None:
     tenant_dir, env = make_fixture(tmp_path)
     env['STUB_ACCOUNT'] = '999999999999'
