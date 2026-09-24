@@ -23,6 +23,7 @@ run "infra_eks_contract" {
       "wait --for=condition=Established --timeout=60s customresourcedefinition/installations.operator.tigera.io",
       "resource \"null_resource\" \"wait_for_cluster\"",
       "resource \"null_resource\" \"karpenter\"",
+      "module.self_managed_node_group,",
       "delete nodepools.karpenter.sh --all",
       "delete nodeclaims.karpenter.sh --all",
       "delete ec2nodeclasses.karpenter.k8s.aws --all",
