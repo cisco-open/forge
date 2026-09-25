@@ -82,7 +82,10 @@ data "external" "karpenter_ec2nodeclass" {
   ]
 }
 
+# Skip tenant Karpenter resources when no ARC runners are configured.
 resource "null_resource" "apply_ec2_node_class" {
+  count = length(var.multi_runner_config) > 0 ? 1 : 0
+
   provisioner "local-exec" {
     command = <<EOF
 export KUBECONFIG='${local.kubeconfig_path}'
@@ -113,6 +116,8 @@ EOF
 }
 
 resource "null_resource" "apply_node_pool" {
+  count = length(var.multi_runner_config) > 0 ? 1 : 0
+
   provisioner "local-exec" {
     command = <<EOF
 export KUBECONFIG='${local.kubeconfig_path}'
@@ -135,4 +140,15 @@ EOF
     null_resource.apply_ec2_node_class,
     data.external.update_kubeconfig,
   ]
+}
+
+# Keep existing ARC tenant state at the indexed addresses introduced by count.
+moved {
+  from = null_resource.apply_ec2_node_class
+  to   = null_resource.apply_ec2_node_class[0]
+}
+
+moved {
+  from = null_resource.apply_node_pool
+  to   = null_resource.apply_node_pool[0]
 }
