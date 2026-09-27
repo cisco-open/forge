@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.16.7](https://github.com/cisco-open/forge/compare/v4.16.6...v4.16.7) (2026-09-27)
+
+
+### Bug Fixes
+
+* **arc:** skip Karpenter resources for empty tenants ([#743](https://github.com/cisco-open/forge/issues/743)) ([bf64539](https://github.com/cisco-open/forge/commit/bf6453960db12126c1f0440049efb6182e76a62c))
+
 ## [4.16.6](https://github.com/cisco-open/forge/compare/v4.16.5...v4.16.6) (2026-09-24)
 
 
