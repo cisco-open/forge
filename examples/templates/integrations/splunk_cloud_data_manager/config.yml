@@ -34,6 +34,17 @@ s3_logs_config:
       s3_bucket_patterns:
         - <S3_BUCKET_PATTERN>               # e.g., forge-runner-logs-*; use * when no narrower prefix exists
       kms_key_arns: []                      # required; use [] when no KMS keys apply
+    - enabled: false                        # enable only after the producer output and Splunk parser are validated
+      name: forge-aws-config-prod
+      iam_region: <AWS_REGION>
+      index: <S3_LOGS_INDEX>
+      source_type: forgecicd:aws:config:s3
+      # Copy splunk_s3_logs.sqs.url from the aws_config_recording output.
+      sqs_urls: []
+      # Copy splunk_s3_logs.bucket_arn from the aws_config_recording output.
+      s3_bucket_patterns: []
+      # splunk_s3_logs.bucket_kms_key_arn is null because the bucket uses SSE-S3.
+      kms_key_arns: []
   ct-logs: []                               # AWS CloudTrail inputs
   s3-access-logs: []                        # Amazon S3 access-log inputs
   elb-access-logs: []                       # Elastic Load Balancing access-log inputs

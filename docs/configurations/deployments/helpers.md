@@ -17,20 +17,20 @@ ______________________________________________________________________
 
 ## Helper Modules
 
-| Module                                 | Example directory                                          | Use when                                                             |
-| -------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------- |
-| `modules/helpers/aws_config_recording` | `environments/prod/regions/eu-west-1/aws_config_recording` | You need configuration history for selected AWS resource types.      |
-| `modules/helpers/ami_policy`           | `environments/prod/ami_policy`                             | Forge owns AMI usage policy support.                                 |
-| `modules/helpers/ami_sharing`          | `environments/prod/regions/eu-west-1/ami_sharing`          | Runner AMIs must be shared across accounts or regions.               |
-| `modules/helpers/cloud_custodian`      | `environments/prod/cloud_custodian`                        | You run cleanup or governance policies from Forge.                   |
-| `modules/helpers/cloud_formation`      | `environments/prod/cloud_formation`                        | Integrations need CloudFormation admin/execution roles.              |
-| `modules/helpers/dedicated_mac_hosts`  | `environments/prod/regions/eu-west-1/dedicated_mac_hosts`  | Forge owns EC2 Mac Dedicated Host capacity.                          |
-| `modules/helpers/ecr`                  | `environments/prod/regions/eu-west-1/ecr`                  | Forge owns ECR repositories for runner or helper images.             |
-| `modules/helpers/forge_subscription`   | `environments/prod/forge_subscription`                     | Tenant accounts need Forge-managed IAM, Packer, S3, or ECR access.   |
-| `modules/helpers/microvm`              | `environments/prod/regions/eu-west-1/microvm`              | Provides regional MicroVM publishing/runtime foundations and egress. |
-| `modules/helpers/opt_in_regions`       | `environments/prod/opt_in_regions`                         | You need to enable AWS opt-in regions before regional deploys.       |
-| `modules/helpers/service_linked_roles` | `environments/prod/service_linked_roles`                   | The account needs the EC2 Spot service-linked role.                  |
-| `modules/helpers/storage`              | `environments/prod/storage`                                | Forge owns operational S3 buckets for logs, artifacts, or templates. |
+| Module                                 | Example directory                                          | Use when                                                              |
+| -------------------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------- |
+| `modules/helpers/aws_config_recording` | `environments/prod/regions/eu-west-1/aws_config_recording` | You need AWS Config history with a Splunk-compatible S3/SQS producer. |
+| `modules/helpers/ami_policy`           | `environments/prod/ami_policy`                             | Forge owns AMI usage policy support.                                  |
+| `modules/helpers/ami_sharing`          | `environments/prod/regions/eu-west-1/ami_sharing`          | Runner AMIs must be shared across accounts or regions.                |
+| `modules/helpers/cloud_custodian`      | `environments/prod/cloud_custodian`                        | You run cleanup or governance policies from Forge.                    |
+| `modules/helpers/cloud_formation`      | `environments/prod/cloud_formation`                        | Integrations need CloudFormation admin/execution roles.               |
+| `modules/helpers/dedicated_mac_hosts`  | `environments/prod/regions/eu-west-1/dedicated_mac_hosts`  | Forge owns EC2 Mac Dedicated Host capacity.                           |
+| `modules/helpers/ecr`                  | `environments/prod/regions/eu-west-1/ecr`                  | Forge owns ECR repositories for runner or helper images.              |
+| `modules/helpers/forge_subscription`   | `environments/prod/forge_subscription`                     | Tenant accounts need Forge-managed IAM, Packer, S3, or ECR access.    |
+| `modules/helpers/microvm`              | `environments/prod/regions/eu-west-1/microvm`              | Provides regional MicroVM publishing/runtime foundations and egress.  |
+| `modules/helpers/opt_in_regions`       | `environments/prod/opt_in_regions`                         | You need to enable AWS opt-in regions before regional deploys.        |
+| `modules/helpers/service_linked_roles` | `environments/prod/service_linked_roles`                   | The account needs the EC2 Spot service-linked role.                   |
+| `modules/helpers/storage`              | `environments/prod/storage`                                | Forge owns operational S3 buckets for logs, artifacts, or templates.  |
 
 ______________________________________________________________________
 
@@ -78,6 +78,20 @@ cd examples/deployments/helpers/terragrunt/environments/prod/regions/eu-west-1/a
 cd examples/deployments/helpers/terragrunt/environments/prod/regions/eu-west-1/dedicated_mac_hosts
 ```
 
+After applying `aws_config_recording`, inspect the values for a Splunk Data
+Manager custom S3 input:
+
+```bash
+cd examples/deployments/helpers/terragrunt/environments/prod/regions/eu-west-1/aws_config_recording
+terragrunt output -json splunk_s3_logs
+terragrunt output -json splunk_s3_logs | jq -r '.sqs.url'
+terragrunt output -json splunk_s3_logs | jq -r '.bucket_arn'
+```
+
+These outputs establish only the AWS producer contract. Configure the custom
+Splunk parser and validate a real AWS Config `.json.gz` object through to
+indexed events before calling the integration operational.
+
 Plan the full helper environment only after the individual helper plans are
 understood:
 
@@ -92,8 +106,7 @@ ______________________________________________________________________
 
 1. `service_linked_roles` when the account needs the EC2 Spot service-linked role.
 1. `opt_in_regions` before deploying into opt-in regions.
-1. `storage` before `aws_config_recording` so the long-term bucket is available as its delivery dependency.
-1. `aws_config_recording` before allocating Dedicated Hosts so their full history is captured.
+1. `aws_config_recording` before allocating Dedicated Hosts so their full history is captured; it creates its own delivery bucket and notification queue.
 1. `dedicated_mac_hosts` only after reviewing Mac host cost and minimum allocation periods.
 1. `ecr` if Forge builds or stores runner/helper images.
 1. `ami_sharing` if runner AMIs live in a central image account.
