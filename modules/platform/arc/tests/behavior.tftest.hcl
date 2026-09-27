@@ -165,9 +165,9 @@ run "arc_single_runner_contract" {
 
   assert {
     condition = (
-      null_resource.apply_ec2_node_class.triggers.migrate_arc_cluster == "false"
-      && null_resource.apply_node_pool.triggers.migrate_arc_cluster == "false"
-      && length(null_resource.apply_node_pool.triggers.manifest_hash) == 64
+      null_resource.apply_ec2_node_class[0].triggers.migrate_arc_cluster == "false"
+      && null_resource.apply_node_pool[0].triggers.migrate_arc_cluster == "false"
+      && length(null_resource.apply_node_pool[0].triggers.manifest_hash) == 64
     )
     error_message = "ARC root module must record non-migration Karpenter trigger values."
   }
@@ -192,8 +192,8 @@ run "arc_migration_contract" {
   assert {
     condition = (
       output.runners_map.tenant_a.runner_role_arn == "arn:aws:iam::123456789012:role/tenant-a-arc-runner-role"
-      && null_resource.apply_ec2_node_class.triggers.migrate_arc_cluster == "true"
-      && null_resource.apply_node_pool.triggers.migrate_arc_cluster == "true"
+      && null_resource.apply_ec2_node_class[0].triggers.migrate_arc_cluster == "true"
+      && null_resource.apply_node_pool[0].triggers.migrate_arc_cluster == "true"
       && length(kubernetes_manifest.storage_class) == 0
     )
     error_message = "ARC migration mode must keep runner outputs while suppressing storage classes and flipping Karpenter migration triggers."
@@ -212,7 +212,9 @@ run "arc_empty_runner_config_contract" {
       length(output.runners_map) == 0
       && length(output.subnet_cidr_blocks) == 0
       && length(kubernetes_manifest.storage_class) == 0
+      && length(null_resource.apply_ec2_node_class) == 0
+      && length(null_resource.apply_node_pool) == 0
     )
-    error_message = "ARC root module must suppress controller, scale-set, storage-class, and subnet outputs when no runners are configured."
+    error_message = "ARC root module must suppress controller, scale-set, storage-class, Karpenter resources, and subnet outputs when no runners are configured."
   }
 }
