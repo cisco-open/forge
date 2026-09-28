@@ -23,3 +23,17 @@ variable "default_tags" {
   type        = map(string)
   description = "A map of tags to apply to resources."
 }
+
+variable "enable_app_registry" {
+  description = <<-EOT
+    Enable AWS Service Catalog AppRegistry resources.
+
+    AWS deprecated AppRegistry for new customers on July 30, 2026.
+    Existing resources continue to work, but new deployments should disable this.
+
+    Set to false (default) to skip AppRegistry resource creation.
+    Set to true only if your account needs AppRegistry for billing/tracking.
+  EOT
+  type        = bool
+  default     = false
+}
