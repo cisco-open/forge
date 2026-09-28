@@ -29,11 +29,14 @@ variable "enable_app_registry" {
     Enable AWS Service Catalog AppRegistry resources.
 
     AWS deprecated AppRegistry for new customers on July 30, 2026.
-    Existing resources continue to work, but new deployments should disable this.
+    Default: true (enabled) to protect existing deployments from resource destruction.
 
-    Set to false (default) to skip AppRegistry resource creation.
-    Set to true only if your account needs AppRegistry for billing/tracking.
+    Existing accounts: Leave default (AppRegistry continues working for billing/tracking).
+    New accounts (post July 30, 2026): Set to false to avoid AccessDeniedException.
+
+    Set to false to skip AppRegistry resource creation.
+    Set to true to keep AppRegistry resources (needed for existing deployments).
   EOT
   type        = bool
-  default     = false
+  default     = true
 }
