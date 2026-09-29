@@ -83,7 +83,7 @@ repos:
   # Commit Message Hooks
   # ---------------------
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: db073f6e2776db0e634dc8d6c20d4123a1cab086  # frozen: v4.18.1
+    rev: 3f5ccc87b27966d9ed21cf5ea8ec2fba38ca65ce  # frozen: v4.19.0
     hooks:
       - id: commitizen
         name: Git · Validate commit message
@@ -173,7 +173,7 @@ repos:
         name: Python · Remove unused imports
 
   - repo: https://github.com/PyCQA/flake8
-    rev: d93590f5be797aabb60e3b09f2f52dddb02f349f  # frozen: 7.3.0
+    rev: 31405090a83cade9350502e481dcd1f032cb50b9  # frozen: 7.4.0
     hooks:
       - id: flake8
         name: Python · Linter
@@ -198,7 +198,7 @@ repos:
   # JSON Schema Hooks
   # ---------------------
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: c4654a7e007c9619a5eb63c39a456572a0fa1851  # frozen: 0.38.0
+    rev: 99f2dd369364da7ed3ac536504132b3db2e7a3b1  # frozen: 0.38.1
     hooks:
       - id: check-github-workflows
         name: JSON Schema · GitHub workflows
@@ -302,7 +302,7 @@ repos:
   # Ansible Hooks
   # ---------------------
   - repo: https://github.com/ansible/ansible-lint
-    rev: 665d9e07a1943254d2910faffc106adaf7ea7294  # frozen: v26.8.0
+    rev: e7f397ad6dfa20d274afa17cd7bbedd84ed136f5  # frozen: v26.9.0
     hooks:
       - id: ansible-lint
         name: Ansible · Linter
