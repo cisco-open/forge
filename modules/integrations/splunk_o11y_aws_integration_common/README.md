@@ -33,9 +33,9 @@ Forge separates logs and metrics. This module wires CloudWatch metrics into Splu
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 6.47 |
-| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | < 10.0.0 |
-| <a name="provider_time"></a> [time](#provider\_time) | >= 0.13 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.66.0 |
+| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.35.0 |
+| <a name="provider_time"></a> [time](#provider\_time) | 0.14.2 |
 
 ## Modules
 

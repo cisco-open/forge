@@ -33,8 +33,8 @@ Data Manager needs a read-only AWS role to inventory and ingest logs or metadata
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 6.47 |
-| <a name="provider_external"></a> [external](#provider\_external) | >= 2.3 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.66.0 |
+| <a name="provider_external"></a> [external](#provider\_external) | 2.4.2 |
 
 ## Modules
 
