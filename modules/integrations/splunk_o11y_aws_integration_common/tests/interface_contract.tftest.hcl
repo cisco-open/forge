@@ -11,6 +11,7 @@ run "integrations_splunk_o11y_aws_integration_common_interface_contract" {
       "aws_profile",
       "aws_region",
       "default_tags",
+      "enable_app_registry",
       "integration_name",
       "integration_regions",
       "splunk_api_url",
@@ -29,6 +30,9 @@ run "integrations_splunk_o11y_aws_integration_common_interface_contract" {
       "variable \"default_tags\"",
       "type        = map(string)",
       "description = \"A map of tags to apply to resources.\"",
+      "variable \"enable_app_registry\"",
+      "type        = bool",
+      "default     = true",
       "variable \"integration_name\"",
       "description = \"Name of the integration.\"",
       "variable \"integration_regions\"",
@@ -71,9 +75,9 @@ run "integrations_splunk_o11y_aws_integration_common_interface_contract" {
 
   assert {
     condition = (
-      output.expected_input_variable_count == 8
+      output.expected_input_variable_count == 9
       && output.expected_output_value_count == 1
-      && output.expected_interface_literal_count == 20
+      && output.expected_interface_literal_count == 23
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }
