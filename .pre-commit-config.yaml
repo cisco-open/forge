@@ -173,7 +173,7 @@ repos:
         name: Python · Remove unused imports
 
   - repo: https://github.com/PyCQA/flake8
-    rev: 31405090a83cade9350502e481dcd1f032cb50b9  # frozen: 7.4.0
+    rev: 7eccf20b526fe4f2230bf9afeeef2fc9f97faf8d  # frozen: 7.4.1
     hooks:
       - id: flake8
         name: Python · Linter
@@ -198,7 +198,7 @@ repos:
   # JSON Schema Hooks
   # ---------------------
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 99f2dd369364da7ed3ac536504132b3db2e7a3b1  # frozen: 0.38.1
+    rev: 0494aa7fa1314e98913a41227d8f0a515b2c1049  # frozen: 0.38.2
     hooks:
       - id: check-github-workflows
         name: JSON Schema · GitHub workflows
