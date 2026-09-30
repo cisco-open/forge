@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.17.0](https://github.com/cisco-open/forge/compare/v4.16.7...v4.17.0) (2026-09-30)
+
+
+### Features
+
+* add opt-out flag for deprecated AppRegistry ([#748](https://github.com/cisco-open/forge/issues/748)) ([46c7a4e](https://github.com/cisco-open/forge/commit/46c7a4eb28fdbb436495a3b454ec62b3c6d93070))
+
 ## [4.16.7](https://github.com/cisco-open/forge/compare/v4.16.6...v4.16.7) (2026-09-27)
 
 
