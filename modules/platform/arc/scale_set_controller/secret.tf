@@ -11,6 +11,12 @@ resource "kubernetes_secret_v1" "github_app" {
   metadata {
     name      = var.release_name
     namespace = var.namespace
+    labels = {
+      "app.kubernetes.io/managed-by" = "OpenTofu"
+    }
+    annotations = {
+      "app.kubernetes.io/managed-by" = "OpenTofu"
+    }
   }
 
   type = "generic"

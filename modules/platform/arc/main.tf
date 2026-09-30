@@ -46,7 +46,7 @@ module "scale_sets" {
   container_requests_cpu       = each.value.runner_config.container_requests_cpu
   container_requests_memory    = each.value.runner_config.container_requests_memory
   volume_requests_storage_size = each.value.runner_config.volume_requests_storage_size
-  volume_requests_storage_type = "${each.value.runner_set_configs.namespace}-${each.value.runner_config.volume_requests_storage_type}-${sha1(join(",", [for k in sort(keys(var.tags)) : "${k}=${var.tags[k]}"]))}"
+  volume_requests_storage_type = var.migrate_arc_cluster ? "" : kubernetes_manifest.storage_class["${each.value.runner_set_configs.namespace}-${each.value.runner_config.volume_requests_storage_type}"].manifest.metadata.name
   container_ecr_registries     = each.value.runner_config.container_ecr_registries
   container_images             = each.value.runner_config.container_images
   scale_set_name               = each.value.runner_config.scale_set_name
@@ -66,7 +66,7 @@ module "scale_sets" {
 
   log_level = var.log_level
 
-  depends_on = [module.controller]
+  depends_on = [module.controller, kubernetes_manifest.storage_class]
 
   tags = var.tags
 }
