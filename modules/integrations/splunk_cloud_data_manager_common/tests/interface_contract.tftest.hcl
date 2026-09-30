@@ -11,6 +11,7 @@ run "integrations_splunk_cloud_data_manager_common_interface_contract" {
       "aws_profile",
       "aws_region",
       "default_tags",
+      "enable_app_registry",
       "splunk_cloud",
       "tags",
     ]
@@ -24,6 +25,9 @@ run "integrations_splunk_cloud_data_manager_common_interface_contract" {
       "variable \"default_tags\"",
       "type        = map(string)",
       "description = \"A map of tags to apply to resources.\"",
+      "variable \"enable_app_registry\"",
+      "type        = bool",
+      "default     = true",
       "variable \"splunk_cloud\"",
       "description = \"Splunk Cloud endpoint.\"",
       "variable \"tags\"",
@@ -57,9 +61,9 @@ run "integrations_splunk_cloud_data_manager_common_interface_contract" {
 
   assert {
     condition = (
-      output.expected_input_variable_count == 5
+      output.expected_input_variable_count == 6
       && output.expected_output_value_count == 0
-      && output.expected_interface_literal_count == 11
+      && output.expected_interface_literal_count == 14
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

@@ -33,9 +33,9 @@ Forge separates logs and metrics. This module wires CloudWatch metrics into Splu
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.57.1 |
-| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.33.0 |
-| <a name="provider_time"></a> [time](#provider\_time) | 0.14.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.66.0 |
+| <a name="provider_signalfx"></a> [signalfx](#provider\_signalfx) | 9.35.0 |
+| <a name="provider_time"></a> [time](#provider\_time) | 0.14.2 |
 
 ## Modules
 
@@ -66,6 +66,7 @@ No modules.
 | <a name="input_aws_profile"></a> [aws\_profile](#input\_aws\_profile) | AWS profile to use. | `string` | n/a | yes |
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | Default AWS region. | `string` | n/a | yes |
 | <a name="input_default_tags"></a> [default\_tags](#input\_default\_tags) | A map of tags to apply to resources. | `map(string)` | n/a | yes |
+| <a name="input_enable_app_registry"></a> [enable\_app\_registry](#input\_enable\_app\_registry) | Enable AWS Service Catalog AppRegistry resources.<br/><br/>AWS deprecated AppRegistry for new customers on July 30, 2026.<br/>Default: true (enabled) to protect existing deployments from resource destruction.<br/><br/>Existing accounts: Leave default (AppRegistry continues working for billing/tracking).<br/>New accounts (post July 30, 2026): Set to false to avoid AccessDeniedException.<br/><br/>Set to false to skip AppRegistry resource creation.<br/>Set to true to keep AppRegistry resources (needed for existing deployments). | `bool` | `true` | no |
 | <a name="input_integration_name"></a> [integration\_name](#input\_integration\_name) | Name of the integration. | `string` | n/a | yes |
 | <a name="input_integration_regions"></a> [integration\_regions](#input\_integration\_regions) | List of regions for the integration. | `list(string)` | n/a | yes |
 | <a name="input_splunk_api_url"></a> [splunk\_api\_url](#input\_splunk\_api\_url) | URL for plunk Observability Cloud API. | `string` | n/a | yes |
