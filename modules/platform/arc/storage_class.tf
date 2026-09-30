@@ -41,9 +41,16 @@ resource "kubernetes_manifest" "storage_class" {
   for_each = local.storage_class_manifests
 
   manifest = merge(each.value, {
-    metadata = {
-      name = "${each.key}-${sha1(jsonencode(each.value))}"
-    }
+    metadata = merge(
+      {
+        name = "${each.key}-${sha1(jsonencode(each.value))}"
+      },
+      contains(keys(var.tags), "ForgeModuleRef") ? {
+        labels = {
+          "app.kubernetes.io/version" = var.tags["ForgeModuleRef"]
+        }
+      } : {}
+    )
   })
 
   lifecycle {
