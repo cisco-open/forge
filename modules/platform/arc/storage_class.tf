@@ -46,8 +46,8 @@ resource "kubernetes_manifest" "storage_class" {
         name = "${each.key}-${sha1(jsonencode(each.value))}"
       },
       contains(keys(var.tags), "ForgeModuleRef") ? {
-        labels = {
-          "app.kubernetes.io/version" = var.tags["ForgeModuleRef"]
+        annotations = {
+          "forge.cisco.com/module-ref" = var.tags["ForgeModuleRef"]
         }
       } : {}
     )
