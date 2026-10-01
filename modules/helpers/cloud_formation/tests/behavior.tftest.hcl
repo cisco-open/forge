@@ -12,6 +12,14 @@ mock_provider "aws" {
       json = "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"sts:AssumeRole\",\"cloudformation:*\",\"secretsmanager:*\",\"tag:TagResources\"],\"Resource\":[\"arn:aws:iam::123456789012:role/AWSCloudFormationStackSetAdministrationRole\",\"arn:aws:iam::*:role/AWSCloudFormationStackSetExecutionRole\"],\"Principal\":{\"Service\":\"cloudformation.amazonaws.com\",\"AWS\":\"arn:aws:iam::123456789012:role/AWSCloudFormationStackSetAdministrationRole\"}}]}"
     }
   }
+
+  mock_resource "aws_servicecatalogappregistry_application" {
+    defaults = {
+      application_tag = {
+        awsApplication = "arn:aws:resource-groups:us-east-1:123456789012:group/helpers-cloudformation"
+      }
+    }
+  }
 }
 
 variables {
@@ -52,5 +60,14 @@ run "cloudformation_stackset_roles_contract" {
       && aws_iam_role.cloudformation_execution_role.tags.Env == "test"
     )
     error_message = "CloudFormation helper must keep the StackSet execution role, admin trust, broad execution policy, and merged tags."
+  }
+
+  assert {
+    condition = (
+      aws_servicecatalogappregistry_application.this[0].name == "helpers_cloud_formation_us-east-1"
+      && aws_servicecatalogappregistry_application.this[0].tags.Product == "Forge"
+      && aws_servicecatalogappregistry_application.this[0].tags.Env == "test"
+    )
+    error_message = "AppRegistry application must use correct naming convention and merged tags when enabled."
   }
 }

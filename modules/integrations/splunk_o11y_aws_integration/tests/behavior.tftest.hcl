@@ -86,4 +86,13 @@ run "splunk_o11y_cloudformation_stack_contract" {
     )
     error_message = "Metric Stream tag management must replace on stack, template, script, or desired-tag changes."
   }
+
+  assert {
+    condition = (
+      aws_servicecatalogappregistry_application.this[0].name == "integrations_splunk_o11y_aws_integration_us-east-1"
+      && aws_servicecatalogappregistry_application.this[0].tags.Product == "Forge"
+      && aws_servicecatalogappregistry_application.this[0].tags.Env == "test"
+    )
+    error_message = "AppRegistry application must use correct naming convention and merged tags when enabled."
+  }
 }

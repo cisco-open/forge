@@ -3,6 +3,6 @@ locals {
   all_security_tags = merge(
     var.default_tags,
     var.tags,
-    aws_servicecatalogappregistry_application.this.application_tag,
+    var.enable_app_registry ? aws_servicecatalogappregistry_application.this[0].application_tag : {},
   )
 }

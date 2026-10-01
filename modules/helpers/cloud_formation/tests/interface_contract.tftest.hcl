@@ -11,6 +11,7 @@ run "helpers_cloud_formation_interface_contract" {
       "aws_profile",
       "aws_region",
       "default_tags",
+      "enable_app_registry",
       "tags",
     ]
     expected_output_values = []
@@ -23,6 +24,9 @@ run "helpers_cloud_formation_interface_contract" {
       "variable \"default_tags\"",
       "type        = map(string)",
       "description = \"A map of tags to apply to resources.\"",
+      "variable \"enable_app_registry\"",
+      "type        = bool",
+      "default     = true",
       "variable \"tags\"",
     ]
   }
@@ -54,9 +58,9 @@ run "helpers_cloud_formation_interface_contract" {
 
   assert {
     condition = (
-      output.expected_input_variable_count == 4
+      output.expected_input_variable_count == 5
       && output.expected_output_value_count == 0
-      && output.expected_interface_literal_count == 9
+      && output.expected_interface_literal_count == 12
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }
