@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.17.1](https://github.com/cisco-open/forge/compare/v4.17.0...v4.17.1) (2026-10-01)
+
+
+### Bug Fixes
+
+* **arc:** make storage class upgrades safe ([#756](https://github.com/cisco-open/forge/issues/756)) ([cd26eb7](https://github.com/cisco-open/forge/commit/cd26eb74c4c4669c73f4b2b45427aa50fe730da8))
+
 ## [4.17.0](https://github.com/cisco-open/forge/compare/v4.16.7...v4.17.0) (2026-09-30)
 
 
