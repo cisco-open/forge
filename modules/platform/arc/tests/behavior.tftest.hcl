@@ -133,7 +133,7 @@ variables {
   }
   tags = {
     Env            = "test"
-    ForgeModuleRef = "fix/arc-storage-class-rollout"
+    ForgeModuleRef = "feature/test-module-ref"
     Product        = "Forge"
   }
   migrate_arc_cluster = false
@@ -155,7 +155,7 @@ run "arc_single_runner_contract" {
   assert {
     condition = (
       kubernetes_manifest.storage_class["tenant-a-gp3"].manifest.metadata.name == "tenant-a-gp3-38612d04c0cb387df03c9dfdc9fa8fcbcc606ad0"
-      && kubernetes_manifest.storage_class["tenant-a-gp3"].manifest.metadata.annotations["forge.cisco.com/module-ref"] == "fix/arc-storage-class-rollout"
+      && kubernetes_manifest.storage_class["tenant-a-gp3"].manifest.metadata.annotations["forge.cisco.com/module-ref"] == "feature/test-module-ref"
       && kubernetes_manifest.storage_class["tenant-a-gp3"].manifest.parameters.type == "gp3"
       && kubernetes_manifest.storage_class["tenant-a-gp3"].manifest.parameters.fsType == "ext4"
       && kubernetes_manifest.storage_class["tenant-a-gp3"].manifest.parameters.encrypted == "true"
