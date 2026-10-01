@@ -26,6 +26,8 @@ run "scale_set_controller_contract" {
       kubernetes_namespace_v1.controller_namespace[0].metadata[0].name == "arc-system"
       && kubernetes_secret_v1.github_app[0].metadata[0].name == "arc-controller"
       && kubernetes_secret_v1.github_app[0].metadata[0].namespace == "arc-system"
+      && kubernetes_secret_v1.github_app[0].metadata[0].labels["app.kubernetes.io/managed-by"] == "OpenTofu"
+      && kubernetes_secret_v1.github_app[0].metadata[0].annotations["app.kubernetes.io/managed-by"] == "OpenTofu"
       && kubernetes_secret_v1.github_app[0].type == "generic"
       && kubernetes_secret_v1.github_app[0].data.github_app_id == "12345"
       && kubernetes_secret_v1.github_app[0].data.github_app_installation_id == "67890"

@@ -132,8 +132,9 @@ variables {
     }
   }
   tags = {
-    Env     = "test"
-    Product = "Forge"
+    Env            = "test"
+    ForgeModuleRef = "feature/test-module-ref"
+    Product        = "Forge"
   }
   migrate_arc_cluster = false
   log_level           = "DEBUG"
@@ -153,14 +154,21 @@ run "arc_single_runner_contract" {
 
   assert {
     condition = (
-      strcontains(kubernetes_manifest.storage_class["tenant-a-gp3"].manifest.metadata.name, "tenant-a-gp3-")
+      kubernetes_manifest.storage_class["tenant-a-gp3"].manifest.metadata.name == "tenant-a-gp3-38612d04c0cb387df03c9dfdc9fa8fcbcc606ad0"
+      && kubernetes_manifest.storage_class["tenant-a-gp3"].manifest.metadata.annotations["forge.cisco.com/module-ref"] == "feature/test-module-ref"
       && kubernetes_manifest.storage_class["tenant-a-gp3"].manifest.parameters.type == "gp3"
       && kubernetes_manifest.storage_class["tenant-a-gp3"].manifest.parameters.fsType == "ext4"
       && kubernetes_manifest.storage_class["tenant-a-gp3"].manifest.parameters.encrypted == "true"
+      && kubernetes_manifest.storage_class["tenant-a-gp3"].manifest.parameters.tagSpecification_1 == "Env=test"
+      && kubernetes_manifest.storage_class["tenant-a-gp3"].manifest.parameters.tagSpecification_2 == "Product=Forge"
+      && alltrue([
+        for value in values(kubernetes_manifest.storage_class["tenant-a-gp3"].manifest.parameters) :
+        !startswith(value, "ForgeModuleRef=")
+      ])
       && kubernetes_manifest.storage_class["tenant-a-gp3"].manifest.reclaimPolicy == "Delete"
       && kubernetes_manifest.storage_class["tenant-a-gp3"].manifest.volumeBindingMode == "WaitForFirstConsumer"
     )
-    error_message = "ARC root module must render tenant storage classes from runner volume inputs."
+    error_message = "ARC root module must keep module refs as metadata while deriving StorageClass identity from immutable settings."
   }
 
   assert {
@@ -179,6 +187,51 @@ run "arc_single_runner_contract" {
       && strcontains(file("${path.module}/templates/node_pool.yaml.tpl"), "effect: NoExecute")
     )
     error_message = "Each tenant Karpenter NodePool must declare the EBS CSI bootstrap taint as a startup taint."
+  }
+}
+
+run "arc_module_ref_change_contract" {
+  command = plan
+
+  variables {
+    tags = {
+      Env            = "test"
+      ForgeModuleRef = "feature/another-branch"
+      Product        = "Forge"
+    }
+  }
+
+  assert {
+    condition = (
+      kubernetes_manifest.storage_class["tenant-a-gp3"].manifest.metadata.name == "tenant-a-gp3-38612d04c0cb387df03c9dfdc9fa8fcbcc606ad0"
+      && kubernetes_manifest.storage_class["tenant-a-gp3"].manifest.metadata.annotations["forge.cisco.com/module-ref"] == "feature/another-branch"
+      && alltrue([
+        for value in values(kubernetes_manifest.storage_class["tenant-a-gp3"].manifest.parameters) :
+        !startswith(value, "ForgeModuleRef=")
+      ])
+    )
+    error_message = "Changing only ForgeModuleRef must update metadata without rotating the StorageClass."
+  }
+}
+
+run "arc_storage_class_spec_change_contract" {
+  command = plan
+
+  variables {
+    tags = {
+      Env            = "test"
+      ForgeModuleRef = "v4.18.0"
+      Product        = "Forge Next"
+    }
+  }
+
+  assert {
+    condition = (
+      kubernetes_manifest.storage_class["tenant-a-gp3"].manifest.metadata.name == "tenant-a-gp3-6c0a6b329d1d41f319cd1614e0e9b7a5f35ecb42"
+      && kubernetes_manifest.storage_class["tenant-a-gp3"].manifest.metadata.name != "tenant-a-gp3-38612d04c0cb387df03c9dfdc9fa8fcbcc606ad0"
+      && kubernetes_manifest.storage_class["tenant-a-gp3"].manifest.parameters.tagSpecification_2 == "Product=Forge Next"
+    )
+    error_message = "Changing an immutable StorageClass parameter must rotate its identity."
   }
 }
 
