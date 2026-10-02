@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.18.0](https://github.com/cisco-open/forge/compare/v4.17.1...v4.18.0) (2026-10-02)
+
+
+### Features
+
+* add enable_app_registry opt-out to wrapper modules ([#764](https://github.com/cisco-open/forge/issues/764)) ([033fb47](https://github.com/cisco-open/forge/commit/033fb47eb552b62ddca63b3c2afc865c7bd9b450))
+
 ## [4.17.1](https://github.com/cisco-open/forge/compare/v4.17.0...v4.17.1) (2026-10-01)
 
 
