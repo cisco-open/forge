@@ -14,6 +14,7 @@ run "integrations_splunk_cloud_data_manager_interface_contract" {
       "cloudwatch_log_groups_config",
       "custom_cloudwatch_log_groups_config",
       "default_tags",
+      "enable_app_registry",
       "s3_logs_config",
       "security_metadata_config",
       "splunk_cloud",
@@ -96,6 +97,9 @@ run "integrations_splunk_cloud_data_manager_interface_contract" {
       "variable \"default_tags\"",
       "type        = map(string)",
       "description = \"A map of tags to apply to resources.\"",
+      "variable \"enable_app_registry\"",
+      "type        = bool",
+      "default     = true",
       "variable \"security_metadata_config\"",
       "cloudtrail = optional(object({",
       "securityhub = optional(object({",
@@ -148,9 +152,9 @@ run "integrations_splunk_cloud_data_manager_interface_contract" {
 
   assert {
     condition = (
-      output.expected_input_variable_count == 10
+      output.expected_input_variable_count == 11
       && output.expected_output_value_count == 4
-      && output.expected_interface_literal_count == 92
+      && output.expected_interface_literal_count == 95
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }

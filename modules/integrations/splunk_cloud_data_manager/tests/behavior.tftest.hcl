@@ -302,7 +302,7 @@ run "s3_all_datasets_request_and_stack_contract" {
   assert {
     condition = (
       join("-", local.config_aliases) == "s3-logs"
-      && aws_servicecatalogappregistry_application.this.name == "integrations_splunk_cloud_data_manager_s3-logs_eu-west-1"
+      && aws_servicecatalogappregistry_application.this[0].name == "integrations_splunk_cloud_data_manager_s3-logs_eu-west-1"
       && alltrue([
         for region in [
           "eu-west-1",

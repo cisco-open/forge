@@ -31,7 +31,7 @@ Some Forge integrations and AWS-managed setup paths still use CloudFormation. Ke
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.57.1 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.67.0 |
 
 ## Modules
 
@@ -59,6 +59,7 @@ No modules.
 | <a name="input_aws_profile"></a> [aws\_profile](#input\_aws\_profile) | AWS profile to use. | `string` | n/a | yes |
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | Default AWS region. | `string` | n/a | yes |
 | <a name="input_default_tags"></a> [default\_tags](#input\_default\_tags) | A map of tags to apply to resources. | `map(string)` | n/a | yes |
+| <a name="input_enable_app_registry"></a> [enable\_app\_registry](#input\_enable\_app\_registry) | Enable AWS Service Catalog AppRegistry resources.<br/><br/>AWS deprecated AppRegistry for new customers on July 30, 2026.<br/>Default: true (enabled) to protect existing deployments from resource destruction.<br/><br/>Existing accounts: Leave default (AppRegistry continues working for billing/tracking).<br/>New accounts (post July 30, 2026): Set to false to avoid AccessDeniedException.<br/><br/>Set to false to skip AppRegistry resource creation.<br/>Set to true to keep AppRegistry resources (needed for existing deployments). | `bool` | `true` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to apply to resources. | `map(string)` | n/a | yes |
 
 ## Outputs

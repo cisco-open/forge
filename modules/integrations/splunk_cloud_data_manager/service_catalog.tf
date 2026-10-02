@@ -8,6 +8,7 @@ locals {
 }
 
 resource "aws_servicecatalogappregistry_application" "this" {
+  count = var.enable_app_registry ? 1 : 0
   name = join("_", concat(
     ["integrations_splunk_cloud_data_manager"],
     local.config_aliases,

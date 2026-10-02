@@ -1,4 +1,12 @@
-mock_provider "aws" {}
+mock_provider "aws" {
+  mock_resource "aws_servicecatalogappregistry_application" {
+    defaults = {
+      application_tag = {
+        awsApplication = "arn:aws:resource-groups:us-east-1:123456789012:group/helpers-storage"
+      }
+    }
+  }
+}
 
 override_data {
   target = data.aws_caller_identity.current
@@ -89,5 +97,14 @@ run "storage_buckets_contract" {
       && output.s3_short_term_settings.suffix == "/cicd_artifacts"
     )
     error_message = "Storage helper must expose S3 artifact path, ARN, and suffix outputs."
+  }
+
+  assert {
+    condition = (
+      aws_servicecatalogappregistry_application.this[0].name == "helpers_storage_us-east-1"
+      && aws_servicecatalogappregistry_application.this[0].tags.Product == "Forge"
+      && aws_servicecatalogappregistry_application.this[0].tags.Env == "test"
+    )
+    error_message = "AppRegistry application must use correct naming convention and merged tags when enabled."
   }
 }
