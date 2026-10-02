@@ -32,7 +32,7 @@ data "aws_iam_policy_document" "log_group_reconciler" {
 module "log_group_reconciler" {
   #checkov:skip=CKV_TF_1:Module source uses a Renovate-managed release tag.
   source  = "terraform-aws-modules/lambda/aws"
-  version = "8.8.0"
+  version = "8.9.0"
 
   region        = var.region
   function_name = local.function_name
