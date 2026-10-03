@@ -1,4 +1,5 @@
 module "ec2_update_runner_tags" {
+  count  = length(local.ec2_runner_configs) > 0 ? 1 : 0
   source = "./ec2_update_runner_tags"
 
   providers = {
