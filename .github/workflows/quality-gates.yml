@@ -92,7 +92,7 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
-          version: 0.12.7
+          version: 0.12.23
 
       - name: Run automation gate tests
         working-directory: tests
@@ -140,7 +140,7 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
-          version: 0.12.7
+          version: 0.12.23
 
       - name: Run deterministic mutation tests
         working-directory: tests
