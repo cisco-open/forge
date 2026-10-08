@@ -52,7 +52,7 @@ jobs:
             ./ .infrascan-src/
 
       - name: Run InfraScan
-        uses: soldevelo/infrascan@7b56a90270606fa298aec4c82a93d0cd99f5d454 # v1.2.0
+        uses: soldevelo/infrascan@d014b41beb18257680965b5c07d9d53de53bc042 # v1.2.2
         with:
           directory: .infrascan-src
           scanner: comprehensive
@@ -61,7 +61,7 @@ jobs:
           fail-on: high_critical
 
       - name: Upload HTML report
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: infrascan-report
