@@ -70,6 +70,7 @@ data "aws_iam_policy_document" "dynamodb_policy_document" {
 
 resource "aws_iam_policy" "dynamodb_policy" {
   name        = "${var.prefix}-dynamodb-put-delete-policy"
+  path        = "/"
   description = "Allow PutItem and DeleteItem actions on DynamoDB table"
   policy      = data.aws_iam_policy_document.dynamodb_policy_document.json
 
