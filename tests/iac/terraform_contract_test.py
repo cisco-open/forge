@@ -427,12 +427,11 @@ def test_runner_webhook_enables_upstream_api_gateway_access_logs() -> None:
     assert_contains_all(
         runner_module,
         [
-            'github_app = var.runner_configs.github_app',
             'global_config = {',
             'global_config_github                 = local.global_config.github',
             'global_config_lambda                 = local.global_config.lambda',
             'global_config_orchestration_provider = local.global_config.orchestration_provider',
-            'global_config_ssm                    = local.global_config.ssm',
+            'global_config_storage_provider       = local.global_config.storage_provider',
             'global_config_observability          = local.global_config.observability',
             'global_config_compute_provider = merge(local.global_config.compute_provider, {',
             'ec2 = merge(local.global_config.compute_provider.aws.ec2, {',

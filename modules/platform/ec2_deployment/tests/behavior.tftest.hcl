@@ -249,31 +249,35 @@ variables {
             }
           }
         }
-        ssm = {
-          tags = { Scope = "ssm" }
-          paths = {
-            root   = "/custom-root"
-            tokens = "custom-tokens"
-            config = "custom-config"
-          }
-          parameters = {
-            tags = { Scope = "ssm-parameters" }
-          }
-          housekeeper = {
-            schedule_expression = "rate(12 hours)"
-            state               = "DISABLED"
-            tags                = { Scope = "ssm-housekeeper" }
-            lambda = {
-              artifact = {
-                zip = "/private/tmp/forge-test-lambda-cache/ssm-housekeeper.zip"
+        storage_provider = {
+          aws = {
+            ssm = {
+              tags = { Scope = "ssm" }
+              paths = {
+                root   = "/custom-root"
+                tokens = "custom-tokens"
+                config = "custom-config"
               }
-              memory_size = 384
-              timeout     = 70
-            }
-            config = {
-              tokenPath      = "custom-token-path"
-              minimumDaysOld = 2
-              dryRun         = true
+              parameters = {
+                tags = { Scope = "ssm-parameters" }
+              }
+              housekeeper = {
+                schedule_expression = "rate(12 hours)"
+                state               = "DISABLED"
+                tags                = { Scope = "ssm-housekeeper" }
+                lambda = {
+                  artifact = {
+                    zip = "/private/tmp/forge-test-lambda-cache/ssm-housekeeper.zip"
+                  }
+                  memory_size = 384
+                  timeout     = 70
+                }
+                config = {
+                  tokenPath      = "custom-token-path"
+                  minimumDaysOld = 2
+                  dryRun         = true
+                }
+              }
             }
           }
         }
@@ -605,9 +609,9 @@ run "ec2_v2_input_plan" {
       && local.multi_runner_config.ec2.orchestration_provider.webhook.lambda.scale.down.tags.Scope == "scale-down"
       && local.multi_runner_config.ec2.orchestration_provider.webhook.lambda.pool.tags.Scope == "pool"
       && local.multi_runner_config.ec2.orchestration_provider.webhook.job_retry.tags.Scope == "job-retry"
-      && local.multi_runner_config.ec2.ssm.tags.Scope == "ssm"
-      && local.multi_runner_config.ec2.ssm.parameters.tags.Scope == "ssm-parameters"
-      && local.multi_runner_config.ec2.ssm.housekeeper.tags.Scope == "ssm-housekeeper"
+      && local.multi_runner_config.ec2.storage_provider.aws.ssm.tags.Scope == "ssm"
+      && local.multi_runner_config.ec2.storage_provider.aws.ssm.parameters.tags.Scope == "ssm-parameters"
+      && local.multi_runner_config.ec2.storage_provider.aws.ssm.housekeeper.tags.Scope == "ssm-housekeeper"
       && local.multi_runner_config.ec2.observability.logs.tags.Scope == "logs"
     )
     error_message = "The v2 configuration must preserve every component tag scope."
@@ -636,17 +640,17 @@ run "ec2_v2_input_plan" {
 
   assert {
     condition = (
-      local.multi_runner_config.ec2.ssm.paths.root == "/custom-root"
-      && local.multi_runner_config.ec2.ssm.paths.tokens == "custom-tokens"
-      && local.multi_runner_config.ec2.ssm.paths.config == "custom-config"
-      && local.multi_runner_config.ec2.ssm.housekeeper.schedule_expression == "rate(12 hours)"
-      && local.multi_runner_config.ec2.ssm.housekeeper.state == "DISABLED"
-      && local.multi_runner_config.ec2.ssm.housekeeper.lambda.artifact.zip == "/private/tmp/forge-test-lambda-cache/ssm-housekeeper.zip"
-      && local.multi_runner_config.ec2.ssm.housekeeper.lambda.memory_size == 384
-      && local.multi_runner_config.ec2.ssm.housekeeper.lambda.timeout == 70
-      && local.multi_runner_config.ec2.ssm.housekeeper.config.tokenPath == "custom-token-path"
-      && local.multi_runner_config.ec2.ssm.housekeeper.config.minimumDaysOld == 2
-      && local.multi_runner_config.ec2.ssm.housekeeper.config.dryRun
+      local.multi_runner_config.ec2.storage_provider.aws.ssm.paths.root == "/custom-root"
+      && local.multi_runner_config.ec2.storage_provider.aws.ssm.paths.tokens == "custom-tokens"
+      && local.multi_runner_config.ec2.storage_provider.aws.ssm.paths.config == "custom-config"
+      && local.multi_runner_config.ec2.storage_provider.aws.ssm.housekeeper.schedule_expression == "rate(12 hours)"
+      && local.multi_runner_config.ec2.storage_provider.aws.ssm.housekeeper.state == "DISABLED"
+      && local.multi_runner_config.ec2.storage_provider.aws.ssm.housekeeper.lambda.artifact.zip == "/private/tmp/forge-test-lambda-cache/ssm-housekeeper.zip"
+      && local.multi_runner_config.ec2.storage_provider.aws.ssm.housekeeper.lambda.memory_size == 384
+      && local.multi_runner_config.ec2.storage_provider.aws.ssm.housekeeper.lambda.timeout == 70
+      && local.multi_runner_config.ec2.storage_provider.aws.ssm.housekeeper.config.tokenPath == "custom-token-path"
+      && local.multi_runner_config.ec2.storage_provider.aws.ssm.housekeeper.config.minimumDaysOld == 2
+      && local.multi_runner_config.ec2.storage_provider.aws.ssm.housekeeper.config.dryRun
     )
     error_message = "The v2 configuration must preserve runner-configuration SSM paths and housekeeper overrides."
   }
@@ -680,8 +684,8 @@ run "ec2_v2_input_plan" {
       && tolist(local.global_config.lambda.subnet_ids) == tolist(["subnet-test"])
       && length(local.global_config.lambda.security_group_ids) == 1
       && local.global_config.orchestration_provider.webhook.lambda.webhook.artifact.zip == "/private/tmp/forge-test-lambda-cache/webhook.zip"
-      && local.global_config.ssm.kms_key_id == "arn:aws:kms:eu-west-1:123456789012:key/00000000-0000-0000-0000-000000000000"
-      && local.global_config.ssm.housekeeper.lambda.artifact.zip == "/private/tmp/forge-test-lambda-cache/runners.zip"
+      && local.global_config.storage_provider.aws.ssm.kms_key_id == "arn:aws:kms:eu-west-1:123456789012:key/00000000-0000-0000-0000-000000000000"
+      && local.global_config.storage_provider.aws.ssm.housekeeper.lambda.artifact.zip == "/private/tmp/forge-test-lambda-cache/runners.zip"
       && local.global_config.observability.logs.level == "info"
       && local.global_config.observability.logs.retention_in_days == 3
       && local.global_config.compute_provider.aws.ec2.vpc_id == "vpc-test"
@@ -696,7 +700,7 @@ run "ec2_v2_input_plan" {
     condition = (
       local.global_config.tags == local.terraform_aws_github_runner_tags
       && local.global_config.lambda.tags == local.terraform_aws_github_runner_tags
-      && local.global_config.ssm.parameters.tags == local.terraform_aws_github_runner_tags
+      && local.global_config.storage_provider.aws.ssm.parameters.tags == local.terraform_aws_github_runner_tags
     )
     error_message = "Forge resource tags must be carried by the global, Lambda, and Parameter Store tag maps."
   }

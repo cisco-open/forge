@@ -97,7 +97,7 @@ locals {
   }
 
   # Preserve the former base-plus-extra output (including its order) and append
-  # only new labels introduced by additional v2 matchers. The upstream v1 module
+  # only new labels introduced by additional v2 matchers. The upstream module
   # separately sorts the corresponding set before registering runners.
   runner_labels = {
     for key, runner_config in local.ec2_runner_configs :
@@ -297,15 +297,19 @@ locals {
       }
     }
 
-    ssm = {
-      kms_key_id = aws_kms_key.github.arn
-      parameters = {
-        tags = local.terraform_aws_github_runner_tags
-      }
-      housekeeper = {
-        lambda = {
-          artifact = {
-            zip = "${data.external.download_lambdas.result.path}/runners.zip"
+    storage_provider = {
+      aws = {
+        ssm = {
+          kms_key_id = aws_kms_key.github.arn
+          parameters = {
+            tags = local.terraform_aws_github_runner_tags
+          }
+          housekeeper = {
+            lambda = {
+              artifact = {
+                zip = "${data.external.download_lambdas.result.path}/runners.zip"
+              }
+            }
           }
         }
       }

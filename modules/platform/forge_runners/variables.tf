@@ -155,35 +155,39 @@ variable "ec2_deployment_specs" {
         }), null)
       })
 
-      ssm = optional(object({
-        paths = optional(object({
-          root   = optional(string, null)
-          tokens = optional(string, null)
-          config = optional(string, null)
-        }), {})
-        tags = optional(map(string), {})
-        parameters = optional(object({
-          tags = optional(map(string), {})
-        }), {})
-        housekeeper = optional(object({
-          schedule_expression = optional(string, null)
-          state               = optional(string, null)
-          tags                = optional(map(string), {})
-          lambda = optional(object({
-            artifact = optional(object({
-              zip = optional(string, null)
-              s3 = optional(object({
-                key            = string
-                object_version = optional(string, null)
-              }), null)
+      storage_provider = optional(object({
+        aws = optional(object({
+          ssm = optional(object({
+            paths = optional(object({
+              root   = optional(string, null)
+              tokens = optional(string, null)
+              config = optional(string, null)
             }), {})
-            memory_size = optional(number, null)
-            timeout     = optional(number, null)
-          }), {})
-          config = optional(object({
-            tokenPath      = optional(string, null)
-            minimumDaysOld = optional(number, null)
-            dryRun         = optional(bool, null)
+            tags = optional(map(string), {})
+            parameters = optional(object({
+              tags = optional(map(string), {})
+            }), {})
+            housekeeper = optional(object({
+              schedule_expression = optional(string, null)
+              state               = optional(string, null)
+              tags                = optional(map(string), {})
+              lambda = optional(object({
+                artifact = optional(object({
+                  zip = optional(string, null)
+                  s3 = optional(object({
+                    key            = string
+                    object_version = optional(string, null)
+                  }), null)
+                }), {})
+                memory_size = optional(number, null)
+                timeout     = optional(number, null)
+              }), {})
+              config = optional(object({
+                tokenPath      = optional(string, null)
+                minimumDaysOld = optional(number, null)
+                dryRun         = optional(bool, null)
+              }), {})
+            }), {})
           }), {})
         }), {})
       }), {})
@@ -394,8 +398,8 @@ variable "ec2_deployment_specs" {
                                provider owns runner lifecycle, capacity, and startup
                                timing, GitHub scope, matching, queues, scaling, pools,
                                and job retry.
-    - ssm                    : Per-configuration paths, tags, parameter tags, and
-                               housekeeper settings, including its Lambda artifact.
+    - storage_provider       : Per-configuration AWS SSM paths, tags, parameter
+                               tags, and housekeeper settings, including its Lambda artifact.
     - observability          : Per-configuration logging, tracing, and metrics overrides.
     - compute_provider       : Nested v2 EC2 provider configuration.
     - tags                   : Per-configuration resource tags.

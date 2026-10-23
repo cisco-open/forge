@@ -6,9 +6,9 @@ locals {
   runner_ssm_paths = {
     for key, runner_config in local.ec2_runner_configs :
     key => {
-      root = "${trimsuffix(coalesce(runner_config.ssm.paths.root, "/github-action-runners/${var.runner_configs.prefix}"), "/")}/${key}"
+      root = "${trimsuffix(coalesce(runner_config.storage_provider.aws.ssm.paths.root, "/github-action-runners/${var.runner_configs.prefix}"), "/")}/${key}"
       config = coalesce(
-        runner_config.ssm.paths.config,
+        runner_config.storage_provider.aws.ssm.paths.config,
         "runners/config",
       )
     }

@@ -5,7 +5,7 @@ locals {
   terraform_aws_github_runner_tags = merge(
     var.tenant_configs.tags,
     {
-      terraform-aws-github-runner-ref = "fix-multi-runner-v2-routing"
+      terraform-aws-github-runner-ref = "v8.0.0"
     }
   )
   webhook_api_gateway_access_log_format = jsonencode({
@@ -67,7 +67,7 @@ data "aws_subnet" "runner_subnet" {
 }
 
 data "external" "download_lambdas" {
-  program = ["bash", "${path.module}/scripts/download_lambdas.sh", "/tmp/${var.runner_configs.prefix}/", "v7.11.0", "github-aws-runners/terraform-aws-github-runner"]
+  program = ["bash", "${path.module}/scripts/download_lambdas.sh", "/tmp/${var.runner_configs.prefix}/", "v8.0.0", "github-aws-runners/terraform-aws-github-runner"]
 }
 
 # ---------------------------------------------------------------------------
@@ -125,14 +125,12 @@ resource "aws_iam_policy" "runner_hooks_ssm_read" {
 
 
 module "runners" {
-  #checkov:skip=CKV_TF_1:Temporary upstream ref is required to validate multi-runner v2 compatibility before a release tag exists.
-  source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=feat-move-v1-state-to-v2"
+  #checkov:skip=CKV_TF_1:Module source uses a Renovate-managed version tag; commit SHA pinning is an accepted policy tradeoff.
+  source = "git::https://github.com/github-aws-runners/terraform-aws-github-runner.git//modules/multi-runner?ref=v8.0.0"
 
   aws_region = var.aws_region
 
   prefix = var.runner_configs.prefix
-
-  github_app = var.runner_configs.github_app
 
   experimental_features = ["multi-runner-v2"]
 
@@ -142,7 +140,7 @@ module "runners" {
   global_config_github                 = local.global_config.github
   global_config_lambda                 = local.global_config.lambda
   global_config_orchestration_provider = local.global_config.orchestration_provider
-  global_config_ssm                    = local.global_config.ssm
+  global_config_storage_provider       = local.global_config.storage_provider
   global_config_observability          = local.global_config.observability
   global_config_compute_provider = merge(local.global_config.compute_provider, {
     aws = merge(local.global_config.compute_provider.aws, {

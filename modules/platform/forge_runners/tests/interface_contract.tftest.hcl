@@ -216,7 +216,8 @@ run "platform_forge_runners_interface_contract" {
       "max_attempts     = optional(number, 1)",
       "memory_size                    = optional(number, 256)",
       "timeout                        = optional(number, 30)",
-      "ssm = optional(object({",
+      "storage_provider = optional(object({",
+      "aws = optional(object({",
       "paths = optional(object({",
       "root   = optional(string, null)",
       "tokens = optional(string, null)",
@@ -360,7 +361,7 @@ run "platform_forge_runners_interface_contract" {
       "provider owns runner lifecycle, capacity, and startup",
       "timing, GitHub scope, matching, queues, scaling, pools,",
       "and job retry.",
-      "- ssm                    : Per-configuration paths, tags, parameter tags, and",
+      "- storage_provider       : Per-configuration AWS SSM paths, tags, parameter",
       "housekeeper settings, including its Lambda artifact.",
       "- observability          : Per-configuration logging, tracing, and metrics overrides.",
       "- compute_provider       : Nested v2 EC2 provider configuration.",
@@ -455,7 +456,7 @@ run "platform_forge_runners_interface_contract" {
     condition = (
       output.expected_input_variable_count == 10
       && output.expected_output_value_count == 5
-      && output.expected_interface_literal_count == 396
+      && output.expected_interface_literal_count == 397
     )
     error_message = "Interface contract counts must remain pinned for inputs, outputs, and source literals."
   }
