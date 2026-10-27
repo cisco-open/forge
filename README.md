@@ -1,5 +1,6 @@
 # ForgeMT
 
+[![awesome-runners](https://img.shields.io/badge/listed%20on-awesome--runners-blue.svg)](https://github.com/jonico/awesome-runners)
 [![GitHub stars](https://img.shields.io/github/stars/cisco-open/forge?style=flat-square&logo=github)](https://github.com/cisco-open/forge/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/cisco-open/forge?style=flat-square)](https://github.com/cisco-open/forge/issues)
 [![Release](https://img.shields.io/github/v/release/cisco-open/forge?display_name=tag)](https://github.com/cisco-open/forge/releases/latest/)
