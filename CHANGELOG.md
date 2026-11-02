@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.18.1](https://github.com/cisco-open/forge/compare/v4.18.0...v4.18.1) (2026-11-02)
+
+
+### Bug Fixes
+
+* **eks:** apply Karpenter node class updates in place ([#817](https://github.com/cisco-open/forge/issues/817)) ([e8369b7](https://github.com/cisco-open/forge/commit/e8369b7c247c5b5d433fbeb6c14d48b887a67b3c))
+
 ## [4.18.0](https://github.com/cisco-open/forge/compare/v4.17.1...v4.18.0) (2026-10-02)
 
 
