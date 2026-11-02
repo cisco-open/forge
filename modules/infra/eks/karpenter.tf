@@ -175,10 +175,14 @@ locals {
 
 resource "null_resource" "apply_ec2_node_class" {
   provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    # AMI updates are mutable. Deleting the class can block on the termination
+    # finalizer while existing NodeClaims still reference it.
     command = <<EOF
-kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} patch ec2nodeclass karpenter --type='merge' -p '{"metadata":{"finalizers":[]}}' || true
-kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} delete ec2nodeclass karpenter || true
-echo "${local.ec2_node_class_manifest}" | kubectl --context ${var.cluster_name}-${var.aws_profile}-${var.aws_region} apply -f -
+set -euo pipefail
+kubectl --context "${var.cluster_name}-${var.aws_profile}-${var.aws_region}" --request-timeout=60s apply -f - <<'MANIFEST'
+${local.ec2_node_class_manifest}
+MANIFEST
 EOF
   }
 
