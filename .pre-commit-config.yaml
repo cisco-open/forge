@@ -173,7 +173,7 @@ repos:
         name: Python · Remove unused imports
 
   - repo: https://github.com/PyCQA/flake8
-    rev: 7eccf20b526fe4f2230bf9afeeef2fc9f97faf8d  # frozen: 7.4.1
+    rev: 1c7fec1973ed3a7c192dbe1e96906fbbd1dbe49e  # frozen: 7.5.0
     hooks:
       - id: flake8
         name: Python · Linter
