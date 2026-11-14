@@ -302,7 +302,7 @@ repos:
   # Ansible Hooks
   # ---------------------
   - repo: https://github.com/ansible/ansible-lint
-    rev: 9bce2bfb8f4a984e6b13767bc0d6bf0a49492164  # frozen: v26.10.1
+    rev: b74fb6f73d234bf92672372cb1c10768e4018d16  # frozen: v26.11.0
     hooks:
       - id: ansible-lint
         name: Ansible · Linter
