@@ -83,7 +83,7 @@ repos:
   # Commit Message Hooks
   # ---------------------
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: f690817de25831a37094ca35af5ada05c909ff1c  # frozen: v4.19.3
+    rev: e153e14bdac00edc46e390e4f99cbc6bbf808ef6  # frozen: v4.19.4
     hooks:
       - id: commitizen
         name: Git · Validate commit message
@@ -233,7 +233,7 @@ repos:
         exclude: (docs/operations/repo-blueprints/)
 
   - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: 4c4437d784e93cacb1f05f1d7bc28e4354fafd20  # frozen: v1.109.4
+    rev: b9e409b0fee34ee0eee7e6f6a407061f15032926  # frozen: v1.109.5
     hooks:
       - id: terraform_fmt
         name: Terraform · Formatter
